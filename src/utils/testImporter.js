@@ -6,7 +6,10 @@ import {
   checkNewVideos, 
   analyzeTikTokProfile,
   emergencyRestore, 
-  checkDataIntegrity 
+  checkDataIntegrity,
+  fixAndPublishDraftVideos,
+  cleanupImportedVideos,
+  updateAllVideosWithRealMetadata
 } from './tiktokImporter.js';
 
 // Test de vérification des statistiques
@@ -74,6 +77,45 @@ function testDataIntegrity() {
   }
 }
 
+// Test de correction et publication des vidéos en draft
+async function testFixAndPublishDraftVideos() {
+  console.log('🧪 Testando correção e publicação de vídeos em draft...');
+  try {
+    const result = await fixAndPublishDraftVideos();
+    console.log('✅ Correção e publicação concluída:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Erro na correção e publicação:', error);
+    return null;
+  }
+}
+
+// Test de nettoyage des vidéos importées
+async function testCleanupImportedVideos() {
+  console.log('🧪 Testando limpeza de vídeos importadas...');
+  try {
+    const result = await cleanupImportedVideos();
+    console.log('✅ Limpeza concluída:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Erro na limpeza:', error);
+    return null;
+  }
+}
+
+// Test de récupération des vraies métadonnées TikTok
+async function testUpdateAllVideosWithRealMetadata() {
+  console.log('🧪 Testando recuperação de metadados reais do TikTok...');
+  try {
+    const result = await updateAllVideosWithRealMetadata();
+    console.log('✅ Recuperação de metadados reais concluída:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Erro na recuperação de metadados reais:', error);
+    return null;
+  }
+}
+
 // Test complet du système
 async function runFullTests() {
   console.log('🚀 Iniciando testes completos do importador TikTok...');
@@ -135,6 +177,9 @@ export {
   testImportAll, 
   testEmergencyRestore,
   testDataIntegrity,
+  testFixAndPublishDraftVideos,
+  testCleanupImportedVideos,
+  testUpdateAllVideosWithRealMetadata,
   runFullTests,
   runQuickTests
 };
@@ -147,6 +192,9 @@ if (typeof window !== 'undefined') {
     testImportAll,
     testEmergencyRestore,
     testDataIntegrity,
+    testFixAndPublishDraftVideos,
+    testCleanupImportedVideos,
+    testUpdateAllVideosWithRealMetadata,
     runFullTests,
     runQuickTests
   };
@@ -157,4 +205,7 @@ if (typeof window !== 'undefined') {
   console.log('- window.testTikTokImporter.testProfileAnalysis() - Analisar perfil');
   console.log('- window.testTikTokImporter.testImportAll() - Importar TODAS as vídeos');
   console.log('- window.testTikTokImporter.testEmergencyRestore() - Restauração de emergência');
+  console.log('- window.testTikTokImporter.testFixAndPublishDraftVideos() - Corrigir e publicar vídeos em draft');
+  console.log('- window.testTikTokImporter.testCleanupImportedVideos() - Limpar vídeos importadas');
+  console.log('- window.testTikTokImporter.testUpdateAllVideosWithRealMetadata() - Recuperar metadados reais do TikTok');
 }

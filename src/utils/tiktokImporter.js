@@ -168,7 +168,108 @@ export class TikTokImporter {
    * Récupère les métadonnées d'une vidéo TikTok
    */
   async fetchVideoMetadata(videoId, tiktokUrl) {
-    // Générer des métadonnées uniques basées sur l'ID de la vidéo
+    try {
+      // Tenter de récupérer les vraies métadonnées TikTok
+      const realMetadata = await this.fetchRealTikTokMetadata(videoId, tiktokUrl);
+      
+      if (realMetadata) {
+        console.log(`✅ Métadonnées réelles récupérées pour ${videoId}:`, realMetadata);
+        return realMetadata;
+      }
+      
+      // Fallback: générer des métadonnées uniques si la récupération échoue
+      console.log(`⚠️ Fallback pour ${videoId}: génération de métadonnées uniques`);
+      return this.generateFallbackMetadata(videoId, tiktokUrl);
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar metadados reais para ${videoId}:`, error);
+      // Fallback en cas d'erreur
+      return this.generateFallbackMetadata(videoId, tiktokUrl);
+    }
+  }
+
+  /**
+   * Tente de récupérer les vraies métadonnées TikTok
+   */
+  async fetchRealTikTokMetadata(videoId, tiktokUrl) {
+    try {
+      // Méthode 1: Tentative de scraping de la page vidéo TikTok
+      const videoPageUrl = `https://www.tiktok.com/@${TIKTOK_USERNAME}/video/${videoId}`;
+      
+      console.log(`🔍 Tentando extrair metadados reais de: ${videoPageUrl}`);
+      
+      const response = await fetch(videoPageUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const html = await response.text();
+      
+      // Extraire le titre de la vidéo
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      const title = titleMatch ? titleMatch[1].replace(' | TikTok', '').trim() : null;
+      
+      // Extraire la description
+      const descriptionMatch = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i);
+      const description = descriptionMatch ? descriptionMatch[1].trim() : null;
+      
+      // Extraire la date de publication (si disponible)
+      const dateMatch = html.match(/<meta[^>]*property="article:published_time"[^>]*content="([^"]+)"/i);
+      let publicationDate = null;
+      
+      if (dateMatch) {
+        publicationDate = dateMatch[1].split('T')[0]; // Format YYYY-MM-DD
+      } else {
+        // Fallback: utiliser la date actuelle
+        publicationDate = new Date().toISOString().split('T')[0];
+      }
+      
+      // Extraire les hashtags de la description ou du titre
+      const hashtags = this.extractHashtags(description || title || '');
+      
+      // Vérifier si on a des métadonnées valides
+      if (title && title.length > 5) {
+        return {
+          title: title,
+          artist: 'A Música da Segunda',
+          description: description || `Nova música da segunda: ${title}`,
+          lyrics: 'Letra da música será adicionada manualmente...',
+          release_date: publicationDate,
+          status: 'published',
+          spotify_url: '',
+          apple_music_url: '',
+          youtube_url: '',
+          cover_image: '',
+          hashtags: hashtags,
+          tiktok_publication_date: publicationDate,
+          metadata_source: 'real_tiktok'
+        };
+      }
+      
+      return null;
+      
+    } catch (error) {
+      console.log(`⚠️ Falha ao extrair metadados reais: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * Génère des métadonnées de fallback si la récupération échoue
+   */
+  generateFallbackMetadata(videoId, tiktokUrl) {
     const today = new Date();
     
     // Créer un titre unique basé sur l'ID de la vidéo
@@ -186,14 +287,30 @@ export class TikTokImporter {
       description: uniqueDescription,
       lyrics: 'Letra da música será adicionada manualmente...',
       release_date: this.getNextMonday(),
-      status: 'published', // Changé de 'draft' à 'published'
+      status: 'published',
       spotify_url: '',
       apple_music_url: '',
       youtube_url: '',
       cover_image: '',
       hashtags: uniqueHashtags,
-      tiktok_publication_date: today.toISOString().split('T')[0]
+      tiktok_publication_date: today.toISOString().split('T')[0],
+      metadata_source: 'generated_fallback'
     };
+  }
+
+  /**
+   * Extrait les hashtags d'un texte
+   */
+  extractHashtags(text) {
+    if (!text) return ['musica', 'trending', 'novidade', 'humor'];
+    
+    const hashtagMatches = text.match(/#[\w\u00C0-\u017F]+/g);
+    if (hashtagMatches) {
+      return hashtagMatches.map(tag => tag.slice(1).toLowerCase());
+    }
+    
+    // Fallback: hashtags par défaut
+    return ['musica', 'trending', 'novidade', 'humor'];
   }
 
   /**
@@ -456,6 +573,72 @@ export async function analyzeTikTokProfile() {
 }
 
 /**
+ * Fonction pour récupérer les vraies métadonnées de toutes les vidéos existantes
+ */
+export async function updateAllVideosWithRealMetadata() {
+  console.log('🔄 Atualizando todas as vídeos com metadados reais do TikTok...');
+  
+  try {
+    const songs = localStorageService.songs.getAll();
+    const tiktokVideos = songs.filter(song => song.tiktok_video_id);
+    
+    console.log(`📱 Encontradas ${tiktokVideos.length} vídeos TikTok para atualizar`);
+    
+    const updatedSongs = [];
+    let successCount = 0;
+    let fallbackCount = 0;
+    
+    for (const song of tiktokVideos) {
+      try {
+        console.log(`🔄 Atualizando vídeo ${song.tiktok_video_id}...`);
+        
+        // Tenter de récupérer les vraies métadonnées TikTok
+        const importer = new TikTokImporter();
+        const realMetadata = await importer.fetchRealTikTokMetadata(song.tiktok_video_id, song.tiktok_url);
+        
+        if (realMetadata && realMetadata.title) {
+          // Utiliser les vraies métadonnées TikTok
+          const updatedSong = await localStorageService.songs.update(song.id, {
+            title: realMetadata.title,
+            description: realMetadata.description,
+            release_date: realMetadata.tiktok_publication_date,
+            tiktok_publication_date: realMetadata.tiktok_publication_date,
+            hashtags: realMetadata.hashtags,
+            updated_at: new Date().toISOString()
+          });
+          
+          updatedSongs.push(updatedSong);
+          successCount++;
+          console.log(`✅ Vídeo ${song.tiktok_video_id} atualizado com metadados reais: "${realMetadata.title}"`);
+          
+        } else {
+          // Garder les métadonnées existantes
+          fallbackCount++;
+          console.log(`⚠️ Vídeo ${song.tiktok_video_id}: metadados reais não encontrados, mantendo existentes`);
+        }
+        
+      } catch (error) {
+        console.error(`❌ Erro ao atualizar vídeo ${song.tiktok_video_id}:`, error);
+      }
+    }
+    
+    console.log(`🎉 Atualização concluída!`);
+    console.log(`📊 Resumo: ${successCount} vídeos atualizados com metadados reais, ${fallbackCount} mantidos`);
+    
+    return {
+      totalProcessed: tiktokVideos.length,
+      updatedWithRealMetadata: successCount,
+      keptExisting: fallbackCount,
+      updatedSongs: updatedSongs
+    };
+    
+  } catch (error) {
+    console.error('❌ Erro durante atualização:', error);
+    throw error;
+  }
+}
+
+/**
  * Fonction pour corriger et publier toutes les vidéos en statut draft
  */
 export async function fixAndPublishDraftVideos() {
@@ -471,43 +654,62 @@ export async function fixAndPublishDraftVideos() {
     
     for (const song of draftVideos) {
       try {
-        // Créer un titre unique basé sur l'ID TikTok
-        const lastDigits = song.tiktok_video_id.slice(-4);
-        const videoNumber = parseInt(lastDigits, 10);
+        console.log(`🔄 Corrigindo vídeo ${song.tiktok_video_id}...`);
         
-        const baseTitles = [
-          'Música da Segunda',
-          'Nova Música da Segunda',
-          'Música da Segunda Especial',
-          'Música da Segunda Premium',
-          'Música da Segunda VIP'
-        ];
+        // Tenter de récupérer les vraies métadonnées TikTok
+        const importer = new TikTokImporter();
+        const realMetadata = await importer.fetchRealTikTokMetadata(song.tiktok_video_id, song.tiktok_url);
         
-        const baseTitle = baseTitles[videoNumber % baseTitles.length];
-        const today = new Date();
-        const uniqueTitle = `${baseTitle} - ${today.toLocaleDateString('pt-BR')} (ID: ${lastDigits})`;
+        let title, description, publicationDate;
         
-        // Générer une description unique
-        const descriptions = [
-          'Nova música da segunda com muito humor e energia!',
-          'Música da segunda que vai te fazer rir!',
-          'Nova música da segunda com ritmo contagiante!',
-          'Música da segunda com letra inteligente!',
-          'Nova música da segunda com muito estilo!'
-        ];
+        if (realMetadata && realMetadata.title) {
+          // Utiliser les vraies métadonnées TikTok
+          title = realMetadata.title;
+          description = realMetadata.description;
+          publicationDate = realMetadata.tiktok_publication_date;
+          console.log(`✅ Métadonnées réelles récupérées: "${title}"`);
+        } else {
+          // Fallback: générer des métadonnées uniques
+          const lastDigits = song.tiktok_video_id.slice(-4);
+          const videoNumber = parseInt(lastDigits, 10);
+          
+          const baseTitles = [
+            'Música da Segunda',
+            'Nova Música da Segunda',
+            'Música da Segunda Especial',
+            'Música da Segunda Premium',
+            'Música da Segunda VIP'
+          ];
+          
+          const baseTitle = baseTitles[videoNumber % baseTitles.length];
+          const today = new Date();
+          title = `${baseTitle} - ${today.toLocaleDateString('pt-BR')} (ID: ${lastDigits})`;
+          
+          const descriptions = [
+            'Nova música da segunda com muito humor e energia!',
+            'Música da segunda que vai te fazer rir!',
+            'Nova música da segunda com ritmo contagiante!',
+            'Música da segunda com letra inteligente!',
+            'Nova música da segunda com muito estilo!'
+          ];
+          
+          description = descriptions[videoNumber % descriptions.length];
+          publicationDate = today.toISOString().split('T')[0];
+          console.log(`⚠️ Fallback: métadonnées générées: "${title}"`);
+        }
         
-        const uniqueDescription = descriptions[videoNumber % descriptions.length];
-        
-        // Mettre à jour la chanson
+        // Mettre à jour la chanson avec les vraies ou générées métadonnées
         const updatedSong = await localStorageService.songs.update(song.id, {
-          title: uniqueTitle,
-          description: uniqueDescription,
+          title: title,
+          description: description,
           status: 'published', // Changer de 'draft' à 'published'
+          release_date: publicationDate,
+          tiktok_publication_date: publicationDate,
           updated_at: new Date().toISOString()
         });
         
         updatedSongs.push(updatedSong);
-        console.log(`✅ Vídeo ${song.tiktok_video_id} corrigido e publicado: "${uniqueTitle}"`);
+        console.log(`✅ Vídeo ${song.tiktok_video_id} corrigido e publicado: "${title}"`);
         
       } catch (error) {
         console.error(`❌ Erro ao corrigir vídeo ${song.tiktok_video_id}:`, error);

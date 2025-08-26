@@ -19,7 +19,8 @@ import {
   checkDataIntegrity, 
   analyzeTikTokProfile,
   fixAndPublishDraftVideos,
-  cleanupImportedVideos
+  cleanupImportedVideos,
+  updateAllVideosWithRealMetadata
 } from '@/utils/tiktokImporter';
 
 export default function TikTokImporter() {
@@ -229,6 +230,30 @@ export default function TikTokImporter() {
             className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-300 px-6 py-3 text-lg"
           >
             🧹 Limpar Vídeos
+          </Button>
+          
+          <Button
+            onClick={async () => {
+              try {
+                setIsImporting(true);
+                const result = await updateAllVideosWithRealMetadata();
+                setImportResults({ 
+                  success: true, 
+                  importedCount: result.updatedWithRealMetadata, 
+                  songs: result.updatedSongs,
+                  message: `Metadados reais recuperados! ${result.updatedWithRealMetadata} vídeos atualizados com títulos e datas reais do TikTok.`
+                });
+                await loadStats(); // Recharger les statistiques
+              } catch (error) {
+                setImportResults({ success: false, error: error.message });
+              } finally {
+                setIsImporting(false);
+              }
+            }}
+            variant="outline"
+            className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-300 px-6 py-3 text-lg"
+          >
+            🎯 Recuperar Metadados Reais
           </Button>
         </div>
 
