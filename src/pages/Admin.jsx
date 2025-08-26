@@ -120,20 +120,25 @@ export default function AdminPage() {
       const suggestedReleaseDate = getNextMonday();
       
       // Mettre à jour les champs avec les informations extraites
-      setEditingSong(prev => ({
-        ...prev,
+      const updatedSong = {
+        ...editingSong,
         tiktok_url: cleanUrl,
         tiktok_video_id: videoId,
         tiktok_publication_date: metadata.publicationDate,
-        // Titre extrait de TikTok ou par défaut
-        title: metadata.title || prev.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
-        // Description extraite de TikTok ou par défaut
-        description: metadata.description || prev.description || 'Música da Segunda - Nova descoberta musical!',
-        // Hashtags extraits de TikTok ou par défaut
+        // Titre extrait de TikTok (priorité absolue)
+        title: metadata.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
+        // Description extraite de TikTok (priorité absolue)
+        description: metadata.description || 'Música da Segunda - Nova descoberta musical!',
+        // Hashtags extraits de TikTok (priorité absolue)
         hashtags: metadata.hashtags.length > 0 ? metadata.hashtags : ['musica', 'trending', 'novidade', 'humor'],
         // Date de sortie suggérée
         release_date: suggestedReleaseDate
-      }));
+      };
+      
+      console.log('🎯 Métadonnées extraites:', metadata);
+      console.log('📝 Chanson mise à jour:', updatedSong);
+      
+      setEditingSong(updatedSong);
 
       displayMessage('success', `✅ TikTok extraído com sucesso! 
       🎬 ID: ${videoId} 
@@ -153,28 +158,37 @@ export default function AdminPage() {
   // ===== EXTRACTION DES MÉTADONNÉES TIKTOK =====
   const extractTikTokMetadata = async (videoId, tiktokUrl) => {
     try {
+      console.log('🔍 Tentando extrair métadonnées de:', tiktokUrl);
+      
       // Essayer d'extraire les métadonnées via l'API publique TikTok
       const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(tiktokUrl)}`);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Réponse API TikTok:', data);
         
         // Extraire les hashtags du titre et de la description
         const hashtags = extractHashtags(data.title + ' ' + (data.description || ''));
         
-        return {
+        const metadata = {
           title: data.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
           description: data.description || 'Música da Segunda - Nova descoberta musical!',
           hashtags: hashtags,
           publicationDate: new Date().toISOString().split('T')[0], // Aujourd'hui par défaut
           author: data.author_name || 'A Música da Segunda'
         };
+        
+        console.log('✅ Métadonnées extraites avec succès:', metadata);
+        return metadata;
+      } else {
+        console.log('❌ API TikTok retornou erro:', response.status, response.statusText);
       }
     } catch (error) {
-      console.log('API TikTok não disponível, usando dados simulados:', error);
+      console.log('🚫 Erro ao acessar API TikTok, usando dados simulados:', error);
     }
     
     // Fallback: données simulées mais réalistes
+    console.log('🔄 Usando dados simulados como fallback');
     const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
     const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
     
@@ -758,14 +772,20 @@ export default function AdminPage() {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Título *
+                          Título * {editingSong.tiktok_video_id && editingSong.title && editingSong.title !== `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}` && <span className="text-green-600">✅</span>}
                         </label>
                         <Input
                           value={editingSong.title}
                           onChange={(e) => handleInputChange('title', e.target.value)}
                           required
                           placeholder="Título da música"
+                          className={editingSong.tiktok_video_id && editingSong.title && editingSong.title !== `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}` ? 'border-green-300 bg-green-50' : ''}
                         />
+                        {editingSong.tiktok_video_id && editingSong.title && editingSong.title !== `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}` && (
+                          <p className="text-xs text-green-600 mt-1">
+                            ✅ Título extraído do TikTok
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
