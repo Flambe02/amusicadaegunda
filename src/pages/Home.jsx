@@ -121,31 +121,9 @@ export default function Home() {
   }
 
   return (
-    <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
-      <div className="text-center mb-8">
-        {/* Logo sur desktop uniquement - à gauche du titre */}
-        <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-6 lg:mb-6">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl flex-shrink-0">
-            <img 
-              src="/images/Musica da segunda.jpg" 
-              alt="Logo Música da Segunda"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          
-          <div className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
-              Música da Segunda
-            </h1>
-            <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
-              Descubra música nova toda segunda-feira
-            </p>
-          </div>
-        </div>
-        
-        {/* Titre centré sur mobile */}
-        <div className="lg:hidden">
-          {/* Logo + titre sur mobile - même layout que desktop */}
+          <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
+        {/* Header Mobile uniquement */}
+        <div className="lg:hidden text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
               <img 
@@ -165,7 +143,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
       
       {/* ===== LAYOUT DESKTOP: VIDÉO TIKTOK + MÚSICAS DO MÊS ===== */}
       <div className="hidden lg:grid lg:grid-cols-2 lg:gap-8 lg:mt-8">
