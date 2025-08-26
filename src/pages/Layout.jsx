@@ -9,7 +9,7 @@ export default function Layout({ children }) {
   const pages = [
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
     { name: 'Calendário', url: createPageUrl('Calendar'), icon: Calendar },
-    { name: 'Advento', url: createPageUrl('AdventCalendar'), icon: Gift },
+    { name: 'Ano 2025', url: createPageUrl('AdventCalendar'), icon: Gift },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
   ];
 

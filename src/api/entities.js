@@ -74,7 +74,7 @@ export const AdventSong = {
       const sortedSongs = adventSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
       return limit ? sortedSongs.slice(0, limit) : sortedSongs;
     } catch (error) {
-      console.error('Erro ao carregar músicas do advento:', error);
+      console.error('Erro ao carregar músicas do Ano 2025:', error);
       return [];
     }
   }

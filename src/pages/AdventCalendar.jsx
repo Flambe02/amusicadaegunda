@@ -5,14 +5,14 @@ import { Gift, Lock, Music, Play, Sparkles, Youtube, ExternalLink } from 'lucide
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-// Advent Door Component
+// Componente Porta do Advento
 const AdventDoor = ({ day, song, onOpen }) => {
   const today = new Date();
-  // DEBUG: To test opening, uncomment the line below
+  // DEBUG: Para testar a abertura, descomente a linha abaixo
   // const today = new Date('2025-12-25');
   const doorDate = new Date(2025, 11, day);
   
-  // Special case: Day 1 is always accessible
+  // Caso especial: Dia 1 é sempre acessível
   const isLocked = day === 1 ? false : today < doorDate;
 
   const handleClick = () => {
@@ -44,7 +44,7 @@ const AdventDoor = ({ day, song, onOpen }) => {
   );
 };
 
-// Main Advent Calendar Page
+// Página Principal do Calendário do Advento
 export default function AdventCalendar() {
   const [songs, setSongs] = useState([]);
   const [selectedSong, setSelectedSong] = useState(null);
@@ -73,7 +73,7 @@ export default function AdventCalendar() {
         return `https://open.spotify.com/embed/${pathParts[1]}/${pathParts[2]}`;
       }
     } catch (e) {
-      console.error("Invalid Spotify URL", e);
+      console.error("URL do Spotify inválida", e);
     }
     return '';
   };
@@ -84,10 +84,10 @@ export default function AdventCalendar() {
         <div className="text-center mb-8">
           <Gift className="w-16 h-16 text-white mx-auto drop-shadow-lg mb-4" />
           <h1 className="text-4xl font-black text-white drop-shadow-lg mb-2">
-            Calendrier de l'Avent
+            Calendário do Advento
           </h1>
           <p className="text-white/80 font-medium text-lg drop-shadow-md">
-            Décembre 2025 - Une surprise chaque jour !
+            Dezembro 2025 - Uma surpresa a cada dia!
           </p>
         </div>
 
@@ -105,11 +105,11 @@ export default function AdventCalendar() {
         </div>
       </div>
 
-      {/* Redesigned Song Modal */}
+      {/* Modal de Música Redesenhado */}
       <Dialog open={!!selectedSong} onOpenChange={() => setSelectedSong(null)}>
         <DialogContent className="p-0 border-0 bg-transparent max-w-sm w-[90vw] max-h-[90vh] overflow-y-auto">
           <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-3xl shadow-2xl overflow-hidden">
-            {/* Header avec numéro du jour */}
+            {/* Cabeçalho com número do dia */}
             <div className="bg-gradient-to-r from-red-500 to-rose-600 p-6 text-center relative">
               <div className="absolute top-4 left-4 bg-white/20 rounded-full w-12 h-12 flex items-center justify-center">
                 <span className="text-white font-black text-lg">{selectedSong?.day_of_december}</span>
@@ -125,20 +125,20 @@ export default function AdventCalendar() {
               </div>
             </div>
 
-            {/* Contenu principal */}
+            {/* Conteúdo principal */}
             <div className="p-6 pt-12">
-              {/* Description/Thème */}
+              {/* Descrição/Tema */}
               {selectedSong?.description && (
                 <div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span className="font-bold text-gray-600 text-sm uppercase tracking-wide">Thème du jour</span>
+                    <span className="font-bold text-gray-600 text-sm uppercase tracking-wide">Tema do dia</span>
                   </div>
                   <p className="text-gray-800 leading-relaxed">{selectedSong.description}</p>
                 </div>
               )}
 
-              {/* Player Spotify */}
+              {/* Player do Spotify */}
               {selectedSong?.spotify_url && (
                 <div className="mb-6">
                   <iframe 
@@ -153,13 +153,13 @@ export default function AdventCalendar() {
                 </div>
               )}
 
-              {/* Boutons d'action */}
+              {/* Botões de ação */}
               <div className="space-y-3">
                 {selectedSong?.spotify_url && (
                   <a href={selectedSong.spotify_url} target="_blank" rel="noopener noreferrer">
                     <Button className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200">
                       <Music className="w-5 h-5 mr-3" />
-                      Écouter sur Spotify
+                      Ouvir no Spotify
                     </Button>
                   </a>
                 )}
@@ -168,17 +168,17 @@ export default function AdventCalendar() {
                   <a href={selectedSong.youtube_url} target="_blank" rel="noopener noreferrer">
                     <Button className="w-full bg-[#FF0000] hover:bg-[#cc0000] text-white font-bold py-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200">
                       <Youtube className="w-5 h-5 mr-3" />
-                      Voir sur YouTube
+                      Ver no YouTube
                     </Button>
                   </a>
                 )}
               </div>
 
-              {/* Footer décoratif */}
+              {/* Rodapé decorativo */}
               <div className="mt-6 text-center">
                 <div className="flex items-center justify-center gap-2 text-gray-400">
                   <Gift className="w-4 h-4" />
-                  <span className="text-xs font-medium">Calendrier de l'Avent Musical</span>
+                  <span className="text-xs font-medium">Calendário do Advento Musical</span>
                   <Gift className="w-4 h-4" />
                 </div>
               </div>

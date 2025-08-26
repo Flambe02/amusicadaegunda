@@ -33,7 +33,7 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function AdminPage() {
-  // ===== ÉTATS =====
+  // ===== ESTADOS =====
   const [songs, setSongs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -44,12 +44,12 @@ export default function AdminPage() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
 
-  // ===== EFFETS =====
+  // ===== EFEITOS =====
   useEffect(() => {
     loadSongs();
   }, []);
 
-  // ===== FONCTIONS =====
+  // ===== FUNÇÕES =====
   const loadSongs = () => {
     const allSongs = localStorageService.songs.getAll();
     setSongs(allSongs);
@@ -65,7 +65,7 @@ export default function AdminPage() {
     }
   };
 
-  // ===== EXTRACTION TIKTOK =====
+  // ===== EXTRAÇÃO TIKTOK =====
   const extractTikTokInfo = async (tiktokUrl) => {
     if (!tiktokUrl || tiktokUrl.trim() === '') {
       displayMessage('error', '❌ Por favor, insira o link do TikTok primeiro');
@@ -155,7 +155,7 @@ export default function AdminPage() {
     }
   };
 
-  // ===== EXTRACTION DES MÉTADONNÉES TIKTOK =====
+  // ===== EXTRAÇÃO DAS METADADAS TIKTOK =====
   const extractTikTokMetadata = async (videoId, tiktokUrl) => {
     try {
       console.log('🔍 Tentando extrair métadonnées de:', tiktokUrl);
@@ -201,7 +201,7 @@ export default function AdminPage() {
     };
   };
 
-  // ===== EXTRACTION DES HASHTAGS =====
+  // ===== EXTRAÇÃO DAS HASHTAGS =====
   const extractHashtags = (text) => {
     if (!text) return [];
     
@@ -223,12 +223,12 @@ export default function AdminPage() {
     return hashtags.slice(0, 10);
   };
 
-  // ===== EXTRACTION DE LA DATE DE PUBLICATION TIKTOK =====
+  // ===== EXTRAÇÃO DA DATA DE PUBLICAÇÃO TIKTOK =====
   const extractTikTokPublicationDate = async (tiktokUrl, videoId) => {
     try {
       console.log('📅 Tentando extrair data de publicação para vídeo:', videoId);
       
-      // Méthode 1: Essayer de récupérer la page HTML TikTok
+      // Método 1: Tentar recuperar a página HTML do TikTok
       try {
         const response = await fetch(tiktokUrl, {
           method: 'GET',
@@ -285,7 +285,7 @@ export default function AdminPage() {
         console.log('⚠️ Falha ao recuperar HTML TikTok:', htmlError);
       }
       
-      // Méthode 2: Essayer l'API alternative (si disponible)
+      // Método 2: Tentar a API alternativa (se disponível)
       try {
         const alternativeResponse = await fetch(`https://www.tiktok.com/api/item/detail/?itemId=${videoId}`);
         if (alternativeResponse.ok) {
@@ -538,16 +538,16 @@ export default function AdminPage() {
     }
   };
 
-  // ===== RENDU =====
+  // ===== RENDERIZAÇÃO =====
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-5">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-5">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-black text-blue-900 mb-2">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-black text-blue-900 mb-2">
             🎵 Admin Panel - Música da Segunda
           </h1>
-          <p className="text-blue-700 text-lg">
+          <p className="text-blue-700 text-base sm:text-lg">
             Gerencie suas músicas e conteúdo localmente
           </p>
         </div>
@@ -562,55 +562,61 @@ export default function AdminPage() {
         )}
 
         {/* Actions Bar */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex gap-3">
-              <Button onClick={handleCreate} className="bg-green-600 hover:bg-green-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Música
-              </Button>
-              <Button onClick={exportData} variant="outline">
+        <div className="bg-white rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
+          {/* Actions principales - toujours visibles */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <Button onClick={handleCreate} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Música
+            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button onClick={exportData} variant="outline" className="flex-1 sm:flex-none">
                 <Download className="w-4 h-4 mr-2" />
-                Exportar
+                <span className="hidden sm:inline">Exportar</span>
+                <span className="sm:hidden">Export</span>
               </Button>
-              <label className="cursor-pointer">
+              <label className="cursor-pointer flex-1 sm:flex-none">
                 <input
                   type="file"
                   accept=".json"
                   onChange={importData}
                   className="hidden"
                 />
-                <Button variant="outline" asChild>
+                <Button variant="outline" asChild className="w-full">
                   <span>
                     <Upload className="w-4 h-4 mr-2" />
-                    Importar
+                    <span className="hidden sm:inline">Importar</span>
+                    <span className="sm:hidden">Import</span>
                   </span>
                 </Button>
               </label>
             </div>
-            
-            <div className="flex gap-3">
-              <Button onClick={loadSongs} variant="outline" size="sm">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Atualizar
-              </Button>
-              <Button onClick={clearAllData} variant="outline" size="sm" className="text-red-600 border-red-300">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Limpar Tudo
-              </Button>
-            </div>
+          </div>
+          
+          {/* Actions secondaires - en ligne sur mobile */}
+          <div className="flex gap-2 sm:gap-3 justify-center sm:justify-end">
+            <Button onClick={loadSongs} variant="outline" size="sm" className="flex-1 sm:flex-none">
+              <RefreshCw className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Atualizar</span>
+              <span className="sm:hidden">Atual</span>
+            </Button>
+            <Button onClick={clearAllData} variant="outline" size="sm" className="text-red-600 border-red-300 flex-1 sm:flex-none">
+              <Trash2 className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Limpar Tudo</span>
+              <span className="sm:hidden">Limpar</span>
+            </Button>
           </div>
         </div>
 
         {/* Search */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-lg">
+        <div className="bg-white rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
-              placeholder="Buscar músicas por título, artista ou descrição..."
+              placeholder="Buscar músicas..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm sm:text-base"
             />
           </div>
         </div>
@@ -620,35 +626,39 @@ export default function AdminPage() {
           {songs.map((song) => (
             <Card key={song.id} className="shadow-lg">
               <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-0">
                   <div className="flex-1">
-                    <CardTitle className="text-xl text-blue-900 mb-2">
+                    <CardTitle className="text-lg sm:text-xl text-blue-900 mb-2">
                       {song.title}
                     </CardTitle>
                     <div className="flex flex-wrap gap-2 mb-3">
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs sm:text-sm">
                         <Music className="w-3 h-3 mr-1" />
-                        {song.artist}
+                        <span className="hidden sm:inline">{song.artist}</span>
+                        <span className="sm:hidden">A Música da Segunda</span>
                       </Badge>
-                      <Badge variant={song.status === 'published' ? 'default' : 'secondary'}>
-                        {song.status}
+                      <Badge variant={song.status === 'published' ? 'default' : 'secondary'} className="text-xs sm:text-sm">
+                        <span className="hidden sm:inline">{song.status}</span>
+                        <span className="sm:hidden">{song.status === 'published' ? 'Pub' : 'Rasc'}</span>
                       </Badge>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="text-xs sm:text-sm">
                         <Calendar className="w-3 h-3 mr-1" />
-                        {format(parseISO(song.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                        <span className="hidden sm:inline">{format(parseISO(song.release_date), 'dd/MM/yyyy', { locale: ptBR })}</span>
+                        <span className="sm:hidden">{format(parseISO(song.release_date), 'dd/MM', { locale: ptBR })}</span>
                       </Badge>
-
                     </div>
                     {song.description && (
-                      <p className="text-gray-600 text-sm">{song.description}</p>
+                      <p className="text-gray-600 text-xs sm:text-sm line-clamp-2">{song.description}</p>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleEdit(song)} size="sm" variant="outline">
+                  <div className="flex gap-2 justify-center sm:justify-end">
+                    <Button onClick={() => handleEdit(song)} size="sm" variant="outline" className="flex-1 sm:flex-none">
                       <Edit className="w-4 h-4" />
+                      <span className="ml-1 sm:hidden">Editar</span>
                     </Button>
-                    <Button onClick={() => handleDelete(song.id)} size="sm" variant="outline" className="text-red-600">
+                    <Button onClick={() => handleDelete(song.id)} size="sm" variant="outline" className="text-red-600 flex-1 sm:flex-none">
                       <Trash2 className="w-4 h-4" />
+                      <span className="ml-1 sm:hidden">Excluir</span>
                     </Button>
                   </div>
                 </div>
@@ -659,12 +669,12 @@ export default function AdminPage() {
 
         {/* Empty State */}
         {songs.length === 0 && (
-          <div className="text-center py-12">
-            <Music className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+          <div className="text-center py-8 sm:py-12">
+            <Music className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">
               Nenhuma música encontrada
             </h3>
-            <p className="text-gray-500">
+            <p className="text-gray-500 text-sm sm:text-base">
               {searchQuery ? 'Tente uma busca diferente' : 'Crie sua primeira música!'}
             </p>
           </div>
