@@ -31,7 +31,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import TikTokImporter from '@/components/TikTokImporter';
 
 export default function AdminPage() {
   // ===== ÉTATS =====
@@ -189,6 +188,7 @@ export default function AdminPage() {
       status: 'draft',
       tiktok_video_id: '',
       tiktok_url: '',
+      tiktok_publication_date: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
       spotify_url: '',
       apple_music_url: '',
       youtube_url: '',
@@ -220,20 +220,38 @@ export default function AdminPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validation des champs requis
+    if (!editingSong.title || editingSong.title.trim() === '') {
+      displayMessage('error', '❌ O título é obrigatório!');
+      return;
+    }
+    
+    if (!editingSong.release_date) {
+      displayMessage('error', '❌ A data de lançamento é obrigatória!');
+      return;
+    }
+    
+    // Validation du lien TikTok (obligatoire selon la section)
+    if (!editingSong.tiktok_url || editingSong.tiktok_url.trim() === '') {
+      displayMessage('error', '❌ O link do TikTok é obrigatório!');
+      return;
+    }
+    
     try {
       if (isEditing) {
         await Song.update(editingSong.id, editingSong);
-        displayMessage('success', 'Música atualizada com sucesso!');
+        displayMessage('success', '✅ Música atualizada com sucesso!');
       } else {
         await Song.create(editingSong);
-        displayMessage('success', 'Música criada com sucesso!');
+        displayMessage('success', '✅ Música criada com sucesso!');
       }
       
       setShowForm(false);
       setEditingSong(null);
       loadSongs();
     } catch (error) {
-      displayMessage('error', 'Erro ao salvar música');
+      console.error('Erro detalhado:', error);
+      displayMessage('error', `❌ Erro ao salvar música: ${error.message || 'Erro desconhecido'}`);
     }
   };
 
@@ -370,11 +388,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* TikTok Importer */}
-        <div className="mb-6">
-          <TikTokImporter />
-        </div>
-
         {/* Songs List */}
         <div className="grid gap-4">
           {songs.map((song) => (
@@ -455,7 +468,7 @@ export default function AdminPage() {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Link da Vídeo TikTok *
+                          Link da Vídeo TikTok * (Obrigatório)
                         </label>
                         <div className="flex gap-2">
                           <Input

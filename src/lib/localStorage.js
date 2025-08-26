@@ -26,24 +26,6 @@ const DEFAULT_SONGS = [
     hashtags: ["humor", "moraes", "bancos", "trendingsong", "musica"],
     created_at: "2025-01-27T10:00:00.000Z",
     updated_at: "2025-01-27T10:00:00.000Z"
-  },
-  {
-    id: 2,
-    title: "UBER",
-    artist: "A Música da Segunda",
-    description: "Uma música sobre UBER e humor",
-    lyrics: "UBER...\nNova música da segunda...",
-    release_date: "2025-08-18",
-    status: "published",
-    tiktok_video_id: "7539613899209903382",
-    tiktok_url: "https://www.tiktok.com/@amusicadasegunda/video/7539613899209903382",
-    spotify_url: "",
-    apple_music_url: "",
-    youtube_url: "",
-    cover_image: "",
-    hashtags: ["humor", "uber", "trendingsong", "musica"],
-    created_at: "2025-01-27T10:00:00.000Z",
-    updated_at: "2025-01-27T10:00:00.000Z"
   }
 ];
 
