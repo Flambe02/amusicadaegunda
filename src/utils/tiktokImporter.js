@@ -168,23 +168,93 @@ export class TikTokImporter {
    * Récupère les métadonnées d'une vidéo TikTok
    */
   async fetchVideoMetadata(videoId, tiktokUrl) {
-    // Simulation des métadonnées TikTok
+    // Générer des métadonnées uniques basées sur l'ID de la vidéo
     const today = new Date();
     
+    // Créer un titre unique basé sur l'ID de la vidéo
+    const uniqueTitle = this.generateUniqueTitle(videoId);
+    
+    // Générer une description unique
+    const uniqueDescription = this.generateUniqueDescription(videoId);
+    
+    // Générer des hashtags uniques
+    const uniqueHashtags = this.generateUniqueHashtags(videoId);
+    
     return {
-      title: `Música da Segunda - ${today.toLocaleDateString('pt-BR')}`,
+      title: uniqueTitle,
       artist: 'A Música da Segunda',
-      description: 'Nova música da segunda com muito humor e energia!',
+      description: uniqueDescription,
       lyrics: 'Letra da música será adicionada manualmente...',
       release_date: this.getNextMonday(),
-      status: 'draft',
+      status: 'published', // Changé de 'draft' à 'published'
       spotify_url: '',
       apple_music_url: '',
       youtube_url: '',
       cover_image: '',
-      hashtags: ['musica', 'trending', 'novidade', 'humor'],
+      hashtags: uniqueHashtags,
       tiktok_publication_date: today.toISOString().split('T')[0]
     };
+  }
+
+  /**
+   * Génère un titre unique basé sur l'ID de la vidéo
+   */
+  generateUniqueTitle(videoId) {
+    // Utiliser les derniers chiffres de l'ID pour créer un titre unique
+    const lastDigits = videoId.slice(-4);
+    const videoNumber = parseInt(lastDigits, 10);
+    
+    // Titres de base pour varier
+    const baseTitles = [
+      'Música da Segunda',
+      'Nova Música da Segunda',
+      'Música da Segunda Especial',
+      'Música da Segunda Premium',
+      'Música da Segunda VIP'
+    ];
+    
+    const baseTitle = baseTitles[videoNumber % baseTitles.length];
+    const today = new Date();
+    
+    return `${baseTitle} - ${today.toLocaleDateString('pt-BR')} (ID: ${lastDigits})`;
+  }
+
+  /**
+   * Génère une description unique basé sur l'ID de la vidéo
+   */
+  generateUniqueDescription(videoId) {
+    const lastDigits = videoId.slice(-4);
+    const videoNumber = parseInt(lastDigits, 10);
+    
+    const descriptions = [
+      'Nova música da segunda com muito humor e energia!',
+      'Música da segunda que vai te fazer rir!',
+      'Nova música da segunda com ritmo contagiante!',
+      'Música da segunda com letra inteligente!',
+      'Nova música da segunda com muito estilo!'
+    ];
+    
+    return descriptions[videoNumber % descriptions.length];
+  }
+
+  /**
+   * Génère des hashtags uniques basé sur l'ID de la vidéo
+   */
+  generateUniqueHashtags(videoId) {
+    const lastDigits = videoId.slice(-4);
+    const videoNumber = parseInt(lastDigits, 10);
+    
+    const baseHashtags = ['musica', 'trending', 'novidade', 'humor'];
+    const additionalHashtags = [
+      ['segunda', 'energia', 'viral'],
+      ['comedia', 'ritmo', 'sucesso'],
+      ['estilo', 'moda', 'tendencia'],
+      ['criatividade', 'originalidade', 'unico'],
+      ['diversao', 'alegria', 'positividade']
+    ];
+    
+    const selectedAdditional = additionalHashtags[videoNumber % additionalHashtags.length];
+    return [...baseHashtags, ...selectedAdditional];
   }
 
   /**
@@ -381,6 +451,111 @@ export async function analyzeTikTokProfile() {
     };
   } catch (error) {
     console.error('❌ Erro ao analisar perfil:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fonction pour corriger et publier toutes les vidéos en statut draft
+ */
+export async function fixAndPublishDraftVideos() {
+  console.log('🔧 Corrigindo e publicando vídeos em status draft...');
+  
+  try {
+    const songs = localStorageService.songs.getAll();
+    const draftVideos = songs.filter(song => song.status === 'draft' && song.tiktok_video_id);
+    
+    console.log(`📱 Encontradas ${draftVideos.length} vídeos em status draft para corrigir`);
+    
+    const updatedSongs = [];
+    
+    for (const song of draftVideos) {
+      try {
+        // Créer un titre unique basé sur l'ID TikTok
+        const lastDigits = song.tiktok_video_id.slice(-4);
+        const videoNumber = parseInt(lastDigits, 10);
+        
+        const baseTitles = [
+          'Música da Segunda',
+          'Nova Música da Segunda',
+          'Música da Segunda Especial',
+          'Música da Segunda Premium',
+          'Música da Segunda VIP'
+        ];
+        
+        const baseTitle = baseTitles[videoNumber % baseTitles.length];
+        const today = new Date();
+        const uniqueTitle = `${baseTitle} - ${today.toLocaleDateString('pt-BR')} (ID: ${lastDigits})`;
+        
+        // Générer une description unique
+        const descriptions = [
+          'Nova música da segunda com muito humor e energia!',
+          'Música da segunda que vai te fazer rir!',
+          'Nova música da segunda com ritmo contagiante!',
+          'Música da segunda com letra inteligente!',
+          'Nova música da segunda com muito estilo!'
+        ];
+        
+        const uniqueDescription = descriptions[videoNumber % descriptions.length];
+        
+        // Mettre à jour la chanson
+        const updatedSong = await localStorageService.songs.update(song.id, {
+          title: uniqueTitle,
+          description: uniqueDescription,
+          status: 'published', // Changer de 'draft' à 'published'
+          updated_at: new Date().toISOString()
+        });
+        
+        updatedSongs.push(updatedSong);
+        console.log(`✅ Vídeo ${song.tiktok_video_id} corrigido e publicado: "${uniqueTitle}"`);
+        
+      } catch (error) {
+        console.error(`❌ Erro ao corrigir vídeo ${song.tiktok_video_id}:`, error);
+      }
+    }
+    
+    console.log(`🎉 Correção concluída! ${updatedSongs.length} vídeos corrigidos e publicados`);
+    return updatedSongs;
+    
+  } catch (error) {
+    console.error('❌ Erro durante correção:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fonction pour nettoyer et réorganiser les vidéos importées
+ */
+export async function cleanupImportedVideos() {
+  console.log('🧹 Limpando e reorganizando vídeos importados...');
+  
+  try {
+    const songs = localStorageService.songs.getAll();
+    const tiktokVideos = songs.filter(song => song.tiktok_video_id);
+    
+    console.log(`📱 Encontradas ${tiktokVideos.length} vídeos TikTok para limpar`);
+    
+    // Supprimer les vidéos avec des titres génériques identiques
+    const genericTitles = tiktokVideos.filter(song => 
+      song.title.includes('Música da Segunda - 26/08/2025')
+    );
+    
+    console.log(`🗑️ Encontradas ${genericTitles.length} vídeos com títulos genéricos para remover`);
+    
+    for (const song of genericTitles) {
+      try {
+        await localStorageService.songs.delete(song.id);
+        console.log(`🗑️ Vídeo removido: ${song.tiktok_video_id}`);
+      } catch (error) {
+        console.error(`❌ Erro ao remover vídeo ${song.tiktok_video_id}:`, error);
+      }
+    }
+    
+    console.log('🧹 Limpeza concluída! Agora você pode reimporter as vídeos com títulos únicos');
+    return { removedCount: genericTitles.length };
+    
+  } catch (error) {
+    console.error('❌ Erro durante limpeza:', error);
     throw error;
   }
 }

@@ -12,7 +12,15 @@ import {
   Calendar,
   TrendingUp
 } from 'lucide-react';
-import { importAllProfileVideos, checkNewVideos, emergencyRestore, checkDataIntegrity, analyzeTikTokProfile } from '@/utils/tiktokImporter';
+import { 
+  importAllProfileVideos, 
+  checkNewVideos, 
+  emergencyRestore, 
+  checkDataIntegrity, 
+  analyzeTikTokProfile,
+  fixAndPublishDraftVideos,
+  cleanupImportedVideos
+} from '@/utils/tiktokImporter';
 
 export default function TikTokImporter() {
   const [isImporting, setIsImporting] = useState(false);
@@ -174,6 +182,54 @@ export default function TikTokImporter() {
           >
             🔍 Analisar Perfil
           </Button>
+          
+          <Button
+            onClick={async () => {
+              try {
+                setIsImporting(true);
+                const result = await fixAndPublishDraftVideos();
+                setStats({ totalSongs: result.length, importedVideos: result.length, newVideosAvailable: 0 });
+                setImportResults({ 
+                  success: true, 
+                  importedCount: result.length, 
+                  songs: result,
+                  message: 'Vídeos corrigidos e publicados com sucesso!'
+                });
+              } catch (error) {
+                setImportResults({ success: false, error: error.message });
+              } finally {
+                setIsImporting(false);
+              }
+            }}
+            variant="outline"
+            className="bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-300 px-6 py-3 text-lg"
+          >
+            🔧 Corrigir e Publicar
+          </Button>
+          
+          <Button
+            onClick={async () => {
+              try {
+                setIsImporting(true);
+                const result = await cleanupImportedVideos();
+                setImportResults({ 
+                  success: true, 
+                  importedCount: result.removedCount, 
+                  songs: [],
+                  message: `Limpeza concluída! ${result.removedCount} vídeos removidos.`
+                });
+                await loadStats(); // Recharger les statistiques
+              } catch (error) {
+                setImportResults({ success: false, error: error.message });
+              } finally {
+                setIsImporting(false);
+              }
+            }}
+            variant="outline"
+            className="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border-yellow-300 px-6 py-3 text-lg"
+          >
+            🧹 Limpar Vídeos
+          </Button>
         </div>
 
         {/* Résultats de l'importation */}
@@ -186,9 +242,9 @@ export default function TikTokImporter() {
             {importResults.success ? (
               <div className="text-center">
                 <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                <h4 className="font-bold text-green-800 mb-2">
-                  Importação Concluída com Sucesso!
-                </h4>
+                                 <h4 className="font-bold text-green-800 mb-2">
+                   {importResults.message || 'Importação Concluída com Sucesso!'}
+                 </h4>
                                  <p className="text-green-700">
                    {importResults.importedCount} nova(s) vídeo(s) importada(s)
                    {importResults.analysis && (
