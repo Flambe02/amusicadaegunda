@@ -213,7 +213,7 @@ export default function AdventCalendar() {
               {/* Vídeo TikTok - Affichage comme sur la page Home */}
               {selectedSong?.tiktok_video_id && (
                 <div className="mb-4">
-                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '300px' }}>
+                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '450px' }}>
                     <iframe
                       src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}`}
                       width="100%"
