@@ -544,9 +544,9 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          {/* Logo + título */}
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-blue-200 shadow-xl flex-shrink-0">
+          {/* Logo + título - Desktop */}
+          <div className="hidden lg:flex lg:items-center lg:justify-center lg:gap-6 lg:mb-6">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-200 shadow-2xl flex-shrink-0">
               <img 
                 src="/images/Musica da segunda.jpg" 
                 alt="Logo Música da Segunda"
@@ -555,12 +555,34 @@ export default function AdminPage() {
             </div>
             
             <div className="text-left">
-              <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-blue-900 mb-1">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-blue-900 mb-2">
                 🎵 Admin Panel - Música da Segunda
               </h1>
-              <p className="text-blue-700 text-sm sm:text-base">
+              <p className="text-blue-700 text-lg md:text-xl">
                 Gerencie suas músicas e conteúdo localmente
               </p>
+            </div>
+          </div>
+          
+          {/* Logo + título - Mobile */}
+          <div className="lg:hidden">
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-blue-200 shadow-xl flex-shrink-0">
+                <img 
+                  src="/images/Musica da segunda.jpg" 
+                  alt="Logo Música da Segunda"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              <div className="text-left">
+                <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-blue-900 mb-1">
+                  🎵 Admin Panel - Música da Segunda
+                </h1>
+                <p className="text-blue-700 text-sm sm:text-base">
+                  Gerencie suas músicas e conteúdo localmente
+                </p>
+              </div>
             </div>
           </div>
         </div>
