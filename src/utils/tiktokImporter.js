@@ -137,11 +137,23 @@ export class TikTokImporter {
       ];
 
       const importedSongs = [];
+      const existingSongs = localStorageService.songs.getAll();
+      console.log(`📱 Verificando ${knownVideos.length} vídeos conhecidos contra ${existingSongs.length} músicas existentes`);
       
       for (const videoUrl of knownVideos) {
         try {
           const videoInfo = await this.extractVideoInfo(videoUrl);
           if (videoInfo) {
+            // Vérifier si la vidéo existe déjà par ID TikTok
+            const existingSong = existingSongs.find(song => 
+              song.tiktok_video_id === videoInfo.tiktok_video_id
+            );
+            
+            if (existingSong) {
+              console.log(`✅ Vidéo ${videoInfo.tiktok_video_id} já existe: "${existingSong.title}"`);
+              continue; // Passer à la suivante
+            }
+            
             const song = await this.importVideo(videoInfo);
             importedSongs.push(song);
           }
@@ -191,4 +203,52 @@ export async function checkNewVideos() {
   
   console.log('📊 Estatísticas de importação:', stats);
   return stats;
+}
+
+/**
+ * Fonction de récupération d'urgence - restaure les données par défaut
+ */
+export async function emergencyRestore() {
+  console.log('🚨 RESTAURAÇÃO DE EMERGÊNCIA - Restaurando dados padrão...');
+  
+  try {
+    // Restaurer les données par défaut
+    localStorageService.initialize();
+    
+    // Recharger les données
+    const songs = localStorageService.songs.getAll();
+    console.log(`✅ Dados restaurados! ${songs.length} músicas encontradas:`, songs.map(s => s.title));
+    
+    return songs;
+  } catch (error) {
+    console.error('❌ Erro durante restauração:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fonction pour vérifier l'intégrité des données
+ */
+export function checkDataIntegrity() {
+  try {
+    const songs = localStorageService.songs.getAll();
+    const tiktokVideos = songs.filter(song => song.tiktok_video_id);
+    
+    console.log('🔍 Verificação de integridade dos dados:');
+    console.log(`- Total de músicas: ${songs.length}`);
+    console.log(`- Vídeos TikTok: ${tiktokVideos.length}`);
+    
+    songs.forEach((song, index) => {
+      console.log(`${index + 1}. ${song.title} (ID: ${song.id}, TikTok: ${song.tiktok_video_id || 'N/A'})`);
+    });
+    
+    return {
+      totalSongs: songs.length,
+      tiktokVideos: tiktokVideos.length,
+      songs: songs
+    };
+  } catch (error) {
+    console.error('❌ Erro ao verificar integridade:', error);
+    return null;
+  }
 }

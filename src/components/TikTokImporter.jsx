@@ -12,7 +12,7 @@ import {
   Calendar,
   TrendingUp
 } from 'lucide-react';
-import { importAllTikTokVideos, checkNewVideos } from '@/utils/tiktokImporter';
+import { importAllTikTokVideos, checkNewVideos, emergencyRestore, checkDataIntegrity } from '@/utils/tiktokImporter';
 
 export default function TikTokImporter() {
   const [isImporting, setIsImporting] = useState(false);
@@ -99,8 +99,8 @@ export default function TikTokImporter() {
           </div>
         )}
 
-        {/* Bouton d'importation */}
-        <div className="text-center">
+        {/* Boutons d'action */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button
             onClick={handleImportAll}
             disabled={isImporting}
@@ -114,9 +114,41 @@ export default function TikTokImporter() {
             ) : (
               <>
                 <Download className="w-5 h-5 mr-2" />
-                Importar Todas as Vídeos
+                Importar Vídeos
               </>
             )}
+          </Button>
+          
+          <Button
+            onClick={async () => {
+              try {
+                const result = await emergencyRestore();
+                setStats({ totalSongs: result.length, importedVideos: result.length, newVideosAvailable: 0 });
+                setImportResults({ success: true, importedCount: result.length, songs: result });
+              } catch (error) {
+                setImportResults({ success: false, error: error.message });
+              }
+            }}
+            variant="outline"
+            className="bg-red-50 hover:bg-red-100 text-red-700 border-red-300 px-6 py-3 text-lg"
+          >
+            🚨 Restaurar Dados
+          </Button>
+          
+          <Button
+            onClick={async () => {
+              const integrity = checkDataIntegrity();
+              console.log('Integridade dos dados:', integrity);
+              setStats({ 
+                totalSongs: integrity.totalSongs, 
+                importedVideos: integrity.tiktokVideos, 
+                newVideosAvailable: 0 
+              });
+            }}
+            variant="outline"
+            className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300 px-6 py-3 text-lg"
+          >
+            🔍 Verificar Dados
           </Button>
         </div>
 
