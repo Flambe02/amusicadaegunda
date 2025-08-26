@@ -82,13 +82,25 @@ export default function AdventCalendar() {
     <>
       <div className="p-5 max-w-md mx-auto">
         <div className="text-center mb-8">
-          <Gift className="w-16 h-16 text-white mx-auto drop-shadow-lg mb-4" />
-          <h1 className="text-4xl font-black text-white drop-shadow-lg mb-2">
-            Calendário do Advento
-          </h1>
-          <p className="text-white/80 font-medium text-lg drop-shadow-md">
-            Dezembro 2025 - Uma surpresa a cada dia!
-          </p>
+          {/* Logo + título */}
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
+              <img 
+                src="/images/Musica da segunda.jpg" 
+                alt="Logo Música da Segunda"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            
+            <div className="text-left">
+              <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
+                Calendário do Advento
+              </h1>
+              <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
+                Dezembro 2025 - Uma surpresa a cada dia!
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="bg-[#f8f5f2] rounded-3xl p-5 shadow-xl">
