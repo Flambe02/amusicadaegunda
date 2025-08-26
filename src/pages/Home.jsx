@@ -63,10 +63,7 @@ export default function Home() {
     setShowVideoModal(true);
   };
 
-  // Obtenir le nom du mois en cours
-  const getCurrentMonthName = () => {
-    return format(new Date(), 'MMMM yyyy', { locale: ptBR });
-  };
+
 
   // Obtenir le mois précédent
   const getPreviousMonth = () => {
@@ -153,14 +150,11 @@ export default function Home() {
       {/* ===== BLOC MÚSICAS RECENTES ===== */}
       <div className="mt-8">
         <div className="bg-white rounded-3xl p-6 shadow-lg">
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
               <Calendar className="w-6 h-6 text-blue-600" />
-              Músicas Recentes
+              Músicas do Mês
             </h2>
-            <span className="text-gray-600 text-sm font-medium">
-              {getCurrentMonthName()}
-            </span>
           </div>
 
           {recentSongs.length > 0 ? (
