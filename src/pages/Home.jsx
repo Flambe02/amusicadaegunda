@@ -140,7 +140,7 @@ export default function Home() {
               <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
                 🎬 Música da Semana
               </h3>
-              <div className="aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-xl">
+              <div className="bg-black rounded-2xl overflow-hidden shadow-xl" style={{ height: 'min(70vh, 600px)' }}>
                 {currentSong.tiktok_video_id ? (
                   <iframe
                     src={`https://www.tiktok.com/embed/${currentSong.tiktok_video_id}`}
@@ -150,9 +150,10 @@ export default function Home() {
                     allowFullScreen
                     title={`TikTok Video - ${currentSong.title}`}
                     className="w-full h-full"
+                    style={{ aspectRatio: '9/16' }}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900" style={{ aspectRatio: '9/16' }}>
                     <div className="text-center text-white">
                       <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                       <p className="text-lg font-medium">Vídeo TikTok</p>
@@ -174,7 +175,7 @@ export default function Home() {
               <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
                 🎬 Música da Semana
               </h3>
-              <div className="aspect-[9/16] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center" style={{ height: 'min(70vh, 600px)', aspectRatio: '9/16' }}>
                 <div className="text-center text-gray-500">
                   <Music className="w-16 h-16 mx-auto mb-4" />
                   <p className="text-lg font-medium">Nenhuma música disponível</p>
