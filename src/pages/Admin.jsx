@@ -31,6 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import TikTokImporter from '@/components/TikTokImporter';
 
 export default function AdminPage() {
   // ===== ÉTATS =====
@@ -367,6 +368,11 @@ export default function AdminPage() {
               className="pl-10"
             />
           </div>
+        </div>
+
+        {/* TikTok Importer */}
+        <div className="mb-6">
+          <TikTokImporter />
         </div>
 
         {/* Songs List */}
