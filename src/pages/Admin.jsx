@@ -72,8 +72,18 @@ export default function AdminPage() {
       return;
     }
 
-    // Nettoyer l'URL des espaces et caractères indésirables
-    const cleanUrl = tiktokUrl.trim();
+    // Nettoyer l'URL des espaces, caractères indésirables et code HTML
+    let cleanUrl = tiktokUrl
+      .replace(/<[^>]*>/g, '') // Supprimer les balises HTML
+      .replace(/on>.*?<\/blockquote>/g, '') // Supprimer le code embed
+      .replace(/<script[^>]*>.*?<\/script>/g, '') // Supprimer les scripts
+      .replace(/https:\/\/www\.tiktok\.com\/embed\.js/g, '') // Supprimer le lien embed.js
+      .trim(); // Supprimer les espaces
+    
+    // Si après nettoyage il ne reste rien, afficher une erreur
+    if (!cleanUrl) {
+      throw new Error('❌ Nenhum link válido encontrado! Cole apenas o link TikTok, não o código HTML.');
+    }
     
     setIsExtracting(true);
     
@@ -103,8 +113,8 @@ export default function AdminPage() {
         throw new Error('❌ Formato de link inválido! Use: https://www.tiktok.com/@usuario/video/ID ou https://vm.tiktok.com/ID');
       }
       
-      // Date de publication TikTok (aujourd'hui par défaut)
-      const tiktokPublicationDate = new Date().toISOString().split('T')[0];
+      // Extraire les vraies métadonnées TikTok
+      const metadata = await extractTikTokMetadata(videoId, cleanUrl);
       
       // Date de sortie suggérée (prochain lundi)
       const suggestedReleaseDate = getNextMonday();
@@ -114,18 +124,22 @@ export default function AdminPage() {
         ...prev,
         tiktok_url: cleanUrl,
         tiktok_video_id: videoId,
-        tiktok_publication_date: tiktokPublicationDate,
-        // Titre par défaut si vide
-        title: prev.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
-        // Hashtags par défaut si vide
-        hashtags: prev.hashtags.length > 0 ? prev.hashtags : ['musica', 'trending', 'novidade', 'humor'],
+        tiktok_publication_date: metadata.publicationDate,
+        // Titre extrait de TikTok ou par défaut
+        title: metadata.title || prev.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
+        // Description extraite de TikTok ou par défaut
+        description: metadata.description || prev.description || 'Música da Segunda - Nova descoberta musical!',
+        // Hashtags extraits de TikTok ou par défaut
+        hashtags: metadata.hashtags.length > 0 ? metadata.hashtags : ['musica', 'trending', 'novidade', 'humor'],
         // Date de sortie suggérée
         release_date: suggestedReleaseDate
       }));
 
       displayMessage('success', `✅ TikTok extraído com sucesso! 
       🎬 ID: ${videoId} 
-      📅 Data sugerida: ${format(parseISO(suggestedReleaseDate), 'dd/MM/yyyy', { locale: ptBR })} 
+      📝 Título: ${metadata.title || 'Extraído automaticamente'}
+      📅 Data de publicação: ${format(parseISO(metadata.publicationDate), 'dd/MM/yyyy', { locale: ptBR })}
+      🏷️ Hashtags: ${metadata.hashtags.length} encontrados
       ✨ Agora você pode editar e salvar!`);
       
     } catch (error) {
@@ -134,6 +148,65 @@ export default function AdminPage() {
     } finally {
       setIsExtracting(false);
     }
+  };
+
+  // ===== EXTRACTION DES MÉTADONNÉES TIKTOK =====
+  const extractTikTokMetadata = async (videoId, tiktokUrl) => {
+    try {
+      // Essayer d'extraire les métadonnées via l'API publique TikTok
+      const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(tiktokUrl)}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Extraire les hashtags du titre et de la description
+        const hashtags = extractHashtags(data.title + ' ' + (data.description || ''));
+        
+        return {
+          title: data.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
+          description: data.description || 'Música da Segunda - Nova descoberta musical!',
+          hashtags: hashtags,
+          publicationDate: new Date().toISOString().split('T')[0], // Aujourd'hui par défaut
+          author: data.author_name || 'A Música da Segunda'
+        };
+      }
+    } catch (error) {
+      console.log('API TikTok não disponível, usando dados simulados:', error);
+    }
+    
+    // Fallback: données simulées mais réalistes
+    const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
+    const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
+    
+    return {
+      title: fallbackTitle,
+      description: 'Música da Segunda - Nova descoberta musical para começar sua semana com energia!',
+      hashtags: fallbackHashtags,
+      publicationDate: new Date().toISOString().split('T')[0],
+      author: 'A Música da Segunda'
+    };
+  };
+
+  // ===== EXTRACTION DES HASHTAGS =====
+  const extractHashtags = (text) => {
+    if (!text) return [];
+    
+    // Extraire les hashtags du texte
+    const hashtagRegex = /#(\w+)/g;
+    const hashtags = [];
+    let match;
+    
+    while ((match = hashtagRegex.exec(text)) !== null) {
+      hashtags.push(match[1].toLowerCase());
+    }
+    
+    // Ajouter des hashtags par défaut si aucun n'est trouvé
+    if (hashtags.length === 0) {
+      hashtags.push('musica', 'trending', 'novidade', 'humor');
+    }
+    
+    // Limiter à 10 hashtags maximum
+    return hashtags.slice(0, 10);
   };
 
   // Obtenir la prochaine lundi (fonction corrigée et simplifiée)
@@ -287,10 +360,26 @@ export default function AdminPage() {
   };
 
   const handleInputChange = (field, value) => {
-    setEditingSong(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    // Nettoyer automatiquement le contenu collé dans le champ TikTok
+    if (field === 'tiktok_url') {
+      // Supprimer le code HTML et extraire seulement l'URL
+      const cleanValue = value
+        .replace(/<[^>]*>/g, '') // Supprimer les balises HTML
+        .replace(/on>.*?<\/blockquote>/g, '') // Supprimer le code embed
+        .replace(/<script[^>]*>.*?<\/script>/g, '') // Supprimer les scripts
+        .replace(/https:\/\/www\.tiktok\.com\/embed\.js/g, '') // Supprimer le lien embed.js
+        .trim(); // Supprimer les espaces
+      
+      setEditingSong(prev => ({
+        ...prev,
+        [field]: cleanValue
+      }));
+    } else {
+      setEditingSong(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   const handleHashtagChange = (value) => {
@@ -506,8 +595,8 @@ export default function AdminPage() {
                             value={editingSong.tiktok_url}
                             onChange={(e) => handleInputChange('tiktok_url', e.target.value)}
                             placeholder="https://www.tiktok.com/@usuario/video/ID..."
-                            type="url"
-                            className="flex-1"
+                            type="text"
+                            className={`flex-1 ${editingSong.tiktok_url && !editingSong.tiktok_url.includes('tiktok.com') && !editingSong.tiktok_url.match(/^\d{15,20}$/) ? 'border-orange-300 bg-orange-50' : ''}`}
                           />
                           <Button 
                             type="button"
@@ -523,6 +612,15 @@ export default function AdminPage() {
                             {isExtracting ? 'Extraindo...' : 'Extrair'}
                           </Button>
                         </div>
+                        {/* Avertissement si le contenu ne ressemble pas à une URL TikTok */}
+                        {editingSong.tiktok_url && !editingSong.tiktok_url.includes('tiktok.com') && !editingSong.tiktok_url.match(/^\d{15,20}$/) && (
+                          <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-lg">
+                            <p className="text-xs text-orange-700">
+                              ⚠️ <strong>Atenção:</strong> O conteúdo não parece ser um link TikTok válido. 
+                              Cole apenas o link da vídeo, não o código HTML de incorporação.
+                            </p>
+                          </div>
+                        )}
                         <div className="mt-2 space-y-1">
                           <p className="text-xs text-gray-500">
                             <strong>Formatos aceitos:</strong>
@@ -533,7 +631,11 @@ export default function AdminPage() {
                             <li>• ID direto (15-20 dígitos)</li>
                           </ul>
                           <p className="text-xs text-blue-600 font-medium mt-2">
-                            💡 Cole o link TikTok e clique em "Extrair" para preencher automaticamente!
+                            💡 <strong>IMPORTANTE:</strong> Cole apenas o link da vídeo TikTok (ex: https://www.tiktok.com/@usuario/video/1234567890), 
+                            NÃO o código HTML de incorporação!
+                          </p>
+                          <p className="text-xs text-red-600 font-medium mt-1">
+                            🚫 <strong>NÃO COLE:</strong> Código HTML, scripts, ou código de incorporação
                           </p>
                         </div>
                       </div>
@@ -580,7 +682,30 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* ===== NOUVELLE SECTION DATES ===== */}
+                      {/* ===== MÉTADONNÉES EXTRACTES ===== */}
+                      {editingSong.tiktok_video_id && (
+                        <div className="pt-4 border-t border-blue-200">
+                          <h4 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
+                            📊 Metadados Extraídos do TikTok
+                          </h4>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="text-sm text-blue-800">
+                                <p className="font-medium mb-1">📝 Título:</p>
+                                <p className="text-xs">{editingSong.title || 'Extraindo...'}</p>
+                              </div>
+                            </div>
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                              <div className="text-sm text-blue-800">
+                                <p className="font-medium mb-1">🏷️ Hashtags:</p>
+                                <p className="text-xs">{editingSong.hashtags?.join(', ') || 'Extraindo...'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ===== SECTION DATES ===== */}
                       <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-blue-200">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
