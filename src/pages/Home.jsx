@@ -123,6 +123,17 @@ export default function Home() {
   return (
     <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
       <div className="text-center mb-8">
+        {/* Logo sur desktop uniquement */}
+        <div className="hidden lg:flex lg:justify-center lg:mb-6">
+          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl">
+            <img 
+              src="/images/Musica da segunda.jpg" 
+              alt="Logo Música da Segunda"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+        
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
           Música da Segunda
         </h1>
