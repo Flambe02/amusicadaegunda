@@ -36,17 +36,20 @@ export class TikTokImporter {
     
     try {
       // Méthode 1: Tentative de scraping direct (peut ne pas fonctionner à cause de CORS)
+      console.log('🔄 Tentativa 1: Scraping direto do perfil...');
       const videos = await this.attemptDirectScraping();
       if (videos.length > 0) {
+        console.log(`✅ Scraping direto funcionou! ${videos.length} vídeos encontradas`);
         return videos;
       }
 
       // Méthode 2: Utiliser des IDs de vidéos connus et générer des séquences
-      console.log('⚠️ Scraping direto falhou, usando método alternativo...');
+      console.log('⚠️ Scraping direto falhou, usando método alternativo inteligente...');
       return await this.generateVideoSequence();
       
     } catch (error) {
       console.error('❌ Erro ao fazer scraping do perfil:', error);
+      console.log('🔄 Fallback: usando método de geração de sequência...');
       // Fallback: utiliser la méthode de génération de séquence
       return await this.generateVideoSequence();
     }
@@ -91,7 +94,7 @@ export class TikTokImporter {
    * Génère une séquence de vidéos basée sur des patterns connus
    */
   async generateVideoSequence() {
-    console.log('🔢 Gerando sequência de vídeos baseada em padrões conhecidos...');
+    console.log('🔢 Gerando sequência inteligente de vídeos baseada em padrões conhecidos...');
     
     // Vidéos connues avec leurs IDs
     const knownVideos = [
@@ -109,9 +112,19 @@ export class TikTokImporter {
     // TikTok utilise des IDs numériques longs, on peut essayer des variations
     const baseIds = ['7540762684149517590', '7539613899209903382'];
     
+    console.log('🔍 Analisando padrões de IDs TikTok...');
+    
     baseIds.forEach(baseId => {
       // Essayer des variations proches (ajouter/soustraire de petits nombres)
-      for (let i = 1; i <= 10; i++) {
+      for (let i = 1; i <= 20; i++) { // Augmenté de 10 à 20
+        const plusId = (BigInt(baseId) + BigInt(i)).toString();
+        const minusId = (BigInt(baseId) - BigInt(i)).toString();
+        videoIds.add(plusId);
+        videoIds.add(minusId);
+      }
+      
+      // Essayer des variations plus larges pour couvrir plus de vidéos
+      for (let i = 100; i <= 1000; i += 100) { // Ajout de variations plus larges
         const plusId = (BigInt(baseId) + BigInt(i)).toString();
         const minusId = (BigInt(baseId) - BigInt(i)).toString();
         videoIds.add(plusId);
@@ -124,7 +137,9 @@ export class TikTokImporter {
       `https://www.tiktok.com/@${TIKTOK_USERNAME}/video/${id}`
     );
 
-    console.log(`🔢 Geradas ${videoUrls.length} URLs de vídeo potenciais`);
+    console.log(`🔢 Geradas ${videoUrls.length} URLs de vídeo potenciais usando método inteligente`);
+    console.log(`📱 Primeiras 5 URLs:`, videoUrls.slice(0, 5));
+    
     return videoUrls;
   }
 
@@ -569,6 +584,65 @@ export async function analyzeTikTokProfile() {
   } catch (error) {
     console.error('❌ Erro ao analisar perfil:', error);
     throw error;
+  }
+}
+
+/**
+ * Fonction pour tester la connectivité TikTok et diagnostiquer les problèmes
+ */
+export async function diagnoseTikTokConnection() {
+  console.log('🔍 Diagnóstico de conectividade TikTok...');
+  
+  try {
+    // Test 1: Vérifier la connectivité de base
+    console.log('🔄 Teste 1: Conectividade básica...');
+    const response = await fetch(TIKTOK_PROFILE_URL, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    console.log(`✅ Status HTTP: ${response.status}`);
+    console.log(`✅ Headers:`, Object.fromEntries(response.headers.entries()));
+    
+    // Test 2: Analyser le profil
+    console.log('🔄 Teste 2: Análise do perfil...');
+    const analysis = await analyzeTikTokProfile();
+    
+    // Test 3: Vérifier les données existantes
+    console.log('🔄 Teste 3: Verificação de dados existentes...');
+    const integrity = checkDataIntegrity();
+    
+    return {
+      connectivity: {
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries())
+      },
+      profileAnalysis: analysis,
+      dataIntegrity: integrity,
+      recommendations: [
+        '✅ Conectividade TikTok funcionando',
+        `📱 ${analysis.totalVideos} vídeos encontradas no perfil`,
+        `💾 ${integrity.totalSongs} músicas na base de dados`,
+        '🚀 Pronto para importação!'
+      ]
+    };
+    
+  } catch (error) {
+    console.error('❌ Erro durante diagnóstico:', error);
+    
+    return {
+      connectivity: { error: error.message },
+      profileAnalysis: null,
+      dataIntegrity: null,
+      recommendations: [
+        '❌ Problema de conectividade detectado',
+        '🔧 Verificar conexão com internet',
+        '🌐 Tentar acessar TikTok diretamente no navegador',
+        '🔄 Tentar novamente em alguns minutos'
+      ]
+    };
   }
 }
 

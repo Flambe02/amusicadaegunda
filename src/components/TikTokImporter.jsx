@@ -20,7 +20,8 @@ import {
   analyzeTikTokProfile,
   fixAndPublishDraftVideos,
   cleanupImportedVideos,
-  updateAllVideosWithRealMetadata
+  updateAllVideosWithRealMetadata,
+  diagnoseTikTokConnection
 } from '@/utils/tiktokImporter';
 
 export default function TikTokImporter() {
@@ -254,6 +255,31 @@ export default function TikTokImporter() {
             className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-300 px-6 py-3 text-lg"
           >
             🎯 Recuperar Metadados Reais
+          </Button>
+          
+          <Button
+            onClick={async () => {
+              try {
+                setIsImporting(true);
+                const diagnosis = await diagnoseTikTokConnection();
+                console.log('Diagnóstico completo:', diagnosis);
+                setImportResults({ 
+                  success: true, 
+                  importedCount: 0, 
+                  songs: [],
+                  message: `Diagnóstico concluído! ${diagnosis.recommendations.join(' | ')}`,
+                  diagnosis: diagnosis
+                });
+              } catch (error) {
+                setImportResults({ success: false, error: error.message });
+              } finally {
+                setIsImporting(false);
+              }
+            }}
+            variant="outline"
+            className="bg-teal-50 hover:bg-teal-100 text-teal-700 border-teal-300 px-6 py-3 text-lg"
+          >
+            🔍 Diagnóstico TikTok
           </Button>
         </div>
 
