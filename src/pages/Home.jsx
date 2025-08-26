@@ -131,24 +131,63 @@ export default function Home() {
         </p>
       </div>
       
-      {currentSong ? (
-        <div className="mb-6">
-          <SongPlayer song={currentSong} />
+      {/* ===== LAYOUT DESKTOP: VIDÉO TIKTOK + MÚSICAS DO MÊS ===== */}
+      <div className="hidden lg:grid lg:grid-cols-2 lg:gap-8 lg:mt-8">
+        {/* ===== COLONNE GAUCHE: VIDÉO TIKTOK ===== */}
+        <div className="space-y-6">
+          {currentSong ? (
+            <div className="bg-white rounded-3xl p-6 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
+                🎬 Música da Semana
+              </h3>
+              <div className="aspect-[9/16] bg-black rounded-2xl overflow-hidden shadow-xl">
+                {currentSong.tiktok_video_id ? (
+                  <iframe
+                    src={`https://www.tiktok.com/embed/${currentSong.tiktok_video_id}`}
+                    width="100%"
+                    height="100%"
+                    frameBorder="0"
+                    allowFullScreen
+                    title={`TikTok Video - ${currentSong.title}`}
+                    className="w-full h-full"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                    <div className="text-center text-white">
+                      <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                      <p className="text-lg font-medium">Vídeo TikTok</p>
+                      <p className="text-sm text-gray-400">Música da semana</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 text-center">
+                <h4 className="font-bold text-gray-800 text-lg mb-2">{currentSong.title}</h4>
+                <p className="text-gray-600">{currentSong.artist}</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  {format(parseISO(currentSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl p-6 shadow-lg">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
+                🎬 Música da Semana
+              </h3>
+              <div className="aspect-[9/16] bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <Music className="w-16 h-16 mx-auto mb-4" />
+                  <p className="text-lg font-medium">Nenhuma música disponível</p>
+                  <p className="text-sm">Volte na segunda-feira!</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <CountdownTimer />
         </div>
-      ) : (
-        <div className="bg-white/20 rounded-3xl p-8 text-center">
-          <Music className="w-16 h-16 text-white/60 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">Nenhuma música disponível</h3>
-          <p className="text-white/80">
-            A música da semana será publicada em breve. Volte na segunda-feira!
-          </p>
-        </div>
-      )}
-      
-      <CountdownTimer />
 
-      {/* ===== BLOC MÚSICAS RECENTES ===== */}
-      <div className="mt-8">
+        {/* ===== COLONNE DROITE: MÚSICAS DO MÊS ===== */}
         <div className="bg-white rounded-3xl p-6 shadow-lg">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
@@ -169,7 +208,7 @@ export default function Home() {
                       <Play className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-800 text-lg truncate">
+                      <h3 className="text-xl font-bold text-gray-800 truncate">
                         {song.title}
                       </h3>
                       <p className="text-gray-600 text-base font-medium mt-1">
@@ -185,7 +224,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Music className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">
                 Nenhuma música publicada este mês ainda
               </p>
@@ -201,6 +240,83 @@ export default function Home() {
               <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Ver músicas de {format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'MMMM yyyy', { locale: ptBR })}
             </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== LAYOUT MOBILE: DISPOSITION VERTICALE TRADITIONNELLE ===== */}
+      <div className="lg:hidden">
+        {currentSong ? (
+          <div className="mb-6">
+            <SongPlayer song={currentSong} />
+          </div>
+        ) : (
+          <div className="bg-white/20 rounded-3xl p-8 text-center">
+            <Music className="w-16 h-16 text-white/60 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-white mb-2">Nenhuma música disponível</h3>
+            <p className="text-white/80">
+              A música da semana será publicada em breve. Volte na segunda-feira!
+            </p>
+          </div>
+        )}
+        
+        <CountdownTimer />
+
+        {/* ===== BLOC MÚSICAS DO MÊS (MOBILE) ===== */}
+        <div className="mt-8">
+          <div className="bg-white rounded-3xl p-6 shadow-lg">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                <Calendar className="w-6 h-6 text-blue-600" />
+                Músicas do Mês
+              </h2>
+            </div>
+
+            {recentSongs.length > 0 ? (
+              <div className="space-y-4">
+                {recentSongs.map((song) => (
+                  <div key={song.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100">
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+                        onClick={() => handlePlayVideo(song)}
+                      >
+                        <Play className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-gray-800 text-lg truncate">
+                          {song.title}
+                        </h3>
+                        <p className="text-gray-600 text-base font-medium mt-1">
+                          {song.artist}
+                        </p>
+                        <p className="text-gray-500 text-sm font-medium mt-1">
+                          {format(parseISO(song.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  Nenhuma música publicada este mês ainda
+                </p>
+              </div>
+            )}
+
+            {/* Lien discret vers le mois précédent */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <a
+                href={`/Calendar?month=${getPreviousMonth()}`}
+                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors group"
+              >
+                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                Ver músicas de {format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'MMMM yyyy', { locale: ptBR })}
+              </a>
+            </div>
           </div>
         </div>
       </div>
