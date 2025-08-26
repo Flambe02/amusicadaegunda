@@ -174,7 +174,7 @@ export default function AdminPage() {
           title: data.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
           description: data.description || 'Música da Segunda - Nova descoberta musical!',
           hashtags: hashtags,
-          publicationDate: new Date().toISOString().split('T')[0], // Aujourd'hui par défaut
+          publicationDate: await extractTikTokPublicationDate(tiktokUrl, videoId),
           author: data.author_name || 'A Música da Segunda'
         };
         
@@ -221,6 +221,99 @@ export default function AdminPage() {
     
     // Limiter à 10 hashtags maximum
     return hashtags.slice(0, 10);
+  };
+
+  // ===== EXTRACTION DE LA DATE DE PUBLICATION TIKTOK =====
+  const extractTikTokPublicationDate = async (tiktokUrl, videoId) => {
+    try {
+      console.log('📅 Tentando extrair data de publicação para vídeo:', videoId);
+      
+      // Méthode 1: Essayer de récupérer la page HTML TikTok
+      try {
+        const response = await fetch(tiktokUrl, {
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        
+        if (response.ok) {
+          const html = await response.text();
+          console.log('📄 HTML TikTok recuperado, tamanho:', html.length);
+          
+          // Chercher des patterns de date dans le HTML
+          const datePatterns = [
+            /"createTime":\s*(\d+)/, // Timestamp Unix
+            /"publishTime":\s*(\d+)/, // Temps de publication
+            /"uploadTime":\s*(\d+)/,  // Temps de téléchargement
+            /data-publish-time="([^"]+)"/, // Attribut data
+            /datetime="([^"]+)"/, // Attribut datetime
+            /(\d{4}-\d{2}-\d{2})/, // Format YYYY-MM-DD
+            /(\d{2}\/\d{2}\/\d{4})/ // Format DD/MM/YYYY
+          ];
+          
+          for (const pattern of datePatterns) {
+            const match = html.match(pattern);
+            if (match) {
+              let publicationDate;
+              
+              if (pattern.source.includes('Time') && match[1]) {
+                // Timestamp Unix (en secondes ou millisecondes)
+                const timestamp = parseInt(match[1]);
+                const date = new Date(timestamp > 1000000000000 ? timestamp : timestamp * 1000);
+                publicationDate = date.toISOString().split('T')[0];
+                console.log('✅ Data extraída via timestamp:', publicationDate);
+                return publicationDate;
+              } else if (match[1]) {
+                // Format de date direct
+                const dateStr = match[1];
+                if (dateStr.includes('-')) {
+                  publicationDate = dateStr;
+                } else if (dateStr.includes('/')) {
+                  const [day, month, year] = dateStr.split('/');
+                  publicationDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                }
+                console.log('✅ Data extraída via pattern:', publicationDate);
+                return publicationDate;
+              }
+            }
+          }
+          
+          console.log('⚠️ Nenhum padrão de data encontrado no HTML');
+        }
+      } catch (htmlError) {
+        console.log('⚠️ Falha ao recuperar HTML TikTok:', htmlError);
+      }
+      
+      // Méthode 2: Essayer l'API alternative (si disponible)
+      try {
+        const alternativeResponse = await fetch(`https://www.tiktok.com/api/item/detail/?itemId=${videoId}`);
+        if (alternativeResponse.ok) {
+          const data = await alternativeResponse.json();
+          console.log('📊 Réponse API alternativa:', data);
+          
+          if (data.itemInfo && data.itemInfo.itemStruct) {
+            const createTime = data.itemInfo.itemStruct.createTime;
+            if (createTime) {
+              const date = new Date(createTime * 1000);
+              const publicationDate = date.toISOString().split('T')[0];
+              console.log('✅ Data extraída via API alternativa:', publicationDate);
+              return publicationDate;
+            }
+          }
+        }
+      } catch (apiError) {
+        console.log('⚠️ API alternativa falhou:', apiError);
+      }
+      
+      // Fallback: utiliser la date d'aujourd'hui si aucune méthode ne fonctionne
+      console.log('🔄 Usando data atual como fallback');
+      return new Date().toISOString().split('T')[0];
+      
+    } catch (error) {
+      console.error('❌ Erro ao extrair data de publicação:', error);
+      return new Date().toISOString().split('T')[0];
+    }
   };
 
   // Obtenir la prochaine lundi (fonction corrigée et simplifiée)
@@ -723,19 +816,33 @@ export default function AdminPage() {
                       <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-blue-200">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            📅 Data de Publicação TikTok
+                            📅 Data de Publicação TikTok {editingSong.tiktok_publication_date && editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] && <span className="text-green-600">✅</span>}
                           </label>
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                            <div className="text-sm text-blue-800 font-medium">
+                          <div className={`border rounded-lg p-3 ${editingSong.tiktok_publication_date && editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
+                            <div className="text-sm font-medium">
                               {editingSong.tiktok_publication_date ? (
                                 <>
-                                  <span className="text-green-600">✅ Publicado em: </span>
-                                  {format(parseISO(editingSong.tiktok_publication_date), 'EEEE, d \'de\' MMMM \'de\' yyyy', { locale: ptBR })}
+                                  {editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] ? (
+                                    <>
+                                      <span className="text-green-600">✅ Data extraída com sucesso: </span>
+                                      <span className="text-green-800">{format(parseISO(editingSong.tiktok_publication_date), 'EEEE, d \'de\' MMMM \'de\' yyyy', { locale: ptBR })}</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="text-blue-600">📱 Data padrão (hoje): </span>
+                                      <span className="text-blue-800">{format(parseISO(editingSong.tiktok_publication_date), 'EEEE, d \'de\' MMMM \'de\' yyyy', { locale: ptBR })}</span>
+                                    </>
+                                  )}
                                 </>
                               ) : (
                                 <span className="text-blue-600">📱 Data será extraída automaticamente</span>
                               )}
                             </div>
+                            {editingSong.tiktok_publication_date && editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] && (
+                              <p className="text-xs text-green-600 mt-2">
+                                🎯 Data real de publicação TikTok detectada!
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div>
