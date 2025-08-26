@@ -150,44 +150,46 @@ export default function AdventCalendar() {
         <DialogContent className="p-0 border-0 bg-transparent max-w-sm w-[90vw] max-h-[90vh] overflow-y-auto">
           <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-3xl shadow-2xl overflow-hidden">
             {/* Cabeçalho com número do dia */}
-            <div className="bg-gradient-to-r from-red-500 to-rose-600 p-6 text-center relative">
-              <div className="absolute top-4 left-4 bg-white/20 rounded-full w-12 h-12 flex items-center justify-center">
-                <span className="text-white font-black text-lg">{selectedSong?.day_of_december}</span>
+            <div className="bg-gradient-to-r from-red-500 to-rose-600 p-4 text-center relative">
+              <div className="absolute top-2 left-4 bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">
+                <span className="text-white font-black text-base">{selectedSong?.day_of_december}</span>
               </div>
-              <div className="mt-2">
-                <h2 className="text-2xl font-black text-white mb-1">
-                  {selectedSong?.release_date ? 
-                    format(parseISO(selectedSong.release_date), 'MMMM', { locale: ptBR }) : 
-                    'Dezembro'
-                  }
-                </h2>
-                <p className="text-white/90 text-lg font-semibold">
-                  {selectedSong?.release_date ? 
-                    format(parseISO(selectedSong.release_date), 'd', { locale: ptBR }) : 
-                    selectedSong?.day_of_december
-                  }
-                </p>
+              <div className="mt-1">
+                <div className="flex items-center justify-center gap-2">
+                  <h2 className="text-xl font-black text-white">
+                    {selectedSong?.release_date ? 
+                      format(parseISO(selectedSong.release_date), 'MMMM', { locale: ptBR }) : 
+                      'Dezembro'
+                    }
+                  </h2>
+                  <span className="text-white/90 text-lg font-semibold">
+                    {selectedSong?.release_date ? 
+                      format(parseISO(selectedSong.release_date), 'd', { locale: ptBR }) : 
+                      selectedSong?.day_of_december
+                    }
+                  </span>
+                </div>
               </div>
-              <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
-                <div className="bg-white rounded-full p-3 shadow-lg">
-                  <Music className="w-8 h-8 text-red-500" />
+              <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
+                <div className="bg-white rounded-full p-2 shadow-lg">
+                  <Music className="w-6 h-6 text-red-500" />
                 </div>
               </div>
             </div>
 
             {/* Conteúdo principal */}
-            <div className="p-6 pt-12">
+            <div className="p-4 pt-8">
               {/* Nome da Vídeo */}
-              <div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span className="font-bold text-gray-600 text-sm uppercase tracking-wide">Nome da Vídeo</span>
+              <div className="mb-4 bg-white/80 backdrop-blur-sm rounded-2xl p-3 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <span className="font-bold text-gray-600 text-xs uppercase tracking-wide">Nome da Vídeo</span>
                 </div>
-                <p className="text-gray-800 leading-relaxed font-semibold text-lg">
+                <p className="text-gray-800 leading-relaxed font-semibold text-base">
                   {selectedSong?.title || 'Vídeo Musical'}
                 </p>
                 {selectedSong?.artist && (
-                  <p className="text-gray-600 text-sm mt-1">
+                  <p className="text-gray-600 text-xs mt-1">
                     {selectedSong.artist}
                   </p>
                 )}
