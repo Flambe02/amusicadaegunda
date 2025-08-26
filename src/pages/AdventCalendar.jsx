@@ -153,8 +153,18 @@ export default function AdventCalendar() {
                 <span className="text-white font-black text-lg">{selectedSong?.day_of_december}</span>
               </div>
               <div className="mt-2">
-                <h2 className="text-2xl font-black text-white mb-1">{selectedSong?.title}</h2>
-                <p className="text-white/90 text-lg font-semibold">{selectedSong?.artist}</p>
+                <h2 className="text-2xl font-black text-white mb-1">
+                  {selectedSong?.release_date ? 
+                    format(parseISO(selectedSong.release_date), 'MMMM', { locale: ptBR }) : 
+                    'Dezembro'
+                  }
+                </h2>
+                <p className="text-white/90 text-lg font-semibold">
+                  {selectedSong?.release_date ? 
+                    format(parseISO(selectedSong.release_date), 'd', { locale: ptBR }) : 
+                    selectedSong?.day_of_december
+                  }
+                </p>
               </div>
               <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2">
                 <div className="bg-white rounded-full p-3 shadow-lg">
@@ -165,16 +175,21 @@ export default function AdventCalendar() {
 
             {/* Conteúdo principal */}
             <div className="p-6 pt-12">
-              {/* Descrição/Tema */}
-              {selectedSong?.description && (
-                <div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span className="font-bold text-gray-600 text-sm uppercase tracking-wide">Tema do dia</span>
-                  </div>
-                  <p className="text-gray-800 leading-relaxed">{selectedSong.description}</p>
+              {/* Nome da Vídeo */}
+              <div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span className="font-bold text-gray-600 text-sm uppercase tracking-wide">Nome da Vídeo</span>
                 </div>
-              )}
+                <p className="text-gray-800 leading-relaxed font-semibold text-lg">
+                  {selectedSong?.title || 'Vídeo Musical'}
+                </p>
+                {selectedSong?.artist && (
+                  <p className="text-gray-600 text-sm mt-1">
+                    {selectedSong.artist}
+                  </p>
+                )}
+              </div>
 
               {/* Player do Spotify */}
               {selectedSong?.spotify_url && (
