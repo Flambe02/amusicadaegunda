@@ -58,16 +58,24 @@ export default function AdventCalendar() {
     fetchSongs();
   }, []);
 
-  // Chanson spéciale Croissant pour o dia 1
-  const croissantSong = {
-    id: 'croissant-special',
-    title: 'Croissant',
-    artist: 'Música Especial',
-    description: 'Uma surpresa musical especial para começar o mês de dezembro! 🥐🎵',
-    day_of_december: 1,
-    spotify_url: null,
-    youtube_url: null,
-    tiktok_video_id: '7321234567890123456' // ID TikTok fictif - à remplacer par le vrai ID
+  // Fonction pour choisir une chanson aléatoire pour le jour 1
+  const getRandomSongForDay1 = () => {
+    if (songs.length === 0) return null;
+    
+    // Filtrer seulement les chansons avec un ID TikTok
+    const songsWithTikTok = songs.filter(song => song.tiktok_video_id);
+    
+    if (songsWithTikTok.length === 0) return null;
+    
+    // Choisir une chanson aléatoire
+    const randomIndex = Math.floor(Math.random() * songsWithTikTok.length);
+    const randomSong = songsWithTikTok[randomIndex];
+    
+    // Retourner la chanson avec le jour 1
+    return {
+      ...randomSong,
+      day_of_december: 1
+    };
   };
 
   const songsByDay = songs.reduce((acc, song) => {
@@ -75,8 +83,11 @@ export default function AdventCalendar() {
     return acc;
   }, {});
 
-  // Adicionar a chanson Croissant ao dia 1
-  songsByDay[1] = croissantSong;
+  // Ajouter une chanson aléatoire pour le jour 1 (toujours disponible)
+  const day1Song = getRandomSongForDay1();
+  if (day1Song) {
+    songsByDay[1] = day1Song;
+  }
 
   const getSpotifyEmbedUrl = (url) => {
     if (!url) return '';
@@ -180,8 +191,8 @@ export default function AdventCalendar() {
                 </div>
               )}
 
-              {/* Vídeo TikTok - Croissant para o dia 1 */}
-              {selectedSong?.day_of_december === 1 && selectedSong?.tiktok_video_id && (
+              {/* Vídeo TikTok - Affichage comme sur la page Home */}
+              {selectedSong?.tiktok_video_id && (
                 <div className="mb-6">
                   <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '400px' }}>
                     <iframe
@@ -190,13 +201,13 @@ export default function AdventCalendar() {
                       height="100%"
                       frameBorder="0"
                       allowFullScreen
-                      title="TikTok Video - Croissant"
+                      title={`TikTok Video - ${selectedSong.title}`}
                       className="w-full h-full"
                       style={{ aspectRatio: '9/16' }}
                     />
                   </div>
                   <div className="mt-3 text-center">
-                    <p className="text-sm text-gray-600 font-medium">🎬 Vídeo TikTok - Croissant</p>
+                    <p className="text-sm text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
                   </div>
                 </div>
               )}
