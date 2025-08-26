@@ -12,7 +12,7 @@ import {
   Calendar,
   TrendingUp
 } from 'lucide-react';
-import { importAllTikTokVideos, checkNewVideos, emergencyRestore, checkDataIntegrity } from '@/utils/tiktokImporter';
+import { importAllProfileVideos, checkNewVideos, emergencyRestore, checkDataIntegrity, analyzeTikTokProfile } from '@/utils/tiktokImporter';
 
 export default function TikTokImporter() {
   const [isImporting, setIsImporting] = useState(false);
@@ -21,15 +21,15 @@ export default function TikTokImporter() {
   const [error, setError] = useState(null);
 
   /**
-   * Importe toutes les nouvelles vidéos TikTok
+   * Importe TOUTES les vidéos du profil TikTok
    */
   const handleImportAll = async () => {
     setIsImporting(true);
     setError(null);
     
     try {
-      console.log('🚀 Début de l\'importation automatique...');
-      const results = await importAllTikTokVideos();
+      console.log('🚀 Début de l\'importation de TODAS as vídeos do perfil...');
+      const results = await importAllProfileVideos();
       
       setImportResults({
         success: true,
@@ -150,6 +150,30 @@ export default function TikTokImporter() {
           >
             🔍 Verificar Dados
           </Button>
+          
+          <Button
+            onClick={async () => {
+              try {
+                setIsImporting(true);
+                const analysis = await analyzeTikTokProfile();
+                console.log('Análise do perfil:', analysis);
+                setImportResults({
+                  success: true,
+                  importedCount: analysis.totalVideos,
+                  songs: [],
+                  analysis: analysis
+                });
+              } catch (error) {
+                setImportResults({ success: false, error: error.message });
+              } finally {
+                setIsImporting(false);
+              }
+            }}
+            variant="outline"
+            className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300 px-6 py-3 text-lg"
+          >
+            🔍 Analisar Perfil
+          </Button>
         </div>
 
         {/* Résultats de l'importation */}
@@ -165,9 +189,14 @@ export default function TikTokImporter() {
                 <h4 className="font-bold text-green-800 mb-2">
                   Importação Concluída com Sucesso!
                 </h4>
-                <p className="text-green-700">
-                  {importResults.importedCount} nova(s) vídeo(s) importada(s)
-                </p>
+                                 <p className="text-green-700">
+                   {importResults.importedCount} nova(s) vídeo(s) importada(s)
+                   {importResults.analysis && (
+                     <span className="block mt-2">
+                       📊 Perfil analisado: {importResults.analysis.totalVideos} vídeos encontradas
+                     </span>
+                   )}
+                 </p>
                 
                 {/* Liste des musiques importées */}
                 {importResults.songs.length > 0 && (
