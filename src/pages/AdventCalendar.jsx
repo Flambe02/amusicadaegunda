@@ -41,7 +41,17 @@ const AdventDoor = ({ day, song, onOpen }) => {
     <div onClick={handleClick} className={finalClasses}>
       <span>{day}</span>
       {isLocked && <Lock className="absolute w-8 h-8 opacity-70" />}
-      {!isLocked && song && <Sparkles className="absolute top-2 right-2 w-5 h-5 text-yellow-300 animate-ping" />}
+      {!isLocked && song && (
+        <>
+          <Sparkles className="absolute top-2 right-2 w-5 h-5 text-yellow-300 animate-ping" />
+          {/* Nom de la vidéo découverte */}
+          <div className="absolute bottom-1 left-1 right-1 text-center">
+            <p className="text-xs font-bold text-white drop-shadow-lg truncate">
+              {song.title}
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -60,8 +70,17 @@ export default function AdventCalendar() {
     fetchSongs();
   }, []);
 
-  // Fonction pour choisir une chanson aléatoire pour le jour 1
-  const getRandomSongForDay1 = () => {
+  // Fonction pour obtenir ou créer une chanson pour un jour spécifique
+  const getSongForDay = (day) => {
+    const storageKey = `advent_day_${day}`;
+    const storedSong = localStorage.getItem(storageKey);
+    
+    if (storedSong) {
+      // Retourner la chanson mémorisée
+      return JSON.parse(storedSong);
+    }
+    
+    // Si pas de chanson mémorisée, en choisir une aléatoirement
     if (songs.length === 0) return null;
     
     // Filtrer seulement les chansons avec un ID TikTok
@@ -73,11 +92,16 @@ export default function AdventCalendar() {
     const randomIndex = Math.floor(Math.random() * songsWithTikTok.length);
     const randomSong = songsWithTikTok[randomIndex];
     
-    // Retourner la chanson avec le jour 1
-    return {
+    // Créer la chanson pour ce jour
+    const daySong = {
       ...randomSong,
-      day_of_december: 1
+      day_of_december: day
     };
+    
+    // Mémoriser dans le localStorage
+    localStorage.setItem(storageKey, JSON.stringify(daySong));
+    
+    return daySong;
   };
 
   const songsByDay = songs.reduce((acc, song) => {
@@ -85,8 +109,8 @@ export default function AdventCalendar() {
     return acc;
   }, {});
 
-  // Ajouter une chanson aléatoire pour le jour 1 (toujours disponible)
-  const day1Song = getRandomSongForDay1();
+  // Ajouter une chanson pour le jour 1 (toujours disponible)
+  const day1Song = getSongForDay(1);
   if (day1Song) {
     songsByDay[1] = day1Song;
   }
@@ -213,16 +237,19 @@ export default function AdventCalendar() {
               {/* Vídeo TikTok - Affichage comme sur la page Home */}
               {selectedSong?.tiktok_video_id && (
                 <div className="mb-4">
-                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '450px' }}>
+                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '500px' }}>
                     <iframe
                       src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}`}
-                      width="100%"
-                      height="100%"
+                      width="90%"
+                      height="90%"
                       frameBorder="0"
                       allowFullScreen
                       title={`TikTok Video - ${selectedSong.title}`}
-                      className="w-full h-full"
-                      style={{ aspectRatio: '9/16' }}
+                      className="mx-auto block"
+                      style={{ 
+                        aspectRatio: '9/16',
+                        marginTop: '5%'
+                      }}
                     />
                   </div>
                   <div className="mt-2 text-center">
