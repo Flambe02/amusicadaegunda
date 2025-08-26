@@ -67,45 +67,70 @@ export default function AdminPage() {
 
   // ===== EXTRACTION TIKTOK =====
   const extractTikTokInfo = async (tiktokUrl) => {
-    if (!tiktokUrl) {
-      displayMessage('error', 'Por favor, insira o link do TikTok primeiro');
+    if (!tiktokUrl || tiktokUrl.trim() === '') {
+      displayMessage('error', '❌ Por favor, insira o link do TikTok primeiro');
       return;
     }
 
+    // Nettoyer l'URL des espaces et caractères indésirables
+    const cleanUrl = tiktokUrl.trim();
+    
     setIsExtracting(true);
     
     try {
-      // Extraire l'ID de la vidéo du lien TikTok
-      const videoIdMatch = tiktokUrl.match(/video\/(\d+)/);
-      if (!videoIdMatch) {
-        throw new Error('Link do TikTok inválido. Formato esperado: https://www.tiktok.com/@usuario/video/ID');
-      }
-
-      const videoId = videoIdMatch[1];
+      // Validation et extraction de l'ID de la vidéo TikTok
+      let videoId = null;
       
-      // Simuler la date de publication TikTok (aujourd'hui par défaut)
-      // En production, on pourrait utiliser l'API TikTok pour obtenir la vraie date
+      // Pattern 1: https://www.tiktok.com/@usuario/video/ID
+      const pattern1 = cleanUrl.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+      if (pattern1) {
+        videoId = pattern1[1];
+      }
+      
+      // Pattern 2: https://vm.tiktok.com/ID/ (liens courts)
+      const pattern2 = cleanUrl.match(/vm\.tiktok\.com\/([A-Za-z0-9]+)/);
+      if (pattern2) {
+        videoId = pattern2[1];
+      }
+      
+      // Pattern 3: ID direct (si l'utilisateur colle juste l'ID)
+      const pattern3 = cleanUrl.match(/^(\d{15,20})$/);
+      if (pattern3) {
+        videoId = pattern3[1];
+      }
+      
+      if (!videoId) {
+        throw new Error('❌ Formato de link inválido! Use: https://www.tiktok.com/@usuario/video/ID ou https://vm.tiktok.com/ID');
+      }
+      
+      // Date de publication TikTok (aujourd'hui par défaut)
       const tiktokPublicationDate = new Date().toISOString().split('T')[0];
+      
+      // Date de sortie suggérée (prochain lundi)
+      const suggestedReleaseDate = getNextMonday();
       
       // Mettre à jour les champs avec les informations extraites
       setEditingSong(prev => ({
         ...prev,
-        tiktok_url: tiktokUrl,
+        tiktok_url: cleanUrl,
         tiktok_video_id: videoId,
         tiktok_publication_date: tiktokPublicationDate,
-        // Générer un titre par défaut
+        // Titre par défaut si vide
         title: prev.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
-        // Générer des hashtags par défaut
-        hashtags: prev.hashtags.length > 0 ? prev.hashtags : ['musica', 'trending', 'novidade'],
-        // Définir la date de sortie pour la prochaine lundi
-        release_date: getNextMonday()
+        // Hashtags par défaut si vide
+        hashtags: prev.hashtags.length > 0 ? prev.hashtags : ['musica', 'trending', 'novidade', 'humor'],
+        // Date de sortie suggérée
+        release_date: suggestedReleaseDate
       }));
 
-      displayMessage('success', `✅ Informações do TikTok extraídas! ID: ${videoId} | Data sugerida: ${format(parseISO(getNextMonday()), 'dd/MM/yyyy', { locale: ptBR })}`);
+      displayMessage('success', `✅ TikTok extraído com sucesso! 
+      🎬 ID: ${videoId} 
+      📅 Data sugerida: ${format(parseISO(suggestedReleaseDate), 'dd/MM/yyyy', { locale: ptBR })} 
+      ✨ Agora você pode editar e salvar!`);
       
     } catch (error) {
       console.error('Erro ao extrair informações do TikTok:', error);
-      displayMessage('error', `Erro: ${error.message}`);
+      displayMessage('error', `❌ ${error.message}`);
     } finally {
       setIsExtracting(false);
     }
@@ -233,7 +258,13 @@ export default function AdminPage() {
     
     // Validation du lien TikTok (obligatoire selon la section)
     if (!editingSong.tiktok_url || editingSong.tiktok_url.trim() === '') {
-      displayMessage('error', '❌ O link do TikTok é obrigatório!');
+      displayMessage('error', '❌ O link do TikTok é obrigatório! Cole o link e clique em "Extrair" primeiro.');
+      return;
+    }
+    
+    // Validation de l'ID TikTok
+    if (!editingSong.tiktok_video_id || editingSong.tiktok_video_id.trim() === '') {
+      displayMessage('error', '❌ ID do TikTok não foi extraído! Clique em "Extrair" para obter o ID automaticamente.');
       return;
     }
     
@@ -492,23 +523,38 @@ export default function AdminPage() {
                             {isExtracting ? 'Extraindo...' : 'Extrair'}
                           </Button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Exemplo: https://www.tiktok.com/@amusicadasegunda/video/7539613899209903382
-                        </p>
+                        <div className="mt-2 space-y-1">
+                          <p className="text-xs text-gray-500">
+                            <strong>Formatos aceitos:</strong>
+                          </p>
+                          <ul className="text-xs text-gray-500 space-y-1 ml-2">
+                            <li>• https://www.tiktok.com/@usuario/video/ID</li>
+                            <li>• https://vm.tiktok.com/ID</li>
+                            <li>• ID direto (15-20 dígitos)</li>
+                          </ul>
+                          <p className="text-xs text-blue-600 font-medium mt-2">
+                            💡 Cole o link TikTok e clique em "Extrair" para preencher automaticamente!
+                          </p>
+                        </div>
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
-                            ID da Vídeo TikTok
+                            ID da Vídeo TikTok {editingSong.tiktok_video_id && <span className="text-green-600">✅</span>}
                           </label>
                           <Input
                             value={editingSong.tiktok_video_id}
                             onChange={(e) => handleInputChange('tiktok_video_id', e.target.value)}
-                            placeholder="7539613899209903382"
+                            placeholder="Clique em 'Extrair' para obter o ID"
                             readOnly
-                            className="bg-gray-50"
+                            className={`${editingSong.tiktok_video_id ? 'bg-green-50 border-green-300' : 'bg-gray-50'}`}
                           />
+                          {editingSong.tiktok_video_id && (
+                            <p className="text-xs text-green-600 mt-1">
+                              ✅ ID extraído com sucesso!
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-end gap-2">
                           <Button 
