@@ -212,8 +212,8 @@ export default function AdventCalendar() {
 
               {/* Vídeo TikTok - Affichage comme sur la page Home */}
               {selectedSong?.tiktok_video_id && (
-                <div className="mb-6">
-                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '400px' }}>
+                <div className="mb-4">
+                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '300px' }}>
                     <iframe
                       src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}`}
                       width="100%"
@@ -225,8 +225,8 @@ export default function AdventCalendar() {
                       style={{ aspectRatio: '9/16' }}
                     />
                   </div>
-                  <div className="mt-3 text-center">
-                    <p className="text-sm text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
+                  <div className="mt-2 text-center">
+                    <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
                   </div>
                 </div>
               )}
