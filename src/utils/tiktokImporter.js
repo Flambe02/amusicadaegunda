@@ -221,7 +221,6 @@ export class TikTokImporter {
       console.error('Erro ao importar vídeo:', error);
       throw error;
     }
-    }
   }
 
   /**
