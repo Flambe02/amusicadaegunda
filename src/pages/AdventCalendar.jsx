@@ -67,7 +67,7 @@ export default function AdventCalendar() {
     day_of_december: 1,
     spotify_url: null,
     youtube_url: null,
-    tiktok_video_id: '7321234567890123456'
+    tiktok_video_id: '7321234567890123456' // ID TikTok fictif - à remplacer par le vrai ID
   };
 
   const songsByDay = songs.reduce((acc, song) => {
@@ -181,17 +181,18 @@ export default function AdventCalendar() {
               )}
 
               {/* Vídeo TikTok - Croissant para o dia 1 */}
-              {selectedSong?.day_of_december === 1 && (
+              {selectedSong?.day_of_december === 1 && selectedSong?.tiktok_video_id && (
                 <div className="mb-6">
-                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg">
+                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '400px' }}>
                     <iframe
-                      src="https://www.tiktok.com/embed/7321234567890123456"
+                      src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}`}
                       width="100%"
-                      height="400"
+                      height="100%"
                       frameBorder="0"
                       allowFullScreen
                       title="TikTok Video - Croissant"
                       className="w-full h-full"
+                      style={{ aspectRatio: '9/16' }}
                     />
                   </div>
                   <div className="mt-3 text-center">
