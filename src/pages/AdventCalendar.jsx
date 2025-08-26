@@ -4,6 +4,8 @@ import { AdventSong } from '@/api/entities';
 import { Gift, Lock, Music, Play, Sparkles, Youtube, ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 // Componente Porta do Advento
 const AdventDoor = ({ day, song, onOpen }) => {
