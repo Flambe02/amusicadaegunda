@@ -8,6 +8,8 @@ import AdventCalendar from "./AdventCalendar";
 
 import Admin from "./Admin";
 
+import Sobre from "./Sobre";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -19,6 +21,8 @@ const PAGES = {
     AdventCalendar: AdventCalendar,
     
     Admin: Admin,
+    
+    Sobre: Sobre,
     
 }
 
@@ -54,6 +58,8 @@ function PagesContent() {
                 <Route path="/AdventCalendar" element={<AdventCalendar />} />
                 
                 <Route path="/Admin" element={<Admin />} />
+                
+                <Route path="/Sobre" element={<Sobre />} />
                 
             </Routes>
         </Layout>

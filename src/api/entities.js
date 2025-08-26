@@ -1,46 +1,83 @@
-import { apiClient, handleApiError } from './base44Client';
+import { localStorageService } from '@/lib/localStorage';
 
-// Enhanced Song entity with local API
 export const Song = {
-  // Enhanced list method with error handling
   list: async (orderBy = '-release_date', limit = 10) => {
     try {
-      const songs = await apiClient.getSongs(orderBy, limit);
-      return songs || [];
+      const songs = localStorageService.songs.getAll();
+      // Trier par date de sortie (plus récente en premier)
+      const sortedSongs = songs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+      return limit ? sortedSongs.slice(0, limit) : sortedSongs;
     } catch (error) {
-      const errorMessage = handleApiError(error, 'carregar músicas');
       console.error('Erro ao carregar músicas:', error);
-      
-      // Return empty array as fallback
       return [];
     }
   },
-  
-  // Enhanced get method with error handling
+
   get: async (id) => {
     try {
-      return await apiClient.getSong(id);
+      return localStorageService.songs.getById(id);
     } catch (error) {
-      const errorMessage = handleApiError(error, 'carregar música');
       console.error('Erro ao carregar música:', error);
       return null;
+    }
+  },
+
+  getCurrent: async () => {
+    try {
+      return localStorageService.songs.getCurrent();
+    } catch (error) {
+      console.error('Erro ao carregar música atual:', error);
+      return null;
+    }
+  },
+
+  create: async (songData) => {
+    try {
+      return localStorageService.songs.create(songData);
+    } catch (error) {
+      console.error('Erro ao criar música:', error);
+      throw error;
+    }
+  },
+
+  update: async (id, updates) => {
+    try {
+      return localStorageService.songs.update(id, updates);
+    } catch (error) {
+      console.error('Erro ao atualizar música:', error);
+      throw error;
+    }
+  },
+
+  delete: async (id) => {
+    try {
+      return localStorageService.songs.delete(id);
+    } catch (error) {
+      console.error('Erro ao deletar música:', error);
+      throw error;
     }
   }
 };
 
 export const AdventSong = {
-  // Enhanced list method with error handling
   list: async (orderBy = '-release_date', limit = 25) => {
     try {
-      const songs = await apiClient.getSongs(orderBy, limit);
-      return songs || [];
+      const songs = localStorageService.songs.getAll();
+      const adventSongs = songs.filter(song => {
+        const releaseDate = new Date(song.release_date);
+        const month = releaseDate.getMonth();
+        const day = releaseDate.getDate();
+        return month === 11 || song.status === 'published';
+      });
+      
+      // Trier par date de sortie
+      const sortedSongs = adventSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+      return limit ? sortedSongs.slice(0, limit) : sortedSongs;
     } catch (error) {
-      const errorMessage = handleApiError(error, 'carregar músicas do advento');
       console.error('Erro ao carregar músicas do advento:', error);
       return [];
     }
   }
 };
 
-// No auth needed for public site
 export const User = null;

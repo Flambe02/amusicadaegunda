@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { FileText, Share2, ExternalLink, Music, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Share2, ExternalLink, Music, ChevronDown, ChevronUp, Play, Youtube, Music2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -89,6 +89,74 @@ export default function SongPlayer({ song }) {
                 </div>
               )}
 
+              {/* NOUVEAU BLOC : Liens de Streaming */}
+              <div className="bg-white/60 rounded-2xl p-4">
+                <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                  <Music2 className="w-4 h-4" />
+                  Ouvir em outras plataformas
+                </h4>
+                <div className="space-y-2">
+                  {song.spotify_url && (
+                    <a href={song.spotify_url} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-3 rounded-2xl text-sm flex items-center gap-2">
+                        <Play className="w-4 h-4" />
+                        Ouvir no Spotify
+                      </Button>
+                    </a>
+                  )}
+                  
+                  {song.apple_music_url && (
+                    <a href={song.apple_music_url} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full bg-gradient-to-r from-[#FA233B] to-[#FB5C74] hover:opacity-90 text-white font-bold py-3 rounded-2xl text-sm flex items-center gap-2">
+                        <Music2 className="w-4 h-4" />
+                        Ouvir no Apple Music
+                      </Button>
+                    </a>
+                  )}
+                  
+                  {song.youtube_url && (
+                    <a href={song.youtube_url} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full bg-[#FF0000] hover:bg-[#cc0000] text-white font-bold py-3 rounded-2xl text-sm flex items-center gap-2">
+                        <Youtube className="w-4 h-4" />
+                        Assistir no YouTube
+                      </Button>
+                    </a>
+                  )}
+
+                  {!song.spotify_url && !song.apple_music_url && !song.youtube_url && (
+                    <p className="text-gray-500 text-sm text-center py-2">
+                      Links de streaming em breve...
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* NOUVEAU BLOC : Paroles */}
+              {song.lyrics && (
+                <div className="bg-white/60 rounded-2xl p-4">
+                  <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    Letra da música
+                  </h4>
+                  <div className="bg-gray-50 rounded-xl p-3 max-h-32 overflow-y-auto">
+                    <pre className="text-gray-700 whitespace-pre-wrap font-sans text-xs leading-relaxed">
+                      {song.lyrics.length > 200 
+                        ? `${song.lyrics.substring(0, 200)}...` 
+                        : song.lyrics
+                      }
+                    </pre>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full mt-3 bg-[#32a2dc]/10 hover:bg-[#32a2dc]/20 text-[#32a2dc] font-bold border-[#32a2dc]/20 py-2 rounded-xl text-sm"
+                    onClick={() => setShowLyrics(true)}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Ver letra completa
+                  </Button>
+                </div>
+              )}
+
               {/* Botões de Ação */}
               <div className="grid grid-cols-2 gap-3">
                 {song.lyrics && (
@@ -98,7 +166,7 @@ export default function SongPlayer({ song }) {
                     onClick={() => setShowLyrics(true)}
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    Letra
+                    Letra Completa
                   </Button>
                 )}
                 
@@ -110,36 +178,6 @@ export default function SongPlayer({ song }) {
                   <Share2 className="w-4 h-4 mr-2" />
                   Compartilhar
                 </Button>
-              </div>
-
-              {/* Links das Plataformas de Streaming */}
-              <div className="space-y-2">
-                {song.spotify_url && (
-                  <a href={song.spotify_url} target="_blank" rel="noopener noreferrer">
-                    <Button className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-3 rounded-2xl text-sm">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Spotify
-                    </Button>
-                  </a>
-                )}
-                
-                {song.apple_music_url && (
-                  <a href={song.apple_music_url} target="_blank" rel="noopener noreferrer">
-                    <Button className="w-full bg-gradient-to-r from-[#FA233B] to-[#FB5C74] hover:opacity-90 text-white font-bold py-3 rounded-2xl text-sm">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Apple Music
-                    </Button>
-                  </a>
-                )}
-                
-                {song.youtube_url && (
-                  <a href={song.youtube_url} target="_blank" rel="noopener noreferrer">
-                    <Button className="w-full bg-[#FF0000] hover:bg-[#cc0000] text-white font-bold py-3 rounded-2xl text-sm">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      YouTube
-                    </Button>
-                  </a>
-                )}
               </div>
             </div>
           )}

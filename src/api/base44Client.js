@@ -7,7 +7,7 @@ const mockSongs = [
     id: '1',
     title: 'Confissões Bancárias',
     artist: 'A Música da Segunda',
-    release_date: '2024-08-25T09:00:00.000Z',
+    release_date: '2025-08-25T09:00:00.000Z', // 25 août 2025 - Lundi
     cover_image: 'https://via.placeholder.com/400x600/32a2dc/ffffff?text=Confissões+Bancárias',
     description: 'Nova música da segunda com muito humor sobre confissões bancárias! Uma dose semanal de descobertas musicais para começar sua semana com energia.',
     hashtags: ['humor', 'moraes', 'bancos', 'trendingsong', 'musica'],
