@@ -11,17 +11,16 @@ const detectStorageMode = async () => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
+    // Si pas de variables d'environnement, essayer les valeurs par défaut
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.warn('⚠️ Variables Supabase manquantes, utilisation localStorage');
-      useSupabase = false;
-      return false;
+      console.log('🔄 Variables d\'environnement non trouvées, test des valeurs par défaut...');
     }
 
     // Vérifier la connexion
     const isConnected = await checkConnection();
     
     if (isConnected) {
-      console.log('🔄 Mode de stockage: Supabase ☁️ (forcé)');
+      console.log('🔄 Mode de stockage: Supabase ☁️ (connecté)');
       useSupabase = true;
       return true;
     } else {
@@ -36,8 +35,10 @@ const detectStorageMode = async () => {
   }
 };
 
-// Détecter au chargement
-detectStorageMode();
+// Forcer la détection immédiate
+detectStorageMode().then(() => {
+  console.log(`🎯 Mode de stockage final: ${useSupabase ? 'Supabase ☁️' : 'localStorage 💾'}`);
+});
 
 // ===== ENTITÉS AVEC FALLBACK AUTOMATIQUE =====
 export const Song = {

@@ -26,6 +26,42 @@ const DEFAULT_SONGS = [
     hashtags: ["humor", "moraes", "bancos", "trendingsong", "musica"],
     created_at: "2025-01-27T10:00:00.000Z",
     updated_at: "2025-01-27T10:00:00.000Z"
+  },
+  {
+    id: 2,
+    title: "Café Tarifa Caos",
+    artist: "A Música da Segunda",
+    description: "Música sobre café, tarifas e o caos do dia a dia",
+    lyrics: "Café tarifa caos...\nNova música da segunda...",
+    release_date: "2025-08-03",
+    status: "published",
+    tiktok_video_id: "7540762684149517591",
+    tiktok_url: "https://www.tiktok.com/@amusicadasegunda/video/7540762684149517591",
+    spotify_url: "",
+    apple_music_url: "",
+    youtube_url: "",
+    cover_image: "",
+    hashtags: ["cafe", "tarifa", "caos", "trendingsong", "musica"],
+    created_at: "2025-01-27T10:00:00.000Z",
+    updated_at: "2025-01-27T10:00:00.000Z"
+  },
+  {
+    id: 3,
+    title: "Segunda-feira Blues",
+    artist: "A Música da Segunda",
+    description: "O clássico blues da segunda-feira",
+    lyrics: "Segunda-feira blues...\nNova música da segunda...",
+    release_date: "2025-08-18",
+    status: "published",
+    tiktok_video_id: "7540762684149517592",
+    tiktok_url: "https://www.tiktok.com/@amusicadasegunda/video/7540762684149517592",
+    spotify_url: "",
+    apple_music_url: "",
+    youtube_url: "",
+    cover_image: "",
+    hashtags: ["blues", "segunda", "trendingsong", "musica"],
+    created_at: "2025-01-27T10:00:00.000Z",
+    updated_at: "2025-01-27T10:00:00.000Z"
   }
 ];
 
@@ -37,6 +73,12 @@ export const localStorageService = {
     if (!localStorage.getItem(STORAGE_KEYS.SONGS)) {
       localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
     }
+  },
+
+  // Forcer la réinitialisation des données
+  forceReset() {
+    localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
+    console.log('🔄 localStorage réinitialisé avec les données par défaut');
   },
 
   // ===== GESTION DES CHANSONS =====
