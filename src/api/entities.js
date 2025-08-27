@@ -2,42 +2,40 @@ import { localStorageService } from '@/lib/localStorage';
 import { supabaseSongService, supabaseAlbumService } from './supabaseService';
 import { checkConnection, checkSupabaseData } from '@/lib/supabase';
 
+let currentStorageMode = 'unknown';
+
 // ===== FORCER L'UTILISATION DE SUPABASE =====
 let useSupabase = true; // Forcer Supabase
 
 const detectStorageMode = async () => {
   try {
-    // Vérifier que les variables d'environnement sont présentes
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    console.log('🔄 Test de connexion Supabase...');
     
-    // Si pas de variables d'environnement, essayer les valeurs par défaut
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.log('🔄 Variables d\'environnement non trouvées, test des valeurs par défaut...');
-    }
-
     // Vérifier la connexion
     const isConnected = await checkConnection();
     
     if (isConnected) {
-      console.log('🔄 Mode de stockage: Supabase ☁️ (connecté)');
+      console.log('✅ Mode de stockage: Supabase ☁️ (connecté)');
       useSupabase = true;
+      currentStorageMode = 'supabase';
       return true;
     } else {
       console.warn('⚠️ Connexion Supabase échouée, utilisation localStorage');
       useSupabase = false;
+      currentStorageMode = 'localStorage';
       return false;
     }
   } catch (error) {
     console.warn('⚠️ Erreur détection mode stockage, utilisation localStorage:', error);
     useSupabase = false;
+    currentStorageMode = 'localStorage';
     return false;
   }
 };
 
 // Forcer la détection immédiate
 detectStorageMode().then(() => {
-  console.log(`🎯 Mode de stockage final: ${useSupabase ? 'Supabase ☁️' : 'localStorage 💾'}`);
+  console.log(`🎯 Mode de stockage final: ${currentStorageMode === 'supabase' ? 'Supabase ☁️' : 'localStorage 💾'}`);
 });
 
 // ===== ENTITÉS AVEC FALLBACK AUTOMATIQUE =====
@@ -266,9 +264,7 @@ export const switchToLocalStorage = () => {
   return true;
 };
 
-export const getCurrentStorageMode = () => {
-  return useSupabase ? 'supabase' : 'localStorage';
-};
+export const getCurrentStorageMode = () => currentStorageMode;
 
 export const isSupabaseAvailable = () => {
   return useSupabase;

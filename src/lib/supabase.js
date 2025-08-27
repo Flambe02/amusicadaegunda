@@ -5,12 +5,12 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://efnzmpzkzeuktq
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmbnptcHpremV1a3Rxa2dod2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMzE4MzcsImV4cCI6MjA3MTgwNzgzN30.iQiDuurPIkSNjHWP6TID0dATrOCJQ71-kblcsRsHiAk'
 
 // Vérification des variables d'environnement
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.warn('⚠️ Variables Supabase manquantes. Mode fallback activé.')
-  console.warn('📝 Créez un fichier .env avec VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY')
+const hasEnvVars = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+if (!hasEnvVars) {
+  console.log('🔄 Variables d\'environnement non trouvées, utilisation des valeurs par défaut Supabase')
 }
 
-// Client Supabase (ne plantera pas même avec des valeurs placeholder)
+// Client Supabase (utilise les valeurs par défaut si pas d'env)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Configuration des tables
@@ -29,12 +29,6 @@ export const handleSupabaseError = (error, context = 'Supabase operation') => {
 // Vérifier la connexion et l'état de la base
 export const checkConnection = async () => {
   try {
-    // Vérifier que les variables d'environnement sont présentes
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-      console.log('❌ Variables Supabase manquantes - mode fallback')
-      return false
-    }
-
     // Vérifier la connexion en testant une requête simple
     const { data, error } = await supabase.from(TABLES.SONGS).select('count').limit(1)
     
