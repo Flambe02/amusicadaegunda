@@ -642,7 +642,7 @@ export default function AdminPage() {
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-blue-200 shadow-xl flex-shrink-0">
               <img 
-                src="/images/Musica da segunda.jpg" 
+                src="images/Musica da segunda.jpg" 
                 alt="Logo Música da Segunda"
                 className="w-full h-full object-cover"
               />

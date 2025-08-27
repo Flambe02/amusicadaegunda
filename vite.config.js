@@ -5,9 +5,8 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // GitHub Pages: base doit correspondre au nom EXACT du dépôt
-  // https://flambe02.github.io/amusicadaegunda/ ⇒ base "/amusicadaegunda/"
-  base: '/amusicadaegunda/',
+  // GitHub Pages: utiliser des chemins relatifs pour éviter les erreurs 404
+  base: './',
   server: {
     allowedHosts: true
   },

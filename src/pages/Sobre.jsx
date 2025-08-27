@@ -18,7 +18,7 @@ export default function Sobre() {
       <div className="bg-white/80 rounded-3xl p-8 text-center mb-8">
         <div className="w-32 h-32 mx-auto mb-6 rounded-full overflow-hidden shadow-2xl">
           <img 
-            src="/images/Musica da segunda.jpg" 
+            src="images/Musica da segunda.jpg" 
             alt="Logo Música da Segunda" 
             className="w-full h-full object-cover"
           />
