@@ -76,26 +76,43 @@ src/
 │   ├── Calendar.jsx    # Calendário musical
 │   └── Sobre.jsx       # Página sobre
 ├── lib/                # Utilitários e configurações
-│   └── localStorage.js # Sistema de storage local
-├── api/                # Serviços de dados
-│   └── entities.js     # Entidades e operações CRUD
+│   ├── localStorage.js # Sistema de storage local
+│   ├── supabase.js     # Configuration Supabase
+│   └── migrationService.js # Service de migration
+├── api/                # Serviços de données
+│   ├── entities.js     # Entités avec fallback automatique
+│   └── supabaseService.js # Service Supabase complet
 └── hooks/              # Hooks personalizados
 ```
 
-## 💾 **Sistema de Storage Local**
+## 💾 **Sistema de Storage Hybride (Local + Cloud)**
 
-### **Vantagens**
-- ✅ **Zero configuração** - Funciona imediatamente
-- ✅ **100% local** - Sem servidores externos
-- ✅ **Portável** - Dados ficam no navegador
-- ✅ **Backup fácil** - Export/import JSON
-- ✅ **Sem limites** - Armazenamento local ilimitado
+### **🆕 NOUVEAU : Supabase Cloud Database**
+- ✅ **Sauvegarde automatique** - Données synchronisées en temps réel
+- ✅ **Base de données PostgreSQL** - Robuste et scalable
+- ✅ **Sauvegarde cloud** - Vos données sont protégées
+- ✅ **Synchronisation multi-appareils** - Accès depuis partout
+- ✅ **API REST automatique** - Intégration facile
 
-### **Como Funciona**
-- Dados salvos no `localStorage` do navegador
-- Estrutura JSON simples e legível
-- Backup automático com export/import
-- Inicialização com dados de exemplo
+### **📱 Fallback localStorage**
+- ✅ **Zero configuration** - Fonctionne immédiatement
+- ✅ **100% local** - Sans serveurs externes
+- ✅ **Portable** - Données dans le navigateur
+- ✅ **Backup facile** - Export/import JSON
+- ✅ **Sans limites** - Stockage local illimité
+
+### **🔄 Migration Automatique**
+- ✅ **Détection automatique** du mode de stockage
+- ✅ **Migration en un clic** localStorage → Supabase
+- ✅ **Fallback automatique** en cas de problème
+- ✅ **Synchronisation bidirectionnelle** des données
+- ✅ **Vérification d'intégrité** des données migrées
+
+### **Comment ça fonctionne**
+1. **Mode Supabase** : Données sauvegardées dans la base cloud
+2. **Mode localStorage** : Données stockées localement (fallback)
+3. **Migration** : Transfert automatique des données existantes
+4. **Synchronisation** : Maintien des deux sources à jour
 
 ## 🎨 **Personalização**
 
@@ -130,7 +147,34 @@ npm run preview
 ### **Deploy Estático**
 - Netlify, Vercel, GitHub Pages
 - Qualquer servidor web estático
-- **Sem backend necessário!**
+- **Backend cloud Supabase** (optionnel)
+
+## ☁️ **Configuration Supabase (Optionnel)**
+
+### **1. Créer un projet Supabase**
+- Allez sur [https://supabase.com](https://supabase.com)
+- Créez un nouveau projet gratuit
+- Choisissez la région Europe (Paris)
+
+### **2. Configurer les variables d'environnement**
+```bash
+# Copiez env-example.txt vers .env
+cp env-example.txt .env
+
+# Remplissez vos vraies clés Supabase
+VITE_SUPABASE_URL=https://votre-projet.supabase.co
+VITE_SUPABASE_ANON_KEY=votre-clé-anon-supabase
+```
+
+### **3. Créer la base de données**
+- Dans l'éditeur SQL de Supabase
+- Exécutez le script `database-schema.sql`
+- Vos tables seront créées automatiquement
+
+### **4. Migrer vos données**
+- Allez sur `/Admin` dans votre app
+- Cliquez sur "Migrar para Supabase"
+- Vos données localStorage seront transférées
 
 ## 🔧 **Desenvolvimento**
 
@@ -187,10 +231,14 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 - ✅ **Site público** funcionando
 - ✅ **Interface admin** completa
-- ✅ **Sistema de storage** local
+- ✅ **Sistema de storage hybride** (local + cloud)
+- ✅ **Base de données Supabase** configurée
+- ✅ **Migration automatique** localStorage → Supabase
+- ✅ **Sauvegarde cloud** avec fallback local
 - ✅ **Integração TikTok** ativa
 - ✅ **Design responsivo** implementado
 - ✅ **Calendário musical** funcional
+- ✅ **Synchronisation temps réel** (avec Supabase)
 
 ---
 

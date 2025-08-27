@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { localStorageService } from '@/lib/localStorage';
-import { Song } from '@/api/entities';
+import { Song, getCurrentStorageMode, isSupabaseAvailable } from '@/api/entities';
+import { migrationService } from '@/lib/migrationService';
 import { 
   Plus, 
   Edit, 
@@ -43,25 +44,71 @@ export default function AdminPage() {
   const [showMessage, setShowMessage] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [storageMode, setStorageMode] = useState('localStorage');
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState(null);
 
   // ===== EFEITOS =====
   useEffect(() => {
     loadSongs();
+    detectStorageMode();
   }, []);
 
-  // ===== FUNÇÕES =====
-  const loadSongs = () => {
-    const allSongs = localStorageService.songs.getAll();
-    setSongs(allSongs);
+  const detectStorageMode = () => {
+    // Forcer le mode Supabase si les variables d'environnement sont présentes
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    
+    if (supabaseUrl && supabaseAnonKey) {
+      setStorageMode('supabase');
+      console.log('🔄 Mode de stockage forcé: Supabase ☁️');
+    } else {
+      setStorageMode('localStorage');
+      console.log('🔄 Mode de stockage: localStorage 📱');
+    }
   };
 
-  const handleSearch = (query) => {
+  // ===== FUNÇÕES =====
+  const loadSongs = async () => {
+    try {
+      if (storageMode === 'supabase') {
+        // Utiliser Supabase
+        const allSongs = await Song.list();
+        setSongs(allSongs);
+      } else {
+        // Fallback localStorage
+        const allSongs = localStorageService.songs.getAll();
+        setSongs(allSongs);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar músicas:', error);
+      // Fallback localStorage en cas d'erreur
+      const allSongs = localStorageService.songs.getAll();
+      setSongs(allSongs);
+    }
+  };
+
+  const handleSearch = async (query) => {
     setSearchQuery(query);
     if (!query) {
       loadSongs();
     } else {
-      const results = localStorageService.songs.search(query);
-      setSongs(results);
+      try {
+        if (storageMode === 'supabase') {
+          // Utiliser Supabase
+          const results = await Song.search(query);
+          setSongs(results);
+        } else {
+          // Fallback localStorage
+          const results = localStorageService.songs.search(query);
+          setSongs(results);
+        }
+      } catch (error) {
+        console.error('Erro na busca:', error);
+        // Fallback localStorage en cas d'erreur
+        const results = localStorageService.songs.search(query);
+        setSongs(results);
+      }
     }
   };
 
@@ -188,7 +235,7 @@ export default function AdminPage() {
     }
     
     // Fallback: données simulées mais réalistes
-    console.log('🔄 Usando dados simulados como fallback');
+    console.log('🔄 Usando dados simulados comme fallback');
     const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
     const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
     
@@ -228,18 +275,14 @@ export default function AdminPage() {
     try {
       console.log('📅 Tentando extrair data de publicação para vídeo:', videoId);
       
-      // Método 1: Tentar recuperar a página HTML do TikTok
+      // Método 1: Tentar recuperar a página HTML do TikTok (via proxy CORS)
       try {
-        const response = await fetch(tiktokUrl, {
-          method: 'GET',
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        });
+        const proxyUrl = 'https://r.jina.ai/http://' + tiktokUrl.replace(/^https?:\/\//, '');
+        const response = await fetch(proxyUrl);
         
         if (response.ok) {
           const html = await response.text();
-          console.log('📄 HTML TikTok recuperado, tamanho:', html.length);
+          console.log('📄 HTML TikTok recuperado via proxy, tamanho:', html.length);
           
           // Chercher des patterns de date dans le HTML
           const datePatterns = [
@@ -279,31 +322,33 @@ export default function AdminPage() {
             }
           }
           
-          console.log('⚠️ Nenhum padrão de data encontrado no HTML');
+          console.log('⚠️ Nenhum padrão de data encontrado no HTML (via proxy)');
         }
       } catch (htmlError) {
-        console.log('⚠️ Falha ao recuperar HTML TikTok:', htmlError);
+        console.log('⚠️ Falha ao recuperar HTML TikTok via proxy:', htmlError);
       }
       
-      // Método 2: Tentar a API alternativa (se disponível)
+      // Método 2: Tentar a API alternativa (via proxy CORS)
       try {
-        const alternativeResponse = await fetch(`https://www.tiktok.com/api/item/detail/?itemId=${videoId}`);
+        const altUrl = `https://www.tiktok.com/api/item/detail/?itemId=${videoId}`;
+        const altProxy = 'https://r.jina.ai/http://' + altUrl.replace(/^https?:\/\//, '');
+        const alternativeResponse = await fetch(altProxy);
         if (alternativeResponse.ok) {
           const data = await alternativeResponse.json();
-          console.log('📊 Réponse API alternativa:', data);
+          console.log('📊 Réponse API alternativa (via proxy):', data);
           
           if (data.itemInfo && data.itemInfo.itemStruct) {
             const createTime = data.itemInfo.itemStruct.createTime;
             if (createTime) {
               const date = new Date(createTime * 1000);
               const publicationDate = date.toISOString().split('T')[0];
-              console.log('✅ Data extraída via API alternativa:', publicationDate);
+              console.log('✅ Data extraída via API alternativa (proxy):', publicationDate);
               return publicationDate;
             }
           }
         }
       } catch (apiError) {
-        console.log('⚠️ API alternativa falhou:', apiError);
+        console.log('⚠️ API alternativa (proxy) falhou:', apiError);
       }
       
       // Fallback: utiliser la date d'aujourd'hui si aucune méthode ne fonctionne
@@ -538,6 +583,56 @@ export default function AdminPage() {
     }
   };
 
+  // ===== FONCTIONS DE MIGRATION =====
+  const handleMigration = async () => {
+    if (!isSupabaseAvailable()) {
+      displayMessage('error', '❌ Supabase non disponible. Configurez d\'abord vos variables d\'environnement.');
+      return;
+    }
+
+    setIsMigrating(true);
+    setMigrationStatus('Début de la migration...');
+
+    try {
+      const result = await migrationService.migrateAll();
+      setMigrationStatus(`Migration terminée: ${result.songs.migrated} chansons, ${result.albums.migrated} albums`);
+      displayMessage('success', `✅ Migration réussie! ${result.songs.migrated} chansons migrées`);
+      detectStorageMode(); // Mettre à jour le mode
+      loadSongs(); // Recharger les données
+    } catch (error) {
+      setMigrationStatus(`Erreur: ${error.message}`);
+      displayMessage('error', `❌ Erreur migration: ${error.message}`);
+    } finally {
+      setIsMigrating(false);
+    }
+  };
+
+  const handleVerifyMigration = async () => {
+    try {
+      const result = await migrationService.verifyMigration();
+      if (result.success) {
+        displayMessage('success', `✅ Migration vérifiée: ${result.supabaseCount} chansons synchronisées`);
+      } else {
+        displayMessage('error', `❌ Problèmes détectés: ${result.integrityIssues.length} erreurs`);
+        console.log('Problèmes d\'intégrité:', result.integrityIssues);
+      }
+    } catch (error) {
+      displayMessage('error', `❌ Erreur vérification: ${error.message}`);
+    }
+  };
+
+  const handleRestoreFromSupabase = async () => {
+    if (window.confirm('⚠️ Restaurer depuis Supabase? Cela remplacera vos données locales.')) {
+      try {
+        const result = await migrationService.restoreFromSupabase();
+        displayMessage('success', `✅ Restauration réussie: ${result.songs} chansons`);
+        loadSongs();
+      } catch (error) {
+        displayMessage('error', `❌ Erreur restauration: ${error.message}`);
+      }
+    }
+  };
+
   // ===== RENDERIZAÇÃO =====
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-5">
@@ -618,6 +713,91 @@ export default function AdminPage() {
               <span className="sm:hidden">Limpar</span>
             </Button>
           </div>
+        </div>
+
+        {/* ===== PANEL SUPABASE ===== */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-100 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg border-2 border-blue-200">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+                ☁️ Supabase Cloud Database
+              </h3>
+              <p className="text-blue-700 text-sm">
+                Mode actuel: <span className={`font-semibold ${storageMode === 'supabase' ? 'text-green-600' : 'text-orange-600'}`}>
+                  {storageMode === 'supabase' ? '☁️ Cloud (Supabase)' : '📱 Local (localStorage)'}
+                </span>
+              </p>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                onClick={handleMigration}
+                disabled={isMigrating || !isSupabaseAvailable()}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                {isMigrating ? (
+                  <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Zap className="w-4 h-4 mr-2" />
+                )}
+                {isMigrating ? 'Migrando...' : 'Migrar para Supabase'}
+              </Button>
+              
+              <Button 
+                onClick={handleVerifyMigration}
+                variant="outline"
+                size="sm"
+                className="border-blue-300 text-blue-700 hover:bg-blue-50"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Verificar
+              </Button>
+            </div>
+          </div>
+
+          {/* Status de migration */}
+          {migrationStatus && (
+            <div className="bg-blue-100 border border-blue-300 rounded-lg p-3 mb-3">
+              <p className="text-blue-800 text-sm font-medium">
+                📊 {migrationStatus}
+              </p>
+            </div>
+          )}
+
+          {/* Actions Supabase */}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={handleRestoreFromSupabase}
+              variant="outline"
+              size="sm"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50"
+              disabled={!isSupabaseAvailable()}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Restaurar do Supabase
+            </Button>
+            
+            <Button 
+              onClick={detectStorageMode}
+              variant="outline"
+              size="sm"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Detectar Modo
+            </Button>
+          </div>
+
+          {/* Instructions */}
+          {!isSupabaseAvailable() && (
+            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <p className="text-blue-800 text-sm">
+                ⚠️ <strong>Supabase non configuré:</strong> Créez un fichier <code>.env</code> avec vos clés Supabase 
+                pour activer la sauvegarde cloud. Consultez <code>supabase-config.md</code> pour les instructions.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Search */}

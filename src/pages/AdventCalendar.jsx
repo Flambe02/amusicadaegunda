@@ -238,19 +238,21 @@ export default function AdventCalendar() {
               {selectedSong?.tiktok_video_id && (
                 <div className="mb-4">
                   <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '500px' }}>
-                    <iframe
-                      src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}`}
-                      width="90%"
-                      height="90%"
-                      frameBorder="0"
-                      allowFullScreen
-                      title={`TikTok Video - ${selectedSong.title}`}
-                      className="mx-auto block"
-                      style={{ 
-                        aspectRatio: '9/16',
-                        marginTop: '5%'
-                      }}
-                    />
+                    <div className="w-full h-full flex items-center justify-center overflow-hidden">
+                      <iframe
+                        src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}`}
+                        width="360"
+                        height="450"
+                        frameBorder="0"
+                        allowFullScreen
+                        title={`TikTok Video - ${selectedSong.title}`}
+                        className="rounded-lg"
+                        style={{ 
+                          border: 'none',
+                          outline: 'none'
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="mt-2 text-center">
                     <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>

@@ -14,7 +14,6 @@ export default function Calendar() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadSongs();
     // Vérifier si un mois spécifique est passé dans l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const monthParam = urlParams.get('month');
@@ -32,14 +31,28 @@ export default function Calendar() {
     }
   }, []);
 
+  // Recharger les chansons à chaque changement de mois
+  useEffect(() => {
+    loadSongsForMonth();
+  }, [currentDate]);
 
-
-  const loadSongs = async () => {
+  const loadSongsForMonth = async () => {
     try {
-      const data = await Song.list('-release_date');
-      setSongs(data);
+      setIsLoading(true);
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth() + 1; // 1-12
+      // Charger toutes les chansons publiées puis filtrer côté client
+      const published = await Song.getByStatus('published');
+      const monthData = (Array.isArray(published) ? published : []).filter(s => {
+        const d = parseISO(s.release_date);
+        return d.getFullYear() === year && (d.getMonth() + 1) === month;
+      });
+      // Trier desc par date
+      monthData.sort((a, b) => parseISO(b.release_date) - parseISO(a.release_date));
+      setSongs(monthData);
     } catch (error) {
-      console.error('Error loading songs:', error);
+      console.error('Error loading monthly songs:', error);
+      setSongs([]);
     } finally {
       setIsLoading(false);
     }
@@ -51,8 +64,6 @@ export default function Calendar() {
 
   const getSongForDate = (date) => {
     return songs.find(song => {
-      // Créer la date de sortie en utilisant la date locale pour éviter les problèmes de fuseau horaire
-      // Utiliser parseISO de date-fns pour une meilleure gestion des dates
       const songDate = parseISO(song.release_date);
       return isSameDay(songDate, date);
     });

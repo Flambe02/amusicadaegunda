@@ -1,0 +1,19 @@
+# 🔧 Configuration Supabase - Música da Segunda
+# Copiez ce fichier vers .env et remplissez vos vraies valeurs
+
+# Configuration Supabase
+VITE_SUPABASE_URL=https://votre-projet.supabase.co
+VITE_SUPABASE_ANON_KEY=votre-clé-anon-supabase
+
+# Instructions de configuration :
+# 1. Allez sur https://supabase.com
+# 2. Créez un nouveau projet
+# 3. Dans Settings > API, copiez :
+#    - Project URL → VITE_SUPABASE_URL
+#    - anon public → VITE_SUPABASE_ANON_KEY
+# 4. Renommez ce fichier en .env
+# 5. Redémarrez votre serveur de développement
+
+# Exemple de valeurs (à remplacer) :
+# VITE_SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+# VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
