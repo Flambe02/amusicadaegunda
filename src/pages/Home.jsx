@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import SongPlayer from '../components/SongPlayer';
 import CountdownTimer from '../components/CountdownTimer';
-import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play } from 'lucide-react';
+import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -13,6 +16,9 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showPlatformsDialog, setShowPlatformsDialog] = useState(false);
+  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
+  const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
 
   useEffect(() => {
     loadCurrentSong();
@@ -61,6 +67,34 @@ export default function Home() {
   const handlePlayVideo = (song) => {
     setSelectedVideo(song);
     setShowVideoModal(true);
+  };
+
+  const handleShowPlatforms = (song) => {
+    setSelectedSongForDialog(song);
+    setShowPlatformsDialog(true);
+  };
+
+  const handleShowLyrics = (song) => {
+    setSelectedSongForDialog(song);
+    setShowLyricsDialog(true);
+  };
+
+  const handleShareSong = async (song) => {
+    // Utiliser l'API de partage natif si disponible
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${song.title} - ${song.artist}`,
+          text: `Confira esta música incrível da Música da Segunda!`,
+          url: song.tiktok_url || window.location.href,
+        });
+      } catch {}
+    } else {
+      // Fallback : copier le lien
+      const shareText = `${song.title} - ${song.artist}\nConfira esta música incrível da Música da Segunda!`;
+      navigator.clipboard.writeText(shareText);
+      alert('Link copiado para a área de transferência!');
+    }
   };
 
 
@@ -181,6 +215,35 @@ export default function Home() {
                 <p className="text-gray-500 text-sm mt-1">
                   {format(parseISO(currentSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}
                 </p>
+              </div>
+              
+              {/* 3 Ações Principais - Desktop */}
+              <div className="mt-6">
+                <div className="grid grid-cols-3 gap-3">
+                  <Button
+                    variant="outline"
+                    className="bg-white/70 hover:bg-white/90 text-gray-700 font-semibold border-gray-300 py-3 rounded-2xl text-sm"
+                    onClick={() => handleShowPlatforms(currentSong)}
+                  >
+                    Plataformas
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="bg-white/70 hover:bg-white/90 text-gray-700 font-semibold border-gray-300 py-3 rounded-2xl text-sm"
+                    onClick={() => handleShowLyrics(currentSong)}
+                  >
+                    Letras
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="bg-white/70 hover:bg-white/90 text-gray-700 font-semibold border-gray-300 py-3 rounded-2xl text-sm"
+                    onClick={() => handleShareSong(currentSong)}
+                  >
+                    Compartilhar
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (
@@ -401,6 +464,128 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* ===== DIALOG PLATAFORMAS ===== */}
+      <Dialog open={showPlatformsDialog} onOpenChange={setShowPlatformsDialog}>
+        <DialogContent className="bg-[#f8f5f2] max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              🎵 Ouvir em outras plataformas
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedSongForDialog && (
+            <div className="space-y-4">
+              {/* Informations de la musique */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                <h3 className="text-lg font-bold text-blue-900 mb-1">
+                  {selectedSongForDialog.title}
+                </h3>
+                <p className="text-blue-700 font-medium">
+                  {selectedSongForDialog.artist}
+                </p>
+              </div>
+
+              {/* Liens des plateformes */}
+              <div className="space-y-3">
+                {selectedSongForDialog.spotify_url && (
+                  <a 
+                    href={selectedSongForDialog.spotify_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <Button className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-3 rounded-2xl text-sm transition-all duration-200 hover:scale-105">
+                      🎧 Ouvir no Spotify
+                    </Button>
+                  </a>
+                )}
+                
+                {selectedSongForDialog.apple_music_url && (
+                  <a 
+                    href={selectedSongForDialog.apple_music_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <Button className="w-full bg-gradient-to-r from-[#FA233B] to-[#FB5C74] hover:opacity-90 text-white font-bold py-3 rounded-2xl text-sm transition-all duration-200 hover:scale-105">
+                      🎵 Ouvir no Apple Music
+                    </Button>
+                  </a>
+                )}
+                
+                {selectedSongForDialog.youtube_url && (
+                  <a 
+                    href={selectedSongForDialog.youtube_url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <Button className="w-full bg-[#FF0000] hover:bg-[#cc0000] text-white font-bold py-3 rounded-2xl text-sm transition-all duration-200 hover:scale-105">
+                      📺 Assistir no YouTube
+                    </Button>
+                  </a>
+                )}
+
+                {!selectedSongForDialog.spotify_url && !selectedSongForDialog.apple_music_url && !selectedSongForDialog.youtube_url && (
+                  <div className="text-center py-6">
+                    <Music className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">Links de streaming em breve...</p>
+                    <p className="text-gray-500 text-sm">Esta música será disponibilizada em breve nas principais plataformas.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== DIALOG LETRAS ===== */}
+      <Dialog open={showLyricsDialog} onOpenChange={setShowLyricsDialog}>
+        <DialogContent className="bg-[#f8f5f2] max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              📝 Letras da Música
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedSongForDialog && (
+            <div className="space-y-4">
+              {/* Informations de la musique */}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                <h3 className="text-lg font-bold text-green-900 mb-1">
+                  {selectedSongForDialog.title}
+                </h3>
+                <p className="text-green-700 font-medium">
+                  {selectedSongForDialog.artist}
+                </p>
+                <p className="text-green-600 text-sm">
+                  📅 {format(parseISO(selectedSongForDialog.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                </p>
+              </div>
+
+              {/* Paroles */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                {selectedSongForDialog.lyrics ? (
+                  <ScrollArea className="h-60">
+                    <div className="pr-4">
+                      <pre className="text-gray-700 whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                        {selectedSongForDialog.lyrics}
+                      </pre>
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">Letras não disponíveis</p>
+                    <p className="text-gray-500 text-sm">As letras desta música serão adicionadas em breve.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

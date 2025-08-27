@@ -41,15 +41,20 @@ export default function Calendar() {
       setIsLoading(true);
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1; // 1-12
-      // Charger toutes les chansons publiées puis filtrer côté client
-      const published = await Song.getByStatus('published');
-      const monthData = (Array.isArray(published) ? published : []).filter(s => {
+      
+      // Charger TOUTES les chansons du mois (comme la page Home)
+      // au lieu de seulement les chansons publiées
+      const allSongs = await Song.list();
+      const monthData = (Array.isArray(allSongs) ? allSongs : []).filter(s => {
         const d = parseISO(s.release_date);
         return d.getFullYear() === year && (d.getMonth() + 1) === month;
       });
+      
       // Trier desc par date
       monthData.sort((a, b) => parseISO(b.release_date) - parseISO(a.release_date));
       setSongs(monthData);
+      
+      console.log(`📅 Calendrier: ${monthData.length} chansons chargées pour ${month}/${year}:`, monthData.map(s => `${s.title} (${s.status})`));
     } catch (error) {
       console.error('Error loading monthly songs:', error);
       setSongs([]);
@@ -90,7 +95,14 @@ export default function Calendar() {
     let classes = "aspect-square flex flex-col items-center justify-center rounded-2xl text-sm font-bold transition-all duration-300 ";
     
     if (song) {
-      classes += "bg-[#32a2dc] text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
+      // Différencier les chansons selon leur statut
+      if (song.status === 'published') {
+        classes += "bg-[#32a2dc] text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
+      } else if (song.status === 'draft') {
+        classes += "bg-orange-500 text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
+      } else {
+        classes += "bg-gray-500 text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
+      }
     } else if (isMondayDay) {
       classes += "bg-white/40 text-gray-600 border-2 border-dashed border-gray-400 ";
     } else {
@@ -210,7 +222,14 @@ export default function Calendar() {
                   onClick={() => song && setSelectedSong(song)}
                 >
                   <span className="text-xs">{format(day, 'd')}</span>
-                  {song && <Music className="w-3 h-3 mt-1" />}
+                  {song && (
+                    <div className="flex flex-col items-center mt-1">
+                      <Music className="w-3 h-3" />
+                      {song.status === 'draft' && (
+                        <div className="w-1 h-1 bg-white rounded-full mt-1 opacity-80"></div>
+                      )}
+                    </div>
+                  )}
                   {isMondayDay && !song && isCurrentMonth && (
                     <div className="w-2 h-2 bg-gray-400 rounded-full mt-1 opacity-60"></div>
                   )}
@@ -223,16 +242,24 @@ export default function Calendar() {
           <div className="mt-6 space-y-2 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-[#32a2dc] rounded-lg"></div>
-              <span className="text-gray-600 font-medium">Música disponível</span>
+              <span className="text-gray-600 font-medium">Música publicada</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-white/40 border-2 border-dashed border-gray-400 rounded-lg"></div>
               <span className="text-gray-600 font-medium">Segunda-feira (aguardando)</span>
             </div>
-            <div className="text-xs text-gray-500 mt-2 p-2 bg-white/40 rounded-lg">
-              <p className="font-semibold">25 de Agosto de 2025 - Segunda-feira</p>
-              <p>Confissões Bancárias - A Música da Segunda</p>
-            </div>
+            {selectedSong && (
+              <div className="text-xs text-gray-500 mt-2 p-2 bg-white/40 rounded-lg">
+                <p className="font-semibold">
+                  {format(parseISO(selectedSong.release_date), "dd 'de' MMMM 'de' yyyy - EEEE", { locale: ptBR })}
+                </p>
+                <p>{selectedSong.title} - {selectedSong.artist}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Status: {selectedSong.status === 'published' ? 'Publicada' : 
+                           selectedSong.status === 'draft' ? 'Rascunho' : 'Arquivada'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -267,11 +294,23 @@ export default function Calendar() {
                 className="bg-[#f8f5f2] rounded-2xl p-4 shadow-lg flex items-center gap-4 cursor-pointer hover:shadow-xl transition-all duration-300"
                 onClick={() => setSelectedSong(song)}
               >
-                <div className="w-12 h-12 bg-[#32a2dc] rounded-xl flex items-center justify-center">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  song.status === 'published' ? 'bg-[#32a2dc]' :
+                  song.status === 'draft' ? 'bg-orange-500' : 'bg-gray-500'
+                }`}>
                   <Play className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-grow">
-                  <p className="font-bold text-gray-800">{song.title}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-bold text-gray-800">{song.title}</p>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      song.status === 'published' ? 'bg-green-100 text-green-800' :
+                      song.status === 'draft' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {song.status === 'published' ? 'Publicada' :
+                       song.status === 'draft' ? 'Rascunho' : 'Arquivada'}
+                    </span>
+                  </div>
                   <p className="text-sm text-gray-600">{song.artist}</p>
                   <p className="text-xs text-gray-400">
                     {format(parseISO(song.release_date), "dd/MM/yyyy")}

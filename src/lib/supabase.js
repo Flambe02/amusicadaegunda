@@ -1,16 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Configuration Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Configuration Supabase avec fallback pour GitHub Pages
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
 
 // Vérification des variables d'environnement
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Variables Supabase manquantes. Vérifiez votre fichier .env')
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('⚠️ Variables Supabase manquantes. Mode fallback activé.')
   console.warn('📝 Créez un fichier .env avec VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY')
 }
 
-// Client Supabase
+// Client Supabase (ne plantera pas même avec des valeurs placeholder)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Configuration des tables
@@ -30,8 +30,8 @@ export const handleSupabaseError = (error, context = 'Supabase operation') => {
 export const checkConnection = async () => {
   try {
     // Vérifier que les variables d'environnement sont présentes
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.log('❌ Variables Supabase manquantes')
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      console.log('❌ Variables Supabase manquantes - mode fallback')
       return false
     }
 

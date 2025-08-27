@@ -9,6 +9,7 @@ import TikTokEmbed from './TikTokEmbed';
 export default function SongPlayer({ song }) {
   const [showLyrics, setShowLyrics] = useState(false);
   const [showPlatforms, setShowPlatforms] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
 
   if (!song) {
     return (
@@ -41,7 +42,14 @@ export default function SongPlayer({ song }) {
           <p className="text-sm font-semibold text-gray-700 mb-1">
             {format(new Date(song.release_date), "dd/MM", { locale: ptBR })}
           </p>
-          <h2 className="text-xl font-black text-gray-800 leading-tight">{song.title}</h2>
+          <button 
+            onClick={() => setShowDescription(true)}
+            className="text-left w-full hover:opacity-80 transition-opacity"
+          >
+            <h2 className="text-xl font-black text-gray-800 leading-tight cursor-pointer hover:text-gray-600">
+              {song.title}
+            </h2>
+          </button>
           <p className="text-base font-semibold text-gray-600">{song.artist}</p>
         </div>
 
@@ -129,6 +137,29 @@ export default function SongPlayer({ song }) {
               <pre className="text-gray-700 whitespace-pre-wrap font-sans text-sm leading-relaxed">
                 {song.lyrics || 'Sem letra disponível.'}
               </pre>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo Descrição */}
+      <Dialog open={showDescription} onOpenChange={setShowDescription}>
+        <DialogContent className="bg-[#f8f5f2] max-w-md max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800">{song.title}</DialogTitle>
+            <p className="text-gray-600 font-semibold">{song.artist}</p>
+          </DialogHeader>
+          <ScrollArea className="h-60 mt-4">
+            <div className="pr-4">
+              {song.description ? (
+                <p className="text-gray-700 font-sans text-sm leading-relaxed">
+                  {song.description}
+                </p>
+              ) : (
+                <p className="text-gray-500 italic text-sm">
+                  Nenhuma descrição disponível para esta música.
+                </p>
+              )}
             </div>
           </ScrollArea>
         </DialogContent>

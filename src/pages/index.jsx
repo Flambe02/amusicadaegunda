@@ -35,8 +35,13 @@ function _getCurrentPage(url) {
         urlLastPart = urlLastPart.split('?')[0];
     }
 
+    // Si on est sur la racine ou une URL vide, retourner Home
+    if (!urlLastPart || urlLastPart === 'amusicadaegunda') {
+        return 'Home';
+    }
+
     const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
-    return pageName || Object.keys(PAGES)[0];
+    return pageName || 'Home';
 }
 
 // Create a wrapper component that uses useLocation inside the Router context
