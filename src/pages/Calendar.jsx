@@ -4,7 +4,8 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay,
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Music, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import VisuallyHidden from "@/components/ui/VisuallyHidden";
 import SongPlayer from '../components/SongPlayer';
 
 export default function Calendar() {
@@ -149,6 +150,14 @@ export default function Calendar() {
 
   const allDaysToShow = getAllDaysToShow();
 
+  const handleSongClick = (song) => {
+    if (song && song.id && song.title) {
+      setSelectedSong(song);
+    } else {
+      console.error('Chanson invalide:', song);
+    }
+  };
+
   return (
     <>
       <div className="p-5 max-w-md mx-auto">
@@ -219,7 +228,7 @@ export default function Calendar() {
                 <div
                   key={day.toISOString()}
                   className={`${getDayClass(day)} ${!isCurrentMonth ? 'opacity-40' : ''}`}
-                  onClick={() => song && setSelectedSong(song)}
+                  onClick={() => song && handleSongClick(song)}
                 >
                   <span className="text-xs">{format(day, 'd')}</span>
                   {song && (
@@ -292,7 +301,7 @@ export default function Calendar() {
               <div
                 key={song.id}
                 className="bg-[#f8f5f2] rounded-2xl p-4 shadow-lg flex items-center gap-4 cursor-pointer hover:shadow-xl transition-all duration-300"
-                onClick={() => setSelectedSong(song)}
+                onClick={() => handleSongClick(song)}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                   song.status === 'published' ? 'bg-[#32a2dc]' :
@@ -323,9 +332,22 @@ export default function Calendar() {
       </div>
 
       {/* Song Dialog */}
-      <Dialog open={!!selectedSong} onOpenChange={() => setSelectedSong(null)}>
+      <Dialog open={!!selectedSong} onOpenChange={(open) => !open && setSelectedSong(null)}>
         <DialogContent className="max-w-md p-0 border-0 bg-transparent max-h-[90vh] overflow-y-auto">
-          <SongPlayer song={selectedSong} />
+          <DialogTitle asChild>
+            <VisuallyHidden>
+              {selectedSong ? `${selectedSong.title} - ${selectedSong.artist}` : 'Détails de la musique'}
+            </VisuallyHidden>
+          </DialogTitle>
+          <DialogDescription asChild>
+            <VisuallyHidden>
+              {selectedSong ? `Détails de la musique ${selectedSong.title} par ${selectedSong.artist}` : 'Détails de la musique'}
+            </VisuallyHidden>
+          </DialogDescription>
+          <SongPlayer 
+            song={selectedSong} 
+            onClose={() => setSelectedSong(null)}
+          />
         </DialogContent>
       </Dialog>
     </>

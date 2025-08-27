@@ -1,0 +1,92 @@
+/* TikTok NO SCROLL - Règles CSS agressives pour supprimer TOUT scroll */
+
+/* Règles globales pour TikTok */
+.tiktok-player-container,
+.tiktok-player-container *,
+.tiktok-player-container iframe,
+.tiktok-player-container iframe * {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  scroll-behavior: auto !important;
+}
+
+/* Supprimer les scrollbars webkit partout */
+.tiktok-player-container::-webkit-scrollbar,
+.tiktok-player-container *::-webkit-scrollbar,
+.tiktok-player-container iframe::-webkit-scrollbar,
+.tiktok-player-container iframe *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+/* Règles spécifiques pour l'iframe TikTok */
+.tiktok-player-container iframe[src*="tiktok"] {
+  overflow: hidden !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Forcer la suppression du scroll sur le contenu TikTok */
+.tiktok-player-container iframe[src*="tiktok"] body,
+.tiktok-player-container iframe[src*="tiktok"] html,
+.tiktok-player-container iframe[src*="tiktok"] div,
+.tiktok-player-container iframe[src*="tiktok"] section {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Règles pour le mode plein écran */
+.tiktok-player-container.fullscreen,
+.tiktok-player-container.fullscreen *,
+.tiktok-player-container.fullscreen iframe,
+.tiktok-player-container.fullscreen iframe * {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+/* Règles CSS-in-JS pour forcer l'absence de scroll */
+.tiktok-player-container[style*="overflow"],
+.tiktok-player-container iframe[style*="overflow"] {
+  overflow: hidden !important;
+}
+
+/* SUPPRESSION COMPLÈTE DE L'ÉCRAN BLANC TIKTOK */
+.tiktok-player-container iframe[src*="tiktok"] {
+  /* Forcer le format 9:16 */
+  aspect-ratio: 9/16 !important;
+  /* Supprimer l'écran blanc */
+  background: #000 !important;
+  /* Supprimer les marges et paddings */
+  margin: 0 !important;
+  padding: 0 !important;
+  /* Forcer le centrage du contenu */
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* Supprimer l'écran blanc sur tous les éléments enfants */
+.tiktok-player-container iframe[src*="tiktok"] * {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Règles spécifiques pour le contenu vidéo */
+.tiktok-player-container iframe[src*="tiktok"] video,
+.tiktok-player-container iframe[src*="tiktok"] .video-container {
+  background: #000 !important;
+  background-color: #000 !important;
+  /* Forcer le format 9:16 */
+  aspect-ratio: 9/16 !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}

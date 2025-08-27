@@ -10,7 +10,11 @@ import Admin from "./Admin";
 
 import Sobre from "./Sobre";
 
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+
+// Lazy loading de la route TikTok pour optimiser le bundle
+const TikTokDemo = lazy(() => import('./TikTokDemo'));
 
 const PAGES = {
     
@@ -23,6 +27,8 @@ const PAGES = {
     Admin: Admin,
     
     Sobre: Sobre,
+    
+    TikTokDemo: TikTokDemo,
     
 }
 
@@ -38,6 +44,11 @@ function _getCurrentPage(url) {
     // Si on est sur la racine ou une URL vide, retourner Home
     if (!urlLastPart || urlLastPart === 'amusicadaegunda') {
         return 'Home';
+    }
+
+    // Gérer les routes TikTok avec paramètres
+    if (urlLastPart.startsWith('tiktok')) {
+        return 'TikTokDemo';
     }
 
     const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
@@ -65,6 +76,11 @@ function PagesContent() {
                 <Route path="/Admin" element={<Admin />} />
                 
                 <Route path="/Sobre" element={<Sobre />} />
+                
+                <Route path="/TikTokDemo" element={<TikTokDemo />} />
+                
+                {/* Route TikTok avec paramètre dynamique */}
+                <Route path="/tiktok/:id" element={<TikTokDemo />} />
                 
             </Routes>
         </Layout>
