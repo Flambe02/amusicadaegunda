@@ -5,8 +5,8 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // GitHub Pages: utiliser le chemin de base correct
-  base: '/amusicadaegunda/',
+  // GitHub Pages: utiliser des chemins relatifs pour le déploiement branch
+  base: './',
   server: {
     allowedHosts: true
   },

@@ -95,7 +95,7 @@ function PagesContent() {
 
 export default function Pages() {
     return (
-        <Router basename="/amusicadaegunda">
+        <Router>
             <PagesContent />
         </Router>
     );
