@@ -1,8 +1,12 @@
-# 🎵 Música da Segunda
+# Música da Segunda
 
-**Descubra música nova toda segunda-feira!**
+> Projet de découverte musicale hebdomadaire - Nova música toda segunda-feira
 
-Um projeto web moderno para compartilhar e descobrir música semanalmente, com integração TikTok, calendário musical interativo e interface admin completa.
+<!-- Force deploy - GitHub Pages reset -->
+
+## 🎵 À propos
+
+Música da Segunda est une application web qui présente une nouvelle musique chaque lundi, avec intégration TikTok, calendrier musical et interface moderne.
 
 ## ✨ **Funcionalidades**
 
