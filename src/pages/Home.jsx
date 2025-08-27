@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import SongPlayer from '../components/SongPlayer';
 import CountdownTimer from '../components/CountdownTimer';
-import SupabaseTest from '../components/SupabaseTest';
 import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -588,10 +587,6 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* ===== COMPOSANT DE TEST SUPABASE ===== */}
-      <div className="mt-8">
-        <SupabaseTest />
-      </div>
     </div>
   );
 }
