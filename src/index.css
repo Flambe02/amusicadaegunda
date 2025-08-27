@@ -84,72 +84,151 @@
   }
 }
 
-/* TikTok Video Stability Styles */
-@layer components {
-  .tiktok-video-container {
-    position: relative !important;
-    width: 100% !important;
-    height: 100% !important;
-    overflow: hidden !important;
-    border-radius: 16px !important;
-    background: #000 !important;
-    transform: none !important;
-    will-change: auto !important;
-    resize: none !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-  }
-  
-  /* Hide scrollbars for webkit browsers */
-  .tiktok-video-container::-webkit-scrollbar {
-    display: none !important;
-  }
-  
-  .tiktok-video-container iframe {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    border: none !important;
-    border-radius: 16px !important;
-    background: #000 !important;
-    transform: scale(1) !important;
-    transform-origin: center center !important;
-    will-change: auto !important;
-    transition: none !important;
-    animation: none !important;
-    overflow: hidden !important;
-    resize: none !important;
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-  }
-  
-  /* Hide scrollbars for webkit browsers */
-  .tiktok-video-container iframe::-webkit-scrollbar {
-    display: none !important;
-  }
-  
-  /* Prevent any unwanted movements */
-  .tiktok-video-container * {
-    transform: none !important;
-    animation: none !important;
-    transition: none !important;
-  }
-  
-  /* Mobile-specific stability */
-  @media (max-width: 768px) {
-    .tiktok-video-container {
-      max-width: 260px !important;
-      margin: 0 auto !important;
-    }
-  }
-  
-  /* Desktop-specific stability */
-  @media (min-width: 769px) {
-    .tiktok-video-container {
-      max-width: 320px !important;
-      margin: 0 auto !important;
-    }
-  }
+/* TikTok Embed Optimization - No Scrolling */
+.tiktok-embed {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.tiktok-embed::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* TikTok container styles */
+.tiktok-container {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.tiktok-container::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Ensure TikTok iframe has no scrolling */
+.tiktok-embed iframe {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 16px !important;
+}
+
+.tiktok-embed iframe::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* TikTok embed blockquote optimization */
+.tiktok-embed blockquote {
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 16px !important;
+}
+
+/* TikTok embed section optimization */
+.tiktok-embed section {
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 16px !important;
+}
+
+/* TikTok embed link optimization */
+.tiktok-embed a {
+  overflow: hidden !important;
+  text-decoration: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Global scrollbar hiding for TikTok components */
+.tiktok-scroll-hide {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.tiktok-scroll-hide::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* TikTok video container specific styles */
+.tiktok-video-container {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  max-height: 100% !important;
+  max-width: 100% !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 16px !important;
+}
+
+.tiktok-video-container::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Ensure TikTok content fits perfectly */
+.tiktok-content-fit {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  object-fit: contain !important;
+  border: none !important;
+  outline: none !important;
+  border-radius: 16px !important;
+}
+
+/* Remove all red lines and borders from TikTok elements */
+.tiktok-embed *,
+.tiktok-container *,
+.tiktok-video-container * {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Focus states - remove red outlines */
+.tiktok-embed:focus,
+.tiktok-container:focus,
+.tiktok-video-container:focus,
+.tiktok-embed *:focus,
+.tiktok-container *:focus,
+.tiktok-video-container *:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove any default browser styling */
+.tiktok-embed,
+.tiktok-container,
+.tiktok-video-container {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+/* Ensure rounded corners on all TikTok elements */
+.tiktok-embed,
+.tiktok-container,
+.tiktok-video-container,
+.tiktok-content-fit {
+  border-radius: 16px !important;
+  overflow: hidden !important;
 }
