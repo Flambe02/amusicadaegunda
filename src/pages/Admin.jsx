@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { localStorageService } from '@/lib/localStorage';
-import { Song, getCurrentStorageMode, isSupabaseAvailable } from '@/api/entities';
+import { Song, getCurrentStorageMode } from '@/api/entities';
 import { migrationService } from '@/lib/migrationService';
 import { 
   Plus, 
@@ -46,7 +46,7 @@ export default function AdminPage() {
   const [showMessage, setShowMessage] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
-  const [storageMode, setStorageMode] = useState('localStorage');
+  const [storageMode, setStorageMode] = useState('supabase');
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState(null);
   const [showTikTokImport, setShowTikTokImport] = useState(false);
@@ -73,17 +73,9 @@ export default function AdminPage() {
   }, [storageMode]);
 
   const detectStorageMode = () => {
-    // Forcer le mode Supabase si les variables d'environnement sont présentes
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    if (supabaseUrl && supabaseAnonKey) {
-      setStorageMode('supabase');
-      console.log('🔄 Mode de stockage forcé: Supabase ☁️');
-    } else {
-      setStorageMode('localStorage');
-      console.log('🔄 Mode de stockage: localStorage 📱');
-    }
+    // Toujours Supabase dans la version publiée (fallback géré dans lib/supabase)
+    setStorageMode('supabase');
+    console.log('🔄 Mode de stockage forcé: Supabase ☁️');
   };
 
   // ===== FUNÇÕES =====
@@ -1565,16 +1557,14 @@ export default function AdminPage() {
                 ☁️ Supabase Cloud Database
               </h3>
               <p className="text-blue-700 text-sm">
-                Mode actuel: <span className={`font-semibold ${storageMode === 'supabase' ? 'text-green-600' : 'text-orange-600'}`}>
-                  {storageMode === 'supabase' ? '☁️ Cloud (Supabase)' : '📱 Local (localStorage)'}
-                </span>
+                Mode actuel: <span className="font-semibold text-green-600">☁️ Cloud (Supabase)</span>
               </p>
             </div>
             
             <div className="flex gap-2">
               <Button 
                 onClick={handleMigration}
-                disabled={isMigrating || !isSupabaseAvailable()}
+                disabled={isMigrating}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
                 size="sm"
               >
@@ -1610,9 +1600,7 @@ export default function AdminPage() {
           {/* Info sur le chargement des données */}
           <div className="bg-green-100 border border-green-300 rounded-lg p-3 mb-3">
             <p className="text-green-800 text-sm font-medium">
-              💾 Données chargées depuis: <span className="font-bold">
-                {storageMode === 'supabase' ? '☁️ Supabase' : '📱 localStorage'}
-              </span>
+              💾 Données chargées depuis: <span className="font-bold">☁️ Supabase</span>
             </p>
             <p className="text-green-700 text-xs mt-1">
               {songs.length > 0 ? `${songs.length} chanson(s) disponible(s)` : 'Aucune chanson chargée'}
@@ -1626,21 +1614,12 @@ export default function AdminPage() {
               variant="outline"
               size="sm"
               className="border-purple-300 text-purple-700 hover:bg-purple-50"
-              disabled={!isSupabaseAvailable()}
             >
               <Download className="w-4 h-4 mr-2" />
               Restaurar do Supabase
             </Button>
             
-            <Button 
-              onClick={detectStorageMode}
-              variant="outline"
-              size="sm"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Detectar Modo
-            </Button>
+            {/* Local mode actions removed in published version */}
           </div>
 
           {/* Instructions */}
