@@ -10,8 +10,10 @@ import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'da
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
+import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
+  const navigate = useNavigate();
   const [currentSong, setCurrentSong] = useState(null);
   const [recentSongs, setRecentSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,6 +131,12 @@ export default function Home() {
     const currentDate = new Date();
     currentDate.setMonth(currentDate.getMonth() - 1);
     return format(currentDate, 'yyyy-MM');
+  };
+
+  // Naviguer vers le calendrier du mois précédent
+  const handleNavigateToPreviousMonth = () => {
+    const previousMonth = getPreviousMonth();
+    navigate(`/calendar?month=${previousMonth}`);
   };
 
   if (isLoading) {
@@ -383,13 +391,13 @@ export default function Home() {
 
           {/* Lien discret vers le mois précédent */}
           <div className="mt-6 pt-4 border-t border-gray-200">
-            <a
-              href={`/Calendar?month=${getPreviousMonth()}`}
-              className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors group"
+            <button
+              onClick={handleNavigateToPreviousMonth}
+              className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors group cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Ver músicas de {format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'MMMM yyyy', { locale: ptBR })}
-            </a>
+            </button>
           </div>
         </div>
       </div>
@@ -461,13 +469,13 @@ export default function Home() {
 
             {/* Lien discret vers le mois précédent */}
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <a
-                href={`/Calendar?month=${getPreviousMonth()}`}
-                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors group"
+              <button
+                onClick={handleNavigateToPreviousMonth}
+                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors group cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 Ver músicas de {format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'MMMM yyyy', { locale: ptBR })}
-              </a>
+              </button>
             </div>
           </div>
         </div>

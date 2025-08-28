@@ -173,7 +173,7 @@ export default function TikTokPlayer({
 
     // Créer l'iframe avec l'API v1 de TikTok et format 9:16
     const iframe = document.createElement('iframe');
-    iframe.src = `https://www.tiktok.com/player/v1/${postId}?autoplay=${autoPlay ? 1 : 0}&loop=1&controls=${controls}&rel=0&muted=1&ratio=9:16`;
+    iframe.src = `https://www.tiktok.com/player/v1/${postId}?autoplay=${autoPlay ? 1 : 0}&loop=1&controls=${controls}&rel=0&muted=0&ratio=9:16`;
     iframe.title = 'TikTok Video Player';
     iframe.allowFullscreen = true;
     iframe.allow = 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; gyroscope';
