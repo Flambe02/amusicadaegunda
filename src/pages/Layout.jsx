@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Calendar, Gift, Info, Settings } from 'lucide-react';
+import { Home, Calendar, Gift, Info } from 'lucide-react';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -10,7 +10,6 @@ export default function Layout({ children }) {
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
     { name: 'Calendário', url: createPageUrl('Calendar'), icon: Calendar },
     { name: 'Ano 2025', url: createPageUrl('AdventCalendar'), icon: Gift },
-    { name: 'Admin', url: createPageUrl('Admin'), icon: Settings },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
   ];
 
@@ -67,7 +66,7 @@ export default function Layout({ children }) {
 
       {/* Navegação Inferior - Mobile uniquement */}
       <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50">
-        <div className="grid grid-cols-5 gap-1 p-1">
+        <div className="grid grid-cols-4 gap-1 p-1">
           {pages.map((page) => (
             <Link
               key={page.name}

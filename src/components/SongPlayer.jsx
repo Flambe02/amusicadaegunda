@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video, FileText } from 'lucide-react';
+import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video, FileText, Info } from 'lucide-react';
 import TikTokDirect from './TikTokDirect';
 import { cleanTikTokId, parseTikTokId } from '@/lib/parseTikTokId';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 export default function SongPlayer({ song, onClose }) {
   const [showDescription, setShowDescription] = useState(false);
+  const [showSongDescription, setShowSongDescription] = useState(false);
   const [showPlatforms, setShowPlatforms] = useState(false);
   const platformsRef = useRef(null);
 
@@ -62,7 +63,18 @@ export default function SongPlayer({ song, onClose }) {
       <div className="bg-white rounded-2xl shadow-lg p-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-gray-800 leading-tight mb-1 line-clamp-2">{song.title}</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-lg font-bold text-gray-800 leading-tight line-clamp-2">{song.title}</h2>
+              {song.description && song.description.trim() && (
+                <button
+                  onClick={() => setShowSongDescription(true)}
+                  className="text-blue-500 hover:text-blue-700 transition-colors flex-shrink-0"
+                  title="Ver descrição da música"
+                >
+                  <Info className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <p className="text-sm text-blue-700">{new Date(song.release_date).toLocaleDateString('pt-BR')}</p>
           </div>
           {onClose && (
@@ -180,6 +192,31 @@ export default function SongPlayer({ song, onClose }) {
             <pre className="text-gray-700 leading-relaxed whitespace-pre-wrap font-sans text-sm">
               {song.lyrics || 'Nenhuma letra disponível para esta música.'}
             </pre>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Song Description Dialog */}
+      <Dialog open={showSongDescription} onOpenChange={setShowSongDescription}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center space-x-2">
+                <Info className="w-5 h-5 text-blue-500" />
+                <span>Descrição da Música</span>
+              </DialogTitle>
+              <button
+                onClick={() => setShowSongDescription(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </DialogHeader>
+          <div className="mt-4">
+            <p className="text-gray-700 leading-relaxed font-sans text-sm">
+              {song.description || 'Nenhuma descrição disponível para esta música.'}
+            </p>
           </div>
         </DialogContent>
       </Dialog>
