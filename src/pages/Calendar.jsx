@@ -18,7 +18,21 @@ export default function Calendar() {
   useEffect(() => {
     // Vérifier si un mois spécifique est passé dans l'URL
     const urlParams = new URLSearchParams(window.location.search);
-    const monthParam = urlParams.get('month');
+    let monthParam = urlParams.get('month');
+    
+    // Gérer la redirection SPA de GitHub Pages
+    if (!monthParam) {
+      // Vérifier si l'URL contient le format SPA redirigé
+      const fullUrl = window.location.search;
+      if (fullUrl.includes('?/')) {
+        const pathPart = fullUrl.split('?/')[1];
+        if (pathPart.includes('?')) {
+          const queryPart = pathPart.split('?')[1];
+          const queryParams = new URLSearchParams(queryPart);
+          monthParam = queryParams.get('month');
+        }
+      }
+    }
     
     if (monthParam) {
       try {
@@ -26,6 +40,7 @@ export default function Calendar() {
         const [year, month] = monthParam.split('-').map(Number);
         if (year && month !== undefined) {
           setCurrentDate(new Date(year, month - 1, 1)); // month - 1 car les mois commencent à 0
+          console.log(`📅 Calendar: Mois chargé depuis l'URL: ${year}-${month}`);
         }
       } catch (error) {
         console.error('Erro ao parsear parâmetro month:', error);

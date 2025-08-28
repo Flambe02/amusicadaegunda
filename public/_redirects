@@ -1,0 +1,4 @@
+# GitHub Pages redirects for SPA routing
+# Redirect all routes to index.html to let React Router handle them
+
+/*    /index.html   200

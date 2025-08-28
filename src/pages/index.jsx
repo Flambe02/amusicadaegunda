@@ -11,7 +11,7 @@ import AdventCalendar from "./AdventCalendar";
 import Sobre from "./Sobre";
 
 import { lazy, Suspense } from 'react';
-import { HashRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 // Lazy loading de la route TikTok pour optimiser le bundle
 const TikTokDemo = lazy(() => import('./TikTokDemo'));
@@ -33,11 +33,7 @@ const PAGES = {
 }
 
 function _getCurrentPage(url) {
-    // Pour HashRouter, l'URL commence par #/
-    if (url.startsWith('#')) {
-        url = url.slice(1);
-    }
-    
+    // Pour BrowserRouter, l'URL est directe
     if (url.endsWith('/')) {
         url = url.slice(0, -1);
     }
@@ -79,6 +75,9 @@ function PagesContent() {
                 
                 {/* Route TikTok avec paramètre dynamique */}
                 <Route path="/tiktok/:id" element={<TikTokDemo />} />
+                
+                {/* Route Calendar avec paramètres d'URL */}
+                <Route path="/calendar" element={<Calendar />} />
             </Routes>
         </Layout>
     );
