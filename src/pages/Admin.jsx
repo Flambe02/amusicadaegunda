@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { localStorageService } from '@/lib/localStorage';
-import { Song, getCurrentStorageMode } from '@/api/entities';
-import { migrationService } from '@/lib/migrationService';
+import { Song } from '@/api/entities';
 import { 
   Plus, 
   Edit, 
@@ -62,6 +60,7 @@ export default function AdminPage() {
 
   // ===== EFEITOS =====
   useEffect(() => {
+    console.log('🔄 Admin component mounted');
     detectStorageMode();
   }, []);
 
@@ -92,16 +91,11 @@ export default function AdminPage() {
       } else {
         // Fallback localStorage
         console.log('📱 Chargement depuis localStorage...');
-        const allSongs = localStorageService.songs.getAll();
-        console.log(`✅ ${allSongs.length} chansons chargées depuis localStorage:`, allSongs);
-        setSongs(allSongs);
+        setSongs([]);
       }
     } catch (error) {
       console.error('❌ Erreur lors du chargement des chansons:', error);
-      // Fallback localStorage en cas d'erreur
-      console.log('🔄 Fallback vers localStorage...');
-      const allSongs = localStorageService.songs.getAll();
-      setSongs(allSongs);
+      setSongs([]);
     }
   };
 
@@ -420,7 +414,7 @@ export default function AdminPage() {
 
     } catch (error) {
       console.error('Erro na publicação em lote:', error);
-      displayMessage('error', `❌ Erro na publicação em lote: ${error.message}`);
+      displayMessage('error', `❌ Erreur na publicação em lote: ${error.message}`);
     } finally {
       setIsBulkImporting(false);
       setImportProgress({ current: 0, total: 0 });
@@ -562,7 +556,7 @@ export default function AdminPage() {
     
     // Si après nettoyage il ne reste rien, afficher une erreur
     if (!cleanUrl) {
-      throw new Error('❌ Nenhum link válido encontrado! Cole apenas o link TikTok, não o código HTML.');
+      throw new Error('❌ Nenhum link válido encontrado! Cole apenas o link TikTok, não o código HTML de incorporação.');
     }
     
     setIsExtracting(true);
@@ -1420,52 +1414,15 @@ export default function AdminPage() {
 
   // ===== FONCTIONS DE MIGRATION =====
   const handleMigration = async () => {
-    if (!isSupabaseAvailable()) {
-      displayMessage('error', '❌ Supabase non disponible. Configurez d\'abord vos variables d\'environnement.');
-      return;
-    }
-
-    setIsMigrating(true);
-    setMigrationStatus('Début de la migration...');
-
-    try {
-      const result = await migrationService.migrateAll();
-      setMigrationStatus(`Migration terminée: ${result.songs.migrated} chansons, ${result.albums.migrated} albums`);
-      displayMessage('success', `✅ Migration réussie! ${result.songs.migrated} chansons migrées`);
-      detectStorageMode(); // Mettre à jour le mode
-      loadSongs(); // Recharger les données
-    } catch (error) {
-      setMigrationStatus(`Erreur: ${error.message}`);
-      displayMessage('error', `❌ Erreur migration: ${error.message}`);
-    } finally {
-      setIsMigrating(false);
-    }
+    displayMessage('info', '🔄 Migration non disponible dans cette version');
   };
 
   const handleVerifyMigration = async () => {
-    try {
-      const result = await migrationService.verifyMigration();
-      if (result.success) {
-        displayMessage('success', `✅ Migration vérifiée: ${result.supabaseCount} chansons synchronisées`);
-      } else {
-        displayMessage('error', `❌ Problèmes détectés: ${result.integrityIssues.length} erreurs`);
-        console.log('Problèmes d\'intégrité:', result.integrityIssues);
-      }
-    } catch (error) {
-      displayMessage('error', `❌ Erreur vérification: ${error.message}`);
-    }
+    displayMessage('info', '🔄 Vérification non disponible dans cette version');
   };
 
   const handleRestoreFromSupabase = async () => {
-    if (window.confirm('⚠️ Restaurer depuis Supabase? Cela remplacera vos données locales.')) {
-      try {
-        const result = await migrationService.restoreFromSupabase();
-        displayMessage('success', `✅ Restauration réussie: ${result.songs} chansons`);
-        loadSongs();
-      } catch (error) {
-        displayMessage('error', `❌ Erreur restauration: ${error.message}`);
-      }
-    }
+    displayMessage('info', '🔄 Restauration non disponible dans cette version');
   };
 
   // ===== RENDERIZAÇÃO =====
@@ -1623,14 +1580,11 @@ export default function AdminPage() {
           </div>
 
           {/* Instructions */}
-          {!isSupabaseAvailable() && (
-            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-blue-800 text-sm">
-                ⚠️ <strong>Supabase non configuré:</strong> Créez un fichier <code>.env</code> avec vos clés Supabase 
-                pour activer la sauvegarde cloud. Consultez <code>supabase-config.md</code> pour les instructions.
-              </p>
-            </div>
-          )}
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800 text-sm">
+              ✅ <strong>Mode Supabase activé:</strong> Toutes les données sont synchronisées avec la base de données cloud.
+            </p>
+          </div>
         </div>
 
         {/* Search */}

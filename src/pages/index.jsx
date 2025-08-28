@@ -69,25 +69,16 @@ function PagesContent() {
     return (
         <Layout currentPageName={currentPage}>
             <Routes>            
-                
-                    <Route path="/" element={<Home />} />
-                
-                
-                <Route path="/Home" element={<Home />} />
-                
-                <Route path="/Calendar" element={<Calendar />} />
-                
-                <Route path="/AdventCalendar" element={<AdventCalendar />} />
-                
-                <Route path="/Admin" element={<Admin />} />
-                
-                <Route path="/Sobre" element={<Sobre />} />
-                
-                <Route path="/TikTokDemo" element={<TikTokDemo />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/adventcalendar" element={<AdventCalendar />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/sobre" element={<Sobre />} />
+                <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
                 {/* Route TikTok avec paramètre dynamique */}
                 <Route path="/tiktok/:id" element={<TikTokDemo />} />
-                
             </Routes>
         </Layout>
     );

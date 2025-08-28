@@ -163,10 +163,18 @@ export default function SongPlayer({ song, onClose }) {
       <Dialog open={showDescription} onOpenChange={setShowDescription}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-blue-500" />
-              <span>Letras da Música</span>
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-blue-500" />
+                <span>Letras da Música</span>
+              </DialogTitle>
+              <button
+                onClick={() => setShowDescription(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </DialogHeader>
           <div className="mt-4">
             <pre className="text-gray-700 leading-relaxed whitespace-pre-wrap font-sans text-sm">
