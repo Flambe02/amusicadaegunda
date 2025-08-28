@@ -6,7 +6,7 @@ import Calendar from "./Calendar";
 
 import AdventCalendar from "./AdventCalendar";
 
-import Admin from "./Admin";
+// Admin component removed for private access
 
 import Sobre from "./Sobre";
 
@@ -24,7 +24,7 @@ const PAGES = {
     
     AdventCalendar: AdventCalendar,
     
-    Admin: Admin,
+    // Admin: Admin, // Removed for private access
     
     Sobre: Sobre,
     
@@ -73,7 +73,7 @@ function PagesContent() {
                 <Route path="/home" element={<Home />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/adventcalendar" element={<AdventCalendar />} />
-                <Route path="/admin" element={<Admin />} />
+                {/* Admin route removed for private access */}
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
