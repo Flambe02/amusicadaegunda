@@ -60,18 +60,19 @@ export default function TikTokDirect({ postId, className = "" }) {
 
   return (
     <div className={`bg-black rounded-2xl overflow-hidden ${className}`}>
-      {/* Container avec format 9:16 parfait */}
-      <div className="relative w-full" style={{ aspectRatio: '9/16' }}>
+      {/* Container avec format 9:16 parfait, sans marges ni padding */}
+      <div className="relative w-full m-0 p-0" style={{ aspectRatio: '9/16' }}>
         {/* Iframe TikTok direct */}
         <iframe
           src={`https://www.tiktok.com/embed/${postId}`}
           title="TikTok Video"
-          className="w-full h-full border-0 rounded-2xl"
+          className="w-full h-full border-0 rounded-none block"
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture"
           style={{
             background: '#000',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: 'block'
           }}
           onLoad={() => setIsLoading(false)}
           onError={() => setError('Erro ao carregar vídeo')}

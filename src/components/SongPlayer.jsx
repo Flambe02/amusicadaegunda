@@ -58,12 +58,11 @@ export default function SongPlayer({ song, onClose }) {
 
   return (
     <div className="space-y-4">
-      {/* Header with Title and Artist */}
+      {/* Header - mobile friendly, date only */}
       <div className="bg-white rounded-2xl shadow-lg p-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-gray-800 mb-1">{song.title}</h2>
-            <p className="text-sm text-gray-500">
+            <p className="text-base font-semibold text-blue-700">
               {new Date(song.release_date).toLocaleDateString('pt-BR')}
             </p>
           </div>
@@ -78,14 +77,14 @@ export default function SongPlayer({ song, onClose }) {
         </div>
       </div>
 
-      {/* Main TikTok Video Block */}
+      {/* Main TikTok Video Block - no inner padding to avoid scroll */}
       {(() => {
         // Normaliser l'ID TikTok à partir de la base (id direct ou URL)
         const normalizedId = cleanTikTokId(song.tiktok_video_id) || cleanTikTokId(song.tiktok_url);
         if (!normalizedId) return null;
         return (
-        <div className="bg-white rounded-2xl shadow-lg">
-          <div className="px-4 pt-4">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="">
             <TikTokDirect
               postId={normalizedId}
               className="mb-4"
