@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video, FileText, Info } from 'lucide-react';
-import TikTokDirect from './TikTokDirect';
-import { cleanTikTokId, parseTikTokId } from '@/lib/parseTikTokId';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import TikTokDirect from './TikTokDirect';
+import { cleanTikTokId } from '@/lib/parseTikTokId';
 
-export default function SongPlayer({ song, onClose }) {
+export default function SongPlayer({ song, onClose, onShowDescription }) {
   const [showDescription, setShowDescription] = useState(false);
   const [showSongDescription, setShowSongDescription] = useState(false);
   const [showPlatforms, setShowPlatforms] = useState(false);
@@ -57,6 +57,8 @@ export default function SongPlayer({ song, onClose }) {
     }
   };
 
+
+
   return (
     <div className="space-y-4">
       {/* Header - mobile friendly, title + date */}
@@ -65,9 +67,9 @@ export default function SongPlayer({ song, onClose }) {
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h2 className="text-lg font-bold text-gray-800 leading-tight line-clamp-2">{song.title}</h2>
-              {song.description && song.description.trim() && (
+              {song.description && song.description.trim() && onShowDescription && (
                 <button
-                  onClick={() => setShowSongDescription(true)}
+                  onClick={() => onShowDescription(song)}
                   className="text-blue-500 hover:text-blue-700 transition-colors flex-shrink-0"
                   title="Ver descrição da música"
                 >
@@ -88,16 +90,17 @@ export default function SongPlayer({ song, onClose }) {
         </div>
       </div>
 
-      {/* Main TikTok Video Block - no inner padding to avoid scroll */}
+      {/* Main TikTok Video Block - mobile only */}
       {(() => {
         // Normaliser l'ID TikTok à partir de la base (id direct ou URL)
         const normalizedId = cleanTikTokId(song.tiktok_video_id) || cleanTikTokId(song.tiktok_url);
         if (!normalizedId) return null;
         return (
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
           <div className="">
             <TikTokDirect
               postId={normalizedId}
+              song={song}
               className="mb-4"
             />
           </div>

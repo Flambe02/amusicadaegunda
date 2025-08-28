@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import '../styles/tiktok-optimized.css';
 
 export default function Home() {
   const [currentSong, setCurrentSong] = useState(null);
@@ -18,7 +19,9 @@ export default function Home() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showPlatformsDialog, setShowPlatformsDialog] = useState(false);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
+  const [showDescriptionDialog, setShowDescriptionDialog] = useState(false);
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
+  const [displayedSong, setDisplayedSong] = useState(null); // Nouvelle variable pour la chanson affichée
 
   useEffect(() => {
     loadCurrentSong();
@@ -33,6 +36,7 @@ export default function Home() {
       // Utiliser la nouvelle méthode getCurrent
       const song = await Song.getCurrent();
       setCurrentSong(song);
+      setDisplayedSong(song); // Initialiser la chanson affichée
     } catch (err) {
       console.error('Erro ao carregar música atual:', err);
       setError('Erro ao carregar a música da semana. Tente novamente.');
@@ -64,6 +68,13 @@ export default function Home() {
     loadCurrentSong();
   };
 
+  // Nouvelle fonction pour remplacer la vidéo principale
+  const handleReplaceVideo = (song) => {
+    setDisplayedSong(song);
+    // Scroll vers le haut pour voir la nouvelle vidéo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handlePlayVideo = (song) => {
     setSelectedVideo(song);
     setShowVideoModal(true);
@@ -77,6 +88,11 @@ export default function Home() {
   const handleShowLyrics = (song) => {
     setSelectedSongForDialog(song);
     setShowLyricsDialog(true);
+  };
+
+  const handleShowDescription = (song) => {
+    setSelectedSongForDialog(song);
+    setShowDescriptionDialog(true);
   };
 
   const handleShareSong = async (song) => {
@@ -96,8 +112,6 @@ export default function Home() {
       alert('Link copiado para a área de transferência!');
     }
   };
-
-
 
   // Obtenir le mois précédent
   const getPreviousMonth = () => {
@@ -182,39 +196,86 @@ export default function Home() {
       <div className="hidden lg:grid lg:grid-cols-2 lg:gap-8 lg:mt-8">
         {/* ===== COLONNE GAUCHE: VIDÉO TIKTOK ===== */}
         <div className="space-y-6">
-          {currentSong ? (
+          {displayedSong ? (
             <div className="bg-white rounded-3xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-                🎬 Música da Semana
-              </h3>
-              <div className="bg-black rounded-2xl overflow-hidden shadow-xl" style={{ height: 'min(70vh, 600px)' }}>
-                {currentSong.tiktok_video_id ? (
-                  <iframe
-                    src={`https://www.tiktok.com/embed/${currentSong.tiktok_video_id}`}
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    allowFullScreen
-                    title={`TikTok Video - ${currentSong.title}`}
-                    className="w-full h-full"
-                    style={{ aspectRatio: '9/16' }}
-                  />
-                ) : (
+                             <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
+                 <button
+                   onClick={() => handleShowDescription(displayedSong)}
+                   className="inline-flex items-center gap-2 hover:text-blue-600 transition-colors cursor-pointer"
+                   title="Ver descrição da música"
+                 >
+                   <span className="text-2xl">ℹ️</span>
+                   <span>{displayedSong.title}</span>
+                 </button>
+               </h3>
+               <p className="text-gray-600 text-center mb-4">
+                 {format(parseISO(displayedSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+               </p>
+              <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
+                {displayedSong.tiktok_video_id ? (
+                  <div className="w-full" style={{ aspectRatio: '9/16' }}>
+                    <iframe
+                      src={`https://www.tiktok.com/embed/${displayedSong.tiktok_video_id}?autoplay=0&muted=1&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      allowFullScreen
+                      title={`TikTok Video - ${displayedSong.title}`}
+                      className="w-full h-full"
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        overflow: 'hidden',
+                        borderRadius: '16px'
+                      }}
+                      scrolling="no"
+                      allow="autoplay; fullscreen; picture-in-picture; encrypted-media; microphone; camera; geolocation; gyroscope; accelerometer"
+                      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms allow-top-navigation"
+                      seamless
+                    />
+                  </div>
+                ) : displayedSong.tiktok_url ? (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900" style={{ aspectRatio: '9/16' }}>
                     <div className="text-center text-white">
                       <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                       <p className="text-lg font-medium">Vídeo TikTok</p>
-                      <p className="text-sm text-gray-400">Música da semana</p>
+                      <p className="text-sm text-gray-400 mb-4">{displayedSong.title}</p>
+                      <a 
+                        href={displayedSong.tiktok_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-block bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                      >
+                        Ver no TikTok
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900" style={{ aspectRatio: '9/16' }}>
+                    <div className="text-center text-white">
+                      <Music className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                      <p className="text-lg font-medium">Vídeo não disponível</p>
+                      <p className="text-sm text-gray-400">{displayedSong.title}</p>
                     </div>
                   </div>
                 )}
               </div>
               <div className="mt-4 text-center">
-                <h4 className="font-bold text-gray-800 text-lg mb-2">{currentSong.title}</h4>
-                <p className="text-gray-600">{currentSong.artist}</p>
+                <h4 className="font-bold text-gray-800 text-lg mb-2">{displayedSong.title}</h4>
+                <p className="text-gray-600">{displayedSong.artist}</p>
                 <p className="text-gray-500 text-sm mt-1">
-                  {format(parseISO(currentSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                  {format(parseISO(displayedSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}
                 </p>
+                {/* Bouton pour revenir à la musique de la semaine si une autre est sélectionnée */}
+                {displayedSong !== currentSong && currentSong && (
+                  <button
+                    onClick={() => handleReplaceVideo(currentSong)}
+                    className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                  >
+                    ← Voltar para Música da Semana
+                  </button>
+                )}
               </div>
               
               {/* 3 Ações Principais - Desktop */}
@@ -223,7 +284,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     className="bg-white/70 hover:bg-white/90 text-gray-700 font-semibold border-gray-300 py-3 rounded-2xl text-sm"
-                    onClick={() => handleShowPlatforms(currentSong)}
+                    onClick={() => handleShowPlatforms(displayedSong)}
                   >
                     Plataformas
                   </Button>
@@ -231,7 +292,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     className="bg-white/70 hover:bg-white/90 text-gray-700 font-semibold border-gray-300 py-3 rounded-2xl text-sm"
-                    onClick={() => handleShowLyrics(currentSong)}
+                    onClick={() => handleShowLyrics(displayedSong)}
                   >
                     Letras
                   </Button>
@@ -239,7 +300,7 @@ export default function Home() {
                   <Button
                     variant="outline"
                     className="bg-white/70 hover:bg-white/90 text-gray-700 font-semibold border-gray-300 py-3 rounded-2xl text-sm"
-                    onClick={() => handleShareSong(currentSong)}
+                    onClick={() => handleShareSong(displayedSong)}
                   >
                     Compartilhar
                   </Button>
@@ -247,10 +308,10 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-3xl p-6 shadow-lg">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-                🎬 Música da Semana
-              </h3>
+                         <div className="bg-white rounded-3xl p-6 shadow-lg">
+               <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
+                 ℹ️ Nenhuma música disponível
+               </h3>
               <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center" style={{ height: 'min(70vh, 600px)', aspectRatio: '9/16' }}>
                 <div className="text-center text-gray-500">
                   <Music className="w-16 h-16 mx-auto mb-4" />
@@ -280,7 +341,8 @@ export default function Home() {
                   <div className="flex items-center gap-4">
                     <div 
                       className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-                      onClick={() => handlePlayVideo(song)}
+                      onClick={() => handleReplaceVideo(song)}
+                      title="Clique para ver esta música na coluna de vídeo"
                     >
                       <Play className="w-6 h-6 text-white" />
                     </div>
@@ -323,9 +385,10 @@ export default function Home() {
 
       {/* ===== LAYOUT MOBILE: DISPOSITION VERTICALE TRADITIONNELLE ===== */}
       <div className="lg:hidden">
-        {currentSong ? (
+        {displayedSong ? (
           <div className="mb-6">
-            <SongPlayer song={currentSong} />
+            {/* Composant SongPlayer para as ações */}
+            <SongPlayer song={displayedSong} onShowDescription={handleShowDescription} />
           </div>
         ) : (
           <div className="bg-white/20 rounded-3xl p-8 text-center">
@@ -356,7 +419,8 @@ export default function Home() {
                     <div className="flex items-center gap-4">
                       <div 
                         className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-                        onClick={() => handlePlayVideo(song)}
+                        onClick={() => handleReplaceVideo(song)}
+                        title="Clique para ver esta música na coluna de vídeo"
                       >
                         <Play className="w-6 h-6 text-white" />
                       </div>
@@ -579,6 +643,53 @@ export default function Home() {
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-600 font-medium">Letras não disponíveis</p>
                     <p className="text-gray-500 text-sm">As letras desta música serão adicionadas em breve.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== DIALOG DESCRIÇÃO ===== */}
+      <Dialog open={showDescriptionDialog} onOpenChange={setShowDescriptionDialog}>
+        <DialogContent className="bg-[#f8f5f2] max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              ℹ️ Descrição da Música
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedSongForDialog && (
+            <div className="space-y-4">
+              {/* Informations de la musique */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                <h3 className="text-lg font-bold text-blue-900 mb-1">
+                  {selectedSongForDialog.title}
+                </h3>
+                <p className="text-blue-700 font-medium">
+                  {selectedSongForDialog.artist}
+                </p>
+                <p className="text-blue-600 text-sm">
+                  📅 {format(parseISO(selectedSongForDialog.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                </p>
+              </div>
+
+              {/* Descrição */}
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                {selectedSongForDialog.description ? (
+                  <ScrollArea className="h-60">
+                    <div className="pr-4">
+                      <pre className="text-gray-700 whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                        {selectedSongForDialog.description}
+                      </pre>
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">Descrição não disponível</p>
+                    <p className="text-gray-500 text-sm">A descrição desta música será adicionada em breve.</p>
                   </div>
                 )}
               </div>

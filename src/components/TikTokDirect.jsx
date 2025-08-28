@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, RotateCcw, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
+import { Play, RotateCcw, AlertCircle, RefreshCw, ExternalLink, Music } from 'lucide-react';
 
 /**
  * TikTokDirect - Embed TikTok professionnel avec intégration parfaite
  * Utilise les meilleures pratiques pour une vidéo stable et responsive
  */
-export default function TikTokDirect({ postId, className = "" }) {
+export default function TikTokDirect({ postId, className = "", song = null }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -17,15 +17,14 @@ export default function TikTokDirect({ postId, className = "" }) {
   const timeoutRef = useRef(null);
   const retryTimeoutRef = useRef(null);
   
-  const maxRetries = 2; // Réduit pour éviter les boucles
-  const loadTimeout = 12000; // 12 secondes max
+  const maxRetries = 2;
+  const loadTimeout = 12000;
 
   // Gestion du cycle de vie du composant
   useEffect(() => {
     setIsMounted(true);
     return () => {
       setIsMounted(false);
-      // Nettoyage des timeouts
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
     };
@@ -49,16 +48,13 @@ export default function TikTokDirect({ postId, className = "" }) {
     
     console.log(`🎬 TikTok: Chargement de la vidéo ${postId}`);
     
-    // Reset states
     setIsLoading(true);
     setError(null);
     setRetryCount(0);
     setIframeKey(prev => prev + 1);
     
-    // Nettoyer les timeouts précédents
     clearAllTimeouts();
     
-    // Timeout principal de chargement
     timeoutRef.current = setTimeout(() => {
       if (isMounted) {
         console.warn('⏰ TikTok: Timeout de chargement atteint');
@@ -77,7 +73,6 @@ export default function TikTokDirect({ postId, className = "" }) {
     setIsLoading(false);
     setError(null);
     
-    // Focus sur l'iframe pour l'accessibilité
     if (iframeRef.current) {
       iframeRef.current.focus();
     }
@@ -92,7 +87,6 @@ export default function TikTokDirect({ postId, className = "" }) {
     if (retryCount < maxRetries) {
       console.log(`🔄 Tentative de retry ${retryCount + 1}/${maxRetries}`);
       
-      // Délai avant retry pour éviter la surcharge
       retryTimeoutRef.current = setTimeout(() => {
         if (isMounted) {
           setRetryCount(prev => prev + 1);
@@ -100,14 +94,13 @@ export default function TikTokDirect({ postId, className = "" }) {
           setIsLoading(true);
           setError(null);
           
-          // Nouveau timeout pour cette tentative
           timeoutRef.current = setTimeout(() => {
             if (isMounted) {
               handleLoadError('Timeout sur retry');
             }
           }, loadTimeout);
         }
-      }, 1000); // 1 seconde de délai
+      }, 1000);
     } else {
       console.error('❌ Nombre maximum de tentatives atteint');
       setIsLoading(false);
@@ -124,7 +117,6 @@ export default function TikTokDirect({ postId, className = "" }) {
     setIsLoading(true);
     setError(null);
     
-    // Nouveau timeout
     clearAllTimeouts();
     timeoutRef.current = setTimeout(() => {
       if (isMounted) {
@@ -133,7 +125,6 @@ export default function TikTokDirect({ postId, className = "" }) {
     }, loadTimeout);
   }, [isMounted, clearAllTimeouts]);
 
-  // Gestion des erreurs de l'iframe
   const handleIframeError = useCallback(() => {
     handleLoadError('Erro interno do iframe TikTok');
   }, [handleLoadError]);
@@ -141,7 +132,6 @@ export default function TikTokDirect({ postId, className = "" }) {
   // Gestion des messages postMessage pour la communication avec TikTok
   useEffect(() => {
     const handleMessage = (event) => {
-      // Vérifier l'origine pour la sécurité
       if (event.origin !== 'https://www.tiktok.com') return;
       
       try {
@@ -161,7 +151,21 @@ export default function TikTokDirect({ postId, className = "" }) {
   if (!postId) {
     return (
       <div className={`bg-gray-100 rounded-lg p-8 text-center ${className}`}>
+        <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-500">ID TikTok manquant</p>
+        {song && song.tiktok_url && (
+          <div className="mt-4">
+            <a 
+              href={song.tiktok_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Ver no TikTok
+            </a>
+          </div>
+        )}
       </div>
     );
   }
@@ -172,7 +176,7 @@ export default function TikTokDirect({ postId, className = "" }) {
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-red-800 mb-2">Erro ao carregar</h3>
         <p className="text-red-600 mb-4">{error}</p>
-        <div className="flex gap-2 justify-center">
+        <div className="flex gap-2 justify-center flex-wrap">
           <button
             onClick={handleRetry}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -180,12 +184,23 @@ export default function TikTokDirect({ postId, className = "" }) {
             <RefreshCw className="w-4 h-4" />
             Tentar Novamente
           </button>
+          {song && song.tiktok_url && (
+            <a
+              href={song.tiktok_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Abrir no TikTok
+            </a>
+          )}
           <button
             onClick={() => window.open(`https://www.tiktok.com/@user/video/${postId}`, '_blank')}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
           >
             <ExternalLink className="w-4 h-4" />
-            Abrir no TikTok
+            Tentar ID Direto
           </button>
         </div>
       </div>
@@ -200,29 +215,29 @@ export default function TikTokDirect({ postId, className = "" }) {
         width: '100%',
         maxWidth: '100%',
         position: 'relative',
-        overflow: 'hidden',
         backgroundColor: '#000',
         borderRadius: '16px',
-        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)',
+        overflow: 'hidden'
       }}
     >
-      {/* Container principal avec ratio 9:16 parfait et dimensions fixes */}
+      {/* Container principal avec dimensions dynamiques pour TikTok */}
       <div 
         className="tiktok-iframe-wrapper"
         style={{
           width: '100%',
           height: '0',
-          paddingBottom: '177.78%', // Ratio 9:16 exact (16/9 * 100)
+          paddingBottom: '177.78%', // Ratio 9:16 exact pour TikTok
           position: 'relative',
           overflow: 'hidden',
           borderRadius: '16px'
         }}
       >
-        {/* Iframe TikTok avec paramètres optimisés */}
+        {/* Iframe TikTok avec paramètres optimisés pour une intégration parfaite */}
         <iframe
           key={iframeKey}
           ref={iframeRef}
-          src={`https://www.tiktok.com/embed/${postId}?autoplay=0&muted=1&loop=1&controls=1&rel=0&modestbranding=1`}
+          src={`https://www.tiktok.com/embed/${postId}?autoplay=0&muted=1&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
           title={`Vídeo TikTok ${postId}`}
           className="tiktok-iframe"
           style={{
@@ -236,17 +251,23 @@ export default function TikTokDirect({ postId, className = "" }) {
             backgroundColor: '#000',
             overflow: 'hidden',
             display: 'block',
-            zIndex: 1
+            zIndex: 1,
+            // Paramètres critiques pour éviter le scroll et la coupure
+            scrolling: 'no',
+            allowTransparency: 'true',
+            frameBorder: '0'
           }}
-          allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          allow="autoplay; fullscreen; picture-in-picture; encrypted-media; microphone; camera; geolocation; gyroscope; accelerometer"
           allowFullScreen
           loading="lazy"
           onLoad={handleLoadSuccess}
           onError={handleIframeError}
-          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms allow-top-navigation"
+          scrolling="no"
+          seamless
         />
         
-        {/* Overlay de chargement avec design professionnel */}
+        {/* Overlay de chargement */}
         {isLoading && (
           <div 
             className="tiktok-loading-overlay"

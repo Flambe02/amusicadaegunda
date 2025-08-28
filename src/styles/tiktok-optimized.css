@@ -1,34 +1,27 @@
-/* TikTok Optimized CSS - Intégration parfaite sans scroll ni mouvement */
+/* ===== CSS OPTIMISÉ POUR TIKTOK EMBEDDING PARFAIT ===== */
 
-/* Container principal - dimensions fixes et stables */
+/* Container principal TikTok */
 .tiktok-video-container {
-  width: 100% !important;
-  max-width: 100% !important;
-  position: relative !important;
-  overflow: hidden !important;
-  background-color: #000 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  display: block !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+  background-color: #000;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
 }
 
-/* Wrapper de l'iframe - ratio 9:16 parfait */
+/* Wrapper de l'iframe avec ratio 9:16 parfait */
 .tiktok-iframe-wrapper {
-  width: 100% !important;
-  height: 0 !important;
-  padding-bottom: 177.78% !important; /* Ratio 9:16 exact (16/9 * 100) */
-  position: relative !important;
-  overflow: hidden !important;
-  border-radius: 16px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
+  width: 100%;
+  height: 0;
+  padding-bottom: 177.78%; /* Ratio 9:16 exact (16/9 * 100) */
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
 }
 
-/* Iframe TikTok - positionnement absolu parfait */
+/* Iframe TikTok optimisé */
 .tiktok-iframe {
   position: absolute !important;
   top: 0 !important;
@@ -41,134 +34,111 @@
   overflow: hidden !important;
   display: block !important;
   z-index: 1 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  box-sizing: border-box !important;
   
-  /* Prévention du scroll et du mouvement */
-  transform: none !important;
-  transition: none !important;
-  animation: none !important;
+  /* Paramètres critiques pour éviter le scroll */
+  scrolling: no !important;
+  allowtransparency: true !important;
+  frameborder: 0 !important;
   
   /* Optimisations de performance */
-  will-change: auto !important;
-  backface-visibility: hidden !important;
-  perspective: none !important;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-/* Overlay de chargement - positionnement parfait */
+/* Responsive design pour différents écrans */
+@media (max-width: 768px) {
+  .tiktok-video-container {
+    border-radius: 12px;
+  }
+  
+  .tiktok-iframe-wrapper {
+    border-radius: 12px;
+  }
+  
+  .tiktok-iframe {
+    border-radius: 12px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tiktok-video-container {
+    border-radius: 20px;
+  }
+  
+  .tiktok-iframe-wrapper {
+    border-radius: 20px;
+  }
+  
+  .tiktok-iframe {
+    border-radius: 20px !important;
+  }
+}
+
+/* Animation de chargement */
 .tiktok-loading-overlay {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  background-color: rgba(0, 0, 0, 0.95) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 2 !important;
-  border-radius: 16px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: hidden !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  border-radius: inherit;
+  backdrop-filter: blur(4px);
 }
 
 /* Spinner de chargement */
 .loading-spinner {
-  margin-bottom: 1rem !important;
+  animation: spin 1s linear infinite;
 }
 
-/* Prévention du scroll sur mobile */
-@media (max-width: 768px) {
-  .tiktok-video-container {
-    /* Utilisation des unités mobiles optimisées */
-    width: 100vw !important;
-    max-width: 100vw !important;
-    margin: 0 !important;
-    padding: 0 !important;
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
   }
-  
-  .tiktok-iframe-wrapper {
-    /* Ratio mobile optimisé */
-    padding-bottom: 177.78% !important;
-  }
-  
-  /* Prévention du scroll sur iOS */
-  .tiktok-video-container,
-  .tiktok-iframe-wrapper,
-  .tiktok-iframe {
-    -webkit-overflow-scrolling: auto !important;
-    overscroll-behavior: none !important;
-    scroll-behavior: auto !important;
+  to {
+    transform: rotate(360deg);
   }
 }
 
-/* Prévention du scroll sur tous les navigateurs */
-.tiktok-video-container *,
-.tiktok-iframe-wrapper *,
-.tiktok-iframe * {
-  scrollbar-width: none !important; /* Firefox */
-  -ms-overflow-style: none !important; /* IE/Edge */
+/* Optimisations pour éviter le scroll */
+.tiktok-iframe::-webkit-scrollbar {
+  display: none !important;
 }
 
-.tiktok-video-container *::-webkit-scrollbar,
-.tiktok-iframe-wrapper *::-webkit-scrollbar,
-.tiktok-iframe *::-webkit-scrollbar {
-  display: none !important; /* Chrome/Safari/Opera */
+.tiktok-iframe {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
-/* Optimisations pour les navigateurs modernes */
-@supports (aspect-ratio: 9/16) {
-  .tiktok-iframe-wrapper {
-    aspect-ratio: 9/16 !important;
-    padding-bottom: 0 !important;
-  }
+/* Hover effects pour l'interactivité */
+.tiktok-video-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
 }
 
-/* Prévention des animations et transitions non désirées */
-.tiktok-video-container *,
-.tiktok-iframe-wrapper *,
-.tiktok-iframe * {
-  animation: none !important;
-  transition: none !important;
-  transform: none !important;
-}
-
-/* Focus visible pour l'accessibilité */
+/* Focus states pour l'accessibilité */
 .tiktok-iframe:focus {
-  outline: 2px solid #3b82f6 !important;
-  outline-offset: 2px !important;
+  outline: 2px solid #00f2ea;
+  outline-offset: 2px;
 }
 
-/* États d'erreur et de chargement */
-.tiktok-video-container.error {
-  border: 2px solid #ef4444 !important;
-}
-
-.tiktok-video-container.loading {
-  background-color: #000 !important;
-}
-
-/* Responsive design parfait */
-@media (min-width: 1024px) {
+/* Support pour le mode sombre */
+@media (prefers-color-scheme: dark) {
   .tiktok-video-container {
-    max-width: 400px !important; /* Largeur maximale sur desktop */
-    margin: 0 auto !important;
+    background-color: #111;
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .tiktok-video-container {
-    max-width: 350px !important;
-    margin: 0 auto !important;
-  }
-}
-
-@media (max-width: 767px) {
-  .tiktok-video-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
+/* Optimisations pour les appareils à haute densité */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .tiktok-iframe {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 }

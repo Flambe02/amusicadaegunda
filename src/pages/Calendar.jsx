@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import VisuallyHidden from "@/components/ui/VisuallyHidden";
 import SongPlayer from '../components/SongPlayer';
+import '../styles/tiktok-optimized.css';
 
 export default function Calendar() {
   const [songs, setSongs] = useState([]);
@@ -347,6 +348,11 @@ export default function Calendar() {
           <SongPlayer 
             song={selectedSong} 
             onClose={() => setSelectedSong(null)}
+            onShowDescription={(song) => {
+              // Pour Calendar, on peut ouvrir un dialog de description
+              // ou rediriger vers la page Home
+              console.log('Descrição solicitada para:', song.title);
+            }}
           />
         </DialogContent>
       </Dialog>
