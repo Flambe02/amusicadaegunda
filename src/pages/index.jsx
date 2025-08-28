@@ -12,6 +12,8 @@ import Sobre from "./Sobre";
 
 import Blog from "./Blog";
 
+import Admin from "./Admin";
+
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -31,6 +33,8 @@ const PAGES = {
     Sobre: Sobre,
     
     Blog: Blog,
+    
+    Admin: Admin,
     
     TikTokDemo: TikTokDemo,
     
@@ -76,6 +80,7 @@ function PagesContent() {
                 {/* Admin route removed for private access */}
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/blog" element={<Blog />} />
+                <Route path="/admin" element={<Admin />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
                 {/* Route TikTok avec paramètre dynamique */}
