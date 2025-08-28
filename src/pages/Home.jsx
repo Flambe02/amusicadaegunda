@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
+import { localStorageService } from '@/lib/localStorage';
 
 export default function Home() {
   const [currentSong, setCurrentSong] = useState(null);
@@ -24,6 +25,16 @@ export default function Home() {
   const [displayedSong, setDisplayedSong] = useState(null); // Nouvelle variable pour la chanson affichée
 
   useEffect(() => {
+    // S'assurer que le localStorage est initialisé
+    localStorageService.initialize();
+    
+    // Vérifier si des données existent, sinon forcer la réinitialisation
+    const songs = localStorageService.songs.getAll();
+    if (songs.length === 0) {
+      console.log('🔄 Aucune donnée trouvée, réinitialisation du localStorage...');
+      localStorageService.forceReset();
+    }
+    
     loadCurrentSong();
     loadRecentSongs();
   }, []);
@@ -215,7 +226,7 @@ export default function Home() {
                 {displayedSong.tiktok_video_id ? (
                   <div className="w-full" style={{ aspectRatio: '9/16' }}>
                     <iframe
-                      src={`https://www.tiktok.com/embed/${displayedSong.tiktok_video_id}?autoplay=0&muted=1&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+                                             src={`https://www.tiktok.com/embed/${displayedSong.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
                       width="100%"
                       height="100%"
                       frameBorder="0"
@@ -496,15 +507,15 @@ export default function Home() {
                 {/* Lecteur TikTok intégré */}
                 {selectedVideo.tiktok_video_id && (
                   <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
-                    <iframe
-                      src={`https://www.tiktok.com/embed/${selectedVideo.tiktok_video_id}`}
-                      width="100%"
-                      height="500"
-                      frameBorder="0"
-                      allowFullScreen
-                      title={`TikTok Video - ${selectedVideo.title}`}
-                      className="w-full"
-                    />
+                                         <iframe
+                       src={`https://www.tiktok.com/embed/${selectedVideo.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+                       width="100%"
+                       height="500"
+                       frameBorder="0"
+                       allowFullScreen
+                       title={`TikTok Video - ${selectedVideo.title}`}
+                       className="w-full"
+                     />
                   </div>
                 )}
 

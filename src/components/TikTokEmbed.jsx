@@ -34,7 +34,7 @@ export default function TikTokEmbed({ tiktokId, className = "" }) {
 
       // Create iframe directly with TikTok embed URL
       const iframe = document.createElement('iframe');
-      iframe.src = `https://www.tiktok.com/embed/${tiktokId}`;
+      iframe.src = `https://www.tiktok.com/embed/${tiktokId}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`;
       iframe.style.cssText = `
         width: 100%;
         height: 100%;

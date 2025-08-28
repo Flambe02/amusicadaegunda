@@ -237,7 +237,7 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
         <iframe
           key={iframeKey}
           ref={iframeRef}
-          src={`https://www.tiktok.com/embed/${postId}?autoplay=0&muted=1&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+          src={`https://www.tiktok.com/embed/${postId}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
           title={`Vídeo TikTok ${postId}`}
           className="tiktok-iframe"
           style={{

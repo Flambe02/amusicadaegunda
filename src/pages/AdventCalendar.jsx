@@ -6,6 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import TikTokDirect from '../components/TikTokDirect';
+import { cleanTikTokId } from '@/lib/parseTikTokId';
+import '../styles/tiktok-optimized.css';
 
 // Componente Porta do Advento
 const AdventDoor = ({ day, song, onOpen }) => {
@@ -234,27 +237,15 @@ export default function AdventCalendar() {
                 </div>
               )}
 
-              {/* Vídeo TikTok - Affichage comme sur la page Home */}
+              {/* Vídeo TikTok - Affichage optimisé avec TikTokDirect */}
               {selectedSong?.tiktok_video_id && (
                 <div className="mb-4">
-                  <div className="bg-black rounded-2xl overflow-hidden shadow-lg" style={{ height: '500px' }}>
-                    <div className="w-full h-full flex items-center justify-center overflow-hidden">
-                      <iframe
-                        src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}`}
-                        width="360"
-                        height="450"
-                        frameBorder="0"
-                        allowFullScreen
-                        title={`TikTok Video - ${selectedSong.title}`}
-                        className="rounded-lg"
-                        style={{ 
-                          border: 'none',
-                          outline: 'none'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-2 text-center">
+                  <TikTokDirect
+                    postId={selectedSong.tiktok_video_id}
+                    song={selectedSong}
+                    className="mb-2"
+                  />
+                  <div className="text-center">
                     <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
                   </div>
                 </div>
