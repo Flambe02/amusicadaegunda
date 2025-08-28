@@ -2,13 +2,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Calendar, Gift, Info } from 'lucide-react';
+import { Home, Calendar, Gift, Info, FileText } from 'lucide-react';
 
 export default function Layout({ children }) {
   const location = useLocation();
   const pages = [
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
     { name: 'Calendário', url: createPageUrl('Calendar'), icon: Calendar },
+    { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Ano 2025', url: createPageUrl('AdventCalendar'), icon: Gift },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
   ];

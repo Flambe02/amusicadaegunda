@@ -10,6 +10,8 @@ import AdventCalendar from "./AdventCalendar";
 
 import Sobre from "./Sobre";
 
+import Blog from "./Blog";
+
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -27,6 +29,8 @@ const PAGES = {
     // Admin: Admin, // Removed for private access
     
     Sobre: Sobre,
+    
+    Blog: Blog,
     
     TikTokDemo: TikTokDemo,
     
@@ -71,6 +75,7 @@ function PagesContent() {
                 <Route path="/adventcalendar" element={<AdventCalendar />} />
                 {/* Admin route removed for private access */}
                 <Route path="/sobre" element={<Sobre />} />
+                <Route path="/blog" element={<Blog />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
                 {/* Route TikTok avec paramètre dynamique */}
