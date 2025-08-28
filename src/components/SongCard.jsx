@@ -11,7 +11,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import TikTokEmbed from './TikTokEmbed';
+import TikTokDirect from './TikTokDirect';
+import { cleanTikTokId } from '@/lib/parseTikTokId';
 
 export default function SongCard({ song }) {
   const [showLyrics, setShowLyrics] = useState(false);
@@ -100,14 +101,19 @@ export default function SongCard({ song }) {
         </DialogContent>
       </Dialog>
       
-      {/* Diálogo do Vídeo - Agora usando TikTokEmbed unificado */}
+      {/* Diálogo do Vídeo - usando TikTokDirect com ID normalizado */}
       <Dialog open={showVideo} onOpenChange={setShowVideo}>
         <DialogContent className="max-w-sm p-0 border-0 bg-black">
-          <TikTokEmbed 
-            videoId={song.tiktok_video_id}
-            embedId={song.tiktok_embed_id}
-            className="w-full"
-          />
+          {(() => {
+            const normalizedId = cleanTikTokId(song.tiktok_video_id) || cleanTikTokId(song.tiktok_url);
+            if (!normalizedId) return null;
+            return (
+              <TikTokDirect
+                postId={normalizedId}
+                className="w-full"
+              />
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </>

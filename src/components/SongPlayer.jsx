@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video } from 'lucide-react';
 import TikTokDirect from './TikTokDirect';
+import { cleanTikTokId, parseTikTokId } from '@/lib/parseTikTokId';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 export default function SongPlayer({ song, onClose }) {
@@ -78,16 +79,21 @@ export default function SongPlayer({ song, onClose }) {
       </div>
 
       {/* Main TikTok Video Block */}
-      {song.tiktok_video_id && (
+      {(() => {
+        // Normaliser l'ID TikTok à partir de la base (id direct ou URL)
+        const normalizedId = cleanTikTokId(song.tiktok_video_id) || cleanTikTokId(song.tiktok_url);
+        if (!normalizedId) return null;
+        return (
         <div className="bg-white rounded-2xl shadow-lg">
           <div className="px-4 pt-4">
             <TikTokDirect
-              postId={song.tiktok_video_id}
+              postId={normalizedId}
               className="mb-4"
             />
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Independent Action Buttons Block */}
       <div className="bg-white rounded-2xl shadow-lg p-4">
