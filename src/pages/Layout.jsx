@@ -67,19 +67,19 @@ export default function Layout({ children }) {
 
       {/* Navegação Inferior - Mobile uniquement */}
       <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50">
-        <div className="flex justify-around items-center p-1">
+        <div className="grid grid-cols-5 gap-1 p-1">
           {pages.map((page) => (
             <Link
               key={page.name}
               to={page.url}
-              className={`flex-1 flex flex-col items-center py-2 px-2 rounded-3xl transition-all duration-300 ${
+              className={`flex flex-col items-center justify-center py-3 px-1 rounded-3xl transition-all duration-300 ${
                 isActive(page)
                   ? 'bg-[#32a2dc] text-white shadow-lg transform scale-105'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
               }`}
             >
-              <page.icon className="w-6 h-6 mb-1" />
-              <span className="text-xs font-bold">{page.name}</span>
+              <page.icon className="w-5 h-5 mb-1" />
+              <span className="text-xs font-bold text-center leading-tight">{page.name}</span>
             </Link>
           ))}
         </div>
