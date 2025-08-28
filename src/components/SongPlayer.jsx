@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video } from 'lucide-react';
+import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video, FileText } from 'lucide-react';
 import TikTokDirect from './TikTokDirect';
 import { cleanTikTokId, parseTikTokId } from '@/lib/parseTikTokId';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
@@ -141,10 +141,16 @@ export default function SongPlayer({ song, onClose }) {
             )}
           </div>
           
-          <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center space-x-2">
-            <ExternalLink className="w-5 h-5" />
-            <span>Letras</span>
-          </button>
+          {/* Letras Button - Only show when lyrics exist */}
+          {song.lyrics && song.lyrics.trim() && (
+            <button 
+              onClick={() => setShowDescription(true)}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center space-x-2"
+            >
+              <FileText className="w-5 h-5" />
+              <span>Letras</span>
+            </button>
+          )}
           
           <button className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors flex items-center justify-center space-x-2">
             <Share2 className="w-5 h-5" />
@@ -153,19 +159,19 @@ export default function SongPlayer({ song, onClose }) {
         </div>
       </div>
 
-      {/* Description Dialog */}
+      {/* Lyrics Dialog */}
       <Dialog open={showDescription} onOpenChange={setShowDescription}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-blue-500" />
-              <span>Descrição da Música</span>
+              <FileText className="w-5 h-5 text-blue-500" />
+              <span>Letras da Música</span>
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <p className="text-gray-700 leading-relaxed">
-              {song.description || 'Nenhuma descrição disponível para esta música.'}
-            </p>
+            <pre className="text-gray-700 leading-relaxed whitespace-pre-wrap font-sans text-sm">
+              {song.lyrics || 'Nenhuma letra disponível para esta música.'}
+            </pre>
           </div>
         </DialogContent>
       </Dialog>
