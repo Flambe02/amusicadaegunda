@@ -45,39 +45,7 @@ export default function Blog() {
     return monday;
   };
 
-  // Générer le contexte de l'actualité basé sur la date
-  const generateNewsContext = (dateString) => {
-    const date = parseISO(dateString);
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    
-    // Contexte générique basé sur la période
-    if (month === 0) { // Janvier
-      return "Début d'année, résolutions et nouveaux départs. Une période de renouveau et d'espoir.";
-    } else if (month === 1) { // Février
-      return "Mois de l'amour et du carnaval. Une époque de célébration et de joie.";
-    } else if (month === 2) { // Mars
-      return "Arrivée du printemps, renaissance de la nature. Une saison de croissance et de transformation.";
-    } else if (month === 3) { // Avril
-      return "Pâques et renouveau printanier. Une période de réflexion et de renouveau.";
-    } else if (month === 4) { // Mai
-      return "Mois des fleurs et de la célébration du travail. Une époque de gratitude et d'appréciation.";
-    } else if (month === 5) { // Juin
-      return "Début de l'été, festivals et célébrations. Une saison de liberté et d'expression.";
-    } else if (month === 6) { // Juillet
-      return "Cœur de l'été, vacances et détente. Une période de repos et de découverte.";
-    } else if (month === 7) { // Août
-      return "Fin de l'été, préparation de la rentrée. Une époque de transition et de préparation.";
-    } else if (month === 8) { // Septembre
-      return "Rentrée scolaire et retour à la routine. Une saison de nouveaux commencements.";
-    } else if (month === 9) { // Octobre
-      return "Automne, changement de couleurs. Une période de transformation et de mélancolie.";
-    } else if (month === 10) { // Novembre
-      return "Approche de l'hiver, réflexion et introspection. Une époque de contemplation.";
-    } else { // Décembre
-      return "Fin d'année, fêtes et célébrations. Une saison de joie et de partage.";
-    }
-  };
+
 
   if (isLoading) {
     return (
@@ -133,18 +101,17 @@ export default function Blog() {
         <p className="text-white/80 font-medium text-lg drop-shadow-md">
           Histórias por trás de cada música
         </p>
-        <p className="text-white/60 text-sm mt-2">
-          Contexto histórico, atualidades e significado de cada canção
-        </p>
+                 <p className="text-white/60 text-sm mt-2">
+           Descrições detalhadas e significado de cada canção
+         </p>
       </div>
 
       {/* Liste des articles de blog */}
       <div className="space-y-8">
-        {songs.map((song) => {
-          const mondayDate = getMondayOfWeek(song.release_date);
-          const newsContext = generateNewsContext(song.release_date);
-          
-          return (
+                 {songs.map((song) => {
+           const mondayDate = getMondayOfWeek(song.release_date);
+           
+           return (
             <Card key={song.id} className="bg-white/95 backdrop-blur-sm shadow-xl border-0">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
@@ -167,18 +134,8 @@ export default function Blog() {
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-6">
-                {/* Contexte de l'actualité */}
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
-                  <h3 className="text-lg font-bold text-blue-900 mb-2 flex items-center gap-2">
-                    📰 Contexto da Época
-                  </h3>
-                  <p className="text-blue-800 leading-relaxed">
-                    {newsContext}
-                  </p>
-                </div>
-
-                {/* Description de la chanson */}
+                             <CardContent className="space-y-6">
+                 {/* Description de la chanson */}
                 {song.description ? (
                   <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
                     <h3 className="text-lg font-bold text-green-900 mb-2 flex items-center gap-2">
@@ -188,16 +145,16 @@ export default function Blog() {
                       {song.description}
                     </p>
                   </div>
-                ) : (
-                  <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-700 mb-2 flex items-center gap-2">
-                      🎵 Sobre a Música
-                    </h3>
-                    <p className="text-gray-600 italic">
-                      A descrição desta música será adicionada em breve. Enquanto isso, aproveite a música!
-                    </p>
-                  </div>
-                )}
+                                 ) : (
+                   <div className="bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-200">
+                     <h3 className="text-lg font-bold text-gray-700 mb-2 flex items-center gap-2">
+                       🎵 Sobre a Música
+                     </h3>
+                     <p className="text-gray-600 italic">
+                       A descrição desta música será adicionada no Supabase em breve. Enquanto isso, aproveite a música!
+                     </p>
+                   </div>
+                 )}
 
                 {/* Liens vers les plateformes */}
                 <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-4 border border-orange-200">
