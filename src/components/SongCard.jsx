@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Music2, Play, FileText, Share2, X } from 'lucide-react';
+import { Music2, Play, FileText, Share2, X, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -101,19 +101,45 @@ export default function SongCard({ song }) {
         </DialogContent>
       </Dialog>
       
-      {/* Diálogo do Vídeo - usando TikTokDirect com ID normalizado */}
+      {/* Diálogo do Vídeo - Refactorisé avec intégration parfaite */}
       <Dialog open={showVideo} onOpenChange={setShowVideo}>
-        <DialogContent className="max-w-sm p-0 border-0 bg-black">
-          {(() => {
-            const normalizedId = cleanTikTokId(song.tiktok_video_id) || cleanTikTokId(song.tiktok_url);
-            if (!normalizedId) return null;
-            return (
-              <TikTokDirect
-                postId={normalizedId}
-                className="w-full"
-              />
-            );
-          })()}
+        <DialogContent className="max-w-md p-0 border-0 bg-transparent">
+          <div className="relative">
+            {/* Header avec titre et bouton de fermeture */}
+            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-black/80 backdrop-blur-sm rounded-t-2xl">
+              <div className="flex items-center gap-2">
+                <Play className="w-5 h-5 text-blue-400" />
+                <span className="text-white font-semibold">{song.title}</span>
+              </div>
+              <button
+                onClick={() => setShowVideo(false)}
+                className="text-white hover:text-gray-300 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Container TikTok avec intégration parfaite */}
+            <div className="mt-16"> {/* Espace pour le header */}
+              {(() => {
+                const normalizedId = cleanTikTokId(song.tiktok_video_id) || cleanTikTokId(song.tiktok_url);
+                if (!normalizedId) {
+                  return (
+                    <div className="bg-gray-100 rounded-2xl p-8 text-center">
+                      <p className="text-gray-500">Vídeo TikTok não disponível</p>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <TikTokDirect
+                    postId={normalizedId}
+                    className="w-full"
+                  />
+                );
+              })()}
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
