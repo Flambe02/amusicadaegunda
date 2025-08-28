@@ -58,13 +58,12 @@ export default function SongPlayer({ song, onClose }) {
 
   return (
     <div className="space-y-4">
-      {/* Header - mobile friendly, date only */}
+      {/* Header - mobile friendly, title + date */}
       <div className="bg-white rounded-2xl shadow-lg p-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <p className="text-base font-semibold text-blue-700">
-              {new Date(song.release_date).toLocaleDateString('pt-BR')}
-            </p>
+            <h2 className="text-lg font-bold text-gray-800 leading-tight mb-1 line-clamp-2">{song.title}</h2>
+            <p className="text-sm text-blue-700">{new Date(song.release_date).toLocaleDateString('pt-BR')}</p>
           </div>
           {onClose && (
             <button
