@@ -206,7 +206,7 @@ export default function AdventCalendar() {
             </div>
 
             {/* Conteúdo principal */}
-            <div className="p-4 pt-8">
+            <div className="p-4 pt-2">
               {/* Nome da Vídeo */}
               <div className="mb-4 bg-white/80 backdrop-blur-sm rounded-2xl p-3 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
@@ -225,7 +225,7 @@ export default function AdventCalendar() {
 
               {/* Player do Spotify */}
               {selectedSong?.spotify_url && (
-                <div className="mb-6">
+                <div className="mb-4">
                   <iframe 
                     style={{borderRadius: '16px'}} 
                     src={getSpotifyEmbedUrl(selectedSong.spotify_url)}
@@ -246,16 +246,16 @@ export default function AdventCalendar() {
                     <TikTokEmbedOptimized
                       postId={selectedSong.tiktok_video_id}
                       song={selectedSong}
-                      className="mb-2"
+                      className="w-full max-w-sm mx-auto"
                     />
                   ) : (
                     <TikTokDirect
                       postId={selectedSong.tiktok_video_id}
                       song={selectedSong}
-                      className="mb-2"
+                      className="w-full max-w-sm mx-auto"
                     />
                   )}
-                  <div className="text-center">
+                  <div className="text-center mt-2">
                     <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
                   </div>
                 </div>
