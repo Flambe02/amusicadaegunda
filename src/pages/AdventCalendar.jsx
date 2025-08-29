@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import TikTokDirect from '../components/TikTokDirect';
+import TikTokEmbedOptimized from '../components/TikTokEmbedOptimized';
 import { cleanTikTokId } from '@/lib/parseTikTokId';
 import '../styles/tiktok-optimized.css';
 
@@ -237,14 +238,23 @@ export default function AdventCalendar() {
                 </div>
               )}
 
-              {/* Vídeo TikTok - Affichage optimisé avec TikTokDirect */}
+              {/* Vídeo TikTok - Affichage optimisé avec composant approprié */}
               {selectedSong?.tiktok_video_id && (
                 <div className="mb-4">
-                  <TikTokDirect
-                    postId={selectedSong.tiktok_video_id}
-                    song={selectedSong}
-                    className="mb-2"
-                  />
+                  {/* Utiliser le composant optimisé pour "Confissões Bancárias" */}
+                  {selectedSong.tiktok_video_id === '7540762684149517590' ? (
+                    <TikTokEmbedOptimized
+                      postId={selectedSong.tiktok_video_id}
+                      song={selectedSong}
+                      className="mb-2"
+                    />
+                  ) : (
+                    <TikTokDirect
+                      postId={selectedSong.tiktok_video_id}
+                      song={selectedSong}
+                      className="mb-2"
+                    />
+                  )}
                   <div className="text-center">
                     <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
                   </div>

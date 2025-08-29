@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TikTokDirect from './TikTokDirect';
+import TikTokEmbedOptimized from './TikTokEmbedOptimized';
 import LyricsDialog from './LyricsDialog';
 import { cleanTikTokId } from '@/lib/parseTikTokId';
 
@@ -31,6 +32,28 @@ export default function SongCard({ song }) {
         console.log("Compartilhamento falhou:", error);
       }
     }
+  };
+
+  // Fonction pour déterminer quel composant TikTok utiliser
+  const getTikTokComponent = (normalizedId) => {
+    // Utiliser le composant optimisé pour "Confissões Bancárias" (ID: 7540762684149517590)
+    if (normalizedId === '7540762684149517590') {
+      return (
+        <TikTokEmbedOptimized
+          postId={normalizedId}
+          className="w-full"
+          song={song}
+        />
+      );
+    }
+    
+    // Utiliser le composant standard pour les autres vidéos
+    return (
+      <TikTokDirect
+        postId={normalizedId}
+        className="w-full"
+      />
+    );
   };
 
   if (!song) return null;
@@ -126,12 +149,8 @@ export default function SongCard({ song }) {
                   );
                 }
                 
-                return (
-                  <TikTokDirect
-                    postId={normalizedId}
-                    className="w-full"
-                  />
-                );
+                // Utiliser le composant approprié selon la vidéo
+                return getTikTokComponent(normalizedId);
               })()}
             </div>
           </div>

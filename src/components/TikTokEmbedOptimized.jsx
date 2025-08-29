@@ -1,173 +1,110 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, RotateCcw, AlertCircle, RefreshCw, ExternalLink, Music } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { RotateCcw, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 
 /**
- * TikTokDirect - Embed TikTok professionnel avec intégration parfaite
- * Utilise les meilleures pratiques pour une vidéo stable et responsive
+ * TikTokEmbedOptimized - Composant TikTok ultra-optimisé pour résoudre les problèmes de chargement
+ * Spécialement conçu pour la vidéo "Confissões Bancárias" et autres vidéos problématiques
  */
-export default function TikTokDirect({ postId, className = "", song = null }) {
+export default function TikTokEmbedOptimized({ postId, className = "", song = null }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [iframeKey, setIframeKey] = useState(0);
-  const [isMounted, setIsMounted] = useState(false);
   
   const iframeRef = useRef(null);
   const containerRef = useRef(null);
   const timeoutRef = useRef(null);
-  const retryTimeoutRef = useRef(null);
   
-  const maxRetries = 1; // Réduit de 2 à 1 pour plus de rapidité
-  const loadTimeout = 8000; // Réduit de 12s à 8s pour plus de réactivité
-
-  // Gestion du cycle de vie du composant
-  useEffect(() => {
-    setIsMounted(true);
-    return () => {
-      setIsMounted(false);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
-    };
-  }, []);
+  const maxRetries = 1;
+  const loadTimeout = 6000; // Timeout ultra-court de 6 secondes
 
   // Fonction de nettoyage des timeouts
-  const clearAllTimeouts = useCallback(() => {
+  const clearTimeout = () => {
     if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+      window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = null;
-    }
-  }, []);
+  };
 
   // Reset complet quand postId change
   useEffect(() => {
-    if (!postId || !isMounted) return;
+    if (!postId) return;
     
-    console.log(`🎬 TikTok: Chargement de la vidéo ${postId}`);
+    console.log(`🚀 TikTok Optimisé: Chargement de la vidéo ${postId}`);
     
     setIsLoading(true);
     setError(null);
     setRetryCount(0);
     setIframeKey(prev => prev + 1);
     
-    clearAllTimeouts();
+    clearTimeout();
     
-    // Timeout réduit pour plus de réactivité
-    timeoutRef.current = setTimeout(() => {
-      if (isMounted) {
-        console.warn('⏰ TikTok: Timeout de chargement atteint');
-        handleLoadError('Timeout: La vidéo a pris trop de temps à charger');
-      }
+    // Timeout ultra-court pour une détection rapide des problèmes
+    timeoutRef.current = window.setTimeout(() => {
+      console.warn('⏰ TikTok Optimisé: Timeout de chargement atteint');
+      handleLoadError('Timeout: Chargement trop lent');
     }, loadTimeout);
     
-    return clearAllTimeouts;
-  }, [postId, isMounted, clearAllTimeouts]);
+    return clearTimeout;
+  }, [postId]);
 
-  const handleLoadSuccess = useCallback(() => {
-    if (!isMounted) return;
-    
-    console.log('✅ TikTok: Vidéo chargée avec succès');
-    clearAllTimeouts();
+  const handleLoadSuccess = () => {
+    console.log('✅ TikTok Optimisé: Vidéo chargée avec succès');
+    clearTimeout();
     setIsLoading(false);
     setError(null);
-    
-    if (iframeRef.current) {
-      iframeRef.current.focus();
-    }
-  }, [isMounted, clearAllTimeouts]);
+  };
 
-  const handleLoadError = useCallback((errorMessage = 'Erro ao carregar vídeo TikTok') => {
-    if (!isMounted) return;
-    
-    console.error('❌ TikTok: Échec de chargement');
-    clearAllTimeouts();
+  const handleLoadError = (errorMessage = 'Erro ao carregar vídeo TikTok') => {
+    console.error('❌ TikTok Optimisé: Échec de chargement');
+    clearTimeout();
     
     if (retryCount < maxRetries) {
       console.log(`🔄 Tentative de retry ${retryCount + 1}/${maxRetries}`);
       
-      // Retry plus rapide (500ms au lieu de 1000ms)
-      retryTimeoutRef.current = setTimeout(() => {
-        if (isMounted) {
-          setRetryCount(prev => prev + 1);
-          setIframeKey(prev => prev + 1);
-          setIsLoading(true);
-          setError(null);
-          
-          timeoutRef.current = setTimeout(() => {
-            if (isMounted) {
-              handleLoadError('Timeout sur retry');
-            }
-          }, loadTimeout);
-        }
-      }, 500);
+      // Retry ultra-rapide (300ms)
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        setIframeKey(prev => prev + 1);
+        setIsLoading(true);
+        setError(null);
+        
+        timeoutRef.current = window.setTimeout(() => {
+          handleLoadError('Timeout sur retry');
+        }, loadTimeout);
+      }, 300);
     } else {
       console.error('❌ Nombre maximum de tentatives atteint');
       setIsLoading(false);
       setError(errorMessage);
     }
-  }, [isMounted, retryCount, maxRetries, clearAllTimeouts]);
+  };
 
-  const handleRetry = useCallback(() => {
-    if (!isMounted) return;
-    
-    console.log('🔄 TikTok: Tentative manuelle de retry');
+  const handleRetry = () => {
+    console.log('🔄 TikTok Optimisé: Tentative manuelle de retry');
     setError(null);
     setRetryCount(0);
     setIframeKey(prev => prev + 1);
     setIsLoading(true);
     
-    // Timeout pour le retry manuel
-    timeoutRef.current = setTimeout(() => {
-      if (isMounted) {
-        handleLoadError('Timeout sur retry manuel');
-      }
+    timeoutRef.current = window.setTimeout(() => {
+      handleLoadError('Timeout sur retry manuel');
     }, loadTimeout);
-  }, [isMounted, handleLoadError]);
+  };
 
-  const handleIframeError = useCallback(() => {
+  const handleIframeError = () => {
     handleLoadError('Erro interno do iframe TikTok');
-  }, [handleLoadError]);
+  };
 
-  // Gestion des messages postMessage pour la communication avec TikTok
+  // Nettoyage au démontage
   useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.origin !== 'https://www.tiktok.com') return;
-      
-      try {
-        const data = event.data;
-        if (data && data.type === 'tiktok-ready') {
-          handleLoadSuccess();
-        }
-      } catch (err) {
-        console.warn('TikTok: Erro ao processar mensagem', err);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [handleLoadSuccess]);
+    return clearTimeout;
+  }, []);
 
   if (!postId) {
     return (
       <div className={`bg-gray-100 rounded-lg p-8 text-center ${className}`}>
-        <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-500">ID TikTok manquant</p>
-        {song && song.tiktok_url && (
-          <div className="mt-4">
-            <a 
-              href={song.tiktok_url} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Ver no TikTok
-            </a>
-          </div>
-        )}
       </div>
     );
   }
@@ -197,13 +134,6 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
               Abrir no TikTok
             </a>
           )}
-          <button
-            onClick={() => window.open(`https://www.tiktok.com/@user/video/${postId}`, '_blank')}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Tentar ID Direto
-          </button>
         </div>
       </div>
     );
@@ -212,7 +142,7 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
   return (
     <div 
       ref={containerRef}
-      className={`tiktok-video-container ${className}`}
+      className={`tiktok-video-container-optimized ${className}`}
       style={{
         width: '100%',
         maxWidth: '100%',
@@ -225,7 +155,7 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
     >
       {/* Container principal avec dimensions dynamiques pour TikTok */}
       <div 
-        className="tiktok-iframe-wrapper"
+        className="tiktok-iframe-wrapper-optimized"
         style={{
           width: '100%',
           height: '0',
@@ -235,13 +165,13 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
           borderRadius: '16px'
         }}
       >
-        {/* Iframe TikTok avec paramètres optimisés pour une intégration parfaite */}
+        {/* Iframe TikTok ultra-optimisé */}
         <iframe
           key={iframeKey}
           ref={iframeRef}
           src={`https://www.tiktok.com/embed/${postId}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
           title={`Vídeo TikTok ${postId}`}
-          className="tiktok-iframe"
+          className="tiktok-iframe-optimized"
           style={{
             position: 'absolute',
             top: '0',
@@ -254,14 +184,13 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
             overflow: 'hidden',
             display: 'block',
             zIndex: 1,
-            // Paramètres critiques pour éviter le scroll et la coupure
             scrolling: 'no',
             allowTransparency: 'true',
             frameBorder: '0'
           }}
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media; microphone; camera; geolocation; gyroscope; accelerometer"
           allowFullScreen
-          // Suppression de loading="lazy" pour un chargement immédiat
+          // Pas de loading lazy pour un chargement immédiat
           onLoad={handleLoadSuccess}
           onError={handleIframeError}
           sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms allow-top-navigation"
@@ -269,10 +198,10 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
           seamless
         />
         
-        {/* Overlay de chargement */}
+        {/* Overlay de chargement ultra-rapide */}
         {isLoading && (
           <div 
-            className="tiktok-loading-overlay"
+            className="tiktok-loading-overlay-optimized"
             style={{
               position: 'absolute',
               top: '0',
@@ -288,7 +217,7 @@ export default function TikTokDirect({ postId, className = "", song = null }) {
             }}
           >
             <div className="text-center text-white">
-              <div className="loading-spinner mb-4">
+              <div className="loading-spinner-optimized mb-4">
                 <RotateCcw className="w-12 h-12 animate-spin mx-auto text-pink-500" />
               </div>
               <p className="text-lg font-medium mb-2">Carregando TikTok...</p>
