@@ -175,7 +175,7 @@ export default function AdventCalendar() {
 
       {/* Modal de Música Redesenhado */}
       <Dialog open={!!selectedSong} onOpenChange={() => setSelectedSong(null)}>
-        <DialogContent className="p-0 border-0 bg-transparent max-w-sm w-[90vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="p-0 border-0 bg-transparent max-w-sm w-[90vw] max-h-[90vh] overflow-y-auto mx-auto">
           <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-3xl shadow-2xl overflow-hidden">
             {/* Cabeçalho com número do dia */}
             <div className="bg-gradient-to-r from-red-500 to-rose-600 p-4 text-center relative">
