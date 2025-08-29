@@ -243,20 +243,39 @@ export default function AdventCalendar() {
                 <div className="mb-4">
                   {/* Utiliser le composant optimisé pour "Confissões Bancárias" */}
                   {selectedSong.tiktok_video_id === '7540762684149517590' ? (
-                    <TikTokEmbedOptimized
-                      postId={selectedSong.tiktok_video_id}
-                      song={selectedSong}
-                      className="w-full max-w-sm mx-auto"
-                    />
+                    <div className="w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16', height: '400px' }}>
+                      <TikTokEmbedOptimized
+                        postId={selectedSong.tiktok_video_id}
+                        song={selectedSong}
+                        className="w-full h-full"
+                      />
+                    </div>
                   ) : (
-                    <TikTokDirect
-                      postId={selectedSong.tiktok_video_id}
-                      song={selectedSong}
-                      className="w-full max-w-sm mx-auto"
-                    />
+                    <div className="w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16', height: '400px' }}>
+                      <TikTokDirect
+                        postId={selectedSong.tiktok_video_id}
+                        song={selectedSong}
+                        className="w-full h-full"
+                      />
+                    </div>
                   )}
                   <div className="text-center mt-2">
                     <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback si pas de vidéo TikTok */}
+              {!selectedSong?.tiktok_video_id && (
+                <div className="mb-4 bg-gray-100 rounded-2xl p-8 text-center">
+                  <div className="w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16', height: '400px' }}>
+                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center">
+                      <div className="text-center text-gray-500">
+                        <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                        <p className="text-lg font-medium">Vídeo não disponível</p>
+                        <p className="text-sm text-gray-400">{selectedSong?.title}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
