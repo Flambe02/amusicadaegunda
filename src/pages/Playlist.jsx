@@ -19,7 +19,7 @@ export default function Playlist() {
             
             <div className="text-left">
               <h1 className="text-3xl md:text-4xl font-black text-white drop-shadow-lg mb-2">
-                Playlists
+                Playlist
               </h1>
               <p className="text-white/90 font-medium text-lg drop-shadow-md">
                 Ouça todas as músicas da Música da Segunda
