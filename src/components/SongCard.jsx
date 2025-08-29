@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import TikTokDirect from './TikTokDirect';
+import LyricsDialog from './LyricsDialog';
 import { cleanTikTokId } from '@/lib/parseTikTokId';
 
 export default function SongCard({ song }) {
@@ -87,19 +88,13 @@ export default function SongCard({ song }) {
       </div>
       
       {/* Diálogo das Letras */}
-      <Dialog open={showLyrics} onOpenChange={setShowLyrics}>
-        <DialogContent className="bg-[#f8f5f2]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-800">{song.title}</DialogTitle>
-            <DialogDescription>{song.artist}</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="h-72">
-            <pre className="text-gray-600 whitespace-pre-wrap font-sans text-base leading-relaxed p-1">
-              {song.lyrics}
-            </pre>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      <LyricsDialog 
+        open={showLyrics} 
+        onOpenChange={setShowLyrics} 
+        song={song}
+        title={song.title}
+        maxHeight="h-56"
+      />
       
       {/* Diálogo do Vídeo - Refactorisé avec intégration parfaite */}
       <Dialog open={showVideo} onOpenChange={setShowVideo}>

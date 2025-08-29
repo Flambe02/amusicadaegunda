@@ -2,13 +2,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Calendar, Gift, Info, FileText } from 'lucide-react';
+import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
 
 export default function Layout({ children }) {
   const location = useLocation();
   const pages = [
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
     { name: 'Calendário', url: createPageUrl('Calendar'), icon: Calendar },
+    { name: 'Playlist', url: createPageUrl('Playlist'), icon: ListMusic },
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Ano 2025', url: createPageUrl('AdventCalendar'), icon: Gift },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
@@ -27,13 +28,13 @@ export default function Layout({ children }) {
           <div className="flex items-center justify-between">
             {/* Logo + Titre */}
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
+              <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
                 <img 
                   src="images/Musica da segunda.jpg" 
                   alt="Logo Música da Segunda"
                   className="w-full h-full object-cover"
                 />
-              </div>
+              </Link>
               <div>
                 <h1 className="text-xl font-black text-gray-800">Música da Segunda</h1>
                 <p className="text-sm text-gray-600">Descubra música nova toda segunda-feira</p>
@@ -66,20 +67,20 @@ export default function Layout({ children }) {
       </main>
 
       {/* Navegação Inferior - Mobile uniquement */}
-      <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50">
-        <div className="grid grid-cols-4 gap-1 p-1">
-          {pages.filter(page => page.name !== 'Blog' && page.name !== 'Admin').map((page) => (
+      <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-2xl bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50">
+        <div className="flex gap-1 p-1">
+          {pages.filter(page => page.name !== 'Sobre').map((page) => (
             <Link
               key={page.name}
               to={page.url}
-              className={`flex flex-col items-center justify-center py-3 px-1 rounded-3xl transition-all duration-300 ${
+              className={`flex flex-col items-center justify-center py-3 px-2 rounded-3xl transition-all duration-300 flex-1 min-w-0 ${
                 isActive(page)
                   ? 'bg-[#32a2dc] text-white shadow-lg transform scale-105'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
               }`}
             >
-              <page.icon className="w-5 h-5 mb-1" />
-              <span className="text-xs font-bold text-center leading-tight">{page.name}</span>
+              <page.icon className="w-5 h-5 mb-1 flex-shrink-0" />
+              <span className="text-xs font-bold text-center leading-tight truncate">{page.name}</span>
             </Link>
           ))}
         </div>

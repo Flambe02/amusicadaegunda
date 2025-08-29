@@ -11,6 +11,8 @@ export default function Blog() {
   const [songs, setSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   useEffect(() => {
     loadBlogPosts();
@@ -43,6 +45,12 @@ export default function Blog() {
     const monday = new Date(date);
     monday.setDate(date.getDate() + mondayOffset);
     return monday;
+  };
+
+  // Lancer la vidéo TikTok
+  const handlePlayTikTok = (song) => {
+    setSelectedVideo(song);
+    setShowVideoModal(true);
   };
 
 
@@ -190,19 +198,17 @@ export default function Blog() {
                       </a>
                     )}
                     
-                    {song.tiktok_url && (
-                      <a 
-                        href={song.tiktok_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="block"
-                      >
-                        <Button className="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105">
-                          <Video className="w-4 h-4 mr-2" />
-                          TikTok
-                        </Button>
-                      </a>
-                    )}
+                                         {song.tiktok_url && (
+                       <button 
+                         onClick={() => handlePlayTikTok(song)}
+                         className="block w-full"
+                       >
+                         <Button className="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105">
+                           <Video className="w-4 h-4 mr-2" />
+                           Video
+                         </Button>
+                       </button>
+                     )}
 
                     {!song.spotify_url && !song.youtube_url && !song.tiktok_url && (
                       <div className="col-span-full text-center py-4">
@@ -248,8 +254,75 @@ export default function Blog() {
           <p className="text-white/80">
             Os primeiros posts do blog serão publicados em breve!
           </p>
-        </div>
-      )}
-    </div>
-  );
-}
+                 </div>
+       )}
+
+       {/* ===== MODAL VIDÉO TIKTOK ===== */}
+       {showVideoModal && selectedVideo && (
+         <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+             <div className="p-6">
+               <div className="flex items-center justify-between mb-6">
+                 <h2 className="text-3xl font-bold text-blue-900">
+                   🎬 {selectedVideo.title}
+                 </h2>
+                 <button 
+                   onClick={() => setShowVideoModal(false)}
+                   className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-2 hover:bg-gray-100 rounded-full transition-colors"
+                 >
+                   ✕
+                 </button>
+               </div>
+
+               <div className="space-y-6">
+                 {/* Informations de la musique */}
+                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                   <h3 className="text-xl font-bold text-blue-900 mb-2">
+                     {selectedVideo.title}
+                   </h3>
+                   <p className="text-blue-700 font-medium">
+                     {selectedVideo.artist}
+                   </p>
+                   <p className="text-blue-600 text-sm">
+                     📅 Lançamento: {format(parseISO(selectedVideo.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                   </p>
+                 </div>
+
+                 {/* Lecteur TikTok intégré */}
+                 {selectedVideo.tiktok_video_id && (
+                   <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
+                     <iframe
+                       src={`https://www.tiktok.com/embed/${selectedVideo.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+                       width="100%"
+                       height="500"
+                       frameBorder="0"
+                       allowFullScreen
+                       title={`TikTok Video - ${selectedVideo.title}`}
+                       className="w-full"
+                     />
+                   </div>
+                 )}
+
+                 {/* Boutons d'action */}
+                 <div className="flex gap-4 justify-center">
+                   <button
+                     onClick={() => window.open(selectedVideo.tiktok_url, '_blank')}
+                     className="bg-black text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2"
+                   >
+                     🎬 Ver no TikTok
+                   </button>
+                   <button
+                     onClick={() => setShowVideoModal(false)}
+                     className="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                   >
+                     Fechar
+                   </button>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
+     </div>
+   );
+ }

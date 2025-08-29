@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import SongPlayer from '../components/SongPlayer';
 import CountdownTimer from '../components/CountdownTimer';
-import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText } from 'lucide-react';
+import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import LyricsDialog from '../components/LyricsDialog';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
@@ -624,51 +625,14 @@ export default function Home() {
       </Dialog>
 
       {/* ===== DIALOG LETRAS ===== */}
-      <Dialog open={showLyricsDialog} onOpenChange={setShowLyricsDialog}>
-        <DialogContent className="bg-[#f8f5f2] max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              📝 Letras da Música
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedSongForDialog && (
-            <div className="space-y-4">
-              {/* Informations de la musique */}
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
-                <h3 className="text-lg font-bold text-green-900 mb-1">
-                  {selectedSongForDialog.title}
-                </h3>
-                <p className="text-green-700 font-medium">
-                  {selectedSongForDialog.artist}
-                </p>
-                <p className="text-green-600 text-sm">
-                  📅 {format(parseISO(selectedSongForDialog.release_date), 'dd/MM/yyyy', { locale: ptBR })}
-                </p>
-              </div>
-
-              {/* Paroles */}
-              <div className="bg-white rounded-xl p-4 border border-gray-200">
-                {selectedSongForDialog.lyrics ? (
-                  <ScrollArea className="h-60">
-                    <div className="pr-4">
-                      <pre className="text-gray-700 whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                        {selectedSongForDialog.lyrics}
-                      </pre>
-                    </div>
-                  </ScrollArea>
-                ) : (
-                  <div className="text-center py-8">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium">Letras não disponíveis</p>
-                    <p className="text-gray-500 text-sm">As letras desta música serão adicionadas em breve.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <LyricsDialog 
+        open={showLyricsDialog} 
+        onOpenChange={setShowLyricsDialog} 
+        song={selectedSongForDialog}
+        title="📝 Letras da Música"
+        maxHeight="h-52"
+        showIcon={false}
+      />
 
       {/* ===== DIALOG DESCRIÇÃO ===== */}
       <Dialog open={showDescriptionDialog} onOpenChange={setShowDescriptionDialog}>

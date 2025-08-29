@@ -14,6 +14,8 @@ import Blog from "./Blog";
 
 import Admin from "./Admin";
 
+import Playlist from "./Playlist";
+
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
@@ -35,6 +37,8 @@ const PAGES = {
     Blog: Blog,
     
     Admin: Admin,
+    
+    Playlist: Playlist,
     
     TikTokDemo: TikTokDemo,
     
@@ -81,6 +85,7 @@ function PagesContent() {
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/playlist" element={<Playlist />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
                 {/* Route TikTok avec paramètre dynamique */}

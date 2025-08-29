@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video, FileText, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import TikTokDirect from './TikTokDirect';
+import LyricsDialog from './LyricsDialog';
 import { cleanTikTokId } from '@/lib/parseTikTokId';
 
 export default function SongPlayer({ song, onClose, onShowDescription }) {
@@ -175,29 +176,13 @@ export default function SongPlayer({ song, onClose, onShowDescription }) {
       </div>
 
       {/* Lyrics Dialog */}
-      <Dialog open={showDescription} onOpenChange={setShowDescription}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="flex items-center space-x-2">
-                <FileText className="w-5 h-5 text-blue-500" />
-                <span>Letras da Música</span>
-              </DialogTitle>
-              <button
-                onClick={() => setShowDescription(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          </DialogHeader>
-          <div className="mt-4">
-            <pre className="text-gray-700 leading-relaxed whitespace-pre-wrap font-sans text-sm">
-              {song.lyrics || 'Nenhuma letra disponível para esta música.'}
-            </pre>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LyricsDialog 
+        open={showDescription} 
+        onOpenChange={setShowDescription} 
+        song={song}
+        title="Letras da Música"
+        maxHeight="h-64"
+      />
 
       {/* Song Description Dialog */}
       <Dialog open={showSongDescription} onOpenChange={setShowSongDescription}>
