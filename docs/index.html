@@ -4,42 +4,123 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
+    <!-- Favicon et Icônes -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/Logo.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/Logo.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/Logo.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/images/Logo.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/images/Logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
     <!-- SEO Principal -->
-    <title>Música da Segunda - Nova música toda segunda-feira</title>
-    <meta name="description" content="Descubra uma nova música incrível toda segunda-feira. Música da Segunda - sua dose semanal de descobertas musicais e descobertas." />
-    <meta name="keywords" content="música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music" />
+    <title>Música da Segunda - Nova música toda segunda-feira | Descobertas Musicais</title>
+    <meta name="description" content="Descubra uma nova música incrível toda segunda-feira. Música da Segunda - sua dose semanal de descobertas musicais, playlists Spotify e conteúdo exclusivo. Música brasileira e indie." />
+    <meta name="keywords" content="música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music, spotify, tiktok, música da segunda, playlist, descobertas" />
     <meta name="author" content="Música da Segunda" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    
+    <!-- Canonical et Langues -->
+    <link rel="canonical" href="https://amusicadaegunda.com" />
+    <link rel="alternate" hreflang="pt-BR" href="https://amusicadaegunda.com" />
+    <link rel="alternate" hreflang="x-default" href="https://amusicadaegunda.com" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Música da Segunda" />
-    <meta property="og:description" content="Nova música toda segunda-feira - Descubra música nova toda semana" />
+    <meta property="og:title" content="Música da Segunda - Nova música toda segunda-feira" />
+    <meta property="og:description" content="Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais e playlists exclusivas." />
+    <meta property="og:url" content="https://amusicadaegunda.com" />
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:site_name" content="Música da Segunda" />
+    <meta property="og:image" content="https://amusicadaegunda.com/images/Logo.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Logo Música da Segunda - Descobertas musicais semanais" />
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Música da Segunda" />
-    <meta name="twitter:description" content="Nova música toda segunda-feira - Descubra música nova toda semana" />
+    <meta name="twitter:title" content="Música da Segunda - Nova música toda segunda-feira" />
+    <meta name="twitter:description" content="Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais." />
+    <meta name="twitter:image" content="https://amusicadaegunda.com/images/Logo.png" />
+    <meta name="twitter:image:alt" content="Logo Música da Segunda" />
     
     <!-- Mobile & PWA -->
     <meta name="theme-color" content="#32a2dc" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Música da Segunda" />
+    <meta name="mobile-web-app-capable" content="yes" />
     
-    <!-- Preconnect pour performance -->
+    <!-- Performance et Core Web Vitals -->
     <link rel="preconnect" href="https://www.tiktok.com" />
     <link rel="preconnect" href="https://*.tiktokcdn.com" />
     <link rel="preconnect" href="https://open.spotify.com" />
     <link rel="preconnect" href="https://music.apple.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
-    <!-- DNS prefetch pour TikTok -->
+    <!-- DNS prefetch -->
     <link rel="dns-prefetch" href="https://www.tiktok.com" />
     <link rel="dns-prefetch" href="https://*.tiktokcdn.com" />
-    <script type="module" crossorigin src="./assets/index-D-1SNg43.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-lNjNjlqF.css">
+    
+    <!-- Données structurées Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Música da Segunda",
+      "alternateName": "Música da Segunda",
+      "url": "https://amusicadaegunda.com",
+      "description": "Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Música da Segunda",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://amusicadaegunda.com/images/Logo.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://amusicadaegunda.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      },
+      "sameAs": [
+        "https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH"
+      ]
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MusicGroup",
+      "name": "A Música da Segunda",
+      "description": "Projeto musical que lança uma nova música toda segunda-feira",
+      "url": "https://amusicadaegunda.com",
+      "image": "https://amusicadaegunda.com/images/Logo.png",
+      "genre": ["Indie", "Música Brasileira", "Pop"],
+      "sameAs": [
+        "https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH"
+      ]
+    }
+    </script>
+    
+    <!-- Sitemap -->
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <script type="module" crossorigin src="/assets/index-hOnXNTb3.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-DHbHB7JU.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-IWow_Ftt.js">
+    <link rel="modulepreload" crossorigin href="/assets/utils-DME-h_hF.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-dhwJtfoV.css">
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,26 @@
+{
+  "name": "Música da Segunda",
+  "short_name": "Música da Segunda",
+  "description": "Descubra uma nova música incrível toda segunda-feira",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#32a2dc",
+  "theme_color": "#32a2dc",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "entertainment", "lifestyle"],
+  "lang": "pt-BR"
+}

@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://amusicadaegunda.com/sitemap.xml
+
+# Crawl-delay pour éviter de surcharger le serveur
+Crawl-delay: 1
+
+# Permettre l'indexation des pages principales
+Allow: /calendar
+Allow: /playlist
+Allow: /blog
+Allow: /adventcalendar
+Allow: /sobre
+
+# Bloquer l'accès aux pages d'administration
+Disallow: /admin
+
+# Bloquer l'accès aux fichiers de développement
+Disallow: /src/
+Disallow: /node_modules/
+Disallow: /*.js.map
+Disallow: /*.css.map
+
+# Permettre l'accès aux ressources statiques
+Allow: /images/
+Allow: /assets/
+Allow: /manifest.json
