@@ -32,6 +32,15 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
     
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Música da Segunda" />
+    <meta name="application-name" content="Música da Segunda" />
+    <meta name="msapplication-TileColor" content="#32a2dc" />
+    <meta name="theme-color" content="#32a2dc" />
+    
     <!-- SEO Principal -->
     <title>Música da Segunda - Nova música toda segunda-feira</title>
     <meta name="description" content="Descubra uma nova música incrível toda segunda-feira. Música da Segunda - sua dose semanal de descobertas musicais e descobertas." />
@@ -69,6 +78,10 @@
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- Script PWA -->
+    <script src="/pwa-install.js"></script>
+    
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
       // MIT License

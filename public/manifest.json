@@ -1,13 +1,47 @@
 {
-  "name": "Música da Segunda",
+  "name": "Música da Segunda - Nova música toda segunda-feira",
   "short_name": "Música da Segunda",
-  "description": "Descubra uma nova música incrível toda segunda-feira",
+  "description": "Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais!",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#32a2dc",
   "theme_color": "#32a2dc",
   "orientation": "portrait-primary",
+  "categories": ["music", "entertainment", "lifestyle", "social"],
+  "lang": "pt-BR",
+  "dir": "ltr",
   "icons": [
+    {
+      "src": "/images/Logo.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/Logo.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/Logo.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/Logo.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/Logo.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/images/Logo.png",
       "sizes": "192x192",
@@ -16,11 +50,72 @@
     },
     {
       "src": "/images/Logo.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/Logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["music", "entertainment", "lifestyle"],
-  "lang": "pt-BR"
+  "shortcuts": [
+    {
+      "name": "Música da Semana",
+      "short_name": "Música da Semana",
+      "description": "Ver a música atual da semana",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/images/Logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Playlist",
+      "short_name": "Playlist",
+      "description": "Acessar playlists do Spotify",
+      "url": "/playlist",
+      "icons": [
+        {
+          "src": "/images/Logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Blog",
+      "short_name": "Blog",
+      "description": "Ler artigos sobre as músicas",
+      "url": "/blog",
+      "icons": [
+        {
+          "src": "/images/Logo.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/Logo.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/Logo.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }
