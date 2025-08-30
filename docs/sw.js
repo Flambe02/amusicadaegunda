@@ -10,10 +10,10 @@
  * - Versioning automatique des assets
  */
 
-const CACHE_NAME = 'musica-da-segunda-v2.1.0';
-const STATIC_CACHE = 'static-v2.1.0';
-const DYNAMIC_CACHE = 'dynamic-v2.1.0';
-const API_CACHE = 'api-v2.1.0';
+const CACHE_NAME = 'musica-da-segunda-v2.0.0';
+const STATIC_CACHE = 'static-v2.0.0';
+const DYNAMIC_CACHE = 'dynamic-v2.0.0';
+const API_CACHE = 'api-v2.0.0';
 
 // Assets statiques critiques (cache-first)
 const STATIC_ASSETS = [

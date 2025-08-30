@@ -6,10 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import TikTokDirect from '../components/TikTokDirect';
-import TikTokEmbedOptimized from '../components/TikTokEmbedOptimized';
-import { cleanTikTokId } from '@/lib/parseTikTokId';
-import '../styles/tiktok-optimized.css';
+
 
 // Componente Porta do Advento
 const AdventDoor = ({ day, song, onOpen }) => {
@@ -232,27 +229,20 @@ export default function AdventCalendar() {
                 </div>
               )}
 
-              {/* Vídeo TikTok - Affichage optimisé avec composant approprié */}
+              {/* Vídeo TikTok - Affichage standard comme dans Calendrier */}
               {selectedSong?.tiktok_video_id && (
                 <div className="mb-4">
-                  {/* Utiliser le composant optimisé pour "Confissões Bancárias" */}
-                  {selectedSong.tiktok_video_id === '7540762684149517590' ? (
-                    <div className="w-full max-w-md mx-auto" style={{ aspectRatio: '9/16', height: '500px' }}>
-                      <TikTokEmbedOptimized
-                        postId={selectedSong.tiktok_video_id}
-                        song={selectedSong}
-                        className="w-full h-full"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full max-w-md mx-auto" style={{ aspectRatio: '9/16', height: '500px' }}>
-                      <TikTokDirect
-                        postId={selectedSong.tiktok_video_id}
-                        song={selectedSong}
-                        className="w-full h-full"
-                      />
-                    </div>
-                  )}
+                  <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
+                    <iframe
+                      src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+                      width="100%"
+                      height="500"
+                      frameBorder="0"
+                      allowFullScreen
+                      title={`TikTok Video - ${selectedSong.title}`}
+                      className="w-full"
+                    />
+                  </div>
                   <div className="text-center mt-2">
                     <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
                   </div>
@@ -261,8 +251,8 @@ export default function AdventCalendar() {
 
               {/* Fallback si pas de vidéo TikTok */}
               {!selectedSong?.tiktok_video_id && (
-                <div className="mb-4 bg-gray-100 rounded-2xl p-8 text-center">
-                  <div className="w-full max-w-md mx-auto" style={{ aspectRatio: '9/16', height: '500px' }}>
+                <div className="mb-4">
+                  <div className="bg-gray-100 rounded-2xl p-8 text-center">
                     <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center">
                       <div className="text-center text-gray-500">
                         <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />
