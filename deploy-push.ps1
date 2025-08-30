@@ -53,3 +53,7 @@ Write-Host "4. Test the push notifications" -ForegroundColor Cyan
 
 Write-Host "`n🧪 Test Command:" -ForegroundColor White
 Write-Host "curl -X POST 'https://<PROJECT-REF>.functions.supabase.co/push/send' -H 'Content-Type: application/json' -d '{\"topic\":\"new-song\",\"locale\":\"pt-BR\"}'" -ForegroundColor Cyan
+
+Write-Host "`n⚠️  IMPORTANT: Preserve CNAME file for custom domain!" -ForegroundColor Yellow
+Write-Host "   Your site uses: www.amusicadasegunda.com" -ForegroundColor Cyan
+Write-Host "   Never delete docs/CNAME during deployment!" -ForegroundColor Red
