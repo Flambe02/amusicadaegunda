@@ -4,7 +4,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
-import PushCTA from '@/components/PushCTA';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -60,12 +59,11 @@ export default function Layout({ children }) {
                 </Link>
               ))}
               
-              {/* Push Notifications CTA */}
+              {/* V2.0.0: Notifications push désactivées */}
               <div className="ml-4">
-                <PushCTA 
-                  locale="pt" 
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg"
-                />
+                <div className="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-medium">
+                  📱 PWA para notificações automáticas
+                </div>
               </div>
             </nav>
           </div>
@@ -95,7 +93,7 @@ export default function Layout({ children }) {
           ))}
         </div>
       </nav>
-      <div className="fixed bottom-2 right-2 text-xs text-gray-500">V1</div>
+      <div className="fixed bottom-2 right-2 text-xs text-gray-500 font-medium">V2.0.0</div>
       
       {/* Gestionnaire de tutoriel intégré */}
       <TutorialManager />

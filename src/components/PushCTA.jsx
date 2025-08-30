@@ -12,14 +12,15 @@ export default function PushCTA({ locale = 'fr', className = '' }) {
     const testResult = testPush();
     console.log('🧪 Test result:', testResult);
     
-    // Sur desktop, toujours afficher le message informatif
-    if (!isMobile()) {
-      setVisible(true);
-      return;
-    }
+    // Debug de la détection mobile/desktop
+    const mobileCheck = isMobile();
+    console.log('📱 Détection mobile:', mobileCheck);
+    console.log('🖥️ User Agent:', navigator.userAgent);
     
-    // Sur mobile, vérifier si on doit montrer le bouton de notification
-    setVisible(shouldShowPushCTA()); 
+    // V2.0.0: Désactiver complètement les notifications push
+    console.log('🚫 V2.0.0: Notifications push désactivées pour tous les appareils');
+    setVisible(false);
+    return;
   }, []);
 
   if (!visible) return null;
