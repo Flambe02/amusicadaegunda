@@ -16,7 +16,7 @@ export default function TutorialManager() {
       // Attendre que la page soit complètement chargée
       const timer = setTimeout(() => {
         if (detectIOS() && detectSafari()) {
-          setToastMessage('💡 Astuce : Ajoutez cette app à votre écran d\'accueil pour une meilleure expérience ! Cliquez sur "Tutoriel" pour voir le guide complet.');
+          setToastMessage('💡 Dica: Adicione este app à sua tela inicial para uma experiência melhor! Clique em "Tutorial" para ver o guia completo.');
           setToastType('info');
           setShowToast(true);
         }

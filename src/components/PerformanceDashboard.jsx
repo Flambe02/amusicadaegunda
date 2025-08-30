@@ -176,7 +176,7 @@ export default function PerformanceDashboard({ className = "" }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-purple-600" />
-            <h3 className="font-semibold text-gray-900">Dashboard Performance</h3>
+            <h3 className="font-semibold text-gray-900">Dashboard de Performance</h3>
           </div>
           
           <div className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function PerformanceDashboard({ className = "" }) {
                 : 'bg-red-100 text-red-800'
             }`}>
               <Activity className="w-3 h-3" />
-              {isMonitoring ? 'Actif' : 'Inactif'}
+              {isMonitoring ? 'Ativo' : 'Inativo'}
             </div>
           </div>
         </div>
@@ -210,10 +210,10 @@ export default function PerformanceDashboard({ className = "" }) {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            {tab === 'overview' && 'Vue d\'ensemble'}
-            {tab === 'metrics' && 'Métriques'}
-            {tab === 'alerts' && `Alertes (${alerts.length})`}
-            {tab === 'history' && `Historique (${history.length})`}
+            {tab === 'overview' && 'Visão Geral'}
+            {tab === 'metrics' && 'Métricas'}
+            {tab === 'alerts' && `Alertas (${alerts.length})`}
+            {tab === 'history' && `Histórico (${history.length})`}
           </button>
         ))}
       </div>
@@ -228,7 +228,7 @@ export default function PerformanceDashboard({ className = "" }) {
               <div className={`text-4xl font-bold mb-2 ${getScoreColor(performanceScore)}`}>
                 {performanceScore}/100
               </div>
-              <p className="text-gray-600">Score de performance global</p>
+              <p className="text-gray-600">Pontuação de performance global</p>
             </div>
 
             {/* Core Web Vitals */}
@@ -274,17 +274,17 @@ export default function PerformanceDashboard({ className = "" }) {
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
               >
-                {isMonitoring ? (
-                  <>
-                    <Activity className="w-4 h-4" />
-                    Arrêter
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4" />
-                    Démarrer
-                  </>
-                )}
+                                    {isMonitoring ? (
+                      <>
+                        <Activity className="w-4 h-4" />
+                        Parar
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        Iniciar
+                      </>
+                    )}
               </button>
               
               <button
@@ -292,7 +292,7 @@ export default function PerformanceDashboard({ className = "" }) {
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Exporter
+                Exportar
               </button>
             </div>
           </div>
@@ -320,9 +320,9 @@ export default function PerformanceDashboard({ className = "" }) {
                     </div>
                     
                     <div className="text-sm text-gray-600">
-                      {metric === 'LCP' && 'Largest Contentful Paint - Temps de chargement du contenu principal'}
-                      {metric === 'FID' && 'First Input Delay - Délai de réponse à la première interaction'}
-                      {metric === 'CLS' && 'Cumulative Layout Shift - Stabilité visuelle de la page'}
+                      {metric === 'LCP' && 'Largest Contentful Paint - Tempo de carregamento do conteúdo principal'}
+                      {metric === 'FID' && 'First Input Delay - Atraso de resposta à primeira interação'}
+                      {metric === 'CLS' && 'Cumulative Layout Shift - Estabilidade visual da página'}
                     </div>
                   </div>
                 );
@@ -335,20 +335,20 @@ export default function PerformanceDashboard({ className = "" }) {
         {activeTab === 'alerts' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-gray-900">Alertes de performance</h4>
+              <h4 className="font-medium text-gray-900">Alertas de performance</h4>
               <button
                 onClick={clearAlerts}
                 className="flex items-center gap-2 px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
-                Nettoyer
+                Limpar
               </button>
             </div>
             
             {alerts.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Shield className="w-12 h-12 mx-auto mb-2 text-green-400" />
-                <p>Aucune alerte de performance</p>
+                <p>Nenhum alerta de performance</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -372,8 +372,8 @@ export default function PerformanceDashboard({ className = "" }) {
                             alert.severity === 'medium' ? 'bg-yellow-200 text-yellow-800' :
                             'bg-blue-200 text-blue-800'
                           }`}>
-                            {alert.severity === 'high' ? 'Critique' :
-                             alert.severity === 'medium' ? 'Moyen' : 'Info'}
+                            {alert.severity === 'high' ? 'Crítico' :
+                             alert.severity === 'medium' ? 'Médio' : 'Info'}
                           </span>
                         </div>
                         <p className="text-sm text-gray-700">{alert.message}</p>
@@ -393,20 +393,20 @@ export default function PerformanceDashboard({ className = "" }) {
         {activeTab === 'history' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-gray-900">Historique des métriques</h4>
+              <h4 className="font-medium text-gray-900">Histórico das métricas</h4>
               <button
                 onClick={clearHistory}
                 className="flex items-center gap-2 px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
-                Nettoyer
+                Limpar
               </button>
             </div>
             
             {history.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <Clock className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                <p>Aucune métrique enregistrée</p>
+                <p>Nenhuma métrica registrada</p>
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">

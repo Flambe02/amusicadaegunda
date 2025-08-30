@@ -28,24 +28,24 @@ export default function IOSTutorial({ onShowVisualGuide }) {
 
   const steps = [
     {
-      title: "Ajouter à l'écran d'accueil",
-      description: "Cliquez sur le bouton Partager en bas de votre navigateur",
+      title: "Adicionar à tela inicial",
+      description: "Clique no botão Compartilhar na parte inferior do seu navegador",
       icon: Share2,
       arrow: ArrowUp,
       arrowPosition: "bottom-20 right-4",
       highlight: "share-button"
     },
     {
-      title: "Sélectionner l'option",
-      description: "Puis choisissez 'Sur l'écran d'accueil' dans le menu",
+      title: "Selecionar a opção",
+      description: "Depois escolha 'Na tela inicial' no menu",
       icon: Home,
       arrow: ArrowRight,
       arrowPosition: "bottom-16 right-20",
       highlight: "add-to-home"
     },
     {
-      title: "Confirmer l'ajout",
-      description: "Appuyez sur 'Ajouter' pour installer l'application",
+      title: "Confirmar a adição",
+      description: "Pressione 'Adicionar' para instalar o aplicativo",
       icon: Home,
       arrow: ArrowUp,
       arrowPosition: "bottom-12 right-16",
@@ -128,7 +128,7 @@ export default function IOSTutorial({ onShowVisualGuide }) {
               <div className="bg-white rounded-xl p-3 mt-3 flex items-center justify-center">
                 <div className="flex items-center gap-2 text-blue-600">
                   <Share2 className="w-5 h-5" />
-                  <span className="text-sm font-medium">Partager</span>
+                  <span className="text-sm font-medium">Compartilhar</span>
                 </div>
               </div>
 
@@ -159,13 +159,13 @@ export default function IOSTutorial({ onShowVisualGuide }) {
                 onClick={handleSkip}
                 className="flex-1 py-3 px-4 text-gray-600 border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                Ignorer
+                Ignorar
               </button>
               <button
                 onClick={handleNext}
                 className="flex-1 py-3 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium"
               >
-                {currentStep === steps.length - 1 ? 'Terminer' : 'Suivant'}
+                {currentStep === steps.length - 1 ? 'Finalizar' : 'Próximo'}
               </button>
             </div>
           </div>
@@ -180,21 +180,21 @@ export default function IOSTutorial({ onShowVisualGuide }) {
               <Home className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-sm">Ajouter à l'écran d'accueil</h3>
-              <p className="text-blue-100 text-xs">Cliquez sur Partager puis "Sur l'écran d'accueil"</p>
+              <h3 className="font-semibold text-sm">Adicionar à tela inicial</h3>
+              <p className="text-blue-100 text-xs">Clique em Compartilhar e depois "Na tela inicial"</p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowTutorial(true)}
                 className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
               >
-                Tutoriel
+                Tutorial
               </button>
               <button
                 onClick={onShowVisualGuide}
                 className="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg text-xs font-medium transition-colors"
               >
-                Guide visuel
+                Guia visual
               </button>
             </div>
           </div>

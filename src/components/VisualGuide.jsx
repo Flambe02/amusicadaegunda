@@ -7,26 +7,26 @@ export default function VisualGuide({ isOpen, onClose }) {
 
   const steps = [
     {
-      title: "Étape 1 : Bouton Partager",
-      description: "Localisez le bouton Partager en bas de votre navigateur Safari",
+      title: "Passo 1: Botão Compartilhar",
+      description: "Localize o botão Compartilhar na parte inferior do seu navegador Safari",
       image: "step1",
       highlight: "share-button"
     },
     {
-      title: "Étape 2 : Menu Partager",
-      description: "Le menu Partager s'ouvre avec plusieurs options",
+      title: "Passo 2: Menu Compartilhar",
+      description: "O menu Compartilhar abre com várias opções",
       image: "step2",
       highlight: "share-menu"
     },
     {
-      title: "Étape 3 : Sur l'écran d'accueil",
-      description: "Faites défiler et sélectionnez 'Sur l'écran d'accueil'",
+      title: "Passo 3: Na tela inicial",
+      description: "Role e selecione 'Na tela inicial'",
       image: "step3",
       highlight: "add-to-home"
     },
     {
-      title: "Étape 4 : Confirmation",
-      description: "Appuyez sur 'Ajouter' pour installer l'application",
+      title: "Passo 4: Confirmação",
+      description: "Pressione 'Adicionar' para instalar o aplicativo",
       image: "step4",
       highlight: "confirm"
     }
@@ -133,7 +133,7 @@ export default function VisualGuide({ isOpen, onClose }) {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Guide d'installation iOS</h2>
+            <h2 className="text-2xl font-bold">Guia de instalação iOS</h2>
             <button
               onClick={onClose}
               className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -149,7 +149,7 @@ export default function VisualGuide({ isOpen, onClose }) {
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
             >
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-              <span className="text-sm">{isPlaying ? 'Pause' : 'Lecture automatique'}</span>
+              <span className="text-sm">{isPlaying ? 'Pausar' : 'Reprodução automática'}</span>
             </button>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function VisualGuide({ isOpen, onClose }) {
               }`}
             >
               <ChevronLeft className="w-4 h-4" />
-              Précédent
+              Anterior
             </button>
             
             <button
@@ -205,7 +205,7 @@ export default function VisualGuide({ isOpen, onClose }) {
                   : 'bg-blue-500 text-white hover:bg-blue-600'
               }`}
             >
-              Suivant
+              Próximo
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
