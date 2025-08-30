@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
 
 
 // Componente Porta do Advento
@@ -229,25 +230,21 @@ export default function AdventCalendar() {
                 </div>
               )}
 
-              {/* Vídeo TikTok - Affichage standard comme dans Calendrier */}
-              {selectedSong?.tiktok_video_id && (
-                <div className="mb-4">
-                  <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
-                    <iframe
-                      src={`https://www.tiktok.com/embed/${selectedSong.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
-                      width="100%"
-                      height="500"
-                      frameBorder="0"
-                      allowFullScreen
-                      title={`TikTok Video - ${selectedSong.title}`}
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="text-center mt-2">
-                    <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
-                  </div>
-                </div>
-              )}
+                             {/* Vídeo TikTok - Affichage optimisé */}
+               {selectedSong?.tiktok_video_id && (
+                 <div className="mb-4">
+                   <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
+                     <TikTokEmbedOptimized
+                       postId={selectedSong.tiktok_video_id}
+                       className="w-full"
+                       song={selectedSong}
+                     />
+                   </div>
+                   <div className="text-center mt-2">
+                     <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
+                   </div>
+                 </div>
+               )}
 
               {/* Fallback si pas de vidéo TikTok */}
               {!selectedSong?.tiktok_video_id && (

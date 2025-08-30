@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
 
 export default function AdminPage() {
   // ===== ESTADOS =====
@@ -2101,13 +2102,10 @@ export default function AdminPage() {
 
                   {/* Lecteur TikTok intégré */}
                   <div className="bg-black rounded-lg overflow-hidden">
-                    <iframe
-                      src={`https://www.tiktok.com/embed/${editingSong.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
-                      width="100%"
-                      height="400"
-                      frameBorder="0"
-                      allowFullScreen
-                      title="TikTok Video Player"
+                    <TikTokEmbedOptimized
+                      postId={editingSong.tiktok_video_id}
+                      className="w-full"
+                      song={editingSong}
                     />
                   </div>
 

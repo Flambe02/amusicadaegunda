@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
 
 export default function Blog() {
   const [songs, setSongs] = useState([]);
@@ -382,14 +383,10 @@ export default function Blog() {
                 {/* Lecteur TikTok intégré */}
                 {selectedVideo.tiktok_video_id && (
                   <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
-                    <iframe
-                      src={`https://www.tiktok.com/embed/${selectedVideo.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
-                      width="100%"
-                      height="500"
-                      frameBorder="0"
-                      allowFullScreen
-                      title={`TikTok Video - ${selectedVideo.title}`}
+                    <TikTokEmbedOptimized
+                      postId={selectedVideo.tiktok_video_id}
                       className="w-full"
+                      song={selectedVideo}
                     />
                   </div>
                 )}
