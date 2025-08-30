@@ -19,6 +19,7 @@ const isIOS = () =>
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const isStandalone = () => navigator.standalone === true;
 const isAndroid = () => /Android/i.test(navigator.userAgent);
+export const isMobile = () => isIOS() || isAndroid();
 const supported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
 const b64ToUint8 = (base64) => {
@@ -36,8 +37,16 @@ export const shouldShowPushCTA = () => {
   if (!supported() || optedOut()) return false;
   const refusedUntil = localStorage.getItem('push_refused_until');
   if (refusedUntil && Date.now() < Number(refusedUntil)) return false;
-  if (isIOS()) return isStandalone(); // iOS: only if installed
-  return true; // Android/Desktop supported
+  
+  // Desktop: jamais de notifications push
+  if (!isMobile()) return false;
+  
+  // Mobile: seulement si PWA installée ou en mode standalone
+  if (isMobile()) {
+    return isStandalone();
+  }
+  
+  return false;
 };
 
 async function getSWRegistration() {

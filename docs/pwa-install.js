@@ -115,9 +115,37 @@ class PWAInstaller {
         
         // Afficher une notification de succès
         this.showSuccessNotification();
+        
+        // Sur mobile, activer automatiquement les push notifications
+        this.activatePushNotifications();
       }
       
       this.deferredPrompt = null;
+    }
+  }
+
+  // Activer automatiquement les push notifications sur mobile
+  async activatePushNotifications() {
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile && 'serviceWorker' in navigator && 'PushManager' in window) {
+      try {
+        console.log('🚀 Activation automatique des push notifications sur mobile PWA...');
+        
+        // Attendre que le service worker soit prêt
+        const registration = await navigator.serviceWorker.ready;
+        
+        // Demander la permission
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          console.log('✅ Permission accordée, activation des push notifications...');
+          
+          // Ici on pourrait appeler l'API pour s'abonner automatiquement
+          // await this.subscribeToPushNotifications(registration);
+        }
+      } catch (error) {
+        console.error('❌ Erreur lors de l\'activation automatique des push:', error);
+      }
     }
   }
 

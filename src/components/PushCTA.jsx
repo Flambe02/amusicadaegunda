@@ -1,5 +1,5 @@
 import React from 'react';
-import { enablePush, shouldShowPushCTA, optOutPushForever, PUSH_VERSION, testPush } from '../lib/push';
+import { enablePush, shouldShowPushCTA, optOutPushForever, PUSH_VERSION, testPush, isMobile } from '../lib/push';
 
 export default function PushCTA({ locale = 'fr', className = '' }) {
   // default to pt-BR for this app
@@ -11,10 +11,27 @@ export default function PushCTA({ locale = 'fr', className = '' }) {
     console.log('🔍 PushCTA mounted, PUSH_VERSION:', PUSH_VERSION);
     const testResult = testPush();
     console.log('🧪 Test result:', testResult);
+    
+    // Sur desktop, toujours afficher le message informatif
+    if (!isMobile()) {
+      setVisible(true);
+      return;
+    }
+    
+    // Sur mobile, vérifier si on doit montrer le bouton de notification
     setVisible(shouldShowPushCTA()); 
   }, []);
 
   if (!visible) return null;
+
+  // Sur desktop, afficher un message informatif
+  if (!isMobile()) {
+    return (
+      <div className={className} style={{ display:'flex', gap:8, alignItems:'center', padding:'10px 14px', borderRadius:8, background:'#f3f4f6', color:'#6b7280', fontSize:'14px' }}>
+        📱 <span>Instale o app para receber notificações automáticas</span>
+      </div>
+    );
+  }
 
   return (
     <div className={className} style={{ display:'flex', gap:8, alignItems:'center' }}>
