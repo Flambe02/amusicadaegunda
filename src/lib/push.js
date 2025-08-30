@@ -36,9 +36,13 @@ async function getSWRegistration() {
     return null;
   }
   
-  // Prefer a ready SW, otherwise register once
-  try { return await navigator.serviceWorker.ready; }
-  catch {
+  // Utiliser le SW déjà enregistré par pwa-install.js
+  try { 
+    console.log('🔍 Récupération du Service Worker existant...');
+    return await navigator.serviceWorker.ready; 
+  }
+  catch (error) {
+    console.log('⚠️ SW pas prêt, tentative d\'enregistrement...');
     return await navigator.serviceWorker.register('/sw.js');
   }
 }
@@ -85,7 +89,12 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
   console.log('✅ Environment variables loaded');
 
   const reg = await getSWRegistration();
-  console.log('✅ Service Worker registered');
+  if (!reg) {
+    console.error('❌ Service Worker registration failed');
+    throw new Error('Service Worker registration failed');
+  }
+  console.log('✅ Service Worker registered:', reg);
+  console.log('🔍 SW state:', reg.active?.state, 'controller:', !!navigator.serviceWorker.controller);
 
   // Request permission ONLY on user gesture
   const permission = await Notification.requestPermission();
