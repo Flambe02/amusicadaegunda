@@ -19,6 +19,12 @@ class PWAInstaller {
 
   // Enregistrer le service worker
   async registerServiceWorker() {
+    // En dev, pas de SW pour éviter les conflits HMR
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      console.log('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
+      return;
+    }
+    
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');

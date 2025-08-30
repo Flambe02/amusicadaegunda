@@ -10,10 +10,10 @@
  * - Versioning automatique des assets
  */
 
-const CACHE_NAME = 'musica-da-segunda-v1.9.0';
-const STATIC_CACHE = 'static-v1.9.0';
-const DYNAMIC_CACHE = 'dynamic-v1.9.0';
-const API_CACHE = 'api-v1.9.0';
+const CACHE_NAME = 'musica-da-segunda-v2.0.0';
+const STATIC_CACHE = 'static-v2.0.0';
+const DYNAMIC_CACHE = 'dynamic-v2.0.0';
+const API_CACHE = 'api-v2.0.0';
 
 // Assets statiques critiques (cache-first)
 const STATIC_ASSETS = [
@@ -566,3 +566,37 @@ async function processTikTokVideo(videoData) {
 }
 
 console.log('🚀 Service Worker: Initialisé avec succès - Version', CACHE_NAME);
+
+/* --- Web Push handlers (append-only) --- */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch {}
+  const title = data.title || 'Música da Segunda';
+  const options = {
+    body: data.body || 'Nova música no ar 🎶',
+    icon: data.icon || '/icons/icon-192x192.png',
+    badge: data.badge || '/icons/badge-72.png',
+    tag: data.tag || 'nova-musica',
+    data: { url: data.url || '/playlist' },
+    actions: [
+      { action: 'open', title: 'Ouvir agora' },
+      { action: 'later', title: 'Depois' }
+    ]
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/playlist';
+  if (event.action === 'later') return;
+  event.waitUntil((async () => {
+    const clientsList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of clientsList) {
+      if (c.url && c.url.startsWith(self.location.origin)) {
+        c.focus(); c.navigate(url); return;
+      }
+    }
+    await clients.openWindow(url);
+  })());
+});

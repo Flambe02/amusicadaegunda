@@ -175,7 +175,7 @@ export default function AdventCalendar() {
 
       {/* Modal de Música Redesenhado */}
       <Dialog open={!!selectedSong} onOpenChange={() => setSelectedSong(null)}>
-        <DialogContent className="p-0 border-0 bg-transparent max-w-sm w-[90vw] max-h-[90vh] overflow-y-auto mx-auto">
+        <DialogContent className="p-0 border-0 bg-transparent max-w-md w-[95vw] max-h-[95vh] overflow-y-auto mx-auto my-4">
           <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-3xl shadow-2xl overflow-hidden">
             {/* Cabeçalho com número do dia */}
             <div className="bg-gradient-to-r from-red-500 to-rose-600 p-4 text-center relative">
@@ -185,16 +185,10 @@ export default function AdventCalendar() {
               <div className="mt-1">
                 <div className="flex items-center justify-center gap-2">
                   <h2 className="text-xl font-black text-white">
-                    {selectedSong?.release_date ? 
-                      format(parseISO(selectedSong.release_date), 'MMMM', { locale: ptBR }) : 
-                      'Dezembro'
-                    }
+                    Dezembro
                   </h2>
                   <span className="text-white/90 text-lg font-semibold">
-                    {selectedSong?.release_date ? 
-                      format(parseISO(selectedSong.release_date), 'd', { locale: ptBR }) : 
-                      selectedSong?.day_of_december
-                    }
+                    {selectedSong?.day_of_december}
                   </span>
                 </div>
               </div>
@@ -243,7 +237,7 @@ export default function AdventCalendar() {
                 <div className="mb-4">
                   {/* Utiliser le composant optimisé pour "Confissões Bancárias" */}
                   {selectedSong.tiktok_video_id === '7540762684149517590' ? (
-                    <div className="w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16', height: '400px' }}>
+                    <div className="w-full max-w-md mx-auto" style={{ aspectRatio: '9/16', height: '500px' }}>
                       <TikTokEmbedOptimized
                         postId={selectedSong.tiktok_video_id}
                         song={selectedSong}
@@ -251,7 +245,7 @@ export default function AdventCalendar() {
                       />
                     </div>
                   ) : (
-                    <div className="w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16', height: '400px' }}>
+                    <div className="w-full max-w-md mx-auto" style={{ aspectRatio: '9/16', height: '500px' }}>
                       <TikTokDirect
                         postId={selectedSong.tiktok_video_id}
                         song={selectedSong}
@@ -268,7 +262,7 @@ export default function AdventCalendar() {
               {/* Fallback si pas de vidéo TikTok */}
               {!selectedSong?.tiktok_video_id && (
                 <div className="mb-4 bg-gray-100 rounded-2xl p-8 text-center">
-                  <div className="w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16', height: '400px' }}>
+                  <div className="w-full max-w-md mx-auto" style={{ aspectRatio: '9/16', height: '500px' }}>
                     <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center">
                       <div className="text-center text-gray-500">
                         <Play className="w-16 h-16 mx-auto mb-4 text-gray-400" />

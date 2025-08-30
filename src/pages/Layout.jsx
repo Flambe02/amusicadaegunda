@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
+import PushCTA from '@/components/PushCTA';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -58,6 +59,14 @@ export default function Layout({ children }) {
                   <span>{page.name}</span>
                 </Link>
               ))}
+              
+              {/* Push Notifications CTA */}
+              <div className="ml-4">
+                <PushCTA 
+                  locale="pt" 
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl transition-all duration-300 font-medium shadow-md hover:shadow-lg"
+                />
+              </div>
             </nav>
           </div>
         </div>
