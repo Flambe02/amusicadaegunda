@@ -126,8 +126,8 @@ class PWAInstaller {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('Música da Segunda', {
         body: 'Nova versão disponível! Recarregue a página para atualizar.',
-        icon: '/images/Logo.png',
-        badge: '/images/Logo.png'
+        icon: '/icons/pwa/icon-192x192.png',
+        badge: '/icons/pwa/icon-72x72.png'
       });
     }
   }
@@ -137,8 +137,8 @@ class PWAInstaller {
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('Música da Segunda', {
         body: 'App instalada com sucesso! 🎉',
-        icon: '/images/Logo.png',
-        badge: '/images/Logo.png'
+        icon: '/icons/pwa/icon-192x192.png',
+        badge: '/icons/pwa/icon-72x72.png'
       });
     }
   }
