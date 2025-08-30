@@ -1,5 +1,5 @@
 import React from 'react';
-import { enablePush, shouldShowPushCTA, optOutPushForever } from '../lib/push';
+import { enablePush, shouldShowPushCTA, optOutPushForever, PUSH_VERSION, testPush } from '../lib/push';
 
 export default function PushCTA({ locale = 'fr', className = '' }) {
   // default to pt-BR for this app
@@ -7,7 +7,12 @@ export default function PushCTA({ locale = 'fr', className = '' }) {
   const [visible, setVisible] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
 
-  React.useEffect(() => { setVisible(shouldShowPushCTA()); }, []);
+  React.useEffect(() => { 
+    console.log('🔍 PushCTA mounted, PUSH_VERSION:', PUSH_VERSION);
+    const testResult = testPush();
+    console.log('🧪 Test result:', testResult);
+    setVisible(shouldShowPushCTA()); 
+  }, []);
 
   if (!visible) return null;
 

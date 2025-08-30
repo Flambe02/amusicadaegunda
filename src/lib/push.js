@@ -1,4 +1,15 @@
-// src/lib/push.js
+// src/lib/push.js - FORCE INCLUSION
+console.log('🚀 PUSH LIB LOADED - VERSION:', Date.now());
+
+// Force export to prevent tree-shaking
+export const PUSH_VERSION = Date.now();
+
+// Test function to verify the file is loaded
+export function testPush() {
+  console.log('🧪 TEST PUSH FUNCTION CALLED');
+  return 'PUSH_LIB_WORKING';
+}
+
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
 const API_BASE = import.meta.env.VITE_PUSH_API_BASE; // e.g. https://<your-vercel-app>.vercel.app/api
 const VAPID_KEY_VERSION = import.meta.env.VITE_VAPID_KEY_VERSION || 'v1';
