@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Volume2, VolumeX, RotateCcw, AlertCircle, RefreshCw, ExternalLink, Play, Music, Video } from 'lucide-react';
+import '../styles/tiktok-global.css';
 
 /**
  * TikTokEmbedOptimized V2.0.0 - Composant TikTok unifié et ultra-optimisé
@@ -264,8 +265,17 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
   }
 
   return (
-    <div ref={containerRef} className={`${className} bg-black rounded-lg overflow-hidden`} style={{ aspectRatio: '9/16' }}>
-      <div className="relative w-full h-full">
+    <div 
+      ref={containerRef} 
+      className={`${className} bg-black rounded-lg overflow-hidden tiktok-container`} 
+      data-tiktok-component="true"
+      style={{ 
+        aspectRatio: '9/16',
+        overflow: 'hidden',
+        position: 'relative'
+      }}
+    >
+      <div className="relative w-full h-full" style={{ overflow: 'hidden' }}>
         {/* Loading state */}
         {isLoading && (
           <div className="absolute inset-0 bg-black flex items-center justify-center z-10">
@@ -306,7 +316,12 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           onLoad={handleLoadSuccess}
           onError={() => handleLoadError('Erro de carregamento do iframe')}
-          style={{ display: isLoading || error ? 'none' : 'block' }}
+          style={{ 
+            display: isLoading || error ? 'none' : 'block',
+            overflow: 'hidden',
+            scrolling: 'no'
+          }}
+          scrolling="no"
         />
 
         {/* Overlay de contrôle pour iOS */}
