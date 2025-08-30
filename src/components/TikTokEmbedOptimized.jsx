@@ -1,34 +1,70 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { RotateCcw, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Volume2, VolumeX, RotateCcw, AlertCircle, RefreshCw, ExternalLink, Play } from 'lucide-react';
 
 /**
- * TikTokEmbedOptimized - Composant TikTok ultra-optimisé pour résoudre les problèmes de chargement
- * Spécialement conçu pour la vidéo "Confissões Bancárias" et autres vidéos problématiques
+ * TikTokEmbedOptimized - Composant TikTok ultra-optimisé selon les best practices
+ * 
+ * Best Practices implémentées :
+ * - Timeout 15s + 3 retries (vs 6s + 1 retry)
+ * - Autoplay muted + overlay "Tap pour activer le son"
+ * - Layout 9:16 exact sans scroll parasite
+ * - Lazy loading avec IntersectionObserver
+ * - Preconnect TikTok dans index.html
+ * - Gestion iOS Safari autoplay restrictions
+ * - Fallback vidéo robuste
  */
 export default function TikTokEmbedOptimized({ postId, className = "", song = null }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
   const [iframeKey, setIframeKey] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [showUnmuteOverlay, setShowUnmuteOverlay] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   
   const iframeRef = useRef(null);
   const containerRef = useRef(null);
   const timeoutRef = useRef(null);
+  const observerRef = useRef(null);
   
-  const maxRetries = 1;
-  const loadTimeout = 6000; // Timeout ultra-court de 6 secondes
+  // Configuration optimisée selon les best practices
+  const maxRetries = 3; // Augmenté de 1 à 3
+  const loadTimeout = 15000; // Augmenté de 6s à 15s
+  const retryDelay = 1000; // Délai entre retries
 
   // Fonction de nettoyage des timeouts
-  const clearTimeout = () => {
+  const clearTimeout = useCallback(() => {
     if (timeoutRef.current) {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-  };
+  }, []);
+
+  // Lazy loading avec IntersectionObserver
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observerRef.current?.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    );
+
+    observerRef.current.observe(containerRef.current);
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, []);
 
   // Reset complet quand postId change
   useEffect(() => {
-    if (!postId) return;
+    if (!postId || !isVisible) return;
     
     console.log(`🚀 TikTok Optimisé: Chargement de la vidéo ${postId}`);
     
@@ -36,33 +72,40 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
     setError(null);
     setRetryCount(0);
     setIframeKey(prev => prev + 1);
+    setIsMuted(true);
+    setShowUnmuteOverlay(true);
+    setIsPlaying(false);
     
     clearTimeout();
     
-    // Timeout ultra-court pour une détection rapide des problèmes
+    // Timeout optimisé selon les best practices
     timeoutRef.current = window.setTimeout(() => {
-      console.warn('⏰ TikTok Optimisé: Timeout de chargement atteint');
+      console.warn('⏰ TikTok Optimisé: Timeout de chargement atteint (15s)');
       handleLoadError('Timeout: Chargement trop lent');
     }, loadTimeout);
     
     return clearTimeout;
-  }, [postId]);
+  }, [postId, isVisible, clearTimeout]);
 
-  const handleLoadSuccess = () => {
+  const handleLoadSuccess = useCallback(() => {
     console.log('✅ TikTok Optimisé: Vidéo chargée avec succès');
     clearTimeout();
     setIsLoading(false);
     setError(null);
-  };
+    
+    // Démarrer en mode muted (best practice iOS)
+    setIsMuted(true);
+    setShowUnmuteOverlay(true);
+  }, [clearTimeout]);
 
-  const handleLoadError = (errorMessage = 'Erro ao carregar vídeo TikTok') => {
+  const handleLoadError = useCallback((errorMessage = 'Erro ao carregar vídeo TikTok') => {
     console.error('❌ TikTok Optimisé: Échec de chargement');
     clearTimeout();
     
     if (retryCount < maxRetries) {
       console.log(`🔄 Tentative de retry ${retryCount + 1}/${maxRetries}`);
       
-      // Retry ultra-rapide (300ms)
+      // Retry avec délai selon les best practices
       setTimeout(() => {
         setRetryCount(prev => prev + 1);
         setIframeKey(prev => prev + 1);
@@ -72,15 +115,15 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
         timeoutRef.current = window.setTimeout(() => {
           handleLoadError('Timeout sur retry');
         }, loadTimeout);
-      }, 300);
+      }, retryDelay);
     } else {
       console.error('❌ Nombre maximum de tentatives atteint');
       setIsLoading(false);
       setError(errorMessage);
     }
-  };
+  }, [retryCount, maxRetries, retryDelay, loadTimeout, clearTimeout]);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     console.log('🔄 TikTok Optimisé: Tentative manuelle de retry');
     setError(null);
     setRetryCount(0);
@@ -90,16 +133,41 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
     timeoutRef.current = window.setTimeout(() => {
       handleLoadError('Timeout sur retry manuel');
     }, loadTimeout);
-  };
+  }, [loadTimeout, handleLoadError]);
 
-  const handleIframeError = () => {
+  const handleIframeError = useCallback(() => {
     handleLoadError('Erro interno do iframe TikTok');
-  };
+  }, [handleLoadError]);
+
+  // Gestion du son selon les best practices iOS
+  const handleUnmute = useCallback(() => {
+    console.log('🔊 TikTok Optimisé: Activation du son');
+    setShowUnmuteOverlay(false);
+    setIsMuted(false);
+    
+    // Focus sur l'iframe pour déclencher l'interaction
+    if (iframeRef.current) {
+      iframeRef.current.focus();
+      
+      // Tentative de play/unmute via postMessage (si supporté)
+      try {
+        iframeRef.current.contentWindow?.postMessage({
+          type: 'unmute',
+          action: 'unmute'
+        }, 'https://www.tiktok.com');
+      } catch (e) {
+        console.log('PostMessage non supporté, fallback sur UI TikTok');
+      }
+    }
+  }, []);
 
   // Nettoyage au démontage
   useEffect(() => {
-    return clearTimeout;
-  }, []);
+    return () => {
+      clearTimeout();
+      observerRef.current?.disconnect();
+    };
+  }, [clearTimeout]);
 
   if (!postId) {
     return (
@@ -139,6 +207,28 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
     );
   }
 
+  // Skeleton de chargement si pas encore visible
+  if (!isVisible) {
+    return (
+      <div 
+        ref={containerRef}
+        className={`bg-gray-200 rounded-2xl overflow-hidden ${className}`}
+        style={{
+          width: '100%',
+          aspectRatio: '9/16',
+          position: 'relative'
+        }}
+      >
+        <div className="animate-pulse bg-gray-300 w-full h-full flex items-center justify-center">
+          <div className="text-center text-gray-500">
+            <Play className="w-16 h-16 mx-auto mb-4" />
+            <p>Carregando...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div 
       ref={containerRef}
@@ -153,23 +243,21 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
         overflow: 'hidden'
       }}
     >
-      {/* Container principal avec dimensions dynamiques pour TikTok */}
+      {/* Container principal avec ratio 9:16 exact selon les best practices */}
       <div 
-        className="tiktok-iframe-wrapper-optimized"
+        className="tiktok-shell"
         style={{
-          width: '100%',
-          height: '0',
-          paddingBottom: '177.78%', // Ratio 9:16 exact pour TikTok
           position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '16px'
+          width: '100%',
+          aspectRatio: '9/16', // Ratio exact TikTok
+          overflow: 'hidden' // Pas de scroll parasite
         }}
       >
-        {/* Iframe TikTok ultra-optimisé */}
+        {/* Iframe TikTok ultra-optimisé selon les best practices */}
         <iframe
           key={iframeKey}
           ref={iframeRef}
-          src={`https://www.tiktok.com/embed/${postId}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+          src={`https://www.tiktok.com/embed/${postId}?autoplay=1&muted=1&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
           title={`Vídeo TikTok ${postId}`}
           className="tiktok-iframe-optimized"
           style={{
@@ -183,22 +271,19 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
             backgroundColor: '#000',
             overflow: 'hidden',
             display: 'block',
-            zIndex: 1,
-            scrolling: 'no',
-            allowTransparency: 'true',
-            frameBorder: '0'
+            zIndex: 1
           }}
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media; microphone; camera; geolocation; gyroscope; accelerometer"
           allowFullScreen
-          // Pas de loading lazy pour un chargement immédiat
+          playsInline // Important sur iOS
           onLoad={handleLoadSuccess}
           onError={handleIframeError}
-          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms allow-top-navigation"
-          scrolling="no"
-          seamless
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms"
+          referrerPolicy="strict-origin-when-cross-origin"
+          loading="lazy"
         />
         
-        {/* Overlay de chargement ultra-rapide */}
+        {/* Overlay de chargement optimisé */}
         {isLoading && (
           <div 
             className="tiktok-loading-overlay-optimized"
@@ -229,6 +314,61 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
             </div>
           </div>
         )}
+
+        {/* Overlay "Tap pour activer le son" selon les best practices */}
+        {!isLoading && showUnmuteOverlay && (
+          <div 
+            className="tiktok-unmute-overlay"
+            style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              right: '0',
+              bottom: '0',
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 3,
+              borderRadius: '16px',
+              cursor: 'pointer'
+            }}
+            onClick={handleUnmute}
+            role="button"
+            aria-label="Cliquez pour activer le son"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleUnmute();
+              }
+            }}
+          >
+            <div className="text-center text-white">
+              <div className="bg-white bg-opacity-20 rounded-full p-6 mb-4 inline-block">
+                <VolumeX className="w-16 h-16 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Cliquez pour activer le son</h3>
+              <p className="text-lg text-gray-200">
+                La vidéo est en cours de lecture (sans son)
+              </p>
+              <div className="mt-4 bg-white bg-opacity-20 rounded-lg px-4 py-2 inline-block">
+                <span className="text-sm">🔊 Tap to unmute</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Indicateur de statut accessible */}
+        <div 
+          className="sr-only"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {isLoading && 'Chargement de la vidéo TikTok en cours...'}
+          {!isLoading && showUnmuteOverlay && 'Vidéo en cours de lecture, cliquez pour activer le son'}
+          {!isLoading && !showUnmuteOverlay && 'Vidéo en cours de lecture avec son activé'}
+        </div>
       </div>
     </div>
   );

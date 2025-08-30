@@ -1,0 +1,16 @@
+{
+  "name": "icon-generator",
+  "version": "1.0.0",
+  "description": "Générateur d'icônes pour Música da Segunda PWA",
+  "main": "generate-all-icons.js",
+  "scripts": {
+    "generate": "node generate-all-icons.js",
+    "install-deps": "npm install"
+  },
+  "dependencies": {
+    "sharp": "^0.33.0"
+  },
+  "keywords": ["icons", "pwa", "ios", "android", "sharp"],
+  "author": "Música da Segunda",
+  "license": "MIT"
+}

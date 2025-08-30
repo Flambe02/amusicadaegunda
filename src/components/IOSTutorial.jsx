@@ -95,7 +95,10 @@ export default function IOSTutorial({ onShowVisualGuide }) {
               <X className="w-5 h-5" />
             </button>
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-              <steps[currentStep].icon className="w-8 h-8" />
+              {(() => {
+                const IconComponent = steps[currentStep].icon;
+                return <IconComponent className="w-8 h-8" />;
+              })()}
             </div>
             <h2 className="text-xl font-bold mb-2">{steps[currentStep].title}</h2>
             <p className="text-blue-100 text-sm">{steps[currentStep].description}</p>
@@ -131,7 +134,10 @@ export default function IOSTutorial({ onShowVisualGuide }) {
 
               {/* Flèche d'indication */}
               <div className={`absolute ${steps[currentStep].arrowPosition} animate-bounce`}>
-                <steps[currentStep].arrow className="w-8 h-8 text-blue-600 drop-shadow-lg" />
+                {(() => {
+                  const ArrowComponent = steps[currentStep].arrow;
+                  return <ArrowComponent className="w-8 h-8 text-blue-600 drop-shadow-lg" />;
+                })()}
               </div>
             </div>
 
