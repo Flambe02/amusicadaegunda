@@ -274,15 +274,7 @@ export default function Home() {
                 <p className="text-gray-500 text-sm mt-1">
                   {format(parseISO(displayedSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}
                 </p>
-                {/* Bouton pour revenir à la musique de la semaine si une autre est sélectionnée */}
-                {displayedSong !== currentSong && currentSong && (
-                  <button
-                    onClick={() => handleReplaceVideo(currentSong)}
-                    className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                  >
-                    ← Voltar para Música da Semana
-                  </button>
-                )}
+
               </div>
               
               {/* 3 Ações Principais - Desktop */}
