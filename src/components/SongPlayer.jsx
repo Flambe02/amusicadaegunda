@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video, FileText, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import TikTokDirect from './TikTokDirect';
+import TikTokEmbedOptimized from './TikTokEmbedOptimized';
 import LyricsDialog from './LyricsDialog';
 import { cleanTikTokId } from '@/lib/parseTikTokId';
 
@@ -99,7 +99,7 @@ export default function SongPlayer({ song, onClose, onShowDescription }) {
         return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
           <div className="">
-            <TikTokDirect
+            <TikTokEmbedOptimized
               postId={normalizedId}
               song={song}
               className="mb-4"

@@ -11,7 +11,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import TikTokDirect from './TikTokDirect';
 import TikTokEmbedOptimized from './TikTokEmbedOptimized';
 import LyricsDialog from './LyricsDialog';
 import { cleanTikTokId } from '@/lib/parseTikTokId';
@@ -49,9 +48,10 @@ export default function SongCard({ song }) {
     
     // Utiliser le composant standard pour les autres vidéos
     return (
-      <TikTokDirect
+      <TikTokEmbedOptimized
         postId={normalizedId}
         className="w-full"
+        song={song}
       />
     );
   };

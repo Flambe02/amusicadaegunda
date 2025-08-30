@@ -7,9 +7,9 @@ import migrationService from '@/lib/migration';
 import MigrationStatus from '@/components/MigrationStatus';
 import VersionBadge from '@/components/VersionBadge';
 import DeviceDetector from '@/components/DeviceDetector';
-import TikTokFrameTest from '@/components/TikTokFrameTest';
 import NotificationStatus from '@/components/NotificationStatus';
 import IconsDiagnostic from '@/components/IconsDiagnostic';
+import TikTokDiagnostic from '@/components/TikTokDiagnostic';
 // import TikTokDemo from "./pages/TikTokDemo";
 
 function App() {
@@ -33,9 +33,9 @@ function App() {
       <MigrationStatus />
       <VersionBadge />
       <DeviceDetector />
-      <TikTokFrameTest />
       <NotificationStatus />
       <IconsDiagnostic />
+      <TikTokDiagnostic />
       {/* <TikTokDemo /> */}
       <Toaster />
     </HelmetProvider>
