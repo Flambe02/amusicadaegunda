@@ -25,6 +25,9 @@ class PWAInstaller {
       return;
     }
     
+    // En production, toujours enregistrer le SW
+    console.log('🚀 PROD mode: Enregistrement du Service Worker...');
+    
     if ('serviceWorker' in navigator) {
       try {
         const registration = await navigator.serviceWorker.register('/sw.js');
