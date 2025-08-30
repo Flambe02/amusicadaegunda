@@ -75,14 +75,75 @@ export const Song = {
 
   getCurrent: async () => {
     try {
+      // Forcer l'utilisation de Supabase si disponible
       if (useSupabase) {
-        return await supabaseSongService.getCurrent();
-      } else {
-        return localStorageService.songs.getCurrent();
+        const supabaseSong = await supabaseSongService.getCurrent();
+        
+        if (supabaseSong) {
+          // Synchroniser avec localStorage pour compatibilité
+          try {
+            // Nettoyer d'abord le localStorage de "Confissões Bancárias"
+            const existingSongs = localStorageService.songs.getAll();
+            const cleanedSongs = existingSongs.filter(song => 
+              song.title !== 'Confissões Bancárias' && 
+              song.tiktok_video_id !== '7540762684149517590'
+            );
+            
+            // Ajouter la chanson Supabase si elle n'existe pas déjà
+            const songExists = cleanedSongs.some(song => song.tiktok_video_id === supabaseSong.tiktok_video_id);
+            if (!songExists) {
+              cleanedSongs.push(supabaseSong);
+            }
+            
+            // Renuméroter les IDs et sauvegarder
+            const renumberedSongs = cleanedSongs.map((song, index) => ({
+              ...song,
+              id: index + 1
+            }));
+            
+            localStorage.setItem('songs', JSON.stringify(renumberedSongs));
+            console.log('🔄 localStorage synchronisé avec Supabase et nettoyé de "Confissões Bancárias"');
+          } catch (localError) {
+            console.warn('⚠️ Erreur synchronisation localStorage:', localError);
+          }
+          
+          return supabaseSong;
+        }
       }
+      
+      // Fallback localStorage seulement si Supabase n'a pas de données
+      console.log('⚠️ Supabase indisponible, utilisation du localStorage nettoyé');
+      return localStorageService.songs.getCurrent();
+      
     } catch (error) {
       console.error('Erro ao carregar música atual:', error);
-      return localStorageService.songs.getCurrent();
+      
+      // En cas d'erreur, nettoyer le localStorage et essayer de récupérer
+      try {
+        const existingSongs = localStorageService.songs.getAll();
+        const cleanedSongs = existingSongs.filter(song => 
+          song.title !== 'Confissões Bancárias' && 
+          song.tiktok_video_id !== '7540762684149517590'
+        );
+        
+        if (cleanedSongs.length > 0) {
+          // Renuméroter et sauvegarder
+          const renumberedSongs = cleanedSongs.map((song, index) => ({
+            ...song,
+            id: index + 1
+          }));
+          
+          localStorage.setItem('songs', JSON.stringify(renumberedSongs));
+          console.log('🔄 localStorage nettoyé après erreur Supabase');
+          
+          // Retourner la première chanson nettoyée
+          return renumberedSongs[0];
+        }
+      } catch (cleanupError) {
+        console.error('❌ Erreur lors du nettoyage du localStorage:', cleanupError);
+      }
+      
+      return null;
     }
   },
 

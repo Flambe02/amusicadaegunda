@@ -7,28 +7,10 @@ const STORAGE_KEYS = {
   SETTINGS: 'musica-da-segunda-settings'
 };
 
-// Données par défaut
+// Données par défaut (sans "Confissões Bancárias" pour éviter les bugs TikTok)
 const DEFAULT_SONGS = [
   {
     id: 1,
-    title: "Confissões Bancárias",
-    artist: "A Música da Segunda",
-    description: "Uma música sobre confissões bancárias e humor",
-    lyrics: "Confissões bancárias...\nNova música da segunda...",
-    release_date: "2025-08-25",
-    status: "published",
-    tiktok_video_id: "7540762684149517590",
-    tiktok_url: "https://www.tiktok.com/@amusicadasegunda/video/7540762684149517590",
-    spotify_url: "",
-    apple_music_url: "",
-    youtube_url: "",
-    cover_image: "",
-    hashtags: ["humor", "moraes", "bancos", "trendingsong", "musica"],
-    created_at: "2025-01-27T10:00:00.000Z",
-    updated_at: "2025-01-27T10:00:00.000Z"
-  },
-  {
-    id: 2,
     title: "Café Tarifa Caos",
     artist: "A Música da Segunda",
     description: "Música sobre café, tarifas e o caos do dia a dia",
@@ -46,7 +28,7 @@ const DEFAULT_SONGS = [
     updated_at: "2025-01-27T10:00:00.000Z"
   },
   {
-    id: 3,
+    id: 2,
     title: "Segunda-feira Blues",
     artist: "A Música da Segunda",
     description: "O clássico blues da segunda-feira",
@@ -79,6 +61,35 @@ export const localStorageService = {
   forceReset() {
     localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
     console.log('🔄 localStorage réinitialisé avec les données par défaut');
+  },
+
+  // Nettoyer spécifiquement "Confissões Bancárias"
+  cleanConfissoesBancarias() {
+    try {
+      const songs = this.songs.getAll();
+      const cleanedSongs = songs.filter(song => 
+        song.title !== 'Confissões Bancárias' && 
+        song.tiktok_video_id !== '7540762684149517590'
+      );
+      
+      if (cleanedSongs.length !== songs.length) {
+        // Renuméroter les IDs
+        const renumberedSongs = cleanedSongs.map((song, index) => ({
+          ...song,
+          id: index + 1
+        }));
+        
+        localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(renumberedSongs));
+        console.log(`🧹 "Confissões Bancárias" supprimée du localStorage. ${songs.length - cleanedSongs.length} chanson(s) nettoyée(s)`);
+        return true;
+      }
+      
+      console.log('✅ localStorage déjà propre, aucune action nécessaire');
+      return false;
+    } catch (error) {
+      console.error('❌ Erreur lors du nettoyage:', error);
+      return false;
+    }
   },
 
   // ===== GESTION DES CHANSONS =====
