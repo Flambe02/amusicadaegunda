@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import LyricsDialog from '../components/LyricsDialog';
-import TikTokEmbedOptimized from '../components/TikTokEmbedOptimized';
+
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
@@ -235,35 +235,27 @@ export default function Home() {
               <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
                 {displayedSong.tiktok_video_id ? (
                   <div className="w-full" style={{ aspectRatio: '9/16' }}>
-                    {/* Utiliser le composant optimisé pour "Confissões Bancárias" */}
-                    {displayedSong.tiktok_video_id === '7540762684149517590' ? (
-                      <TikTokEmbedOptimized
-                        postId={displayedSong.tiktok_video_id}
-                        className="w-full"
-                        song={displayedSong}
-                      />
-                    ) : (
-                      <iframe
-                        src={`https://www.tiktok.com/embed/${displayedSong.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        allowFullScreen
-                        title={`TikTok Video - ${displayedSong.title}`}
-                        className="w-full h-full"
-                        style={{ 
-                          width: '100%',
-                          height: '100%',
-                          border: 'none',
-                          overflow: 'hidden',
-                          borderRadius: '16px'
-                        }}
-                        scrolling="no"
-                        allow="autoplay; fullscreen; picture-in-picture; encrypted-media; microphone; camera; geolocation; gyroscope; accelerometer"
-                        sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms allow-top-navigation"
-                        seamless
-                      />
-                    )}
+                    {/* Affichage standard pour toutes les musiques */}
+                    <iframe
+                      src={`https://www.tiktok.com/embed/${displayedSong.tiktok_video_id}?autoplay=0&muted=0&loop=1&controls=1&rel=0&modestbranding=1&playsinline=1&allowfullscreen=1`}
+                      width="100%"
+                      height="100%"
+                      frameBorder="0"
+                      allowFullScreen
+                      title={`TikTok Video - ${displayedSong.title}`}
+                      className="w-full h-full"
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        overflow: 'hidden',
+                        borderRadius: '16px'
+                      }}
+                      scrolling="no"
+                      allow="autoplay; fullscreen; picture-in-picture; encrypted-media; microphone; camera; geolocation; gyroscope; accelerometer"
+                      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms allow-top-navigation"
+                      seamless
+                    />
                   </div>
                 ) : displayedSong.tiktok_url ? (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900" style={{ aspectRatio: '9/16' }}>

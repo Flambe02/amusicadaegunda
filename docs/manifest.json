@@ -87,7 +87,7 @@
       "url": "/",
       "icons": [
         {
-          "src": "/icons/pwa/icon-96x96.png",
+          "src": "/images/Logo.png",
           "sizes": "96x96"
         }
       ]
@@ -99,7 +99,7 @@
       "url": "/playlist",
       "icons": [
         {
-          "src": "/icons/pwa/icon-96x96.png",
+          "src": "/images/Logo.png",
           "sizes": "96x96"
         }
       ]
@@ -111,7 +111,7 @@
       "url": "/blog",
       "icons": [
         {
-          "src": "/icons/pwa/icon-96x96.png",
+          "src": "/images/Logo.png",
           "sizes": "96x96"
         }
       ]
@@ -119,13 +119,13 @@
   ],
   "screenshots": [
     {
-      "src": "/icons/pwa/icon-512x512.png",
+      "src": "/images/Logo.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide"
     },
     {
-      "src": "/icons/pwa/icon-512x512.png",
+      "src": "/images/Logo.png",
       "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow"
