@@ -32,6 +32,12 @@ export default function useServiceWorker() {
       return false;
     }
 
+    // Enregistrer uniquement en production
+    if (!import.meta.env.PROD) {
+      console.log('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
+      return false;
+    }
+
     try {
       console.log('🚀 Enregistrement du Service Worker...');
       

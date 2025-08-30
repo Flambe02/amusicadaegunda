@@ -13,12 +13,10 @@ export default defineConfig({
   build: {
     // Optimisations pour les Core Web Vitals
     target: 'es2015',
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
+    minify: 'esbuild',
+    sourcemap: false,
+    esbuild: {
+      drop: ['console', 'debugger'],
     },
     rollupOptions: {
       output: {

@@ -171,6 +171,11 @@ Deno.serve(async (req: Request) => {
       
       return new Response(JSON.stringify({ ok: true }), { headers });
     } catch (e) {
+      console.error(JSON.stringify({
+        at: new Date().toISOString(),
+        fn: "push-edge",
+        error: String(e?.message ?? e)
+      }));
       return new Response(JSON.stringify({ error: "Invalid JSON" }), { 
         status: 400, 
         headers 
@@ -192,6 +197,11 @@ Deno.serve(async (req: Request) => {
       await removeByEndpoint(endpoint);
       return new Response(JSON.stringify({ ok: true }), { headers });
     } catch (e) {
+      console.error(JSON.stringify({
+        at: new Date().toISOString(),
+        fn: "push-edge",
+        error: String(e?.message ?? e)
+      }));
       return new Response(JSON.stringify({ error: "Invalid JSON" }), { 
         status: 400, 
         headers 
@@ -211,6 +221,11 @@ Deno.serve(async (req: Request) => {
         headers: cors({ "Content-Type": "application/json" }) 
       });
     } catch (e) {
+      console.error(JSON.stringify({
+        at: new Date().toISOString(),
+        fn: "push-edge",
+        error: String(e?.message ?? e)
+      }));
       return new Response(JSON.stringify({ 
         error: "Invalid JSON", 
         message: String(e) 

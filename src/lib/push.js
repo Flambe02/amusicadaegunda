@@ -63,7 +63,11 @@ async function getSWRegistration() {
   }
   catch (error) {
     console.log('⚠️ SW pas prêt, tentative d\'enregistrement...');
-    return await navigator.serviceWorker.register('/sw.js');
+    // Enregistrer uniquement en production
+    if (import.meta.env.PROD) {
+      return await navigator.serviceWorker.register('/sw.js');
+    }
+    return null;
   }
 }
 

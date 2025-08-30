@@ -8,4 +8,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
-) 
+)
+
+// Import Web Vitals en production
+if (import.meta.env.PROD) {
+  import('./analytics/webvitals');
+} 
