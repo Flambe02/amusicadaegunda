@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
+import TutorialManager from '@/components/TutorialManager';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -86,6 +87,9 @@ export default function Layout({ children }) {
         </div>
       </nav>
       <div className="fixed bottom-2 right-2 text-xs text-gray-500">V1</div>
+      
+      {/* Gestionnaire de tutoriel intégré */}
+      <TutorialManager />
     </div>
   );
 }
