@@ -7,60 +7,23 @@ const STORAGE_KEYS = {
   SETTINGS: 'musica-da-segunda-settings'
 };
 
-// Données par défaut (sans "Confissões Bancárias" pour éviter les bugs TikTok)
-const DEFAULT_SONGS = [
-  {
-    id: 1,
-    title: "Café Tarifa Caos",
-    artist: "A Música da Segunda",
-    description: "Música sobre café, tarifas e o caos do dia a dia",
-    lyrics: "Café tarifa caos...\nNova música da segunda...",
-    release_date: "2025-08-03",
-    status: "published",
-    tiktok_video_id: "7540762684149517591",
-    tiktok_url: "https://www.tiktok.com/@amusicadasegunda/video/7540762684149517591",
-    spotify_url: "",
-    apple_music_url: "",
-    youtube_url: "",
-    cover_image: "",
-    hashtags: ["cafe", "tarifa", "caos", "trendingsong", "musica"],
-    created_at: "2025-01-27T10:00:00.000Z",
-    updated_at: "2025-01-27T10:00:00.000Z"
-  },
-  {
-    id: 2,
-    title: "Segunda-feira Blues",
-    artist: "A Música da Segunda",
-    description: "O clássico blues da segunda-feira",
-    lyrics: "Segunda-feira blues...\nNova música da segunda...",
-    release_date: "2025-08-18",
-    status: "published",
-    tiktok_video_id: "7540762684149517592",
-    tiktok_url: "https://www.tiktok.com/@amusicadasegunda/video/7540762684149517592",
-    spotify_url: "",
-    apple_music_url: "",
-    youtube_url: "",
-    cover_image: "",
-    hashtags: ["blues", "segunda", "trendingsong", "musica"],
-    created_at: "2025-01-27T10:00:00.000Z",
-    updated_at: "2025-01-27T10:00:00.000Z"
-  }
-];
+// Aucune donnée par défaut - tout vient de Supabase
+const DEFAULT_SONGS = [];
 
 // ===== FONCTIONS DE GESTION =====
 
 export const localStorageService = {
-  // Initialiser les données par défaut
+  // Initialiser les données (vide - Supabase gère tout)
   initialize() {
-    if (!localStorage.getItem(STORAGE_KEYS.SONGS)) {
-      localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
-    }
+    // Ne pas initialiser avec des données mockées
+    // Les données viennent de Supabase
+    console.log('🔄 localStorage initialisé - données Supabase uniquement');
   },
 
-  // Forcer la réinitialisation des données
+  // Forcer la réinitialisation des données (vide)
   forceReset() {
-    localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
-    console.log('🔄 localStorage réinitialisé avec les données par défaut');
+    localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify([]));
+    console.log('🔄 localStorage réinitialisé - données Supabase uniquement');
   },
 
   // Nettoyer spécifiquement "Confissões Bancárias"

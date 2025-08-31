@@ -23,6 +23,9 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-200 to-rose-200">
+      {/* Skip link pour accessibilité */}
+      <a href="#main" className="skip-link">Ir para o conteúdo</a>
+      
       {/* Header Desktop avec Navigation */}
       <header className="hidden lg:block bg-white/90 backdrop-blur-lg border-b border-white/50 shadow-lg sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -31,7 +34,6 @@ export default function Layout({ children }) {
             <div className="flex items-center gap-4">
               <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
                 <img 
-                  loading="lazy" 
                   decoding="async"
                   src="images/Musica da segunda.jpg" 
                   alt="Logo Música da Segunda"
@@ -61,18 +63,13 @@ export default function Layout({ children }) {
                 </Link>
               ))}
               
-              {/* V2.0.0: Notifications push désactivées */}
-              <div className="ml-4">
-                <div className="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-medium">
-                  📱 PWA para notificações automáticas
-                </div>
-              </div>
+
             </nav>
           </div>
         </div>
       </header>
 
-      <main className="lg:pb-0 pb-28 relative z-10">
+      <main id="main" className="lg:pb-0 pb-28 relative z-10">
         {children}
       </main>
 
@@ -95,7 +92,7 @@ export default function Layout({ children }) {
           ))}
         </div>
       </nav>
-      <div className="fixed bottom-2 right-2 text-xs text-gray-500 font-medium">V2.0.0</div>
+
       
       {/* Gestionnaire de tutoriel intégré */}
       <TutorialManager />

@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://amusicadaegunda.com/sitemap.xml
+Sitemap: https://amusicadasegunda.com/sitemap.xml
 
 # Crawl-delay pour éviter de surcharger le serveur
 Crawl-delay: 1

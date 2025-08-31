@@ -32,13 +32,7 @@ export default function Home() {
     // S'assurer que le localStorage est initialisé
     localStorageService.initialize();
     
-    // Vérifier si des données existent, sinon forcer la réinitialisation
-    const songs = localStorageService.songs.getAll();
-    if (songs.length === 0) {
-      console.log('🔄 Aucune donnée trouvée, réinitialisation du localStorage...');
-      localStorageService.forceReset();
-    }
-    
+    // Charger directement depuis Supabase - pas de fallback localStorage
     loadCurrentSong();
     loadRecentSongs();
   }, []);
@@ -48,12 +42,16 @@ export default function Home() {
     setError(null);
     
     try {
+      console.log('🔄 Tentative de chargement depuis Supabase...');
+      
       // Utiliser la nouvelle méthode getCurrent
       const song = await Song.getCurrent();
+      console.log('📊 Chanson actuelle chargée:', song);
+      
       setCurrentSong(song);
       setDisplayedSong(song); // Initialiser la chanson affichée
     } catch (err) {
-      console.error('Erro ao carregar música atual:', err);
+      console.error('❌ Erro ao carregar música atual:', err);
       setError('Erro ao carregar a música da semana. Tente novamente.');
     } finally {
       setIsLoading(false);
@@ -62,7 +60,11 @@ export default function Home() {
 
   const loadRecentSongs = async () => {
     try {
+      console.log('🔄 Chargement des musiques récentes depuis Supabase...');
+      
       const allSongs = await Song.list();
+      console.log('📊 Toutes les musiques chargées:', allSongs);
+      
       const currentMonth = new Date();
       const monthStart = startOfMonth(currentMonth);
       const monthEnd = endOfMonth(currentMonth);
@@ -73,9 +75,10 @@ export default function Home() {
         return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
       });
       
+      console.log('📅 Musiques du mois en cours:', monthSongs);
       setRecentSongs(monthSongs);
     } catch (err) {
-      console.error('Erro ao carregar músicas recentes:', err);
+      console.error('❌ Erro ao carregar músicas recentes:', err);
     }
   };
 

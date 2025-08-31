@@ -9,6 +9,10 @@ const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
 const PUSH_DEFAULT_LOCALE = Deno.env.get("PUSH_DEFAULT_LOCALE") ?? "pt-BR";
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_SEC = parseInt(Deno.env.get("RATE_LIMIT_WINDOW_SEC") ?? "60");
+const RATE_LIMIT_MAX = parseInt(Deno.env.get("RATE_LIMIT_MAX") ?? "20");
+
 // Initialize Supabase client only if we have the required credentials
 let supabase: any = null;
 if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
@@ -24,13 +28,64 @@ if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
 
 // CORS (read from env, fallback "*")
 const ALLOWED_ORIGIN = Deno.env.get("ALLOWED_ORIGIN") ?? "*";
+
+const SECURITY: Record<string, string> = {
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "geolocation=(), camera=(), microphone=()"
+};
+
 function cors(extra: Record<string,string> = {}) {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Headers": "content-type",
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+    "Vary": "Origin",
+    ...SECURITY,
     ...extra,
   };
+}
+
+// Rate limiting storage (in-memory, survives same instance requests)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+// Rate limiting function
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const bucket = rateLimitMap.get(ip);
+  
+  if (!bucket || now > bucket.resetAt) {
+    // Reset bucket
+    rateLimitMap.set(ip, { count: 1, resetAt: now + (RATE_LIMIT_WINDOW_SEC * 1000) });
+    return { allowed: true };
+  }
+  
+  if (bucket.count >= RATE_LIMIT_MAX) {
+    return { allowed: false, retryAfter: bucket.resetAt - now };
+  }
+  
+  // Increment count
+  bucket.count++;
+  return { allowed: true };
+}
+
+// IP extraction function
+function extractIP(req: Request): string {
+  // Try X-Forwarded-For first (first IP in chain)
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const firstIP = forwarded.split(",")[0].trim();
+    if (firstIP) return firstIP;
+  }
+  
+  // Fallback to Cloudflare IP
+  const cfIP = req.headers.get("cf-connecting-ip");
+  if (cfIP) return cfIP;
+  
+  // Last resort
+  return "unknown";
 }
 
 // Initialize webpush only if we have VAPID keys
@@ -152,6 +207,27 @@ Deno.serve(async (req: Request) => {
   // POST /push/subscribe
   if (pathname.endsWith("/subscribe") && req.method === "POST") {
     try {
+      // Rate limiting check
+      const ip = extractIP(req);
+      const rateLimit = checkRateLimit(ip);
+      
+      if (!rateLimit.allowed) {
+        console.warn(JSON.stringify({
+          at: new Date().toISOString(),
+          fn: "push-edge",
+          ip,
+          rate_limited: true
+        }));
+        
+        return new Response(JSON.stringify({ 
+          error: "rate_limited", 
+          retry_after: Math.ceil(rateLimit.retryAfter! / 1000)
+        }), { 
+          status: 429, 
+          headers: cors({ "Content-Type": "application/json" })
+        });
+      }
+      
       const { subscription, topic = "new-song", locale, vapidKeyVersion = "v1" } = await req.json();
       if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
         return new Response(JSON.stringify({ error: "bad subscription" }), { 
@@ -186,6 +262,27 @@ Deno.serve(async (req: Request) => {
   // DELETE /push/unsubscribe
   if (pathname.endsWith("/unsubscribe") && req.method === "DELETE") {
     try {
+      // Rate limiting check
+      const ip = extractIP(req);
+      const rateLimit = checkRateLimit(ip);
+      
+      if (!rateLimit.allowed) {
+        console.warn(JSON.stringify({
+          at: new Date().toISOString(),
+          fn: "push-edge",
+          ip,
+          rate_limited: true
+        }));
+        
+        return new Response(JSON.stringify({ 
+          error: "rate_limited", 
+          retry_after: Math.ceil(rateLimit.retryAfter! / 1000)
+        }), { 
+          status: 429, 
+          headers: cors({ "Content-Type": "application/json" })
+        });
+      }
+      
       const { endpoint } = await req.json();
       if (!endpoint) {
         return new Response(JSON.stringify({ error: "missing endpoint" }), { 

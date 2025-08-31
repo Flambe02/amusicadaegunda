@@ -1,6 +1,16 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Charger le fichier .env depuis le répertoire du script
+config({ path: join(__dirname, '.env') });
 import webpush from 'web-push';
 import { createClient } from '@supabase/supabase-js';
+
+
 
 const {
   SUPABASE_URL,
