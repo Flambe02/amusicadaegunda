@@ -28,7 +28,7 @@ export default function NotificationStatus() {
         
         <div className="mt-2 pt-2 border-t border-red-600">
           <div className="text-xs opacity-75">
-            ✅ Bouton "Avise-me das novas músicas" complètement supprimé
+            ✅ Bouton &quot;Avise-me das novas músicas&quot; complètement supprimé
           </div>
         </div>
       </div>

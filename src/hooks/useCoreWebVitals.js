@@ -162,13 +162,17 @@ export default function useCoreWebVitals(options = {}) {
           const value = lastEntry.startTime;
           const quality = evaluateMetric('LCP', value);
           
-          setMetrics(prev => ({ ...prev, LCP: value }));
+          setMetrics(prev => {
+            const newMetrics = { ...prev, LCP: value };
+            
+            // Vérifier les dégradations
+            if (prev.LCP !== null && value > prev.LCP * 1.2) { // Dégradation de 20%
+              createAlert('LCP', value, quality, prev.LCP);
+            }
+            
+            return newMetrics;
+          });
           addToHistory('LCP', value, quality);
-          
-          // Vérifier les dégradations
-          if (prev.LCP !== null && value > prev.LCP * 1.2) { // Dégradation de 20%
-            createAlert('LCP', value, quality, prev.LCP);
-          }
         }
       });
 
@@ -197,13 +201,17 @@ export default function useCoreWebVitals(options = {}) {
           const value = entry.processingStart - entry.startTime;
           const quality = evaluateMetric('FID', value);
           
-          setMetrics(prev => ({ ...prev, FID: value }));
+          setMetrics(prev => {
+            const newMetrics = { ...prev, FID: value };
+            
+            // Vérifier les dégradations
+            if (prev.FID !== null && value > prev.FID * 1.5) { // Dégradation de 50%
+              createAlert('FID', value, quality, prev.FID);
+            }
+            
+            return newMetrics;
+          });
           addToHistory('FID', value, quality);
-          
-          // Vérifier les dégradations
-          if (metrics.FID !== null && value > metrics.FID * 1.5) { // Dégradation de 50%
-            createAlert('FID', value, quality, metrics.FID);
-          }
         });
       });
 
@@ -213,7 +221,7 @@ export default function useCoreWebVitals(options = {}) {
     } catch (error) {
       console.error('❌ Erreur lors de la mesure FID:', error);
     }
-  }, [evaluateMetric, addToHistory, createAlert, metrics.FID]);
+  }, [evaluateMetric, addToHistory, createAlert]);
 
   /**
    * Mesurer le CLS (Cumulative Layout Shift)
@@ -240,13 +248,17 @@ export default function useCoreWebVitals(options = {}) {
 
         // Mettre à jour la métrique
         const quality = evaluateMetric('CLS', clsValue);
-        setMetrics(prev => ({ ...prev, CLS: clsValue }));
+        setMetrics(prev => {
+          const newMetrics = { ...prev, CLS: clsValue };
+          
+          // Vérifier les dégradations
+          if (prev.CLS !== null && clsValue > prev.CLS * 1.3) { // Dégradation de 30%
+            createAlert('CLS', clsValue, quality, prev.CLS);
+          }
+          
+          return newMetrics;
+        });
         addToHistory('CLS', clsValue, quality);
-        
-        // Vérifier les dégradations
-        if (metrics.CLS !== null && clsValue > metrics.CLS * 1.3) { // Dégradation de 30%
-          createAlert('CLS', clsValue, quality, metrics.CLS);
-        }
       });
 
       observer.observe({ entryTypes: ['layout-shift'] });
@@ -255,7 +267,7 @@ export default function useCoreWebVitals(options = {}) {
     } catch (error) {
       console.error('❌ Erreur lors de la mesure CLS:', error);
     }
-  }, [evaluateMetric, addToHistory, createAlert, metrics.CLS]);
+  }, [evaluateMetric, addToHistory, createAlert]);
 
   /**
    * Mesurer les métriques de navigation

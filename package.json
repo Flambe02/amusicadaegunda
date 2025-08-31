@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
+    "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
     "preview": "vite preview",
     "deploy": "npm run build && node deploy-docs.js"
   },

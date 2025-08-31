@@ -140,7 +140,7 @@ export default function useServiceWorker() {
     } catch (error) {
       console.error('❌ Erreur configuration canal de communication', error);
     }
-  }, []);
+  }, [getCacheInfo]);
 
   /**
    * Nettoyer le cache

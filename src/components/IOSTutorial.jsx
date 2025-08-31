@@ -181,7 +181,7 @@ export default function IOSTutorial({ onShowVisualGuide }) {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-sm">Adicionar à tela inicial</h3>
-              <p className="text-blue-100 text-xs">Clique em Compartilhar e depois "Na tela inicial"</p>
+              <p className="text-blue-100 text-xs">Clique em Compartilhar e depois &quot;Na tela inicial&quot;</p>
             </div>
             <div className="flex gap-2">
               <button

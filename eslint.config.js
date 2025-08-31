@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'docs', 'build', 'coverage', 'supabase/functions/**/node_modules', 'push-sender/node_modules'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
@@ -33,6 +33,15 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
+      // Règles de qualité du code - OPTIMISÉES
+      'react/prop-types': 'off', // Pas de PropTypes maintenant; plan TypeScript plus tard
+      'no-unused-vars': ['warn', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' }],
+      'no-console': 'off', // Build déjà supprime console via Vite esbuild.drop
+      'no-empty': ['warn', { 'allowEmptyCatch': true }],
+      'no-useless-escape': 'warn',
+      // Hooks hygiene - CRITIQUE
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn'
     },
   },
 ]

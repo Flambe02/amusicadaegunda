@@ -87,7 +87,7 @@ export default function TikTokPlayerSimple({
       <div className="video-info">
         <p className="video-id">ID: {postId}</p>
         <p className="video-note">
-          Clique em "Assistir" para abrir o vídeo no TikTok com som completo
+          Clique em &quot;Assistir&quot; para abrir o vídeo no TikTok com som completo
         </p>
       </div>
     </div>

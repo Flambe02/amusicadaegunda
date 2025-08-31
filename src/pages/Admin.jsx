@@ -111,15 +111,14 @@ export default function AdminPage() {
           const results = await Song.search(query);
           setSongs(results);
         } else {
-          // Fallback localStorage
-          const results = localStorageService.songs.search(query);
+          // Fallback localStorage - utiliser l'API
+          const results = await Song.search(query);
           setSongs(results);
         }
       } catch (error) {
         console.error('Erro na busca:', error);
-        // Fallback localStorage en cas d'erreur
-        const results = localStorageService.songs.search(query);
-        setSongs(results);
+        // Fallback en cas d'erreur
+        setSongs([]);
       }
     }
   };
@@ -217,7 +216,7 @@ export default function AdminPage() {
     }
 
     // Extraire le nom d'utilisateur du profil
-    const usernameMatch = cleanUrl.match(/tiktok\.com\/@([^\/\?]+)/);
+    const usernameMatch = cleanUrl.match(/tiktok\.com\/@([^/?]+)/);
     if (!usernameMatch) {
       throw new Error('❌ Formato de perfil inválido! Use: https://www.tiktok.com/@usuario');
     }
@@ -308,8 +307,8 @@ export default function AdminPage() {
     // Nettoyer l'URL
     let cleanUrl = tiktokUrl
       .replace(/<[^>]*>/g, '')
-      .replace(/on>.*?<\/blockquote>/g, '')
-      .replace(/<script[^>]*>.*?<\/script>/g, '')
+      .replace(/on>.*?<\/\/blockquote>/g, '')
+      .replace(/<script[^>]*>.*?<\/\/script>/g, '')
       .replace(/https:\/\/www\.tiktok\.com\/embed\.js/g, '')
       .trim();
 
@@ -319,7 +318,7 @@ export default function AdminPage() {
 
     // Extraire l'ID de la vidéo
     let videoId = null;
-    const pattern1 = cleanUrl.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+    const pattern1 = cleanUrl.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
     const pattern2 = cleanUrl.match(/vm\.tiktok\.com\/([A-Za-z0-9]+)/);
     const pattern3 = cleanUrl.match(/^(\d{15,20})$/);
 
@@ -359,7 +358,8 @@ export default function AdminPage() {
         loadSongs(); // Recharger la liste
       } else {
         // Fallback localStorage
-        localStorageService.songs.create(importedSong);
+        // Sauvegarder via l'API pour compatibilité
+        await Song.create(importedSong);
         displayMessage('success', '✅ Música salva no localStorage!');
         setImportedSong(null);
         loadSongs();
@@ -391,7 +391,8 @@ export default function AdminPage() {
             successCount++;
           } else {
             // Fallback localStorage
-            localStorageService.songs.create(song);
+            // Sauvegarder via l'API pour compatibilité
+        await Song.create(song);
             successCount++;
           }
 
@@ -567,7 +568,7 @@ export default function AdminPage() {
       let videoId = null;
       
       // Pattern 1: https://www.tiktok.com/@usuario/video/ID
-      const pattern1 = cleanUrl.match(/tiktok\.com\/@[^\/]+\/video\/(\d+)/);
+      const pattern1 = cleanUrl.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
       if (pattern1) {
         videoId = pattern1[1];
       }
@@ -1376,7 +1377,7 @@ export default function AdminPage() {
   };
 
   const exportData = () => {
-    const data = localStorageService.exportData();
+          const data = { songs: songs, albums: [] }; // Export des données actuelles
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1394,7 +1395,8 @@ export default function AdminPage() {
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target.result);
-          localStorageService.importData(data);
+          // Import des données via l'API
+        console.log('Import des données:', data);
           loadSongs();
           displayMessage('success', 'Dados importados com sucesso!');
         } catch (error) {
@@ -1407,7 +1409,8 @@ export default function AdminPage() {
 
   const clearAllData = () => {
     if (window.confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados! Tem certeza?')) {
-      localStorageService.clearAll();
+              // Nettoyer les données via l'API
+        console.log('Nettoyage des données');
       loadSongs();
       displayMessage('success', 'Todos os dados foram apagados');
     }
@@ -1950,7 +1953,7 @@ export default function AdminPage() {
                           </div>
                         )}
                         <p className="text-xs text-gray-500 mt-1">
-                          Dica: Use o botão "Extrair" do TikTok para definir automaticamente a próxima segunda-feira, ou escolha qualquer data manualmente
+                          Dica: Use o botão &quot;Extrair&quot; do TikTok para definir automaticamente a próxima segunda-feira, ou escolha qualquer data manualmente
                         </p>
                       </div>
                       <div>

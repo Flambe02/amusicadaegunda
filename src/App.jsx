@@ -5,7 +5,7 @@ import OfflineIndicator from "@/components/OfflineIndicator"
 import { useEffect } from 'react';
 import migrationService from '@/lib/migration';
 import MigrationStatus from '@/components/MigrationStatus';
-import VersionBadge from '@/components/VersionBadge';
+
 import DeviceDetector from '@/components/DeviceDetector';
 import NotificationStatus from '@/components/NotificationStatus';
 import IconsDiagnostic from '@/components/IconsDiagnostic';
@@ -31,7 +31,6 @@ function App() {
       <OfflineIndicator />
       <Pages />
       <MigrationStatus />
-      <VersionBadge />
       <DeviceDetector />
       <NotificationStatus />
       <IconsDiagnostic />

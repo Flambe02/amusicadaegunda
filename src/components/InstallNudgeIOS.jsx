@@ -9,7 +9,7 @@ export default function InstallNudgeIOS({ onOpenTutorial }) {
   if (!isIOS() || isStandalone()) return null;
   return (
     <div style={{ padding:12, border:'1px solid #eee', borderRadius:12 }}>
-      Pour activer les notifications, installe d'abord l'app sur l'écran d'accueil.
+      Pour activer les notifications, installe d&apos;abord l&apos;app sur l&apos;écran d&apos;accueil.
       <div style={{ marginTop:8 }}>
         <button onClick={onOpenTutorial} style={{ padding:'8px 12px', borderRadius:8 }}>
           Comment installer

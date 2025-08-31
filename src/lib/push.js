@@ -61,7 +61,7 @@ async function getSWRegistration() {
     console.log('🔍 Récupération du Service Worker existant...');
     return await navigator.serviceWorker.ready; 
   }
-  catch (error) {
+  catch (_error) {
     console.log('⚠️ SW pas prêt, tentative d\'enregistrement...');
     // Enregistrer uniquement en production
     if (import.meta.env.PROD) {

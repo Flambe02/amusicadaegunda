@@ -23,7 +23,7 @@ export function parseTikTokId(input) {
   // Patterns pour différentes URLs TikTok
   const patterns = [
     // URL complète : https://www.tiktok.com/@username/video/1234567890123456789
-    /tiktok\.com\/@[^\/]+\/video\/(\d{15,20})/i,
+    /tiktok\.com\/@[^/]+\/video\/(\d{15,20})/i,
     
     // URL courte : https://vm.tiktok.com/XXXXXX/
     /vm\.tiktok\.com\/[A-Za-z0-9]+\/?/i,
@@ -110,7 +110,7 @@ export function extractTikTokMetadata(url) {
   }
 
   // Extraire le username si présent
-  const usernameMatch = url.match(/tiktok\.com\/@([^\/]+)/i);
+  const usernameMatch = url.match(/tiktok\.com\/@([^/]+)/i);
   const username = usernameMatch ? usernameMatch[1] : null;
 
   return {

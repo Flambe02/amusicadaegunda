@@ -153,7 +153,7 @@ export default function TikTokDemo() {
               <h4 className="font-medium text-gray-700 mb-2">✅ Implementado</h4>
               <ul className="space-y-1 text-gray-600">
                 <li>• Autoplay muted par défaut</li>
-                <li>• Overlay "Activer le son" accessible</li>
+                <li>• Overlay &quot;Activer le son&quot; accessible</li>
                 <li>• Loop automatique en fin de vidéo</li>
                 <li>• Plein écran mobile (100svh, safe-areas)</li>
                 <li>• PostMessage API pour contrôler la lecture</li>
@@ -166,7 +166,7 @@ export default function TikTokDemo() {
             <div>
               <h4 className="font-medium text-gray-700 mb-2">🔧 API TikTok v1</h4>
               <ul className="space-y-1 text-gray-600">
-                <li>• URL: <code className="bg-gray-100 px-1 rounded">/player/v1/{'{ID}'}</code></li>
+                <li>• URL: <code className="bg-gray-100 px-1 rounded">/player/v1/&lbrace;ID&rbrace;</code></li>
                 <li>• Paramètres: autoplay, loop, controls, muted</li>
                 <li>• PostMessage: onPlayerReady, onStateChange</li>
                 <li>• Commands: play, pause, seekTo, unMute</li>

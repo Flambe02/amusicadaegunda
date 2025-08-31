@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Trash2, RefreshCw, Info, HardDrive, Wifi, WifiOff, Database } from 'lucide-react';
 import useServiceWorker from '@/hooks/useServiceWorker';
 
@@ -25,7 +25,7 @@ export default function CacheManager({ className = "" }) {
     clearCache,
     getCacheInfo,
     forceUpdate,
-    getPerformanceStats
+    _getPerformanceStats
   } = useServiceWorker();
 
   // Calculer la taille totale du cache
