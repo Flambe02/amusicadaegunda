@@ -53,3 +53,8 @@ temp/
 
 # Push sender environment
 push-sender/.env
+
+# IMPORTANT: PROTECT CUSTOM DOMAIN FILES
+# NEVER delete these files - they contain custom domain configuration
+!docs/CNAME
+!public/CNAME
