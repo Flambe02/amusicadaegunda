@@ -6,48 +6,48 @@
   
   <!-- Page d'accueil -->
   <url>
-    <loc>https://amusicadaegunda.com/</loc>
-    <lastmod>2025-01-27</lastmod>
+    <loc>https://amusicadasegunda.com/</loc>
+    <lastmod>2025-08-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   
   <!-- Page Calendário -->
   <url>
-    <loc>https://amusicadaegunda.com/calendar</loc>
-    <lastmod>2025-01-27</lastmod>
+    <loc>https://amusicadasegunda.com/calendar</loc>
+    <lastmod>2025-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
   <!-- Page Playlist -->
   <url>
-    <loc>https://amusicadaegunda.com/playlist</loc>
-    <lastmod>2025-01-27</lastmod>
+    <loc>https://amusicadasegunda.com/playlist</loc>
+    <lastmod>2025-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
   <!-- Page Blog -->
   <url>
-    <loc>https://amusicadaegunda.com/blog</loc>
-    <lastmod>2025-01-27</lastmod>
+    <loc>https://amusicadasegunda.com/blog</loc>
+    <lastmod>2025-08-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <!-- Page Calendário de l'Avent -->
   <url>
-    <loc>https://amusicadaegunda.com/adventcalendar</loc>
-    <lastmod>2025-01-27</lastmod>
+    <loc>https://amusicadasegunda.com/adventcalendar</loc>
+    <lastmod>2025-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <!-- Page Sobre -->
   <url>
-    <loc>https://amusicadaegunda.com/sobre</loc>
-    <lastmod>2025-01-27</lastmod>
+    <loc>https://amusicadasegunda.com/sobre</loc>
+    <lastmod>2025-08-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
