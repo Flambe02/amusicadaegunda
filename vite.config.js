@@ -4,6 +4,7 @@ import { resolve } from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './',
   plugins: [react()],
   resolve: {
     alias: {
@@ -11,6 +12,7 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: 'dist',
     // Optimisations pour les Core Web Vitals
     target: 'es2015',
     minify: 'esbuild',

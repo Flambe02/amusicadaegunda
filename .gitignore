@@ -8,6 +8,10 @@ yarn-error.log*
 dist/
 build/
 
+# Capacitor native platforms
+android/
+ios/
+
 # Environment variables
 .env
 .env.local

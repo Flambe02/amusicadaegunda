@@ -1,0 +1,16 @@
+{
+  "appId": "com.tonorg.musicadasegunda",
+  "appName": "Música da Segunda",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "preferredContentMode": "mobile"
+  },
+  "android": {
+    "backgroundColor": "#ffffff"
+  }
+}

@@ -14,4 +14,25 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 // Import Web Vitals en production
 if (import.meta.env.PROD) {
   import('./analytics/webvitals');
+}
+
+// Gating du Service Worker pour éviter les conflits en natif
+if ('serviceWorker' in navigator) {
+  // Vérifier si on est en mode natif Capacitor
+  const isNative = async () => {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      return Capacitor.isNativePlatform?.() === true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Enregistrer le SW seulement si pas en natif
+  window.addEventListener('load', async () => {
+    const native = await isNative();
+    if (!native) {
+      navigator.serviceWorker.register('/sw.js').catch(console.error);
+    }
+  });
 } 

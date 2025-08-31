@@ -190,6 +190,65 @@ npm run preview      # Preview do build
 npm run lint         # Verificar código
 ```
 
+## 📱 **Mobile Development (Capacitor)**
+
+### **Pré-requisitos Mobile**
+- Android Studio (pour Android)
+- Xcode (pour iOS - macOS uniquement)
+- Node.js 18+ et npm
+
+### **Scripts Capacitor**
+```bash
+# Initialisation et configuration
+npm run cap:init     # Initialiser Capacitor
+npm run cap:add:android  # Ajouter la plateforme Android
+npm run cap:add:ios      # Ajouter la plateforme iOS
+
+# Synchronisation et build
+npm run cap:sync     # Synchroniser le code web avec les plateformes
+npm run cap:copy     # Copier les assets web
+npm run cap:open:android  # Ouvrir dans Android Studio
+npm run cap:open:ios      # Ouvrir dans Xcode
+
+# Génération d'icônes
+npm run icons:android     # Générer les icônes Android
+npm run icons:ios         # Générer les icônes iOS
+
+# CI/CD
+npm run ci:android        # Build complet pour CI (Android)
+```
+
+### **Workflow de développement mobile**
+```bash
+# 1. Build de l'app web
+npm run build
+
+# 2. Synchroniser avec Capacitor
+npm run cap:sync
+
+# 3. Ouvrir dans l'IDE natif
+npm run cap:open:android  # ou npm run cap:open:ios
+```
+
+### **Configuration Appflow (CI/CD)**
+- `capacitor.config.json` : Configuration Capacitor
+- `appflow.config.json` : Configuration Ionic Appflow
+- Les plateformes `android/` et `ios/` sont générées localement
+- **Important** : Ne pas committer les dossiers `android/` et `ios/` (ajoutés au .gitignore)
+
+### **Rollback Capacitor**
+Si vous devez retirer Capacitor :
+```bash
+# Supprimer les dépendances
+npm uninstall @capacitor/core @capacitor/cli @capacitor/android @capacitor/ios cordova-res
+
+# Supprimer les fichiers de config
+rm capacitor.config.json appflow.config.json
+
+# Supprimer les plateformes
+rm -rf android/ ios/
+```
+
 ### **Estrutura de Dados**
 ```javascript
 // Exemplo de música

@@ -9,9 +9,20 @@
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
     "preview": "vite preview",
-    "deploy": "npm run build && node deploy-docs.js"
+    "deploy": "npm run build && node deploy-docs.js",
+    "cap:init": "cap init \"Música da Segunda\" com.tonorg.musicadasegunda || true",
+    "cap:add:android": "cap add android || true",
+    "cap:add:ios": "cap add ios || true",
+    "cap:copy": "cap copy",
+    "cap:sync": "cap sync",
+    "cap:open:android": "cap open android",
+    "cap:open:ios": "cap open ios",
+    "icons:ios": "cordova-res ios --skip-config --copy",
+    "icons:android": "cordova-res android --skip-config --copy",
+    "ci:android": "npm ci && npm run build && npx cap sync android"
   },
   "dependencies": {
+    "@capacitor/core": "^7.4.3",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -66,6 +77,8 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3",
     "@eslint/js": "^9.19.0",
     "@flydotio/dockerfile": "^0.7.8",
     "@types/node": "^22.13.5",
@@ -73,6 +86,7 @@
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
+    "cordova-res": "^0.15.4",
     "cssnano": "^7.1.1",
     "eslint": "^9.19.0",
     "eslint-plugin-react": "^7.37.4",
