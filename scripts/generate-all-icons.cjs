@@ -70,16 +70,23 @@ async function createIcon(sourcePath, outputPath, size, options = {}) {
   try {
     const { padding = 0, background = 'transparent', borderRadius = 0 } = options;
     
-    // Redimensionner l'icône pour remplir complètement l'espace (100%)
+    // Créer un fond carré avec le logo qui remplit 100% de l'espace
     await sharp(sourcePath)
       .resize(size, size, { 
-        fit: 'cover', // Utilise 'cover' pour remplir tout l'espace
+        fit: 'cover', // Remplit tout l'espace carré
         position: 'center'
+      })
+      .extend({
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: { r: 0, g: 0, b: 0, alpha: 0 } // Transparent
       })
       .png()
       .toFile(outputPath);
     
-    console.log(`✅ Généré: ${outputPath} (${size}x${size}) - 100% remplissage`);
+    console.log(`✅ Généré: ${outputPath} (${size}x${size}) - Logo 100% remplissage`);
   } catch (error) {
     console.error(`❌ Erreur lors de la génération de ${outputPath}:`, error.message);
   }
