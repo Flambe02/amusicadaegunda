@@ -15,8 +15,9 @@ import Blog from "./Blog";
 import Admin from "./Admin";
 
 import Playlist from "./Playlist";
+import Song from "./Song";
 
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 // Lazy loading de la route TikTok pour optimiser le bundle
@@ -39,6 +40,8 @@ const PAGES = {
     Admin: Admin,
     
     Playlist: Playlist,
+    
+    Song: Song,
     
     TikTokDemo: TikTokDemo,
     
@@ -86,6 +89,7 @@ function PagesContent() {
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/playlist" element={<Playlist />} />
+                <Route path="/chansons/:slug" element={<Song />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
                 {/* Route TikTok avec paramètre dynamique */}

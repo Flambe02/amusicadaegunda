@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
@@ -45,12 +45,10 @@ const hideSplashScreen = async () => {
       const { SplashScreen } = await import('@capacitor/splash-screen');
       await SplashScreen.hide();
     }
-  } catch (error) {
+  } catch {
     // Ignore les erreurs en mode web
   }
 };
 
 // Masquer le splash screen après le chargement de l'app
-useEffect(() => {
-  hideSplashScreen();
-}, []); 
+hideSplashScreen(); 

@@ -1,6 +1,42 @@
 [
-  "croissant",
-  "confissoes-bancarias",
-  "festas-juninas",
-  "cafe-no-brasil"
+  {
+    "slug": "croissant",
+    "title": "Croissant",
+    "artist": "A Música da Segunda",
+    "description": "Uma música sobre croissants e manhãs francesas",
+    "release_date": "2024-01-15",
+    "status": "published",
+    "genre": "Indie",
+    "tiktok_video_id": "sample_tiktok_1"
+  },
+  {
+    "slug": "confissoes-bancarias",
+    "title": "Confissões Bancárias",
+    "artist": "A Música da Segunda",
+    "description": "Confissões sobre a vida bancária e financeira",
+    "release_date": "2024-01-22",
+    "status": "published",
+    "genre": "Indie",
+    "tiktok_video_id": "sample_tiktok_2"
+  },
+  {
+    "slug": "festas-juninas",
+    "title": "Festas Juninas",
+    "artist": "A Música da Segunda",
+    "description": "Celebrando as tradicionais festas juninas brasileiras",
+    "release_date": "2024-01-29",
+    "status": "published",
+    "genre": "Música Brasileira",
+    "tiktok_video_id": "sample_tiktok_3"
+  },
+  {
+    "slug": "cafe-no-brasil",
+    "title": "Café no Brasil",
+    "artist": "A Música da Segunda",
+    "description": "Uma ode ao café brasileiro e sua cultura",
+    "release_date": "2024-02-05",
+    "status": "published",
+    "genre": "Música Brasileira",
+    "tiktok_video_id": "sample_tiktok_4"
+  }
 ]

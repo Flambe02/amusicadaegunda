@@ -13,7 +13,7 @@ export function useSEO({
   type = 'website'
 }) {
   const siteName = 'Música da Segunda';
-  const siteUrl = 'https://amusicadasegunda.com';
+  const siteUrl = 'https://www.amusicadasegunda.com';
   const defaultImage = `${siteUrl}/images/Logo.png`;
   
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
@@ -119,5 +119,5 @@ export function useSEO({
     } catch (error) {
       console.error('Erro ao atualizar SEO:', error);
     }
-  }, [fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type]);
+  }, [fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type, defaultImage]);
 }

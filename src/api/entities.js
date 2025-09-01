@@ -1,6 +1,6 @@
 import { localStorageService } from '@/lib/localStorage';
-import { supabaseSongService, supabaseAlbumService } from './supabaseService';
-import { checkConnection, checkSupabaseData } from '@/lib/supabase';
+import { supabaseSongService } from './supabaseService';
+import { checkConnection } from '@/lib/supabase';
 
 let currentStorageMode = 'unknown';
 
@@ -9,13 +9,13 @@ let useSupabase = true; // Forcer Supabase
 
 const detectStorageMode = async () => {
   try {
-    console.log('🔄 Test de connexion Supabase...');
+    console.warn('🔄 Test de connexion Supabase...');
     
     // Vérifier la connexion
     const isConnected = await checkConnection();
     
     if (isConnected) {
-      console.log('✅ Mode de stockage: Supabase ☁️ (connecté)');
+      console.warn('✅ Mode de stockage: Supabase ☁️ (connecté)');
       useSupabase = true;
       currentStorageMode = 'supabase';
       return true;
@@ -35,7 +35,7 @@ const detectStorageMode = async () => {
 
 // Forcer la détection immédiate
 detectStorageMode().then(() => {
-  console.log(`🎯 Mode de stockage final: ${currentStorageMode === 'supabase' ? 'Supabase ☁️' : 'localStorage 💾'}`);
+        console.warn(`🎯 Mode de stockage final: ${currentStorageMode === 'supabase' ? 'Supabase ☁️' : 'localStorage 💾'}`);
 });
 
 // ===== ENTITÉS AVEC FALLBACK AUTOMATIQUE =====
@@ -102,7 +102,7 @@ export const Song = {
             }));
             
             localStorage.setItem('songs', JSON.stringify(renumberedSongs));
-            console.log('🔄 localStorage synchronisé avec Supabase et nettoyé de "Confissões Bancárias"');
+            console.warn('🔄 localStorage synchronisé avec Supabase et nettoyé de "Confissões Bancárias"');
           } catch (localError) {
             console.warn('⚠️ Erreur synchronisation localStorage:', localError);
           }
@@ -112,7 +112,7 @@ export const Song = {
       }
       
       // Fallback localStorage seulement si Supabase n'a pas de données
-      console.log('⚠️ Supabase indisponible, utilisation du localStorage nettoyé');
+              console.warn('⚠️ Supabase indisponible, utilisation du localStorage nettoyé');
       return localStorageService.songs.getCurrent();
       
     } catch (error) {
@@ -134,7 +134,7 @@ export const Song = {
           }));
           
           localStorage.setItem('songs', JSON.stringify(renumberedSongs));
-          console.log('🔄 localStorage nettoyé après erreur Supabase');
+          console.warn('🔄 localStorage nettoyé après erreur Supabase');
           
           // Retourner la première chanson nettoyée
           return renumberedSongs[0];
@@ -261,6 +261,28 @@ export const Song = {
         return songDate >= startDate && songDate <= endDate;
       });
     }
+  },
+
+  getBySlug: async (slug) => {
+    try {
+      if (useSupabase) {
+        // Essayer de récupérer par slug depuis Supabase
+        const songs = await supabaseSongService.list();
+        const song = songs.find(s => s.slug === slug || s.title?.toLowerCase().replace(/\s+/g, '-') === slug);
+        return song || null;
+      } else {
+        // Fallback localStorage
+        const songs = localStorageService.songs.getAll();
+        const song = songs.find(s => s.slug === slug || s.title?.toLowerCase().replace(/\s+/g, '-') === slug);
+        return song || null;
+      }
+    } catch (error) {
+      console.error('Erro ao carregar música por slug:', error);
+      // Fallback localStorage en cas d'erreur
+      const songs = localStorageService.songs.getAll();
+      const song = songs.find(s => s.slug === slug || s.title?.toLowerCase().replace(/\s+/g, '-') === slug);
+      return song || null;
+    }
   }
 };
 
@@ -282,8 +304,7 @@ export const AdventSong = {
         const adventSongs = songs.filter(song => {
           const releaseDate = new Date(song.release_date);
           const month = releaseDate.getMonth();
-          const day = releaseDate.getDate();
-          return month === 11 || song.status === 'published';
+                  return month === 11 || song.status === 'published';
         });
         
         const sortedSongs = adventSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
@@ -296,7 +317,6 @@ export const AdventSong = {
       const adventSongs = songs.filter(song => {
         const releaseDate = new Date(song.release_date);
         const month = releaseDate.getMonth();
-        const day = releaseDate.getDate();
         return month === 11 || song.status === 'published';
       });
       
@@ -312,16 +332,16 @@ export const User = null;
 export const switchToSupabase = async () => {
   const success = await detectStorageMode();
   if (success) {
-    console.log('✅ Passage en mode Supabase activé');
+    console.warn('✅ Passage en mode Supabase activé');
   } else {
-    console.log('❌ Impossible de passer en mode Supabase');
+          console.warn('❌ Impossible de passer en mode Supabase');
   }
   return success;
 };
 
 export const switchToLocalStorage = () => {
   useSupabase = false;
-  console.log('📱 Passage en mode localStorage activé');
+      console.warn('📱 Passage en mode localStorage activé');
   return true;
 };
 
