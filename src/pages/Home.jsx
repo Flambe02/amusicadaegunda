@@ -43,11 +43,11 @@ export default function Home() {
     setError(null);
     
     try {
-      console.log('🔄 Tentative de chargement depuis Supabase...');
+      console.warn('🔄 Tentative de chargement depuis Supabase...');
       
       // Utiliser la nouvelle méthode getCurrent
       const song = await Song.getCurrent();
-      console.log('📊 Chanson actuelle chargée:', song);
+      console.warn('📊 Chanson actuelle chargée:', song);
       
       setCurrentSong(song);
       setDisplayedSong(song); // Initialiser la chanson affichée
@@ -61,10 +61,10 @@ export default function Home() {
 
   const loadRecentSongs = async () => {
     try {
-      console.log('🔄 Chargement des musiques récentes depuis Supabase...');
+      console.warn('🔄 Chargement des musiques récentes depuis Supabase...');
       
-      const allSongs = await Song.list();
-      console.log('📊 Toutes les musiques chargées:', allSongs);
+              const allSongs = await Song.list('-release_date', null);
+      console.warn('📊 Toutes les musiques chargées:', allSongs);
       
       const currentMonth = new Date();
       const monthStart = startOfMonth(currentMonth);
@@ -76,7 +76,7 @@ export default function Home() {
         return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
       });
       
-      console.log('📅 Musiques du mois en cours:', monthSongs);
+      console.warn('📅 Musiques du mois en cours:', monthSongs);
       setRecentSongs(monthSongs);
     } catch (err) {
       console.error('❌ Erro ao carregar músicas recentes:', err);

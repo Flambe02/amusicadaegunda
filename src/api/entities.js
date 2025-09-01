@@ -40,24 +40,48 @@ detectStorageMode().then(() => {
 
 // ===== ENTITÉS AVEC FALLBACK AUTOMATIQUE =====
 export const Song = {
-  list: async (orderBy = '-release_date', limit = 10) => {
+  list: async (orderBy = '-release_date', limit = null) => {
     try {
       if (useSupabase) {
         const songs = await supabaseSongService.list(orderBy, limit);
-        return songs;
-      } else {
-        // Fallback localStorage
-        const songs = localStorageService.songs.getAll();
-        const sortedSongs = songs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
-        return limit ? sortedSongs.slice(0, limit) : sortedSongs;
+        if (songs && songs.length > 0) {
+          console.warn('✅ Chansons chargées depuis Supabase:', songs.length);
+          return songs;
+        }
       }
     } catch (error) {
-      console.error('Erro ao carregar músicas:', error);
-      // Fallback localStorage en cas d'erreur Supabase
-      const songs = localStorageService.songs.getAll();
-      const sortedSongs = songs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
-      return limit ? sortedSongs.slice(0, limit) : sortedSongs;
+      console.error('Erro ao carregar músicas desde Supabase:', error);
     }
+    
+    // Fallback vers data/songs.json si Supabase échoue ou est vide
+    try {
+      console.warn('🔄 Fallback vers data/songs.json...');
+      const songs = localStorageService.songs.getAll();
+      if (songs && songs.length > 0) {
+        const sortedSongs = songs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+        console.warn('✅ Chansons chargées depuis localStorage:', songs.length);
+        return limit ? sortedSongs.slice(0, limit) : sortedSongs;
+      }
+    } catch (localError) {
+      console.error('Erro ao carregar músicas depuis localStorage:', localError);
+    }
+    
+    // Dernier fallback : forcer l'initialisation du localStorage
+    try {
+      console.warn('🔄 Forçage initialisation localStorage...');
+      localStorageService.initialize();
+      const songs = localStorageService.songs.getAll();
+      if (songs && songs.length > 0) {
+        const sortedSongs = songs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+        console.warn('✅ Chansons chargées après initialisation forcée:', songs.length);
+        return limit ? sortedSongs.slice(0, limit) : sortedSongs;
+      }
+    } catch (initError) {
+      console.error('Erro ao forçar inicialização localStorage:', initError);
+    }
+    
+    console.warn('⚠️ Aucune chanson trouvée, retour tableau vide');
+    return [];
   },
 
   get: async (id) => {

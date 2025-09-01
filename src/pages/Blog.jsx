@@ -30,7 +30,7 @@ export default function Blog() {
   const loadBlogPosts = async () => {
     try {
       setIsLoading(true);
-      const allSongs = await Song.list();
+              const allSongs = await Song.list('-release_date', null);
       
       // Trier les chansons par date de publication (plus récentes en premier)
       const sortedSongs = allSongs.sort((a, b) => 

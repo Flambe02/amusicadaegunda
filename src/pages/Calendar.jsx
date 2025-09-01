@@ -41,7 +41,7 @@ export default function Calendar() {
         const [year, month] = monthParam.split('-').map(Number);
         if (year && month !== undefined) {
           setCurrentDate(new Date(year, month - 1, 1)); // month - 1 car les mois commencent à 0
-          console.log(`📅 Calendar: Mois chargé depuis l'URL: ${year}-${month}`);
+          console.warn(`📅 Calendar: Mois chargé depuis l'URL: ${year}-${month}`);
         }
       } catch (error) {
         console.error('Erro ao parsear parâmetro month:', error);
@@ -62,7 +62,7 @@ export default function Calendar() {
       
       // Charger TOUTES les chansons du mois (comme la page Home)
       // au lieu de seulement les chansons publiées
-      const allSongs = await Song.list();
+              const allSongs = await Song.list('-release_date', null);
       const monthData = (Array.isArray(allSongs) ? allSongs : []).filter(s => {
         const d = parseISO(s.release_date);
         return d.getFullYear() === year && (d.getMonth() + 1) === month;
@@ -72,7 +72,7 @@ export default function Calendar() {
       monthData.sort((a, b) => parseISO(b.release_date) - parseISO(a.release_date));
       setSongs(monthData);
       
-      console.log(`📅 Calendrier: ${monthData.length} chansons chargées pour ${month}/${year}:`, monthData.map(s => `${s.title} (${s.status})`));
+      console.warn(`📅 Calendrier: ${monthData.length} chansons chargées pour ${month}/${year}:`, monthData.map(s => `${s.title} (${s.status})`));
     } catch (error) {
       console.error('Error loading monthly songs:', error);
       setSongs([]);
@@ -379,7 +379,7 @@ export default function Calendar() {
             onShowDescription={(song) => {
               // Pour Calendar, on peut ouvrir un dialog de description
               // ou rediriger vers la page Home
-              console.log('Descrição solicitada para:', song.title);
+              console.warn('Descrição solicitada para:', song.title);
             }}
           />
         </DialogContent>

@@ -7,23 +7,79 @@ const STORAGE_KEYS = {
   SETTINGS: 'musica-da-segunda-settings'
 };
 
-// Aucune donnée par défaut - tout vient de Supabase
-const DEFAULT_SONGS = [];
+// Données de fallback depuis data/songs.json
+const DEFAULT_SONGS = [
+  {
+    "id": 1,
+    "slug": "croissant",
+    "title": "O Croissant",
+    "artist": "A Música da Segunda",
+    "description": "A música \"O Croissant\" brinca com o cho",
+    "release_date": "2025-02-03",
+    "status": "published",
+    "genre": "Indie",
+    "tiktok_video_id": "sample_tiktok_1"
+  },
+  {
+    "id": 2,
+    "slug": "confissoes-bancarias",
+    "title": "Confissões Bancárias",
+    "artist": "A Música da Segunda",
+    "description": "Confissões sobre a vida bancária e financeira",
+    "release_date": "2025-08-25",
+    "status": "published",
+    "genre": "Indie",
+    "tiktok_video_id": "sample_tiktok_2"
+  },
+  {
+    "id": 3,
+    "slug": "festas-juninas",
+    "title": "Festas Juninas",
+    "artist": "A Música da Segunda",
+    "description": "Celebrando as tradicionais festas juninas brasileiras",
+    "release_date": "2025-06-30",
+    "status": "published",
+    "genre": "Música Brasileira",
+    "tiktok_video_id": "sample_tiktok_3"
+  },
+  {
+    "id": 4,
+    "slug": "cafe-no-brasil",
+    "title": "Café no Brasil",
+    "artist": "A Música da Segunda",
+    "description": "Uma ode ao café brasileiro e sua cultura",
+    "release_date": "2025-07-14",
+    "status": "published",
+    "genre": "Música Brasileira",
+    "tiktok_video_id": "sample_tiktok_4"
+  }
+];
 
 // ===== FONCTIONS DE GESTION =====
 
 export const localStorageService = {
-  // Initialiser les données (vide - Supabase gère tout)
+  // Initialiser les données avec fallback depuis data/songs.json
   initialize() {
-    // Ne pas initialiser avec des données mockées
-    // Les données viennent de Supabase
-    console.log('🔄 localStorage initialisé - données Supabase uniquement');
+    try {
+      const existingSongs = this.songs.getAll();
+      if (existingSongs.length === 0) {
+        // Charger les données par défaut si localStorage est vide
+        localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
+        console.warn('🔄 localStorage initialisé avec données de fallback:', DEFAULT_SONGS.length, 'chansons');
+      } else {
+        console.warn('🔄 localStorage déjà initialisé avec:', existingSongs.length, 'chansons');
+      }
+    } catch (error) {
+      console.error('❌ Erreur initialisation localStorage:', error);
+      // Fallback en cas d'erreur
+      localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
+    }
   },
 
   // Forcer la réinitialisation des données (vide)
   forceReset() {
     localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify([]));
-    console.log('🔄 localStorage réinitialisé - données Supabase uniquement');
+    console.warn('🔄 localStorage réinitialisé - données Supabase uniquement');
   },
 
   // Nettoyer spécifiquement "Confissões Bancárias"
@@ -43,11 +99,11 @@ export const localStorageService = {
         }));
         
         localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(renumberedSongs));
-        console.log(`🧹 "Confissões Bancárias" supprimée du localStorage. ${songs.length - cleanedSongs.length} chanson(s) nettoyée(s)`);
+        console.warn(`🧹 "Confissões Bancárias" supprimée du localStorage. ${songs.length - cleanedSongs.length} chanson(s) nettoyée(s)`);
         return true;
       }
       
-      console.log('✅ localStorage déjà propre, aucune action nécessaire');
+      console.warn('✅ localStorage déjà propre, aucune action nécessaire');
       return false;
     } catch (error) {
       console.error('❌ Erreur lors du nettoyage:', error);
