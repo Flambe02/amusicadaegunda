@@ -4,10 +4,12 @@ const path = require('path');
 const BASE_URL = 'https://www.amusicadasegunda.com';
 
 const staticPages = [
-  { loc: '/',            changefreq: 'weekly', priority: 1.0 },
-  { loc: '/chansons',    changefreq: 'weekly', priority: 0.8 },
-  { loc: '/apropos',     changefreq: 'yearly', priority: 0.5 },
-  { loc: '/contact',     changefreq: 'yearly', priority: 0.4 }
+  { loc: '/',               changefreq: 'daily',  priority: 1.0 },
+  { loc: '/calendar',       changefreq: 'weekly', priority: 0.8 },
+  { loc: '/playlist',       changefreq: 'weekly', priority: 0.9 },
+  { loc: '/blog',           changefreq: 'weekly', priority: 0.7 },
+  { loc: '/adventcalendar', changefreq: 'monthly', priority: 0.6 },
+  { loc: '/sobre',          changefreq: 'monthly', priority: 0.5 }
 ];
 
 const songsJsonPath = path.resolve(process.cwd(), 'data', 'songs.json');
