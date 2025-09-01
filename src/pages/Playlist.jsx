@@ -1,8 +1,18 @@
 import React from 'react';
 import { Music, ExternalLink, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useSEO } from '../hooks/useSEO';
 
 export default function Playlist() {
+  // SEO pour la playlist
+  useSEO({
+    title: 'Playlist Completa - Todas as Descobertas Musicais',
+    description: 'Playlist completa com todas as descobertas musicais do Música da Segunda. Ouça no Spotify, Apple Music e YouTube Music.',
+    keywords: 'playlist música da segunda, descobertas musicais, spotify playlist, apple music, youtube music, todas as músicas',
+    url: '/playlist',
+    type: 'website'
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-200 to-rose-200 p-5">
       <div className="max-w-4xl mx-auto">

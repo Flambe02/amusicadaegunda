@@ -13,6 +13,7 @@ import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
 import { useNavigate } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -143,6 +144,20 @@ export default function Home() {
     const previousMonth = getPreviousMonth();
     navigate(`/calendar?month=${previousMonth}`);
   };
+
+  // SEO dynamique basé sur la chanson actuelle
+  useSEO({
+    title: currentSong ? `${currentSong.title} - ${currentSong.artist}` : 'Descoberta da Semana',
+    description: currentSong 
+      ? `Esta semana: "${currentSong.title}" de ${currentSong.artist}. Descubra uma nova música incrível toda segunda-feira no Música da Segunda.`
+      : 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais no Música da Segunda.',
+    keywords: currentSong 
+      ? `música da segunda, ${currentSong.title}, ${currentSong.artist}, descoberta musical, nova música toda segunda, música brasileira`
+      : 'música da segunda, descoberta musical, nova música toda segunda, música brasileira, indie music, playlist semanal',
+    image: currentSong?.cover_image,
+    url: '/',
+    type: 'website'
+  });
 
   if (isLoading) {
     return (

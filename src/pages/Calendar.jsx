@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import VisuallyHidden from "@/components/ui/VisuallyHidden";
 import SongPlayer from '../components/SongPlayer';
 import '../styles/tiktok-optimized.css';
+import { useSEO } from '../hooks/useSEO';
 
 export default function Calendar() {
   const [songs, setSongs] = useState([]);
@@ -173,6 +174,18 @@ export default function Calendar() {
       console.error('Chanson invalide:', song);
     }
   };
+
+  // SEO dynamique pour le calendrier
+  const monthYear = format(currentDate, 'MMMM yyyy', { locale: ptBR });
+  const songsCount = songs.length;
+  
+  useSEO({
+    title: `Calendário Musical ${monthYear}`,
+    description: `Explore ${songsCount} descobertas musicais de ${monthYear}. Calendário completo das músicas da segunda no Música da Segunda.`,
+    keywords: `calendário musical, ${monthYear}, descobertas musicais, ${songsCount} músicas, música da segunda, playlist mensal`,
+    url: `/calendar?month=${format(currentDate, 'yyyy-MM')}`,
+    type: 'website'
+  });
 
   return (
     <>
