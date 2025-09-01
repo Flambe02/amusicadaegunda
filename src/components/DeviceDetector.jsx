@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { isMobile } from '@/lib/push';
+
+// Fonction isMobile simplifiée (sans dépendance push)
+const isMobile = () => {
+  return /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) ||
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
 
 export default function DeviceDetector() {
   const [deviceInfo, setDeviceInfo] = useState({
