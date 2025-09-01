@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
@@ -35,4 +35,22 @@ if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(console.error);
     }
   });
-} 
+}
+
+// Intégration SplashScreen Capacitor
+const hideSplashScreen = async () => {
+  try {
+    const { Capacitor } = await import('@capacitor/core');
+    if (Capacitor.isNativePlatform?.()) {
+      const { SplashScreen } = await import('@capacitor/splash-screen');
+      await SplashScreen.hide();
+    }
+  } catch (error) {
+    // Ignore les erreurs en mode web
+  }
+};
+
+// Masquer le splash screen après le chargement de l'app
+useEffect(() => {
+  hideSplashScreen();
+}, []); 

@@ -1,5 +1,8 @@
 {
-  "type": "capacitor",
-  "webBuildCommand": "npm run build",
-  "webDir": "dist"
+  "type":"capacitor",
+  "webBuildCommand":"npm run build",
+  "webDir":"dist",
+  "android":{"architecture":"arm64-v8a"},
+  "ios":{"buildScheme":"Release"},
+  "environments":[]
 }

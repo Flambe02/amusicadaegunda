@@ -18,11 +18,16 @@
     "cap:open:android": "cap open android",
     "cap:open:ios": "cap open ios",
     "icons:ios": "cordova-res ios --skip-config --copy",
-    "icons:android": "cordova-res android --skip-config --copy",
-    "ci:android": "npm ci && npm run build && npx cap sync android"
+    "icons:android": "node scripts/generate-android-assets.js",
+    "splash:android": "echo 'Splash screen géré par le script icons:android'",
+    "assets:android": "npm run icons:android",
+    "ci:android": "npm ci && npm run build && npx cap sync android",
+    "sitemap": "node scripts/generate-sitemap.js",
+    "predeploy": "npm run sitemap"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3",
+    "@capacitor/splash-screen": "^7.0.2",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
