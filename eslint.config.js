@@ -36,7 +36,9 @@ export default [
       // Règles de qualité du code - OPTIMISÉES
       'react/prop-types': 'off', // Pas de PropTypes maintenant; plan TypeScript plus tard
       'no-unused-vars': ['warn', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' }],
-      'no-console': 'off', // Build déjà supprime console via Vite esbuild.drop
+      'no-console': process.env.NODE_ENV === 'production'
+        ? ['error', { allow: ['warn', 'error'] }]
+        : ['warn', { allow: ['warn', 'error'] }],
       'no-empty': ['warn', { 'allowEmptyCatch': true }],
       'no-useless-escape': 'warn',
       // Hooks hygiene - CRITIQUE

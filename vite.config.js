@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   base: './',
   plugins: [react()],
   resolve: {
@@ -18,7 +18,10 @@ export default defineConfig({
     minify: 'esbuild',
     sourcemap: false,
     esbuild: {
-      drop: ['console', 'debugger'],
+      drop: command === 'build' ? ['debugger'] : [],
+      pure: command === 'build' 
+        ? ['console.log', 'console.debug', 'console.info', 'console.trace'] 
+        : [],
     },
     rollupOptions: {
       output: {
@@ -46,4 +49,4 @@ export default defineConfig({
     open: true,
     hmr: false // Désactive HMR pour éviter les problèmes WebSocket
   },
-}) 
+})) 

@@ -23,30 +23,34 @@ export function useSEO({
   const fullUrl = url ? `${siteUrl}${url}` : siteUrl;
 
   useEffect(() => {
-    // Mise à jour du titre de la page
-    document.title = fullTitle;
+    // Vérifier que le DOM est prêt
+    if (typeof document === 'undefined') return;
     
-    // Fonction pour mettre à jour ou créer un meta tag
-    const updateMetaTag = (attribute, value, content) => {
-      let meta = document.querySelector(`meta[${attribute}="${value}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute(attribute, value);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
+    try {
+      // Mise à jour du titre de la page
+      document.title = fullTitle;
+      
+      // Fonction pour mettre à jour ou créer un meta tag
+      const updateMetaTag = (attribute, value, content) => {
+        let meta = document.querySelector(`meta[${attribute}="${value}"]`);
+        if (!meta) {
+          meta = document.createElement('meta');
+          meta.setAttribute(attribute, value);
+          document.head.appendChild(meta);
+        }
+        meta.setAttribute('content', content);
+      };
 
-    // Fonction pour mettre à jour le lien canonique
-    const updateCanonicalLink = (url) => {
-      let canonical = document.querySelector('link[rel="canonical"]');
-      if (!canonical) {
-        canonical = document.createElement('link');
-        canonical.setAttribute('rel', 'canonical');
-        document.head.appendChild(canonical);
-      }
-      canonical.setAttribute('href', url);
-    };
+      // Fonction pour mettre à jour le lien canonique
+      const updateCanonicalLink = (url) => {
+        let canonical = document.querySelector('link[rel="canonical"]');
+        if (!canonical) {
+          canonical = document.createElement('link');
+          canonical.setAttribute('rel', 'canonical');
+          document.head.appendChild(canonical);
+        }
+        canonical.setAttribute('href', url);
+      };
     
     // Mise à jour des métadonnées de base
     updateMetaTag('name', 'description', fullDescription);
@@ -106,11 +110,14 @@ export function useSEO({
       oldScript.remove();
     }
 
-    // Ajouter le nouveau script de données structurées
-    const script = document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(structuredData);
-    document.head.appendChild(script);
-
+      // Ajouter le nouveau script de données structurées
+      const script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.textContent = JSON.stringify(structuredData);
+      document.head.appendChild(script);
+      
+    } catch (error) {
+      console.error('Erro ao atualizar SEO:', error);
+    }
   }, [fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type]);
 }
