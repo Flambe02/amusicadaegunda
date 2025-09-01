@@ -68,43 +68,18 @@ const ICON_SIZES = {
 // Fonction pour créer une icône
 async function createIcon(sourcePath, outputPath, size, options = {}) {
   try {
-    const { padding = 0, background = '#32a2dc', borderRadius = 0 } = options;
+    const { padding = 0, background = 'transparent', borderRadius = 0 } = options;
     
-    let pipeline = sharp(sourcePath)
+    // Redimensionner l'icône pour remplir complètement l'espace (100%)
+    await sharp(sourcePath)
       .resize(size, size, { 
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 }
-      });
-    
-    // Ajouter du padding si nécessaire
-    if (padding > 0) {
-      pipeline = pipeline.extend({
-        top: padding,
-        bottom: padding,
-        left: padding,
-        right: padding,
-        background: { r: 0, g: 0, b: 0, alpha: 0 }
-      });
-    }
-    
-    // Créer un fond carré avec la couleur de thème
-    const finalSize = size + (padding * 2);
-    const backgroundImage = await sharp({
-      create: {
-        width: finalSize,
-        height: finalSize,
-        channels: 4,
-        background: background
-      }
-    }).png().toBuffer();
-    
-    // Superposer l'icône sur le fond
-    await sharp(backgroundImage)
-      .composite([{ input: await pipeline.png().toBuffer() }])
+        fit: 'cover', // Utilise 'cover' pour remplir tout l'espace
+        position: 'center'
+      })
       .png()
       .toFile(outputPath);
     
-    console.log(`✅ Généré: ${outputPath} (${finalSize}x${finalSize})`);
+    console.log(`✅ Généré: ${outputPath} (${size}x${size}) - 100% remplissage`);
   } catch (error) {
     console.error(`❌ Erreur lors de la génération de ${outputPath}:`, error.message);
   }
@@ -142,8 +117,8 @@ async function generateAllIcons() {
     const actualSize = icon.size * icon.scale;
     const outputPath = path.join(outputDirs.ios, icon.filename);
     await createIcon(sourcePath, outputPath, actualSize, { 
-      padding: Math.floor(actualSize * 0.1), // 10% de padding
-      background: '#32a2dc'
+      padding: 0, // Pas de padding pour 100% remplissage
+      background: 'transparent'
     });
   }
   
@@ -172,8 +147,8 @@ async function generateAllIcons() {
   for (const icon of ICON_SIZES.apple) {
     const outputPath = path.join(outputDirs.apple, icon.filename);
     await createIcon(sourcePath, outputPath, icon.size, { 
-      padding: Math.floor(icon.size * 0.1),
-      background: '#32a2dc'
+      padding: 0, // Pas de padding pour 100% remplissage
+      background: 'transparent'
     });
   }
   
