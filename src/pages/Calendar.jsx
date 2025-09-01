@@ -11,7 +11,7 @@ import '../styles/tiktok-optimized.css';
 
 export default function Calendar() {
   const [songs, setSongs] = useState([]);
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 7, 1)); // 1er Août 2025
+  const [currentDate, setCurrentDate] = useState(new Date()); // Mois en cours
   const [selectedSong, setSelectedSong] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
