@@ -2,14 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
+import UpdatePassword from '@/components/UpdatePassword';
 
 export default function ProtectedAdmin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showUpdatePassword, setShowUpdatePassword] = useState(false);
 
   useEffect(() => {
     checkAuth();
+    
+    // Vérifier si on est dans le contexte de réinitialisation
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    if (hashParams.get('reset') === 'true') {
+      setShowUpdatePassword(true);
+    }
     
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -66,6 +74,11 @@ export default function ProtectedAdmin() {
       setIsAdmin(false);
     }
   };
+
+  // Afficher la page de mise à jour de mot de passe si demandée
+  if (showUpdatePassword) {
+    return <UpdatePassword onBackToLogin={() => setShowUpdatePassword(false)} />;
+  }
 
   // Afficher un loader pendant la vérification
   if (isLoading) {

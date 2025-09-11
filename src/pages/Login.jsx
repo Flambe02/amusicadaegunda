@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Lock, Eye, EyeOff, Loader2, Shield } from 'lucide-react';
+import { Lock, Eye, EyeOff, Loader2, Shield, KeyRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import ResetPassword from '@/components/ResetPassword';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   // Vérifier si l'utilisateur est déjà connecté
   useEffect(() => {
@@ -103,6 +105,11 @@ export default function LoginPage() {
   const handleSignUp = async () => {
     setError('ℹ️ Pour créer un compte administrateur, contactez l\'administrateur du système.');
   };
+
+  // Afficher la page de réinitialisation si demandée
+  if (showResetPassword) {
+    return <ResetPassword onBackToLogin={() => setShowResetPassword(false)} />;
+  }
 
   // Afficher un loader pendant la vérification
   if (isChecking) {
@@ -226,7 +233,18 @@ export default function LoginPage() {
             </Button>
           </form>
           
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-sm text-gray-600">
+              Mot de passe oublié ?{' '}
+              <button
+                onClick={() => setShowResetPassword(true)}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+                disabled={isLoading}
+              >
+                <KeyRound className="w-4 h-4 inline mr-1" />
+                Réinitialiser
+              </button>
+            </p>
             <p className="text-sm text-gray-600">
               Pas de compte ?{' '}
               <button
