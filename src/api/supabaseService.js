@@ -127,7 +127,7 @@ export const supabaseSongService = {
 
       if (error) throw error
 
-      console.log('✅ Chanson créée avec succès:', data)
+      console.warn('✅ Chanson créée avec succès:', data)
       return data
     } catch (error) {
       handleSupabaseError(error, 'Création chanson')
@@ -168,7 +168,7 @@ export const supabaseSongService = {
         .select()
         .single()
 
-      console.debug('[Supabase][UPDATE] id=', id, 'payload=', cleanUpdates);
+      console.warn('[Supabase][UPDATE] id=', id, 'payload=', cleanUpdates);
       console.warn('🔄 Réponse Supabase:', JSON.stringify({ data, error }, null, 2));
 
       if (error) {
@@ -177,7 +177,7 @@ export const supabaseSongService = {
         throw new Error(error.message || 'Update failed');
       }
 
-      console.log('✅ Chanson mise à jour avec succès:', data)
+      console.warn('✅ Chanson mise à jour avec succès:', data)
       return data
     } catch (error) {
       console.error('❌ Erreur dans supabaseSongService.update:', error);
@@ -201,7 +201,7 @@ export const supabaseSongService = {
 
       if (error) throw error
 
-      console.log('✅ Chanson supprimée avec succès ID:', id)
+      console.warn('✅ Chanson supprimée avec succès ID:', id)
       return true
     } catch (error) {
       handleSupabaseError(error, `Suppression chanson ID ${id}`)
