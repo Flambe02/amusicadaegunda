@@ -12,7 +12,7 @@ import Sobre from "./Sobre";
 
 import Blog from "./Blog";
 
-import Admin from "./Admin";
+import ProtectedAdmin from "@/components/ProtectedAdmin";
 
 import Playlist from "./Playlist";
 import Song from "./Song";
@@ -31,7 +31,7 @@ const PAGES = {
     
     AdventCalendar: AdventCalendar,
     
-    Admin: Admin, // Admin disponible en production
+    Admin: ProtectedAdmin, // Admin protégé en production
     
     Sobre: Sobre,
     
@@ -85,7 +85,7 @@ function PagesContent() {
                 {/* Admin route available in production */}
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/blog" element={<Blog />} />
-                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin" element={<ProtectedAdmin />} />
                 <Route path="/playlist" element={<Playlist />} />
                 <Route path="/chansons/:slug" element={<Song />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
