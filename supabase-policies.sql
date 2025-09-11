@@ -56,7 +56,7 @@ JOIN pg_proc p ON p.oid = t.tgfoid
 WHERE c.relname='songs' AND NOT t.tgisinternal;
 
 -- 8) Vérifier les policies créées
-SELECT polname, cmd, roles, qual, with_check
+SELECT policyname, cmd, roles, qual, with_check
 FROM pg_policies
 WHERE schemaname='public' AND tablename='songs';
 

@@ -18,7 +18,7 @@ import Playlist from "./Playlist";
 import Song from "./Song";
 
 import { lazy } from 'react';
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 // Lazy loading de la route TikTok pour optimiser le bundle
 const TikTokDemo = lazy(() => import('./TikTokDemo'));
@@ -46,7 +46,11 @@ const PAGES = {
 }
 
 function _getCurrentPage(url) {
-    // Pour BrowserRouter, l'URL est directe
+    // Pour HashRouter, l'URL commence par #
+    if (url.startsWith('#')) {
+        url = url.slice(1);
+    }
+    
     if (url.endsWith('/')) {
         url = url.slice(0, -1);
     }
