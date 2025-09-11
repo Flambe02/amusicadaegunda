@@ -63,6 +63,8 @@ export default function AdminPage() {
   useEffect(() => {
     console.warn('🔄 Admin component mounted');
     detectStorageMode();
+    // Charger les chansons immédiatement après détection
+    loadSongs();
   }, []);
 
   // Charger les chansons après détection du mode de stockage
@@ -88,6 +90,7 @@ export default function AdminPage() {
         console.warn('☁️ Chargement depuis Supabase...');
         const allSongs = await Song.list('-release_date', null);
         console.warn(`✅ ${allSongs.length} chansons chargées depuis Supabase:`, allSongs);
+        console.warn('🔍 IDs des chansons chargées:', allSongs.map(s => ({ id: s.id, title: s.title })));
         setSongs(allSongs);
       } else {
         // Fallback localStorage
@@ -1252,22 +1255,26 @@ export default function AdminPage() {
   };
 
   const handleCreate = () => {
+    const today = new Date().toISOString().split('T')[0];
+    
     setEditingSong({
       title: '',
       artist: 'A Música da Segunda',
       description: '',
       lyrics: '',
-      release_date: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
-      status: 'draft',
+      release_date: today,
+      status: 'draft', // Toujours en brouillon par défaut
       tiktok_video_id: '',
       tiktok_url: '',
-      tiktok_publication_date: new Date().toISOString().split('T')[0], // Date d'aujourd'hui par défaut
+      tiktok_publication_date: today,
       spotify_url: '',
       apple_music_url: '',
       youtube_url: '',
       cover_image: '',
       hashtags: []
     });
+    
+    console.warn('📝 Création d\'une nouvelle chanson en mode brouillon');
     setShowForm(true);
     setIsEditing(false);
   };
@@ -1299,6 +1306,7 @@ export default function AdminPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.warn('🚀 handleSubmit appelé - début de la fonction');
     
     // Validation des champs requis
     if (!editingSong.title || editingSong.title.trim() === '') {
@@ -1311,38 +1319,151 @@ export default function AdminPage() {
       return;
     }
     
-    // Validation du lien TikTok (obligatoire selon la section)
-    // Validation du lien TikTok (obrigatório apenas para novas músicas)
-    if (!isEditing && (!editingSong.tiktok_url || editingSong.tiktok_url.trim() === '')) {
-      displayMessage('error', '❌ O link do TikTok é obrigatório! Cole o link e clique em "Extrair" primeiro.');
-      return;
+    // Validation TikTok optionnelle - seulement si l'utilisateur a commencé à remplir
+    if (editingSong.tiktok_url && editingSong.tiktok_url.trim() !== '' && (!editingSong.tiktok_video_id || editingSong.tiktok_video_id.trim() === '')) {
+      displayMessage('warning', '⚠️ Link TikTok preenchido mas ID não extraído. Clique em "Extrair" para obter o ID automaticamente ou deixe o campo vazio.');
+      // Ne pas bloquer l'enregistrement, juste avertir
     }
     
-    // Validation de l'ID TikTok (obrigatório apenas para novas músicas)
-    if (!isEditing && (!editingSong.tiktok_video_id || editingSong.tiktok_video_id.trim() === '')) {
-      displayMessage('error', '❌ ID do TikTok não foi extraído! Clique em "Extrair" para obter o ID automaticamente.');
-      return;
+    // Si pas de TikTok, définir le statut en brouillon
+    if (!editingSong.tiktok_url || editingSong.tiktok_url.trim() === '') {
+      editingSong.status = 'draft';
+      console.warn('📝 Aucun TikTok fourni, chanson sauvegardée en mode brouillon');
     }
+    
+    // S'assurer que les champs requis sont présents
+    const songToSave = {
+      ...editingSong,
+      title: editingSong.title?.trim() || '',
+      artist: editingSong.artist?.trim() || 'A Música da Segunda',
+      status: editingSong.status || 'draft'
+    };
+    
+    // Helper pour normaliser les dates
+    const toISO = (d) => d ? new Date(d).toISOString().slice(0,10) : null;
+    
+    // Nettoyage strict du payload avec gestion des champs de texte long
+    const clean = {
+      ...songToSave,
+      // Normaliser les dates
+      release_date: toISO(songToSave.release_date ?? null),
+      tiktok_publication_date: toISO(songToSave.tiktok_publication_date ?? null),
+      // Gérer les hashtags
+      hashtags: Array.isArray(songToSave.hashtags) ? songToSave.hashtags : [],
+      // S'assurer que les champs de texte sont bien des strings
+      title: String(songToSave.title || ''),
+      artist: String(songToSave.artist || ''),
+      description: String(songToSave.description || ''),
+      lyrics: String(songToSave.lyrics || ''),
+      tiktok_url: String(songToSave.tiktok_url || ''),
+      tiktok_video_id: String(songToSave.tiktok_video_id || ''),
+      status: String(songToSave.status || 'draft'),
+      // Nettoyer les champs vides
+      spotify_url: songToSave.spotify_url || null,
+      apple_music_url: songToSave.apple_music_url || null,
+      youtube_url: songToSave.youtube_url || null,
+      cover_image: songToSave.cover_image || null
+    };
+    
+    // Supprimer TOUS les champs système
+    delete clean.id;
+    delete clean.created_at;
+    delete clean.updated_at;
+    
+    // Logs détaillés pour debug
+    console.warn('🔍 songToSave après nettoyage:', clean);
+    console.warn('🔍 Clés de songToSave:', Object.keys(clean));
+    console.warn('🔍 songToSave contient-il un ID?', 'id' in clean);
+    console.warn('🔍 Description longueur:', clean.description?.length || 0);
+    console.warn('🔍 Description preview:', clean.description?.substring(0, 100) + '...');
+    
+    console.warn('📋 Données à sauvegarder:', songToSave);
+    console.warn('🆔 ID de la chanson:', editingSong.id);
+    console.warn('✏️ Mode édition:', isEditing);
     
     try {
+      console.warn('💾 Tentative de sauvegarde:', { isEditing, songData: songToSave });
+      console.warn('🆔 ID de la chanson à modifier:', editingSong.id);
+      console.warn('📊 Type de l\'ID:', typeof editingSong.id);
+      
       if (isEditing) {
-        await Song.update(editingSong.id, editingSong);
-        displayMessage('success', '✅ Música atualizada com sucesso!');
+        console.warn('🔄 Début de la mise à jour...');
+        try {
+          const result = await Song.update(editingSong.id, clean);
+          console.warn('✅ Mise à jour réussie:', result);
+          displayMessage('success', '✅ Música atualizada com sucesso!');
+          
+          // Fermer seulement en cas de succès
+          console.warn('🔄 Fermeture du formulaire et rechargement...');
+          console.warn('🔄 setShowForm(false) appelé');
+          setShowForm(false);
+          console.warn('🔄 setEditingSong(null) appelé');
+          setEditingSong(null);
+          console.warn('🔄 loadSongs() appelé pour recharger les données...');
+          await loadSongs();
+          console.warn('✅ Rechargement terminé - fenêtre fermée');
+        } catch (error) {
+          console.error('[Admin][Update][Failed]', error);
+          displayMessage('error', `❌ Échec mise à jour: ${error.message || error}`);
+          // NE PAS fermer la fenêtre en cas d'erreur
+          return;
+        }
       } else {
-        await Song.create(editingSong);
-        displayMessage('success', '✅ Música criada com sucesso!');
+        console.warn('🔄 Début de la création...');
+        try {
+          const result = await Song.create(clean);
+          console.warn('✅ Création réussie:', result);
+          displayMessage('success', '✅ Música criada com sucesso!');
+          
+          // Fermer seulement en cas de succès
+          console.warn('🔄 Fermeture du formulaire et rechargement...');
+          console.warn('🔄 setShowForm(false) appelé');
+          setShowForm(false);
+          console.warn('🔄 setEditingSong(null) appelé');
+          setEditingSong(null);
+          console.warn('🔄 loadSongs() appelé pour recharger les données...');
+          await loadSongs();
+          console.warn('✅ Rechargement terminé - fenêtre fermée');
+        } catch (error) {
+          console.error('[Admin][Create][Failed]', error);
+          displayMessage('error', `❌ Échec création: ${error.message || error}`);
+          // NE PAS fermer la fenêtre en cas d'erreur
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro detalhado ao salvar:', error);
+      
+      // Messages d'erreur plus spécifiques
+      let errorMessage = 'Erro desconhecido';
+      
+      if (error.message) {
+        if (error.message.includes('duplicate key')) {
+          errorMessage = '❌ Erro: Já existe uma música com este ID do TikTok';
+        } else if (error.message.includes('permission denied')) {
+          errorMessage = '❌ Erro: Sem permissão para salvar (verifique a conexão)';
+        } else if (error.message.includes('network')) {
+          errorMessage = '❌ Erro: Problema de conexão. Tente novamente.';
+        } else {
+          errorMessage = `❌ Erro ao salvar: ${error.message}`;
+        }
       }
       
-      setShowForm(false);
-      setEditingSong(null);
-      loadSongs();
-    } catch (error) {
-      console.error('Erro detalhado:', error);
-      displayMessage('error', `❌ Erro ao salvar música: ${error.message || 'Erro desconhecido'}`);
+      displayMessage('error', errorMessage);
+      
+      // Fermer la fenêtre même en cas d'erreur après un délai
+      console.warn('🔄 Fermeture de la fenêtre après erreur...');
+      setTimeout(() => {
+        setShowForm(false);
+        setEditingSong(null);
+        console.warn('✅ Fenêtre fermée après erreur');
+      }, 2000);
     }
   };
 
   const handleInputChange = (field, value) => {
+    console.warn(`🔄 Modification du champ ${field}:`, value);
+    
     // Nettoyer automatiquement le contenu collé dans le champ TikTok
     if (field === 'tiktok_url') {
       // Supprimer le code HTML et extraire seulement l'URL
@@ -1353,15 +1474,25 @@ export default function AdminPage() {
         .replace(/https:\/\/www\.tiktok\.com\/embed\.js/g, '') // Supprimer le lien embed.js
         .trim(); // Supprimer les espaces
       
-      setEditingSong(prev => ({
-        ...prev,
-        [field]: cleanValue
-      }));
+      console.warn(`🧹 Valeur nettoyée pour ${field}:`, cleanValue);
+      
+      setEditingSong(prev => {
+        const updated = {
+          ...prev,
+          [field]: cleanValue
+        };
+        console.warn('📝 État de chanson mis à jour:', updated);
+        return updated;
+      });
     } else {
-      setEditingSong(prev => ({
-        ...prev,
-        [field]: value
-      }));
+      setEditingSong(prev => {
+        const updated = {
+          ...prev,
+          [field]: value
+        };
+        console.warn('📝 État de chanson mis à jour:', updated);
+        return updated;
+      });
     }
   };
 
@@ -1373,7 +1504,10 @@ export default function AdminPage() {
   const displayMessage = (type, text) => {
     setMessage({ type, text });
     setShowMessage(true);
-    setTimeout(() => setShowMessage(false), 5000);
+    
+    // Durée différente selon le type de message
+    const duration = type === 'warning' ? 7000 : 5000;
+    setTimeout(() => setShowMessage(false), duration);
   };
 
   const exportData = () => {
@@ -1458,7 +1592,9 @@ export default function AdminPage() {
         {/* Message */}
         {showMessage && (
           <div className={`mb-6 p-4 rounded-lg ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            message.type === 'success' ? 'bg-green-100 text-green-800' : 
+            message.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-red-100 text-red-800'
           }`}>
             {message.text}
           </div>

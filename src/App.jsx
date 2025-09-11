@@ -4,12 +4,9 @@ import { HelmetProvider } from 'react-helmet-async';
 import OfflineIndicator from "@/components/OfflineIndicator"
 import { useEffect } from 'react';
 import migrationService from '@/lib/migration';
-import MigrationStatus from '@/components/MigrationStatus';
+// MigrationStatus supprimé pour la production
 
-import DeviceDetector from '@/components/DeviceDetector';
-import NotificationStatus from '@/components/NotificationStatus';
-import IconsDiagnostic from '@/components/IconsDiagnostic';
-import TikTokDiagnostic from '@/components/TikTokDiagnostic';
+// Composants de diagnostic supprimés pour la production
 // import TikTokDemo from "./pages/TikTokDemo";
 
 function App() {
@@ -30,11 +27,8 @@ function App() {
     <HelmetProvider>
       <OfflineIndicator />
       <Pages />
-      <MigrationStatus />
-      <DeviceDetector />
-      <NotificationStatus />
-      <IconsDiagnostic />
-      <TikTokDiagnostic />
+      {/* MigrationStatus supprimé pour la production */}
+      {/* Composants de diagnostic supprimés pour la production */}
       {/* <TikTokDemo /> */}
       <Toaster />
     </HelmetProvider>

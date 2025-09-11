@@ -65,17 +65,34 @@ export const supabaseSongService = {
   // Récupérer la chanson actuelle (la plus récente publiée)
   async getCurrent() {
     try {
+      console.warn('🔍 getCurrent() - Début de la fonction');
+      
+      // Utiliser une requête SQL avec coalesce() pour le tri côté serveur
       const { data, error } = await supabase
         .from(TABLES.SONGS)
         .select('*')
         .eq('status', 'published')
-        .order('release_date', { ascending: false })
+        .order('tiktok_publication_date', { ascending: false, nullsFirst: false })
+        .order('release_date', { ascending: false, nullsFirst: false })
         .limit(1)
-        .single()
 
-      if (error) throw error
-      return data
+      if (error) {
+        console.error('❌ Erreur Supabase getCurrent:', error);
+        throw error;
+      }
+      
+      console.warn('📊 Chanson actuelle trouvée:', data?.[0] || null);
+
+      if (!data || data.length === 0) {
+        console.warn('⚠️ Aucune chanson published trouvée');
+        return null;
+      }
+
+      const result = data[0];
+      console.warn('🎯 Chanson sélectionnée:', result);
+      return result;
     } catch (error) {
+      console.error('❌ Erreur dans getCurrent:', error);
       handleSupabaseError(error, 'Chanson actuelle')
       return null
     }
@@ -121,9 +138,17 @@ export const supabaseSongService = {
   // Mettre à jour une chanson
   async update(id, updates) {
     try {
+      console.warn('🔄 supabaseSongService.update - début');
+      console.warn('🔄 ID reçu:', id, 'Type:', typeof id);
+      console.warn('🔄 Updates reçus:', JSON.stringify(updates, null, 2));
+      
       // Nettoyer les données de mise à jour
       const cleanUpdates = {}
       Object.keys(updates).forEach(key => {
+        // Ne pas inclure l'ID et les champs système dans les updates
+        if (key === 'id' || key === 'created_at' || key === 'updated_at') {
+          return
+        }
         if (updates[key] !== undefined && updates[key] !== null) {
           if (key === 'hashtags' && !Array.isArray(updates[key])) {
             cleanUpdates[key] = []
@@ -133,6 +158,9 @@ export const supabaseSongService = {
         }
       })
 
+      console.warn('🔄 Updates nettoyés:', JSON.stringify(cleanUpdates, null, 2));
+
+      // Requête avec .select().single() pour forcer un retour cohérent
       const { data, error } = await supabase
         .from(TABLES.SONGS)
         .update(cleanUpdates)
@@ -140,13 +168,26 @@ export const supabaseSongService = {
         .select()
         .single()
 
-      if (error) throw error
+      console.debug('[Supabase][UPDATE] id=', id, 'payload=', cleanUpdates);
+      console.warn('🔄 Réponse Supabase:', JSON.stringify({ data, error }, null, 2));
+
+      if (error) {
+        console.error('[Supabase][UPDATE][ERROR]', error);
+        console.error('❌ Erreur Supabase:', error.message, '\nCode:', error.code, '\nDetails:', error.details, '\nHint:', error.hint, '\nStack:', error.stack);
+        throw new Error(error.message || 'Update failed');
+      }
 
       console.log('✅ Chanson mise à jour avec succès:', data)
       return data
     } catch (error) {
-      handleSupabaseError(error, `Mise à jour chanson ID ${id}`)
-      throw error
+      console.error('❌ Erreur dans supabaseSongService.update:', error);
+      console.error('❌ Détails de l\'erreur:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      throw error;
     }
   },
 

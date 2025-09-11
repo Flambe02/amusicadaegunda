@@ -39,13 +39,19 @@ const DYNAMIC_ASSETS = [
   '/src/hooks/'
 ];
 
-// API et TikTok (network-first)
+// API et TikTok (network-first) - EXCLURE SUPABASE
 const API_ENDPOINTS = [
   'https://www.tiktok.com',
   'https://v16m.tiktokcdn.com',
   'https://v19.tiktokcdn.com',
   'https://open.spotify.com',
   'https://music.apple.com'
+];
+
+// URLs à NE JAMAIS intercepter (Supabase)
+const EXCLUDED_URLS = [
+  'efnzmpzkzeuktqkghwfa.supabase.co',
+  'efnzmpzkzeuktqkghwfa.functions.supabase.co'
 ];
 
 // Configuration des stratégies
@@ -127,6 +133,12 @@ self.addEventListener('fetch', (event) => {
   // Ignorer les requêtes non-GET
   if (request.method !== 'GET') {
     return;
+  }
+  
+  // EXCLURE SUPABASE - ne jamais intercepter
+  if (EXCLUDED_URLS.some(excluded => url.hostname.includes(excluded))) {
+    console.log('🚫 Service Worker: URL Supabase exclue du cache', url.hostname);
+    return; // Laisser passer sans interception
   }
   
   // Stratégie selon le type de ressource

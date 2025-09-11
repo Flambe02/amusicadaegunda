@@ -366,13 +366,7 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
           </div>
         )}
 
-        {/* Indicateur de performance (dev uniquement) */}
-        {import.meta.env.DEV && performanceMetrics.totalLoadTime && (
-          <div className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-            ⚡ {performanceMetrics.totalLoadTime.toFixed(0)}ms
-            {performanceMetrics.fallbackActivated && ' (fallback)'}
-          </div>
-        )}
+        {/* Indicateur de performance supprimé pour la production */}
       </div>
     </div>
   );

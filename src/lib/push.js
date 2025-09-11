@@ -10,9 +10,10 @@ export function testPush() {
   return 'PUSH_LIB_WORKING';
 }
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-const API_BASE = import.meta.env.VITE_PUSH_API_BASE; // e.g. https://<your-vercel-app>.vercel.app/api
-const VAPID_KEY_VERSION = import.meta.env.VITE_VAPID_KEY_VERSION || 'v1';
+// Variables d'environnement - obligatoires
+const VAPID_PUBLIC_KEY = import.meta.env?.VITE_VAPID_PUBLIC_KEY || 'BNmWY52nhsYuohsMsFuFw5-vPv20qLw6nehrF-vyzPm87xU-6cPUoJhwtAVxj_18TcREBqx2uLdr5dcl57gVVNw';
+const API_BASE = import.meta.env?.VITE_PUSH_API_BASE || 'https://musica-da-segunda-push.vercel.app';
+const VAPID_KEY_VERSION = import.meta.env?.VITE_VAPID_KEY_VERSION || 'v1';
 
 const isIOS = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -51,7 +52,7 @@ export const shouldShowPushCTA = () => {
 
 async function getSWRegistration() {
   // En dev, pas de SW pour éviter les conflits HMR
-  if (import.meta.env.DEV) {
+  if (import.meta.env?.DEV) {
     console.log('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
     return null;
   }
@@ -64,7 +65,7 @@ async function getSWRegistration() {
   catch (_error) {
     console.log('⚠️ SW pas prêt, tentative d\'enregistrement...');
     // Enregistrer uniquement en production
-    if (import.meta.env.PROD) {
+    if (import.meta.env?.PROD) {
       return await navigator.serviceWorker.register('/sw.js');
     }
     return null;

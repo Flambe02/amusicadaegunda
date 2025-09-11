@@ -12,8 +12,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 )
 
 // Import Web Vitals en production
-if (import.meta.env.PROD) {
-  import('./analytics/webvitals');
+try {
+  if (import.meta.env?.PROD) {
+    import('./analytics/webvitals').catch(() => {
+      // Ignore les erreurs d'import en production
+    });
+  }
+} catch (error) {
+  // Ignore les erreurs d'import.meta en mode non-module
+  console.log('🔧 Mode non-module détecté, Web Vitals désactivé');
 }
 
 // Gating du Service Worker pour éviter les conflits en natif

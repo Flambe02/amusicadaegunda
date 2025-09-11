@@ -1,16 +1,15 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Configuration Supabase avec fallback pour GitHub Pages
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://efnzmpzkzeuktqkghwfa.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmbnptcHpremV1a3Rxa2dod2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMzE4MzcsImV4cCI6MjA3MTgwNzgzN30.iQiDuurPIkSNjHWP6TID0dATrOCJQ71-kblcsRsHiAk'
+// Configuration Supabase - variables d'environnement obligatoires
+const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
 
 // Vérification des variables d'environnement
-const hasEnvVars = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
-if (!hasEnvVars) {
-  console.log('🔄 Variables d\'environnement non trouvées, utilisation des valeurs par défaut Supabase')
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Variables d\'environnement Supabase manquantes: VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY sont obligatoires')
 }
 
-// Client Supabase (utilise les valeurs par défaut si pas d'env)
+// Client Supabase
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Configuration des tables

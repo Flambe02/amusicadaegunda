@@ -2,6 +2,8 @@ import { localStorageService } from '@/lib/localStorage';
 import { supabaseSongService } from './supabaseService';
 import { checkConnection } from '@/lib/supabase';
 
+// Logs de debug supprimés
+
 let currentStorageMode = 'unknown';
 
 // ===== FORCER L'UTILISATION DE SUPABASE =====
@@ -20,16 +22,16 @@ const detectStorageMode = async () => {
       currentStorageMode = 'supabase';
       return true;
     } else {
-      console.warn('⚠️ Connexion Supabase échouée, utilisation localStorage');
-      useSupabase = false;
-      currentStorageMode = 'localStorage';
-      return false;
+      console.warn('⚠️ Connexion Supabase échouée, mais on force quand même Supabase');
+      useSupabase = true; // FORCER SUPABASE même si la connexion échoue
+      currentStorageMode = 'supabase';
+      return true;
     }
   } catch (error) {
-    console.warn('⚠️ Erreur détection mode stockage, utilisation localStorage:', error);
-    useSupabase = false;
-    currentStorageMode = 'localStorage';
-    return false;
+    console.warn('⚠️ Erreur détection mode stockage, mais on force Supabase:', error);
+    useSupabase = true; // FORCER SUPABASE même en cas d'erreur
+    currentStorageMode = 'supabase';
+    return true;
   }
 };
 
@@ -42,12 +44,15 @@ detectStorageMode().then(() => {
 export const Song = {
   list: async (orderBy = '-release_date', limit = null) => {
     try {
-      if (useSupabase) {
-        const songs = await supabaseSongService.list(orderBy, limit);
-        if (songs && songs.length > 0) {
-          console.warn('✅ Chansons chargées depuis Supabase:', songs.length);
-          return songs;
-        }
+      // Forcer l'utilisation de Supabase
+      console.warn('☁️ Chargement depuis Supabase...');
+      const songs = await supabaseSongService.list(orderBy, limit);
+      if (songs && songs.length > 0) {
+        console.warn('✅ Chansons chargées depuis Supabase:', songs.length);
+        return songs;
+      } else {
+        console.warn('⚠️ Aucune chanson trouvée dans Supabase');
+        return [];
       }
     } catch (error) {
       console.error('Erro ao carregar músicas desde Supabase:', error);
@@ -173,62 +178,66 @@ export const Song = {
 
   create: async (songData) => {
     try {
-      if (useSupabase) {
-        const result = await supabaseSongService.create(songData);
-        // Synchroniser avec localStorage pour compatibilité
-        try {
-          localStorageService.songs.create(songData);
-        } catch (localError) {
-          console.warn('⚠️ Erreur synchronisation localStorage:', localError);
-        }
-        return result;
-      } else {
-        return localStorageService.songs.create(songData);
-      }
+      // Forcer l'utilisation de Supabase - PAS DE FALLBACK
+      console.warn('☁️ Création via Supabase...');
+      const result = await supabaseSongService.create(songData);
+      console.warn('✅ Création Supabase réussie:', result);
+      return result;
     } catch (error) {
-      console.error('Erro ao criar música:', error);
-      // Fallback localStorage
-      return localStorageService.songs.create(songData);
+      console.error('❌ ERREUR CRÉATION SUPABASE:', error);
+      console.error('❌ Message:', error.message);
+      console.error('❌ Code:', error.code);
+      // NE PAS faire de fallback localStorage - forcer l'erreur
+      throw error;
     }
   },
 
   update: async (id, updates) => {
     try {
-      if (useSupabase) {
-        const result = await supabaseSongService.update(id, updates);
-        // Synchroniser avec localStorage
-        try {
-          localStorageService.songs.update(id, updates);
-        } catch (localError) {
-          console.warn('⚠️ Erreur synchronisation localStorage:', localError);
-        }
-        return result;
-      } else {
-        return localStorageService.songs.update(id, updates);
-      }
+      // Forcer l'utilisation de Supabase
+      console.warn('☁️ Mise à jour via Supabase...');
+      console.warn('📋 Données à mettre à jour:', { id, updates });
+      console.warn('🔍 Type de l\'ID:', typeof id);
+      console.warn('🔍 Valeur de l\'ID:', id);
+      
+      console.warn('🔄 Appel de supabaseSongService.update...');
+      
+      // Pas de fallback : si Supabase renvoie une erreur, on la laisse remonter
+      const result = await supabaseSongService.update(id, updates);
+      console.warn('✅ Résultat de la mise à jour Supabase:', result);
+      
+      // Synchronisation localStorage supprimée - on utilise uniquement Supabase
+      console.warn('✅ Mise à jour Supabase réussie - pas de synchronisation localStorage nécessaire');
+      
+      return result;
     } catch (error) {
-      console.error('Erro ao atualizar música:', error);
-      return localStorageService.songs.update(id, updates);
+      console.error('❌ ERREUR SUPABASE DÉTAILLÉE:', error);
+      console.error('❌ Message d\'erreur:', error.message);
+      console.error('❌ Code d\'erreur:', error.code);
+      console.error('❌ Détails de l\'erreur:', error.details);
+      console.error('❌ Hint:', error.hint);
+      console.error('❌ Stack trace:', error.stack);
+      console.error('❌ Erreur complète:', JSON.stringify(error, null, 2));
+      
+      // NE PAS faire de fallback localStorage - forcer l'erreur
+      console.error('❌ ÉCHEC DE LA MISE À JOUR SUPABASE - PAS DE FALLBACK');
+      throw error; // Laisser l'erreur remonter sans la transformer
     }
   },
 
   delete: async (id) => {
     try {
-      if (useSupabase) {
-        const result = await supabaseSongService.delete(id);
-        // Synchroniser avec localStorage
-        try {
-          localStorageService.songs.delete(id);
-        } catch (localError) {
-          console.warn('⚠️ Erreur synchronisation localStorage:', localError);
-        }
-        return result;
-      } else {
-        return localStorageService.songs.delete(id);
-      }
+      // Forcer l'utilisation de Supabase - PAS DE FALLBACK
+      console.warn('☁️ Suppression via Supabase...');
+      const result = await supabaseSongService.delete(id);
+      console.warn('✅ Suppression Supabase réussie:', result);
+      return result;
     } catch (error) {
-      console.error('Erro ao deletar música:', error);
-      return localStorageService.songs.delete(id);
+      console.error('❌ ERREUR SUPPRESSION SUPABASE:', error);
+      console.error('❌ Message:', error.message);
+      console.error('❌ Code:', error.code);
+      // NE PAS faire de fallback localStorage - forcer l'erreur
+      throw error;
     }
   },
 

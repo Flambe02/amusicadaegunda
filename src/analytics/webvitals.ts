@@ -4,7 +4,7 @@ type Metric = { name: string; value: number; id: string; rating?: string; delta?
 
 const send = (m: Metric) => {
   // Dev: log; Prod: easy to switch to POST to a Supabase edge endpoint
-  if (import.meta.env.DEV) {
+  if (typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
     // eslint-disable-next-line no-console
     console.info('[WebVital]', m.name, m.value, m.id);
   }

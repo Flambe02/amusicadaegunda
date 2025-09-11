@@ -31,13 +31,11 @@ const PAGES = {
     
     AdventCalendar: AdventCalendar,
     
-    // Admin: Admin, // Removed for private access
+    Admin: Admin, // Admin disponible en production
     
     Sobre: Sobre,
     
     Blog: Blog,
-    
-    Admin: Admin,
     
     Playlist: Playlist,
     
@@ -84,7 +82,7 @@ function PagesContent() {
                 <Route path="/home" element={<Home />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/adventcalendar" element={<AdventCalendar />} />
-                {/* Admin route removed for private access */}
+                {/* Admin route available in production */}
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/admin" element={<Admin />} />

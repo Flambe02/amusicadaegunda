@@ -49,6 +49,18 @@ export default function Home() {
       const song = await Song.getCurrent();
       console.warn('📊 Chanson actuelle chargée:', song);
       
+      if (song) {
+        console.warn('✅ Chanson trouvée:', {
+          id: song.id,
+          title: song.title,
+          artist: song.artist,
+          release_date: song.release_date,
+          status: song.status
+        });
+      } else {
+        console.warn('❌ Aucune chanson trouvée par getCurrent()');
+      }
+      
       setCurrentSong(song);
       setDisplayedSong(song); // Initialiser la chanson affichée
     } catch (err) {
