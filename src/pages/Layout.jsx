@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
@@ -41,8 +40,8 @@ export default function Layout({ children }) {
                 />
               </Link>
               <div>
-                <h1 className="text-xl font-black text-gray-800">Música da Segunda</h1>
-                <p className="text-sm text-gray-600">Descubra música nova toda segunda-feira</p>
+                <h1 className="text-xl font-black text-gray-800">A Musica da Segunda: As Notícias do Brasil em Forma de Paródia</h1>
+                <p className="text-sm text-gray-600">Site oficial de paródias musicais inteligentes e divertidas</p>
               </div>
             </div>
 

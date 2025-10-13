@@ -172,9 +172,9 @@ export default function Home() {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
-            Música da Segunda
-          </h1>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
+            A Musica da Segunda: As Notícias do Brasil em Forma de Paródia
+          </h2>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
             Descubra música nova toda segunda-feira
           </p>
@@ -230,9 +230,9 @@ export default function Home() {
             </div>
             
             <div className="text-left">
-              <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
-                Música da Segunda
-              </h1>
+              <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
+                A Musica da Segunda: As Notícias do Brasil em Forma de Paródia
+              </h2>
               <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
                 Descubra música nova toda segunda-feira
               </p>
