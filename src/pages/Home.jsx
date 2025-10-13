@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import SongPlayer from '../components/SongPlayer';
 import CountdownTimer from '../components/CountdownTimer';
-import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText, X } from 'lucide-react';
+import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,7 +12,7 @@ import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'da
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
   const [recentSongs, setRecentSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [selectedVideo, _setSelectedVideo] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showPlatformsDialog, setShowPlatformsDialog] = useState(false);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
@@ -106,10 +106,7 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePlayVideo = (song) => {
-    setSelectedVideo(song);
-    setShowVideoModal(true);
-  };
+  
 
   const handleShowPlatforms = (song) => {
     setSelectedSongForDialog(song);
@@ -377,7 +374,9 @@ export default function Home() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-xl font-bold text-gray-800 truncate">
-                        {song.title}
+                        <Link to={`/chansons/${song.slug || song.title?.toLowerCase().replace(/\s+/g,'-')}`} className="hover:underline">
+                          {song.title}
+                        </Link>
                       </h3>
                       <p className="text-gray-600 text-base font-medium mt-1">
                         {song.artist}
@@ -455,7 +454,9 @@ export default function Home() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-gray-800 text-lg truncate">
-                          {song.title}
+                          <Link to={`/chansons/${song.slug || song.title?.toLowerCase().replace(/\s+/g,'-')}`} className="hover:underline">
+                            {song.title}
+                          </Link>
                         </h3>
                         <p className="text-gray-600 text-base font-medium mt-1">
                           {song.artist}
