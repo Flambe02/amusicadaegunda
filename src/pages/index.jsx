@@ -91,6 +91,7 @@ function PagesContent() {
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/admin" element={<ProtectedAdmin />} />
                 <Route path="/playlist" element={<Playlist />} />
+                <Route path="/chansons" element={<Playlist />} />
                 <Route path="/chansons/:slug" element={<Song />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
