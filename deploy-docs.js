@@ -36,6 +36,25 @@ async function deployToDocs() {
       console.log('🔒 CNAME créé par défaut:', defaultCname);
     }
     
+    // Créer des stubs de routes pour GitHub Pages (retour 200 sur deep-links)
+    const routes = [
+      'home',
+      'adventcalendar',
+      'chansons',
+      'calendar',
+      'playlist',
+      'blog',
+      'sobre'
+    ];
+
+    const makeStubHtml = (hashPath) => `<!DOCTYPE html>\n<html>\n  <head>\n    <meta charset=\"utf-8\">\n    <title>Música da Segunda</title>\n    <meta http-equiv=\"refresh\" content=\"0; url=/#/${hashPath}\">\n    <script>window.location.replace('/#/${hashPath}');</script>\n  </head>\n  <body></body>\n</html>`;
+
+    for (const route of routes) {
+      const routeDir = path.join(docsPath, route);
+      await fs.mkdirp(routeDir);
+      await fs.writeFile(path.join(routeDir, 'index.html'), makeStubHtml(route));
+    }
+
     console.log('✅ Build copié vers docs/ avec succès !');
     console.log('📁 Dossier docs/ prêt pour GitHub Pages');
     console.log('🔒 Custom domain www.amusicadasegunda.com PROTÉGÉ !');
