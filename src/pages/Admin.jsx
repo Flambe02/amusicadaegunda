@@ -1414,9 +1414,9 @@ export default function AdminPage() {
           const result = await Song.create(clean);
           console.warn('✅ Création réussie:', result);
           
-          // Vérifier que la chanson a bien un ID Supabase
+          // Vérifier que la chanson a bien un ID
           if (!result || !result.id) {
-            throw new Error('La chanson n\'a pas été sauvegardée dans Supabase (pas d\'ID retourné)');
+            throw new Error('La chanson n\'a pas été sauvegardée (pas d\'ID retourné)');
           }
           
           displayMessage('success', '✅ Música criada com sucesso!');

@@ -178,7 +178,7 @@ export const Song = {
 
   create: async (songData) => {
     try {
-      // Forcer l'utilisation de Supabase - PAS DE FALLBACK
+      // Forcer l'utilisation de Supabase
       console.warn('☁️ Création via Supabase...');
       const result = await supabaseSongService.create(songData);
       console.warn('✅ Création Supabase réussie:', result);
@@ -187,8 +187,23 @@ export const Song = {
       console.error('❌ ERREUR CRÉATION SUPABASE:', error);
       console.error('❌ Message:', error.message);
       console.error('❌ Code:', error.code);
-      // NE PAS faire de fallback localStorage - forcer l'erreur
-      throw error;
+      console.error('❌ Details:', error.details);
+      console.error('❌ Hint:', error.hint);
+      
+      // Fallback localStorage avec avertissement
+      console.warn('🔄 Fallback vers localStorage (Supabase a échoué)...');
+      console.warn('⚠️ ATTENTION: La chanson sera sauvegardée UNIQUEMENT en local!');
+      console.warn('⚠️ Elle ne sera PAS visible sur le site public tant que Supabase ne fonctionne pas!');
+      
+      try {
+        const localResult = localStorageService.songs.create(songData);
+        console.warn('✅ Chanson sauvegardée en localStorage:', localResult);
+        console.warn('⚠️ RAPPEL: Cette chanson est LOCALE uniquement!');
+        return localResult;
+      } catch (localError) {
+        console.error('❌ Fallback localStorage a aussi échoué:', localError);
+        throw new Error(`Échec Supabase ET localStorage: ${error.message}`);
+      }
     }
   },
 
