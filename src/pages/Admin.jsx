@@ -1413,19 +1413,23 @@ export default function AdminPage() {
         try {
           const result = await Song.create(clean);
           console.warn('✅ Création réussie:', result);
+          
+          // Vérifier que la chanson a bien un ID Supabase
+          if (!result || !result.id) {
+            throw new Error('La chanson n\'a pas été sauvegardée dans Supabase (pas d\'ID retourné)');
+          }
+          
           displayMessage('success', '✅ Música criada com sucesso!');
           
           // Fermer seulement en cas de succès
           console.warn('🔄 Fermeture du formulaire et rechargement...');
-          console.warn('🔄 setShowForm(false) appelé');
           setShowForm(false);
-          console.warn('🔄 setEditingSong(null) appelé');
           setEditingSong(null);
-          console.warn('🔄 loadSongs() appelé pour recharger les données...');
           await loadSongs();
           console.warn('✅ Rechargement terminé - fenêtre fermée');
         } catch (error) {
           console.error('[Admin][Create][Failed]', error);
+          console.error('[Admin][Create][Failed] Full error:', JSON.stringify(error, null, 2));
           displayMessage('error', `❌ Échec création: ${error.message || error}`);
           // NE PAS fermer la fenêtre en cas d'erreur
           return;
