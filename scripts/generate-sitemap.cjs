@@ -5,13 +5,15 @@ const BASE_URL = 'https://www.amusicadasegunda.com';
 
 // Static routes that exist in the codebase
 const staticPages = [
-  { loc: '/',               changefreq: 'daily',  priority: 1.0 },
-  { loc: '/calendar',       changefreq: 'weekly', priority: 0.8 },
-  { loc: '/playlist',       changefreq: 'weekly', priority: 0.9 },
-  { loc: '/chansons',       changefreq: 'weekly', priority: 0.8 },
-  { loc: '/blog',           changefreq: 'weekly', priority: 0.7 },
-  { loc: '/adventcalendar', changefreq: 'monthly', priority: 0.6 },
-  { loc: '/sobre',          changefreq: 'monthly', priority: 0.5 }
+  // Root loads the SPA
+  { loc: '/',                    changefreq: 'daily',  priority: 1.0 },
+  // Hash-based SPA routes for GitHub Pages
+  { loc: '/#/calendar',          changefreq: 'weekly', priority: 0.8 },
+  { loc: '/#/playlist',          changefreq: 'weekly', priority: 0.9 },
+  { loc: '/#/chansons',          changefreq: 'weekly', priority: 0.8 },
+  { loc: '/#/blog',              changefreq: 'weekly', priority: 0.7 },
+  { loc: '/#/adventcalendar',    changefreq: 'monthly', priority: 0.6 },
+  { loc: '/#/sobre',             changefreq: 'monthly', priority: 0.5 }
 ];
 
 // Read songs data
@@ -75,7 +77,7 @@ const generateSongsSitemap = () => {
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
     songs.map(song =>
       `  <url>\n` +
-      `    <loc>${BASE_URL}/chansons/${encodeURIComponent(song.slug)}</loc>\n` +
+      `    <loc>${BASE_URL}/#/chansons/${encodeURIComponent(song.slug)}</loc>\n` +
       `    <lastmod>${nowISO}</lastmod>\n` +
       `    <changefreq>weekly</changefreq>\n` +
       `    <priority>0.9</priority>\n` +
