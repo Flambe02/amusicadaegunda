@@ -42,7 +42,7 @@ function loadSongs() {
   return [];
 }
 
-function htmlStub({ title, description, canonicalPath, ogImage, spaHashPath }) {
+function htmlStub({ title, description, canonicalPath, ogImage, spaHashPath, jsonLd }) {
   const url = `${BASE_URL}${canonicalPath}`;
   const img = ogImage || `${BASE_URL}/images/LogoMusica.png`;
   const safeTitle = title || 'A Música da Segunda';
@@ -65,13 +65,21 @@ function htmlStub({ title, description, canonicalPath, ogImage, spaHashPath }) {
   <meta name="twitter:description" content="${safeDesc}" />
   <meta name="twitter:image" content="${img}" />
   <meta name="robots" content="index,follow" />
-  <script>window.location.replace('${spaHashPath}');</script>
+  ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
+  <script>(function(){setTimeout(function(){ try{window.location.replace('${spaHashPath}')}catch(e){window.location.href='${spaHashPath}'} }, 400);})();</script>
 </head>
 <body>
-  <noscript>
-    <p>${safeDesc}</p>
-    <p><a href="${spaHashPath}">Abrir a versão interativa</a></p>
-  </noscript>
+  <main style="max-width:780px;margin:40px auto;padding:0 16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;color:#1f2937;line-height:1.6">
+    <h1 style="font-size:28px;margin:0 0 8px">${safeTitle}</h1>
+    <p style="margin:0 0 16px;color:#4b5563">${safeDesc}</p>
+    <p style="margin:0 0 12px"><a href="${spaHashPath}">Abrir a versão interativa</a> • <a href="${BASE_URL}/#/playlist">Ver playlist</a></p>
+    <figure style="margin:16px 0">
+      <img src="${img}" alt="${safeTitle}" style="max-width:100%;height:auto;border-radius:8px" />
+    </figure>
+    <noscript>
+      <p>Você está vendo a versão estática para indexação. Use o link acima para abrir a versão interativa.</p>
+    </noscript>
+  </main>
 </body>
 </html>`;
 }
@@ -95,12 +103,33 @@ function writeSongStub(song) {
   const title = song.title ? `${song.title} - ${song.artist || 'A Música da Segunda'}` : `Canção ${slug}`;
   const desc = song.description || `Ouça "${song.title || slug}" na Música da Segunda.`;
   const cover = song.cover_image ? (song.cover_image.startsWith('http') ? song.cover_image : `${BASE_URL}${song.cover_image}`) : undefined;
+  const musicJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "MusicRecording",
+    "name": song.title || slug,
+    "byArtist": { "@type": "MusicGroup", "name": song.artist || 'A Música da Segunda' },
+    "inLanguage": "pt-BR",
+    ...(song.release_date ? { "datePublished": song.release_date } : {}),
+    "url": `${BASE_URL}/chansons/${slug}/`,
+    ...(cover ? { "image": cover } : {}),
+  });
+  const breadcrumbJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Início", "item": `${BASE_URL}/` },
+      { "@type": "ListItem", "position": 2, "name": "Canções", "item": `${BASE_URL}/chansons/` },
+      { "@type": "ListItem", "position": 3, "name": song.title || slug, "item": `${BASE_URL}/chansons/${slug}/` }
+    ]
+  });
+  const jsonLdCombined = `${musicJsonLd}\n${breadcrumbJsonLd}`;
   const html = htmlStub({
     title,
     description: desc,
     canonicalPath: `/chansons/${slug}/`,
     ogImage: cover,
     spaHashPath: `/#/chansons/${slug}`,
+    jsonLd: jsonLdCombined,
   });
   writeFile(path.join(dir, 'index.html'), html);
 }
