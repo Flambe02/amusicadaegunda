@@ -14,6 +14,7 @@ import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
+import { Helmet } from 'react-helmet-async';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -171,10 +172,15 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
+        <Helmet>
+          <title>A Música da Segunda | Paródias Musicais das Notícias do Brasil</title>
+          <meta name="description" content="Site oficial de A Música da Segunda. Paródias musicais inteligentes e divertidas sobre as notícias do Brasil." />
+        </Helmet>
         <div className="text-center mb-8">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
-            A Musica da Segunda: As Notícias do Brasil em Forma de Paródia
-          </h2>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
+            A Música da Segunda
+          </h1>
+          <p className="text-lg md:text-xl text-white drop-shadow-lg">As Notícias do Brasil em Forma de Paródia</p>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
             Descubra música nova toda segunda-feira
           </p>
@@ -192,6 +198,10 @@ export default function Home() {
   if (error) {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
+        <Helmet>
+          <title>A Música da Segunda | Paródias Musicais das Notícias do Brasil</title>
+          <meta name="description" content="Site oficial de A Música da Segunda. Paródias musicais inteligentes e divertidas sobre as notícias do Brasil." />
+        </Helmet>
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
             Música da Segunda
@@ -230,9 +240,10 @@ export default function Home() {
             </div>
             
             <div className="text-left">
-              <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
-                A Musica da Segunda: As Notícias do Brasil em Forma de Paródia
-              </h2>
+              <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
+                A Música da Segunda
+              </h1>
+              <p className="text-md md:text-lg text-white drop-shadow-lg">As Notícias do Brasil em Forma de Paródia</p>
               <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
                 Descubra música nova toda segunda-feira
               </p>
