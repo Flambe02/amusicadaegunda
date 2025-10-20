@@ -14,8 +14,9 @@ Allow: /blog
 Allow: /adventcalendar
 Allow: /sobre
 
-# Bloquer l'accès aux pages d'administration
+# Bloquer l'accès aux pages d'administration et login
 Disallow: /admin
+Disallow: /login
 
 # Bloquer l'accès aux fichiers de développement
 Disallow: /src/
