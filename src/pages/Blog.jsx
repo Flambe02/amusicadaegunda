@@ -150,7 +150,7 @@ export default function Blog() {
         <html lang="pt-BR" />
         <title>Blog Musical | A Música da Segunda</title>
         <meta name="description" content="Histórias por trás de cada música publicada na A Música da Segunda." />
-        <link rel="canonical" href="https://www.amusicadasegunda.com/blog" />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/#/blog" />
       </Helmet>
       {/* Header */}
       <div className="text-center mb-8">

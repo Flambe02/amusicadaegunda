@@ -17,7 +17,7 @@ export default function Playlist() {
       <Helmet>
         <html lang="pt-BR" />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://www.amusicadasegunda.com/playlist" />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/#/playlist" />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ItemList",

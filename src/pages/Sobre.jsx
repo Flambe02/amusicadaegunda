@@ -8,7 +8,7 @@ export default function Sobre() {
         <html lang="pt-BR" />
         <title>Sobre | A Música da Segunda</title>
         <meta name="description" content="Conheça a história e a missão do projeto A Música da Segunda." />
-        <link rel="canonical" href="https://www.amusicadasegunda.com/sobre" />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/#/sobre" />
       </Helmet>
       <div className="p-5 max-w-5xl mx-auto">
         {/* Header avec animation subtile */}

@@ -75,7 +75,7 @@ export default function SongPage() {
     }
   }, [song, slug]);
 
-  const canonical = `https://www.amusicadasegunda.com/chansons/${slug}`;
+  const canonical = `https://www.amusicadasegunda.com/#/chansons/${slug}`;
 
   if (isLoading) {
     return (
