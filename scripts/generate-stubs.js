@@ -42,7 +42,7 @@ function loadSongs() {
   return [];
 }
 
-function htmlStub({ title, description, canonicalPath, ogImage, spaHashPath, jsonLd }) {
+function htmlStub({ title, description, canonicalPath, ogImage, spaHashPath, jsonLd, extraHtml = '' }) {
   const url = `${BASE_URL}${canonicalPath}`;
   const img = ogImage || `${BASE_URL}/images/LogoMusica.png`;
   const safeTitle = title || 'A Música da Segunda';
@@ -76,6 +76,7 @@ function htmlStub({ title, description, canonicalPath, ogImage, spaHashPath, jso
     <figure style="margin:16px 0">
       <img src="${img}" alt="${safeTitle}" style="max-width:100%;height:auto;border-radius:8px" />
     </figure>
+    ${extraHtml}
     <noscript>
       <p>Você está vendo a versão estática para indexação. Use o link acima para abrir a versão interativa.</p>
     </noscript>
@@ -103,6 +104,26 @@ function writeSongStub(song) {
   const title = song.title ? `${song.title} - ${song.artist || 'A Música da Segunda'}` : `Canção ${slug}`;
   const desc = song.description || `Ouça "${song.title || slug}" na Música da Segunda.`;
   const cover = song.cover_image ? (song.cover_image.startsWith('http') ? song.cover_image : `${BASE_URL}${song.cover_image}`) : undefined;
+  const tiktokId = song.tiktok_video_id || null;
+  const tiktokUrl = song.tiktok_url || (tiktokId ? `https://www.tiktok.com/@amusicadasegunda/video/${tiktokId}` : undefined);
+  let videoEmbedHtml = '';
+  if (tiktokId) {
+    const embedSrc = `https://www.tiktok.com/embed/v2/${tiktokId}`;
+    videoEmbedHtml = `
+    <section style="margin:16px 0">
+      <h2 style="font-size:20px;margin:0 0 8px">Vídeo</h2>
+      <div style=\"position:relative;padding-bottom:177.78%;height:0;overflow:hidden;border-radius:8px;background:#000\">
+        <iframe src=\"${embedSrc}\" style=\"position:absolute;top:0;left:0;width:100%;height:100%;border:0\" allowfullscreen title=\"${title}\"></iframe>
+      </div>
+      ${tiktokUrl ? `<p style=\\"margin:8px 0 0\\"><a href=\\"${tiktokUrl}\\">Ver no TikTok</a></p>` : ''}
+    </section>`;
+  } else if (tiktokUrl) {
+    videoEmbedHtml = `
+    <section style="margin:16px 0">
+      <h2 style="font-size:20px;margin:0 0 8px">Vídeo</h2>
+      <p><a href="${tiktokUrl}">Ver no TikTok</a></p>
+    </section>`;
+  }
   const musicJsonLd = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "MusicRecording",
@@ -122,7 +143,18 @@ function writeSongStub(song) {
       { "@type": "ListItem", "position": 3, "name": song.title || slug, "item": `${BASE_URL}/chansons/${slug}/` }
     ]
   });
-  const jsonLdCombined = `${musicJsonLd}\n${breadcrumbJsonLd}`;
+  const videoJsonLd = (tiktokUrl || tiktokId) ? JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": song.title || slug,
+    "description": desc,
+    "thumbnailUrl": cover ? [cover] : undefined,
+    "uploadDate": song.release_date || undefined,
+    "embedUrl": tiktokId ? `https://www.tiktok.com/embed/v2/${tiktokId}` : undefined,
+    "contentUrl": tiktokUrl,
+    "url": `${BASE_URL}/chansons/${slug}/`
+  }) : '';
+  const jsonLdCombined = [musicJsonLd, breadcrumbJsonLd, videoJsonLd].filter(Boolean).join('\n');
   const html = htmlStub({
     title,
     description: desc,
@@ -130,6 +162,7 @@ function writeSongStub(song) {
     ogImage: cover,
     spaHashPath: `/#/chansons/${slug}`,
     jsonLd: jsonLdCombined,
+    extraHtml: videoEmbedHtml,
   });
   writeFile(path.join(dir, 'index.html'), html);
 }
