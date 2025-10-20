@@ -9,7 +9,7 @@
 
 - **Faiblesses**
   - **Multiples scripts SQL historiques** pouvant entrer en conflit; risque de recréation de policies.
-  - **Client Supabase dupliqué** (corrigé) et variables injectées dans `vite.config.js` en dur (à supprimer à terme).
+  - **Client Supabase dupliqué** (corrigé) et variables injectées dans `vite.config.js` en dur (à supprimer).
   - **SW/HMR**: logs verbeux côté push et conflits HMR si SW activé en dev (atténués).
   - **SEO/Accessibilité**: à consolider (balises sociales, titres uniformes, sémantique ARIA). 
 
@@ -21,6 +21,7 @@
 ---
 
 ### 2) Architecture et Structure du Projet
+Statut: **Architecture** ✅ • **Router** ✅ • **Vite config** ⚠️ (env codées en dur)
 
 - Structure observée:
   - `src/pages`: `index.jsx` (router HashRouter), `Admin.jsx`, `Login.jsx`, `Playlist.jsx`, etc.
@@ -42,7 +43,13 @@
 
 - Vite (`vite.config.js`)
   - `base: './'`, alias `@` → `./src`, HMR désactivé (évite erreurs WS en dev sous SW).
-  - Problème: `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` injectés en dur dans `define`. À retirer pour `.env`.
+  - ⚠️ Problème: `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` injectés en dur dans `define`.
+    Preuve:
+    ```10:12:vite.config.js
+    'import.meta.env.VITE_SUPABASE_URL': JSON.stringify('https://efnzmpzkzeuktqkghwfa.supabase.co'),
+    'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify('...'),
+    ```
+  - ✅ Attendu: lecture via `.env` uniquement, sans `define`.
 
 - PWA
   - `manifest.json`, `sw.js`, `pwa-install.js`, icônes multiples présents dans `public/` et `docs/`.
@@ -51,11 +58,17 @@
 ---
 
 ### 3) Audit du Système Admin
+Statut: **Login** ✅ • **Garde route** ✅ • **RLS** ✅ • **Session** ✅
 
 - Login et protection
   - `src/pages/Login.jsx`: `supabase.auth.signInWithPassword`, check `admins` via `user_id`.
   - `src/components/ProtectedAdmin.jsx`: garde `/admin` via `getSession()` + vérification `admins` + écoute `onAuthStateChange`.
   - Route `/login` ajoutée; `/admin` affiche `Login` si non authentifié ou non admin.
+  - Preuves:
+    ```92:93:src/pages/index.jsx
+    <Route path="/admin" element={<ProtectedAdmin />} />
+    <Route path="/login" element={<Login />} />
+    ```
 
 - RLS / Policies
   - `songs`: RLS activé; 2 policies cibles:
@@ -66,6 +79,12 @@
 - CRUD `songs`
   - `src/api/supabaseService.js` gère `insert/update/delete` via `supabase.from('songs')`.
   - Tests Node (`scripts/test-admin-crud.js`) validés: création/maj/suppression OK pour l’admin.
+  - Client Supabase unique côté front:
+    ```4:13:src/lib/supabase.js
+    const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL
+    const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
+    export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    ```
 
 - Cause du précédent blocage
   - Utilisateur admin non présent dans `public.admins` → `checkAdminStatus` échoue → CRUD refusé.
@@ -74,6 +93,7 @@
 ---
 
 ### 4) Audit du Système de Notifications
+Statut: **Table** ✅ • **Enregistrement** ✅ • **Tests** ✅ • **Edge Function** ⚠️ (présente mais non câblée par défaut)
 
 - Table `push_subscriptions`
   - Schéma: `endpoint`, `p256dh`, `auth`, `topics[]`, `created_at`, `last_seen_at` (selon migration déployée).
@@ -87,6 +107,7 @@
 ---
 
 ### 5) Audit PWA et Performances
+Statut: **Manifest** ✅ • **SW** ⚠️ • **Perf** ⚠️ (à mesurer) • **Lighthouse** ⚠️
 
 - Manifest
   - Présent avec icônes multi-tailles; vérifier cohérence `name`, `short_name`, `start_url`, `scope`, `background_color`, `theme_color`.
@@ -105,6 +126,7 @@
 ---
 
 ### 6) Audit SEO
+Statut: **Meta/sitemaps** ✅ • **Titres/OG** ⚠️ • **A11y** ⚠️ • **Indexabilité** ✅
 
 - Balises head
   - Vérifier `index.html` (public/docs) pour `title`, `meta description`, `og:*`, `twitter:*`.
@@ -120,6 +142,7 @@
 ---
 
 ### 7) Audit Sécurité
+Statut: **RLS songs** ✅ • **RLS admins** ✅ • **Clés** ⚠️ (Vite define) • **Edge secrets** ✅
 
 - RLS Supabase
   - `songs`: OK (lecture publique limitée + admin-only writes).
@@ -136,6 +159,7 @@
 ---
 
 ### 8) Audit UX/UI et Qualité du Code
+Statut: **UX admin** ✅ • **Logs** ✅ (warn/error) • **ESLint** ✅ • **Dead code** ⚠️
 
 - UX
   - Pages Admin et Login: feedback d’erreurs, loaders, reset password présents.
@@ -157,6 +181,11 @@
   - Edge Function (service role) et retirer les droits publics.
 - Finaliser SEO: Helmet par page, og tags, titles uniques.
 - Vérifier PWA offline: stratégie SW moderne (Workbox ou règles actuelles documentées), test Lighthouse.
+
+Actions concrètes (exemples)
+- `vite.config.js`: supprimer les entrées `define` et utiliser `import.meta.env` dans `src/lib/supabase.js`.
+- Supabase SQL: garder uniquement `songs_public_read_published` et `songs_admin_full_access` (scripts `setup-admin-complete.sql`).
+- `src/lib/push.js`: conserver logs en `console.warn`; optionner Edge Function en prod si besoin server-only.
 
 ---
 

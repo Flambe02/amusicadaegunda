@@ -24,5 +24,6 @@ Next Steps
 1) Remove `define` Supabase keys from Vite config; load from `.env`.
 2) Confirm `admins` RLS and self-select in Supabase; verify `/admin` access.
 3) Decide push model and update policies/functions accordingly.
+ 4) Run Lighthouse in prod; apply image/code-splitting optimizations as needed.
 
 
