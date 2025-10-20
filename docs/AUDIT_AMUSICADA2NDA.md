@@ -1,0 +1,178 @@
+### 1) Executive Summary
+
+- **Forces**
+  - **Stack clair**: Vite + React + Tailwind + Supabase; code organisé en `src/pages`, `src/components`, `src/lib`, `src/api`.
+  - **Sécurité RLS revue**: `songs` RLS corrigé avec lecture publique des publiées et CRUD réservé aux admins via `public.admins`.
+  - **Admin CRUD validé**: tests Node ajoutés et passés; accès admin restauré et vérifié.
+  - **Push subscriptions**: table fonctionnelle avec Option A (insert/update publics) et test Node validé.
+  - **PWA**: manifest, service worker et assets présents; routes hash-based compatibles GitHub Pages.
+
+- **Faiblesses**
+  - **Multiples scripts SQL historiques** pouvant entrer en conflit; risque de recréation de policies.
+  - **Client Supabase dupliqué** (corrigé) et variables injectées dans `vite.config.js` en dur (à supprimer à terme).
+  - **SW/HMR**: logs verbeux côté push et conflits HMR si SW activé en dev (atténués).
+  - **SEO/Accessibilité**: à consolider (balises sociales, titres uniformes, sémantique ARIA). 
+
+- **Priorités immédiates**
+  - Maintenir un seul **client Supabase** (`src/lib/supabase`) et retirer les clés codées dans `vite.config.js` (basculer 100% vers `.env`).
+  - **Geler les policies**: n’utiliser que `songs_public_read_published` + `songs_admin_full_access`; activer RLS et policy self-select sur `admins`; clarifier stratégie `push_subscriptions` (Option A publique ou Edge Function serveur-only).
+  - **QA PWA/SEO**: vérifier Lighthouse, meta tags, sitemap/robots déjà présents, titres/og tags par page.
+
+---
+
+### 2) Architecture et Structure du Projet
+
+- Structure observée:
+  - `src/pages`: `index.jsx` (router HashRouter), `Admin.jsx`, `Login.jsx`, `Playlist.jsx`, etc.
+  - `src/components`: `ProtectedAdmin.jsx`, `ResetPassword.jsx`, `UpdatePassword.jsx`, UI.
+  - `src/lib`: `supabase.js` (client unique), `push.js` (PWA push), `adminTest.js` (test util).
+  - `src/api`: `supabaseService.js` (CRUD songs), `entities.js`.
+  - `supabase/functions/push`: Edge Function (service role) optionnelle.
+  - `supabase/*.sql`, `database-*.sql`, `setup-admin-complete.sql`, `supabase-policies.sql`.
+  - `public/` et `docs/` (build GH Pages), `dist/` (build local).
+
+- Routing
+  - `HashRouter` dans `src/pages/index.jsx`. Routes: `/`, `/playlist`, `/adventcalendar`, `/admin`, `/login` (ajoutée), etc.
+  - Recommandation: Conserver le mode hash pour GitHub Pages; en prod avec domaine et serveur, `BrowserRouter` peut être envisagé.
+
+- Dépendances clés (`package.json`)
+  - `react`, `react-router-dom@7`, `@supabase/supabase-js@^2.57`, `vite@^6`, Tailwind et Radix UI.
+  - Dev: `husky` + `lint-staged`, ESLint flat-config. OK.
+  - Suggestion: exécuter `npm audit fix` périodiquement; supprimer dépendances non utilisées.
+
+- Vite (`vite.config.js`)
+  - `base: './'`, alias `@` → `./src`, HMR désactivé (évite erreurs WS en dev sous SW).
+  - Problème: `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` injectés en dur dans `define`. À retirer pour `.env`.
+
+- PWA
+  - `manifest.json`, `sw.js`, `pwa-install.js`, icônes multiples présents dans `public/` et `docs/`.
+  - Service Worker actif en prod; en dev, `push.js` évite l’enregistrement pour limiter conflits HMR.
+
+---
+
+### 3) Audit du Système Admin
+
+- Login et protection
+  - `src/pages/Login.jsx`: `supabase.auth.signInWithPassword`, check `admins` via `user_id`.
+  - `src/components/ProtectedAdmin.jsx`: garde `/admin` via `getSession()` + vérification `admins` + écoute `onAuthStateChange`.
+  - Route `/login` ajoutée; `/admin` affiche `Login` si non authentifié ou non admin.
+
+- RLS / Policies
+  - `songs`: RLS activé; 2 policies cibles:
+    - Public SELECT published: `songs_public_read_published` (`status = 'published'`).
+    - Admin FULL (ALL) pour `authenticated` si `auth.uid()` ∈ `public.admins`.
+  - `admins`: créer RLS + policy self-select pour permettre la vérification côté client.
+
+- CRUD `songs`
+  - `src/api/supabaseService.js` gère `insert/update/delete` via `supabase.from('songs')`.
+  - Tests Node (`scripts/test-admin-crud.js`) validés: création/maj/suppression OK pour l’admin.
+
+- Cause du précédent blocage
+  - Utilisateur admin non présent dans `public.admins` → `checkAdminStatus` échoue → CRUD refusé.
+  - Correction: insertion `admins` avec l’UUID utilisateur + policies RLS cohérentes.
+
+---
+
+### 4) Audit du Système de Notifications
+
+- Table `push_subscriptions`
+  - Schéma: `endpoint`, `p256dh`, `auth`, `topics[]`, `created_at`, `last_seen_at` (selon migration déployée).
+  - Option A (publique) mise en œuvre: insert/update autorisés via RLS; test Node (`scripts/test-push-upsert.js`) OK.
+  - Alternative: Edge Function `supabase/functions/push` (service role) → supprimer les policies publiques et centraliser l’écriture.
+
+- Service Worker / VAPID
+  - `src/lib/push.js`: vérifications VAPID, activation sur geste utilisateur, envoie la subscription vers API externe (`API_BASE`) ou Edge Function.
+  - En dev: retour anticipé pour SW afin d’éviter conflits HMR; en prod: enregistrement de `/sw.js`.
+
+---
+
+### 5) Audit PWA et Performances
+
+- Manifest
+  - Présent avec icônes multi-tailles; vérifier cohérence `name`, `short_name`, `start_url`, `scope`, `background_color`, `theme_color`.
+
+- Service Worker
+  - `public/sw.js`/`docs/sw.js`: vérifier stratégies cache; actuellement fichiers précachés dans build `docs/`/`dist/`.
+  - Reco: Stale-While-Revalidate pour assets; Network First pour HTML/API; fallback offline.
+
+- Performances
+  - `lazy()` déjà utilisé pour `TikTokDemo`. Reco: code-splitting supplémentaire si bundle lourd; compression images.
+  - Build Vite: minify esbuild, split vendor; OK.
+
+- Lighthouse (à exécuter en prod)
+  - Objectifs: Perf > 90, A11y > 95, SEO > 95, BP > 95.
+
+---
+
+### 6) Audit SEO
+
+- Balises head
+  - Vérifier `index.html` (public/docs) pour `title`, `meta description`, `og:*`, `twitter:*`.
+  - Reco: titres uniques par page (Helmet), méta sociales, `lang`, favicons.
+
+- Indexation
+  - `robots.txt`, `sitemap*.xml` présents dans `public/` et `docs/`.
+  - CSR (HashRouter): indexable; prévoir pré-rendu si SEO critique pour certaines pages.
+
+- Contenu/Accessibilité
+  - Vérifier hiérarchie `h1/h2`, `alt`, `aria-*`, contrastes.
+
+---
+
+### 7) Audit Sécurité
+
+- RLS Supabase
+  - `songs`: OK (lecture publique limitée + admin-only writes).
+  - `admins`: activer RLS + self-select; interdiction des écritures client.
+  - `push_subscriptions`: selon option; si publique, `INSERT/UPDATE` stricts; sinon Edge Function.
+
+- Clés / Environnements
+  - `.env` pour `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`; supprimer `define` en dur dans `vite.config.js`.
+  - Secrets serveur (service role) uniquement en backend/Edge.
+
+- Divers
+  - Sourcemaps désactivées en prod; CORS à valider côté fonctions/API; audit `npm audit`.
+
+---
+
+### 8) Audit UX/UI et Qualité du Code
+
+- UX
+  - Pages Admin et Login: feedback d’erreurs, loaders, reset password présents.
+  - Ajout route `/login`; `/admin` redirige conditionnellement.
+
+- UI/Code
+  - Unification client Supabase; suppression duplicata TS.
+  - ESLint configuré strict (no-console hors warn/error). Logs push harmonisés en `console.warn`.
+  - Reco: factoriser composants UI récurrents; nommage descriptif uniforme; éviter code mort.
+
+---
+
+### 9) Recommandations Synthétiques
+
+- Supprimer les clés hardcodées de `vite.config.js` et n’utiliser que `.env`.
+- Conserver uniquement 2 policies sur `songs`; RLS + self-select sur `admins`.
+- Décider définitivement de la stratégie push:
+  - Option A (publique) telle qu’implémentée, ou
+  - Edge Function (service role) et retirer les droits publics.
+- Finaliser SEO: Helmet par page, og tags, titles uniques.
+- Vérifier PWA offline: stratégie SW moderne (Workbox ou règles actuelles documentées), test Lighthouse.
+
+---
+
+### 10) Plan d’Actions Priorisé
+
+| Priorité | Tâche | Impact attendu |
+|---|---|---|
+| Haute | Retirer `define` Supabase de `vite.config.js`, .env only | Sécurité, déploiements cohérents |
+| Haute | Verrouiller policies `songs` + RLS `admins` | Sécurité data, stabilité Admin |
+| Haute | Choisir modèle push (publique vs Edge) et aligner RLS | Sécurité notifications |
+| Moyenne | Helmet par page, méta sociales | SEO, partage social |
+| Moyenne | SW: stratégie cache + fallback offline | PWA score, UX offline |
+| Basse | Nettoyage dépendances et code mort | Perf, maintenance |
+
+—
+
+Références internes (fichiers clés): `src/pages/index.jsx`, `src/components/ProtectedAdmin.jsx`, `src/pages/Login.jsx`, `src/lib/supabase.js`, `src/lib/push.js`, `src/api/supabaseService.js`, `scripts/test-admin-crud.js`, `scripts/test-push-upsert.js`, `supabase/functions/push/index.ts`, `setup-admin-complete.sql`, `supabase-policies.sql`.
+
+
