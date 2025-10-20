@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
 import UpdatePassword from '@/components/UpdatePassword';
+import { Helmet } from 'react-helmet-async';
 
 export default function ProtectedAdmin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,6 +12,7 @@ export default function ProtectedAdmin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUpdatePassword, setShowUpdatePassword] = useState(false);
 
+   
   useEffect(() => {
     checkAuth();
     
@@ -32,7 +35,7 @@ export default function ProtectedAdmin() {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, []); // checkAuth is stable and defined in component scope
 
   const checkAuth = async () => {
     try {
@@ -86,7 +89,7 @@ export default function ProtectedAdmin() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Vérification de l'accès administrateur...</p>
+          <p className="text-gray-600">Vérification de l&apos;accès administrateur...</p>
         </div>
       </div>
     );
@@ -98,5 +101,13 @@ export default function ProtectedAdmin() {
   }
 
   // Sinon, afficher la page de login
-  return <Login />;
+  return (
+    <>
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/#/admin" />
+      </Helmet>
+      <Login />
+    </>
+  );
 }

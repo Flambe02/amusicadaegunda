@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Music, Calendar, ExternalLink, Play, Headphones, Video, Filter, Search } from 'lucide-react';
+import { Music, Calendar, Play, Headphones, Video, Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
+import { Helmet } from 'react-helmet-async';
 
 export default function Blog() {
   const [songs, setSongs] = useState([]);
@@ -19,10 +21,12 @@ export default function Blog() {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [availableMonths, setAvailableMonths] = useState([]);
 
+   
   useEffect(() => {
     loadBlogPosts();
   }, []);
 
+   
   useEffect(() => {
     filterSongsByMonth();
   }, [selectedMonth, songs]);
@@ -142,6 +146,12 @@ export default function Blog() {
 
   return (
     <div className="p-5 max-w-4xl mx-auto">
+      <Helmet>
+        <html lang="pt-BR" />
+        <title>Blog Musical | A Música da Segunda</title>
+        <meta name="description" content="Histórias por trás de cada música publicada na A Música da Segunda." />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/blog" />
+      </Helmet>
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">

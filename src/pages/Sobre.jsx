@@ -1,9 +1,15 @@
-import React from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle } from 'lucide-react';
 
 export default function Sobre() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <Helmet>
+        <html lang="pt-BR" />
+        <title>Sobre | A Música da Segunda</title>
+        <meta name="description" content="Conheça a história e a missão do projeto A Música da Segunda." />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/sobre" />
+      </Helmet>
       <div className="p-5 max-w-5xl mx-auto">
         {/* Header avec animation subtile */}
         <div className="text-center mb-12">
