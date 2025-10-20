@@ -24,7 +24,10 @@
     "ci:android": "npm ci && npm run build && npx cap sync android",
     "sitemap": "node scripts/generate-sitemap.cjs",
     "predeploy": "npm run sitemap",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "test:admin": "node scripts/test-admin-crud.js",
+    "test:push": "node scripts/test-push-upsert.js",
+    "test:all": "node scripts/test-admin-crud.js && node scripts/test-push-upsert.js"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3",

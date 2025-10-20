@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Auth Admin</title>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+    
+    const supabaseUrl = 'https://efnzmpzkzeuktqkghwfa.supabase.co'
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmbnptcHpremV1a3Rxa2dod2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMzE4MzcsImV4cCI6MjA3MTgwNzgzN30.iQiDuurPIkSNjHWP6TID0dATrOCJQ71-kblcsRsHiAk'
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    
+    window.testAuth = async () => {
+      console.log('🔍 Test 1: Vérifier la session actuelle')
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      console.log('Session:', session)
+      console.log('Session error:', sessionError)
+      
+      if (!session) {
+        console.log('❌ Pas de session - utilisateur non authentifié')
+        return
+      }
+      
+      console.log('✅ Session active')
+      console.log('User ID:', session.user.id)
+      console.log('User email:', session.user.email)
+      
+      console.log('\n🔍 Test 2: Vérifier si l\'utilisateur est admin')
+      const { data: adminData, error: adminError } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .single()
+      
+      console.log('Admin data:', adminData)
+      console.log('Admin error:', adminError)
+      
+      if (adminError || !adminData) {
+        console.log('❌ Utilisateur NON admin')
+        console.log('➡️ Solution: Exécuter dans Supabase SQL:')
+        console.log(`INSERT INTO public.admins(user_id) VALUES ('${session.user.id}') ON CONFLICT (user_id) DO NOTHING;`)
+        return
+      }
+      
+      console.log('✅ Utilisateur est admin')
+      
+      console.log('\n🔍 Test 3: Tester la création d\'une chanson')
+      const testSong = {
+        title: 'Test RLS - ' + Date.now(),
+        artist: 'A Música da Segunda',
+        description: 'Test',
+        lyrics: 'Test',
+        release_date: '2025-01-20',
+        status: 'draft',
+        hashtags: ['test']
+      }
+      
+      const { data: songData, error: songError } = await supabase
+        .from('songs')
+        .insert([testSong])
+        .select()
+        .single()
+      
+      console.log('Song data:', songData)
+      console.log('Song error:', songError)
+      
+      if (songError) {
+        console.log('❌ Échec création chanson')
+        console.log('Code:', songError.code)
+        console.log('Message:', songError.message)
+        console.log('Details:', songError.details)
+        console.log('Hint:', songError.hint)
+        return
+      }
+      
+      console.log('✅ Chanson créée avec succès!')
+      
+      // Nettoyer
+      await supabase.from('songs').delete().eq('id', songData.id)
+      console.log('✅ Chanson de test supprimée')
+    }
+    
+    console.log('✅ Script chargé. Tapez testAuth() dans la console pour lancer le test.')
+  </script>
+</head>
+<body>
+  <h1>Test Auth Admin</h1>
+  <p>Ouvrir la console et taper: <code>testAuth()</code></p>
+</body>
+</html>
+

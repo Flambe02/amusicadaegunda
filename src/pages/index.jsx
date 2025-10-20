@@ -13,6 +13,7 @@ import Sobre from "./Sobre";
 import Blog from "./Blog";
 
 import ProtectedAdmin from "@/components/ProtectedAdmin";
+import Login from "./Login";
 
 import Playlist from "./Playlist";
 import Song from "./Song";
@@ -90,6 +91,7 @@ function PagesContent() {
                 <Route path="/sobre" element={<Sobre />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/admin" element={<ProtectedAdmin />} />
+                <Route path="/login" element={<Login />} />
                 <Route path="/playlist" element={<Playlist />} />
                 <Route path="/chansons" element={<Playlist />} />
                 <Route path="/chansons/:slug" element={<Song />} />

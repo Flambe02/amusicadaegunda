@@ -1,12 +1,28 @@
+import { supabase } from '@/lib/supabase'
+
+// Minimal helper to upsert a push subscription (Option A - public insert)
+export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = 'new-song', locale = 'pt-BR', vapidKeyVersion = 'v1' }) {
+  if (!endpoint || !p256dh || !auth) {
+    throw new Error('Missing subscription fields: endpoint, p256dh, auth')
+  }
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .upsert({ endpoint, p256dh, auth, topics: [topic], locale, vapid_key_version: vapidKeyVersion }, { onConflict: 'endpoint' })
+    .select('endpoint')
+    .single()
+  if (error) throw error
+  return data
+}
+
 // src/lib/push.js - FORCE INCLUSION
-console.log('🚀 PUSH LIB LOADED - VERSION:', Date.now());
+console.warn('🚀 PUSH LIB LOADED - VERSION:', Date.now());
 
 // Force export to prevent tree-shaking
 export const PUSH_VERSION = Date.now();
 
 // Test function to verify the file is loaded
 export function testPush() {
-  console.log('🧪 TEST PUSH FUNCTION CALLED');
+  console.warn('🧪 TEST PUSH FUNCTION CALLED');
   return 'PUSH_LIB_WORKING';
 }
 
@@ -53,17 +69,17 @@ export const shouldShowPushCTA = () => {
 async function getSWRegistration() {
   // En dev, pas de SW pour éviter les conflits HMR
   if (import.meta.env?.DEV) {
-    console.log('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
+    console.warn('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
     return null;
   }
   
   // Utiliser le SW déjà enregistré par pwa-install.js
   try { 
-    console.log('🔍 Récupération du Service Worker existant...');
+    console.warn('🔍 Récupération du Service Worker existant...');
     return await navigator.serviceWorker.ready; 
   }
-  catch (_error) {
-    console.log('⚠️ SW pas prêt, tentative d\'enregistrement...');
+  catch {
+    console.warn('⚠️ SW pas prêt, tentative d\'enregistrement...');
     // Enregistrer uniquement en production
     if (import.meta.env?.PROD) {
       return await navigator.serviceWorker.register('/sw.js');
@@ -74,13 +90,12 @@ async function getSWRegistration() {
 
 export async function enablePush({ locale = 'pt-BR' } = {}) {
   // DIAGNOSTIC: Afficher les variables d'environnement
-  console.log('🔍 DIAGNOSTIC VAPID:');
-  console.log('VAPID_PUBLIC_KEY:', VAPID_PUBLIC_KEY);
-  console.log('VAPID_PUBLIC_KEY length:', VAPID_PUBLIC_KEY?.length);
-  console.log('API_BASE:', API_BASE);
-  console.log('---');
+  console.warn('🔍 DIAGNOSTIC VAPID:');
+  console.warn('VAPID_PUBLIC_KEY length:', VAPID_PUBLIC_KEY?.length);
+  console.warn('API_BASE:', API_BASE);
+  console.warn('---');
   
-  console.log('🔍 Starting push activation...', { locale, VAPID_PUBLIC_KEY: !!VAPID_PUBLIC_KEY, API_BASE });
+  console.warn('🔍 Starting push activation...');
   
   if (!supported()) {
     console.error('❌ Push not supported');
@@ -95,12 +110,12 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
   // TEST: Vérifier la validité de la clé VAPID
   try {
     const testKey = b64ToUint8(VAPID_PUBLIC_KEY);
-    console.log('🔑 VAPID key test - Length:', testKey.byteLength, '(doit être 65)');
+    console.warn('🔑 VAPID key test - Length:', testKey.byteLength, '(doit être 65)');
     if (testKey.byteLength !== 65) {
       console.error('❌ VAPID key invalide: longueur incorrecte');
       throw new Error('VAPID key invalide: longueur incorrecte');
     }
-    console.log('✅ VAPID key valide');
+    console.warn('✅ VAPID key valide');
   } catch (e) {
     console.error('❌ VAPID key error:', e);
     throw new Error('VAPID key invalide: ' + e.message);
@@ -111,19 +126,19 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     throw new Error('API_BASE manquante');
   }
 
-  console.log('✅ Environment variables loaded');
+  console.warn('✅ Environment variables loaded');
 
   const reg = await getSWRegistration();
   if (!reg) {
     console.error('❌ Service Worker registration failed');
     throw new Error('Service Worker registration failed');
   }
-  console.log('✅ Service Worker registered:', reg);
-  console.log('🔍 SW state:', reg.active?.state, 'controller:', !!navigator.serviceWorker.controller);
+  console.warn('✅ Service Worker registered');
+  console.warn('🔍 SW state:', reg.active?.state, 'controller:', !!navigator.serviceWorker.controller);
 
   // Request permission ONLY on user gesture
   const permission = await Notification.requestPermission();
-  console.log('🔐 Permission result:', permission);
+  console.warn('🔐 Permission result:', permission);
   
   if (permission !== 'granted') {
     const in30d = Date.now() + 1000 * 60 * 60 * 24 * 30;
@@ -131,14 +146,14 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     throw new Error('Permission refusée');
   }
 
-  console.log('🔑 Creating push subscription...');
+  console.warn('🔑 Creating push subscription...');
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: b64ToUint8(VAPID_PUBLIC_KEY)
   });
-  console.log('✅ Push subscription created:', sub.endpoint);
+  console.warn('✅ Push subscription created');
 
-  console.log('📡 Sending subscription to server...');
+  console.warn('📡 Sending subscription to server...');
   const res = await fetch(`${API_BASE}/push/subscribe`, {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
@@ -150,7 +165,7 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     })
   });
   
-  console.log('📊 Server response:', res.status, res.statusText);
+  console.warn('📊 Server response:', res.status, res.statusText);
   
   if (!res.ok) {
     const errorText = await res.text();
@@ -158,7 +173,7 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     throw new Error(`Subscribe failed: ${res.status} ${res.statusText}`);
   }
   
-  console.log('✅ Push activation completed successfully');
+  console.warn('✅ Push activation completed successfully');
   return sub;
 }
 
