@@ -16,8 +16,9 @@ const siteUrl = cfg.siteUrl;
   const org = orgJsonLd({ name: cfg.brand.name, url: siteUrl, logo: `${siteUrl}${IMAGE}` });
   const website = websiteJsonLd({ url: siteUrl, search: cfg.search });
 
-  // Static pages
+  // Static pages (skip root to avoid overwriting Vite's SPA index.html)
   for (const r of cfg.routes.static) {
+    if (r.path === '/') continue;
     const dir = path.join(OUT, r.path === '/' ? '' : r.path.replace(/^\//, ''));
     const file = path.join(dir, 'index.html');
     await fs.ensureDir(dir);
