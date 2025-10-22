@@ -123,11 +123,5 @@
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": "cross-env NODE_ENV=production eslint --max-warnings=0 --fix"
-  },
-  "engines": {
-    "node": ">=18.17"
-  },
-  "overrides": {
-    "date-fns": "^3.6.0"
   }
 }
