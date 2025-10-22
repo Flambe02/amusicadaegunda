@@ -36,7 +36,9 @@ const siteUrl = cfg.siteUrl;
       image: `${siteUrl}${IMAGE}`,
       jsonld
     });
-    await fs.writeFile(file, html, 'utf8');
+    const versionComment = `<!-- build:${new Date().toISOString()} -->\n`;
+    const htmlWithVersion = versionComment + html;
+    await fs.writeFile(file, htmlWithVersion, 'utf8');
   }
 
   // Song pages
@@ -70,7 +72,9 @@ const siteUrl = cfg.siteUrl;
         })
       ]
     });
-    await fs.writeFile(file, html, 'utf8');
+    const versionComment = `<!-- build:${new Date().toISOString()} -->\n`;
+    const htmlWithVersion = versionComment + html;
+    await fs.writeFile(file, htmlWithVersion, 'utf8');
   }
 
   console.log(`✅ Stubs enriquecidos em ${OUT} (static + songs JSON-LD).`);

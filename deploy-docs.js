@@ -51,8 +51,12 @@ async function deployToDocs() {
 
     for (const route of routes) {
       const routeDir = path.join(docsPath, route);
-      await fs.mkdirp(routeDir);
-      await fs.writeFile(path.join(routeDir, 'index.html'), makeStubHtml(route));
+      const target = path.join(routeDir, 'index.html');
+      // Ne PAS écraser les stubs enrichis copiés depuis dist/ (JSON-LD, OG, etc.)
+      if (!fs.existsSync(target)) {
+        await fs.mkdirp(routeDir);
+        await fs.writeFile(target, makeStubHtml(route));
+      }
     }
 
     console.log('✅ Build copié vers docs/ avec succès !');

@@ -30,7 +30,10 @@
     "test:all": "node scripts/test-admin-crud.js && node scripts/test-push-upsert.js",
     "postbuild": "node scripts/generate-stubs.cjs && node scripts/generate-sitemap.cjs",
     "export:songs": "node scripts/export-songs-from-supabase.cjs",
-    "build:seo": "npm run export:songs && npm run build"
+    "build:seo": "npm run export:songs && npm run build",
+    "qa:jsonld": "node scripts/check-jsonld-prod.js",
+    "qa:sitemap": "node scripts/check-sitemap-prod.js",
+    "qa:prod": "npm run qa:jsonld && npm run qa:sitemap"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3",
