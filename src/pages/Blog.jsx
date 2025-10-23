@@ -104,9 +104,9 @@ export default function Blog() {
     return (
       <div className="p-5 max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
+          <h2 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
             Blog Musical
-          </h1>
+          </h2>
           <p className="text-white/80 font-medium text-lg drop-shadow-md">
             Histórias por trás de cada música
           </p>
@@ -125,9 +125,9 @@ export default function Blog() {
     return (
       <div className="p-5 max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
+          <h2 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
             Blog Musical
-          </h1>
+          </h2>
           <p className="text-white/80 font-medium text-lg drop-shadow-md">
             Histórias por trás de cada música
           </p>

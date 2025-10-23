@@ -41,9 +41,9 @@ export default function SongPage() {
 
   // SEO optimization for the song page
   useSEO({
-    title: song ? song.title : slug,
-    description: song ? song.description || `Listen to "${song.title}" by ${song.artist || 'A Música da Segunda'}` : `Song: ${slug}`,
-    keywords: song ? `${song.title}, ${song.artist || 'A Música da Segunda'}, música da segunda, nova música` : `música da segunda, ${slug}`,
+    title: song ? `${song.title} — A Música da Segunda` : 'A Música da Segunda',
+    description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.',
+    keywords: song ? `${song.title}, A Música da Segunda, música da segunda, nova música, paródias musicais` : `música da segunda, paródias musicais, notícias do brasil`,
     url: `/chansons/${slug}`,
     type: 'article'
   });
@@ -109,9 +109,9 @@ export default function SongPage() {
               Voltar ao Início
             </Button>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
             {error || 'Song Not Found'}
-          </h1>
+          </h2>
           <p className="text-gray-600">
             The song &quot;{slug}&quot; could not be found.
           </p>
