@@ -1,4 +1,4 @@
-const escape = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+const escape = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/ç/g, 'ç').replace(/ã/g, 'ã').replace(/é/g, 'é').replace(/ê/g, 'ê').replace(/í/g, 'í').replace(/ó/g, 'ó').replace(/ô/g, 'ô').replace(/ú/g, 'ú');
 const json = (obj) => JSON.stringify(obj, null, 2);
 
 function baseHtml({ lang = 'pt-BR', title, desc, url, image, body = '', jsonld = [] }) {
