@@ -22,7 +22,7 @@ const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, '
 
   // Add songs explicitly
   for (const s of songs) {
-    urlSet.add(`/chansons/${s.slug}`);
+    urlSet.add(`/chansons/${s.slug}/`);
   }
 
   const sm = new SitemapStream({ hostname: cfg.siteUrl });
@@ -35,7 +35,7 @@ const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, '
       const s = songs.find(x => x.slug === slug);
       if (s?.datePublished) lastmod = formatISO(new Date(s.datePublished));
     }
-    sm.write({ url: u === '/' ? '/' : u, changefreq: 'weekly', priority: u === '/' ? 0.8 : 0.6, lastmod });
+    sm.write({ url: u === '/' ? '/' : u.endsWith('/') ? u : u + '/', changefreq: 'weekly', priority: u === '/' ? 0.8 : 0.6, lastmod });
   }
 
   sm.end();

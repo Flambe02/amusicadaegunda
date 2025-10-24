@@ -22,7 +22,7 @@ const siteUrl = cfg.siteUrl;
     const dir = path.join(OUT, r.path === '/' ? '' : r.path.replace(/^\//, ''));
     const file = path.join(dir, 'index.html');
     await fs.ensureDir(dir);
-    const url = `${siteUrl}${r.path === '/' ? '' : r.path}`;
+    const url = `${siteUrl}${r.path === '/' ? '' : r.path}${r.path !== '/' && !r.path.endsWith('/') ? '/' : ''}`;
     const jsonld = [org, website];
 
     if (r.path === '/playlist') {
@@ -48,7 +48,7 @@ const siteUrl = cfg.siteUrl;
     const dir = path.join(OUT, 'chansons', s.slug);
     const file = path.join(dir, 'index.html');
     await fs.ensureDir(dir);
-    const url = `${siteUrl}${route}`;
+    const url = `${siteUrl}${route}/`;
     const title = `${s.name} — A Música da Segunda`;
     const desc = `Letra, áudio e história de “${s.name}” — nova música da segunda.`;
 
@@ -57,7 +57,7 @@ const siteUrl = cfg.siteUrl;
       title,
       desc,
       url,
-      image: s.image ? `${siteUrl}${s.image.replace(/^\/?/, '')}` : `${siteUrl}${IMAGE.replace(/^\/?/, '')}`,
+      image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       jsonld: [
         org,
         website,
@@ -66,7 +66,7 @@ const siteUrl = cfg.siteUrl;
           url,
           datePublished: s.datePublished,
           audioUrl: s.audioUrl,
-          image: s.image ? `${siteUrl}${s.image}` : `${siteUrl}${IMAGE}`,
+          image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
           duration: s.duration,
           inLanguage: s.inLanguage,
           byArtist: s.byArtist

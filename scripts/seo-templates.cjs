@@ -1,4 +1,4 @@
-const escape = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escape = (s = '') => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const json = (obj) => JSON.stringify(obj, null, 2);
 
 function baseHtml({ lang = 'pt-BR', title, desc, url, image, body = '', jsonld = [] }) {
