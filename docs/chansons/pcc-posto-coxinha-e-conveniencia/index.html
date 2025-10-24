@@ -1,4 +1,4 @@
-<!-- build:2025-10-24T20:09:19.449Z -->
+<!-- build:2025-10-24T20:20:25.913Z -->
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -66,14 +66,14 @@
 <div id="app"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
 <script>
-// Redirection vers la SPA pour les routes de chansons
-if (window.location.pathname.startsWith('/chansons/')) {
-  // Rediriger vers la SPA avec hash routing
-  const songSlug = window.location.pathname.split('/chansons/')[1].replace(//$/, '');
-  window.location.replace('/#/chansons/' + songSlug);
+// Redirection seulement pour les pages de chansons en production
+if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  if (window.location.pathname.startsWith('/chansons/')) {
+    // Rediriger vers la SPA avec hash routing
+    const songSlug = window.location.pathname.split('/chansons/')[1].replace(//$/, '');
+    window.location.replace('/#/chansons/' + songSlug);
+  }
 }
 </script>
-<script src="/pwa-install.js"></script>
-<script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

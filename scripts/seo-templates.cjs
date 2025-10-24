@@ -40,15 +40,15 @@ ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script
 <div id="app"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
 <script>
-// Redirection vers la SPA pour les routes de chansons
-if (window.location.pathname.startsWith('/chansons/')) {
-  // Rediriger vers la SPA avec hash routing
-  const songSlug = window.location.pathname.split('/chansons/')[1].replace(/\/$/, '');
-  window.location.replace('/#/chansons/' + songSlug);
+// Redirection seulement pour les pages de chansons en production
+if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+  if (window.location.pathname.startsWith('/chansons/')) {
+    // Rediriger vers la SPA avec hash routing
+    const songSlug = window.location.pathname.split('/chansons/')[1].replace(/\/$/, '');
+    window.location.replace('/#/chansons/' + songSlug);
+  }
 }
 </script>
-<script src="/pwa-install.js"></script>
-<script type="module" src="/src/main.jsx"></script>
 </body>
 </html>`;
 }
