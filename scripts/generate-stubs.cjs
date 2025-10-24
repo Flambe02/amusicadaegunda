@@ -50,7 +50,7 @@ const siteUrl = cfg.siteUrl;
     await fs.ensureDir(dir);
     const url = `${siteUrl}${route}/`;
     const title = `${s.name} — A Música da Segunda`;
-    const desc = `Letra, áudio e história de “${s.name}” — nova música da segunda.`;
+    const desc = `Letra, áudio e história de "${s.name}" — nova música da segunda.`;
 
     const html = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
@@ -76,6 +76,33 @@ const siteUrl = cfg.siteUrl;
     const versionComment = `<!-- build:${new Date().toISOString()} -->\n`;
     const htmlWithVersion = versionComment + html;
     await fs.writeFile(file, htmlWithVersion, { encoding: 'utf8' });
+
+    // Créer aussi un fichier pour l'URL sans trailing slash (redirection)
+    const fileNoSlash = path.join(OUT, 'chansons', s.slug + '.html');
+    const htmlNoSlash = baseHtml({
+      lang: s.inLanguage || cfg.defaultLocale,
+      title,
+      desc,
+      url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
+      image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+      jsonld: [
+        org,
+        website,
+        musicRecordingJsonLd({
+          name: s.name,
+          url: `${siteUrl}${route}/`,
+          datePublished: s.datePublished,
+          audioUrl: s.audioUrl,
+          image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+          duration: s.duration,
+          inLanguage: s.inLanguage,
+          byArtist: s.byArtist
+        })
+      ]
+    });
+    const versionCommentNoSlash = `<!-- build:${new Date().toISOString()} -->\n`;
+    const htmlWithVersionNoSlash = versionCommentNoSlash + htmlNoSlash;
+    await fs.writeFile(fileNoSlash, htmlWithVersionNoSlash, { encoding: 'utf8' });
   }
 
   console.log(`✅ Stubs enriquecidos em ${OUT} (static + songs JSON-LD).`);

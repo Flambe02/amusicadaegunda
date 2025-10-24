@@ -39,6 +39,14 @@ ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script
 <body>
 <div id="app"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
+<script>
+// Redirection vers la SPA pour les routes de chansons
+if (window.location.pathname.startsWith('/chansons/')) {
+  // Rediriger vers la SPA avec hash routing
+  const songSlug = window.location.pathname.split('/chansons/')[1].replace(/\/$/, '');
+  window.location.replace('/#/chansons/' + songSlug);
+}
+</script>
 <script src="/pwa-install.js"></script>
 <script type="module" src="/src/main.jsx"></script>
 </body>

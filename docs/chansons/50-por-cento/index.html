@@ -1,16 +1,16 @@
-<!-- build:2025-10-24T19:54:31.080Z -->
+<!-- build:2025-10-24T20:09:19.465Z -->
 <!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>50 por cento — A Música da Segunda</title>
-<meta name="description" content="Letra, áudio e história de “50 por cento” — nova música da segunda."/>
+<meta name="description" content="Letra, áudio e história de &quot;50 por cento&quot; — nova música da segunda."/>
 <link rel="canonical" href="https://www.amusicadasegunda.com/chansons/50-por-cento/"/>
 
 <!-- Open Graph -->
 <meta property="og:title" content="50 por cento — A Música da Segunda"/>
-<meta property="og:description" content="Letra, áudio e história de “50 por cento” — nova música da segunda."/>
+<meta property="og:description" content="Letra, áudio e história de &quot;50 por cento&quot; — nova música da segunda."/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://www.amusicadasegunda.com/chansons/50-por-cento/"/>
 <meta property="og:image" content="https://www.amusicadasegunda.com/images/og-default.jpg"/>
@@ -18,7 +18,7 @@
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="50 por cento — A Música da Segunda"/>
-<meta name="twitter:description" content="Letra, áudio e história de “50 por cento” — nova música da segunda."/>
+<meta name="twitter:description" content="Letra, áudio e história de &quot;50 por cento&quot; — nova música da segunda."/>
 <meta name="twitter:image" content="https://www.amusicadasegunda.com/images/og-default.jpg"/>
 
 <script type="application/ld+json">
@@ -65,6 +65,14 @@
 <body>
 <div id="app"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
+<script>
+// Redirection vers la SPA pour les routes de chansons
+if (window.location.pathname.startsWith('/chansons/')) {
+  // Rediriger vers la SPA avec hash routing
+  const songSlug = window.location.pathname.split('/chansons/')[1].replace(//$/, '');
+  window.location.replace('/#/chansons/' + songSlug);
+}
+</script>
 <script src="/pwa-install.js"></script>
 <script type="module" src="/src/main.jsx"></script>
 </body>
