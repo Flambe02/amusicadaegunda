@@ -39,6 +39,8 @@ ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script
 <body>
 <div id="app"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
+<script src="/pwa-install.js"></script>
+<script type="module" src="/src/main.jsx"></script>
 </body>
 </html>`;
 }
