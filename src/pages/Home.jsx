@@ -12,7 +12,7 @@ import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'da
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
 export default function Home() {
@@ -373,10 +373,12 @@ export default function Home() {
                       <Play className="w-6 h-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xl font-bold text-gray-800 truncate">
-                        <Link to={`/chansons/${song.slug || song.title?.toLowerCase().replace(/\s+/g,'-')}`} className="hover:underline">
-                          {song.title}
-                        </Link>
+                      <h3 
+                        className="text-xl font-bold text-gray-800 truncate cursor-pointer hover:underline"
+                        onClick={() => handleReplaceVideo(song)}
+                        title="Clique para ver esta música na coluna de vídeo"
+                      >
+                        {song.title}
                       </h3>
                       <p className="text-gray-600 text-base font-medium mt-1">
                         {song.artist}
@@ -453,10 +455,12 @@ export default function Home() {
                         <Play className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-gray-800 text-lg truncate">
-                          <Link to={`/chansons/${song.slug || song.title?.toLowerCase().replace(/\s+/g,'-')}`} className="hover:underline">
-                            {song.title}
-                          </Link>
+                        <h3 
+                          className="font-bold text-gray-800 text-lg truncate cursor-pointer hover:underline"
+                          onClick={() => handleReplaceVideo(song)}
+                          title="Clique para ver esta música na coluna de vídeo"
+                        >
+                          {song.title}
                         </h3>
                         <p className="text-gray-600 text-base font-medium mt-1">
                           {song.artist}
