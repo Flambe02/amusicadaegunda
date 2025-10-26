@@ -1,7 +1,6 @@
-import React from 'react';
-import { Music, ExternalLink, Play } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+//
 import { useSEO } from '../hooks/useSEO';
+import { Helmet } from 'react-helmet-async';
 
 export default function Playlist() {
   // SEO pour la playlist
@@ -15,6 +14,16 @@ export default function Playlist() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-teal-200 to-rose-200 p-5">
+      <Helmet>
+        <html lang="pt-BR" />
+        <meta name="robots" content="index,follow" />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/#/playlist" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": "Playlist A Música da Segunda"
+        })}</script>
+      </Helmet>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

@@ -1,0 +1,15 @@
+[
+  {
+    "slug": "debaixo-da-pia",
+    "name": "Debaixo da pia",
+    "datePublished": "2025-10-19",
+    "audioUrl": "https://example.com/audio/debaixo-da-pia.mp3",
+    "image": "/images/og-default.jpg",
+    "duration": "PT2M45S",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A M??sica da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  }
+]

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, Eye, EyeOff, Loader2, Shield, KeyRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ResetPassword from '@/components/ResetPassword';
+import { Helmet } from 'react-helmet-async';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,6 +20,7 @@ export default function LoginPage() {
   const [showResetPassword, setShowResetPassword] = useState(false);
 
   // Vérifier si l'utilisateur est déjà connecté
+   
   useEffect(() => {
     checkAuth();
   }, []);
@@ -115,9 +118,13 @@ export default function LoginPage() {
   if (isChecking) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Helmet>
+          <meta name="robots" content="noindex,nofollow" />
+          <link rel="canonical" href="https://www.amusicadasegunda.com/#/login" />
+        </Helmet>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Vérification de l'authentification...</p>
+          <p className="text-gray-600">Vérification de l&apos;authentification...</p>
         </div>
       </div>
     );
@@ -135,7 +142,7 @@ export default function LoginPage() {
                 ✅ Authentifié avec succès
               </h2>
               <p className="text-gray-600 mb-4">
-                Redirection vers l'Admin en cours...
+                Redirection vers l&apos;Admin en cours...
               </p>
               <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
             </div>
@@ -147,6 +154,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+        <link rel="canonical" href="https://www.amusicadasegunda.com/#/login" />
+      </Helmet>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -169,9 +180,7 @@ export default function LoginPage() {
             )}
             
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </label>
+              <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
               <Input
                 id="email"
                 type="email"
@@ -185,9 +194,7 @@ export default function LoginPage() {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Mot de passe
-              </label>
+              <label htmlFor="password" className="text-sm font-medium text-gray-700">Mot de passe</label>
               <div className="relative">
                 <Input
                   id="password"
@@ -252,7 +259,7 @@ export default function LoginPage() {
                 className="text-blue-600 hover:text-blue-700 font-medium"
                 disabled={isLoading}
               >
-                Contacter l'administrateur
+                Contacter l&apos;administrateur
               </button>
             </p>
           </div>

@@ -1,0 +1,43 @@
+{
+  "siteUrl": "https://www.amusicadasegunda.com",
+  "defaultLocale": "pt-BR",
+  "brand": {
+    "name": "A Música da Segunda",
+    "handle": "@amusicadasegunda",
+    "logo": "/images/og-default.jpg"
+  },
+  "routes": {
+    "static": [
+      {
+        "path": "/",
+        "title": "A Música da Segunda — Nova música toda segunda",
+        "description": "Paródias musicais inteligentes sobre as notícias do Brasil. Uma nova música toda segunda-feira."
+      },
+      {
+        "path": "/playlist",
+        "title": "Playlist — A Música da Segunda",
+        "description": "Ouça todas as músicas da segunda, organize por tema e descubra novas faixas."
+      },
+      {
+        "path": "/blog",
+        "title": "Blog — A Música da Segunda",
+        "description": "Bastidores, letras, making-of e novidades do projeto."
+      },
+      {
+        "path": "/sobre",
+        "title": "Sobre — A Música da Segunda",
+        "description": "Quem somos, como fazemos e onde ouvir."
+      },
+      {
+        "path": "/adventcalendar",
+        "title": "Calendário do Advento — A Música da Segunda",
+        "description": "Uma surpresa musical por dia, em dezembro."
+      }
+    ]
+  },
+  "search": {
+    "enabled": true,
+    "target": "/#/search",
+    "param": "q"
+  }
+}

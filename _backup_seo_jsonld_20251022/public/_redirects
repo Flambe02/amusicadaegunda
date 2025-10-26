@@ -1,0 +1,10 @@
+# GitHub Pages redirects for SPA routing
+# Redirect all routes to index.html to let React Router handle them
+
+# Allow crawlers to fetch sitemaps and robots.txt directly
+/sitemap.xml           /sitemap.xml    200
+/sitemap-static.xml    /sitemap-static.xml 200
+/sitemap-songs.xml     /sitemap-songs.xml 200
+/robots.txt            /robots.txt     200
+
+/*    /index.html   200

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-stubs.cjs",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
     "preview": "vite preview",
@@ -27,7 +27,13 @@
     "prepare": "husky install",
     "test:admin": "node scripts/test-admin-crud.js",
     "test:push": "node scripts/test-push-upsert.js",
-    "test:all": "node scripts/test-admin-crud.js && node scripts/test-push-upsert.js"
+    "test:all": "node scripts/test-admin-crud.js && node scripts/test-push-upsert.js",
+    "postbuild": "node scripts/generate-stubs.cjs && node scripts/generate-sitemap.cjs",
+    "export:songs": "node scripts/export-songs-from-supabase.cjs",
+    "build:seo": "npm run export:songs && npm run build",
+    "qa:jsonld": "node scripts/check-jsonld-prod.js",
+    "qa:sitemap": "node scripts/check-sitemap-prod.js",
+    "qa:prod": "npm run qa:jsonld && npm run qa:sitemap"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3",
@@ -59,12 +65,9 @@
     "@radix-ui/react-toggle": "^1.1.2",
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
-    "@supabase/supabase-js": "^2.57.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
-    "date-fns": "^3.6.0",
-    "dotenv": "^17.2.1",
     "embla-carousel-react": "^8.5.2",
     "framer-motion": "^12.4.7",
     "input-otp": "^1.4.2",
@@ -90,6 +93,7 @@
     "@capacitor/cli": "^7.4.3",
     "@eslint/js": "^9.19.0",
     "@flydotio/dockerfile": "^0.7.8",
+    "@supabase/supabase-js": "^2.76.1",
     "@types/node": "^22.13.5",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
@@ -98,15 +102,20 @@
     "cordova-res": "^0.15.4",
     "cross-env": "^10.0.0",
     "cssnano": "^7.1.1",
+    "date-fns": "^3.6.0",
+    "dotenv": "^17.2.3",
     "eslint": "^9.19.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.18",
-    "fs-extra": "^11.3.1",
+    "fast-glob": "^3.3.3",
+    "fs-extra": "^11.3.2",
     "globals": "^15.14.0",
+    "he": "^1.2.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
     "postcss": "^8.5.3",
+    "sitemap": "^8.0.1",
     "tailwindcss": "^3.4.17",
     "terser": "^5.43.1",
     "vite": "^6.1.0",
@@ -114,5 +123,11 @@
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": "cross-env NODE_ENV=production eslint --max-warnings=0 --fix"
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "overrides": {
+    "date-fns": "^3.6.0"
   }
 }

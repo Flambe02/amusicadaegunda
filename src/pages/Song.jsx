@@ -7,6 +7,7 @@ import {
   breadcrumbsJsonLd, 
   injectJsonLd 
 } from '../lib/seo-jsonld';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Music, Calendar, User } from 'lucide-react';
 import TikTokEmbedOptimized from '../components/TikTokEmbedOptimized';
@@ -23,12 +24,9 @@ export default function SongPage() {
   useEffect(() => {
     const loadSongData = async () => {
       if (!slug) return;
-      
       setIsLoading(true);
       setError(null);
-      
       try {
-        // Try to get song by slug (this would need to be implemented in the Song entity)
         const songData = await Song.getBySlug(slug);
         setSong(songData);
       } catch (err) {
@@ -38,17 +36,14 @@ export default function SongPage() {
         setIsLoading(false);
       }
     };
-    
     loadSongData();
   }, [slug]);
 
-
-
   // SEO optimization for the song page
   useSEO({
-    title: song ? song.title : slug,
-    description: song ? song.description || `Listen to "${song.title}" by ${song.artist || 'A Música da Segunda'}` : `Song: ${slug}`,
-    keywords: song ? `${song.title}, ${song.artist || 'A Música da Segunda'}, música da segunda, nova música` : `música da segunda, ${slug}`,
+    title: song ? `${song.title} — A Música da Segunda` : 'A Música da Segunda',
+    description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.',
+    keywords: song ? `${song.title}, A Música da Segunda, música da segunda, nova música, paródias musicais` : `música da segunda, paródias musicais, notícias do brasil`,
     url: `/chansons/${slug}`,
     type: 'article'
   });
@@ -56,7 +51,6 @@ export default function SongPage() {
   // Inject JSON-LD schemas
   useEffect(() => {
     if (song) {
-      // MusicRecording schema
       const musicSchema = musicRecordingJsonLd({
         title: song.title,
         slug: slug,
@@ -66,14 +60,12 @@ export default function SongPage() {
       });
       injectJsonLd(musicSchema, 'song-music-schema');
 
-      // Breadcrumbs schema
       const breadcrumbSchema = breadcrumbsJsonLd({
         title: song.title,
         slug: slug
       });
       injectJsonLd(breadcrumbSchema, 'song-breadcrumb-schema');
 
-      // Cleanup on unmount
       return () => {
         const musicScript = document.getElementById('song-music-schema');
         const breadcrumbScript = document.getElementById('song-breadcrumb-schema');
@@ -82,6 +74,8 @@ export default function SongPage() {
       };
     }
   }, [song, slug]);
+
+  const canonical = `https://www.amusicadasegunda.com/#/chansons/${slug}`;
 
   if (isLoading) {
     return (
@@ -100,6 +94,10 @@ export default function SongPage() {
   if (error || !song) {
     return (
       <div className="container mx-auto px-4 py-8">
+        <Helmet>
+          <link rel="canonical" href={canonical} />
+          <meta name="robots" content="noindex,follow" />
+        </Helmet>
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-6">
             <Button 
@@ -111,9 +109,9 @@ export default function SongPage() {
               Voltar ao Início
             </Button>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
             {error || 'Song Not Found'}
-          </h1>
+          </h2>
           <p className="text-gray-600">
             The song &quot;{slug}&quot; could not be found.
           </p>
@@ -124,6 +122,12 @@ export default function SongPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Helmet>
+        <html lang="pt-BR" />
+        <link rel="canonical" href={canonical} />
+        <meta property="og:url" content={canonical} />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
       <div className="max-w-4xl mx-auto">
         {/* Navigation */}
         <div className="mb-6">

@@ -4,10 +4,14 @@ import App from './App.jsx'
 import './index.css'
 import './styles/tiktok-optimized.css'
 import './styles/a11y.css'
+import { HelmetProvider } from 'react-helmet-async'
 
+const helmetContext = {}
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <HelmetProvider context={helmetContext}>
+      <App />
+    </HelmetProvider>
   </React.StrictMode>,
 )
 
@@ -18,9 +22,9 @@ try {
       // Ignore les erreurs d'import en production
     });
   }
-} catch (error) {
+} catch {
   // Ignore les erreurs d'import.meta en mode non-module
-  console.log('🔧 Mode non-module détecté, Web Vitals désactivé');
+  console.warn('🔧 Mode non-module détecté, Web Vitals désactivé');
 }
 
 // Gating du Service Worker pour éviter les conflits en natif

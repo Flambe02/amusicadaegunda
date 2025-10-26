@@ -14,6 +14,7 @@ import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
+import { Helmet } from 'react-helmet-async';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -161,15 +162,11 @@ export default function Home() {
     navigate(`/calendar?month=${previousMonth}`);
   };
 
-  // SEO dynamique basé sur la chanson actuelle
+  // SEO statique pour la page d'accueil
   useSEO({
-    title: currentSong ? `${currentSong.title} - ${currentSong.artist}` : 'Descoberta da Semana',
-    description: currentSong 
-      ? `Esta semana: "${currentSong.title}" de ${currentSong.artist}. Descubra uma nova música incrível toda segunda-feira no Música da Segunda.`
-      : 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais no Música da Segunda.',
-    keywords: currentSong 
-      ? `música da segunda, ${currentSong.title}, ${currentSong.artist}, descoberta musical, nova música toda segunda, música brasileira`
-      : 'música da segunda, descoberta musical, nova música toda segunda, música brasileira, indie music, playlist semanal',
+    title: 'A Música da Segunda: Paródias das Notícias do Brasil',
+    description: 'A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas.',
+    keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda',
     image: currentSong?.cover_image,
     url: '/',
     type: 'website'
@@ -178,10 +175,15 @@ export default function Home() {
   if (isLoading) {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
+        <Helmet>
+          <title>A Música da Segunda: Paródias das Notícias do Brasil</title>
+          <meta name="description" content="A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas." />
+        </Helmet>
         <div className="text-center mb-8">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
-            A Musica da Segunda: As Notícias do Brasil em Forma de Paródia
-          </h2>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
+            A Música da Segunda
+          </h1>
+          <p className="text-lg md:text-xl text-white drop-shadow-lg">As Notícias do Brasil em Forma de Paródia</p>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
             Descubra música nova toda segunda-feira
           </p>
@@ -199,10 +201,14 @@ export default function Home() {
   if (error) {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
+        <Helmet>
+          <title>A Música da Segunda: Paródias das Notícias do Brasil</title>
+          <meta name="description" content="A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas." />
+        </Helmet>
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
             Música da Segunda
-          </h1>
+          </h2>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
             Descubra música nova toda segunda-feira
           </p>
@@ -238,8 +244,9 @@ export default function Home() {
             
             <div className="text-left">
               <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
-                A Musica da Segunda: As Notícias do Brasil em Forma de Paródia
+                A Música da Segunda
               </h2>
+              <p className="text-md md:text-lg text-white drop-shadow-lg">As Notícias do Brasil em Forma de Paródia</p>
               <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
                 Descubra música nova toda segunda-feira
               </p>
