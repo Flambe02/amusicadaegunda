@@ -100,7 +100,14 @@ export default function Home() {
   };
 
   // Nouvelle fonction pour remplacer la vidéo principale
-  const handleReplaceVideo = (song) => {
+  const handleReplaceVideo = (song, event) => {
+    // Empêcher la propagation de l'événement et le comportement par défaut
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    console.warn('🎵 handleReplaceVideo appelé avec:', song.title);
     setDisplayedSong(song);
     // Scroll vers le haut pour voir la nouvelle vidéo
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -367,7 +374,7 @@ export default function Home() {
                   <div className="flex items-center gap-4">
                     <div 
                       className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-                      onClick={() => handleReplaceVideo(song)}
+                      onClick={(e) => handleReplaceVideo(song, e)}
                       title="Clique para ver esta música na coluna de vídeo"
                     >
                       <Play className="w-6 h-6 text-white" />
@@ -375,7 +382,7 @@ export default function Home() {
                     <div className="flex-1 min-w-0">
                       <h3 
                         className="text-xl font-bold text-gray-800 truncate cursor-pointer hover:underline"
-                        onClick={() => handleReplaceVideo(song)}
+                        onClick={(e) => handleReplaceVideo(song, e)}
                         title="Clique para ver esta música na coluna de vídeo"
                       >
                         {song.title}
@@ -449,7 +456,7 @@ export default function Home() {
                     <div className="flex items-center gap-4">
                       <div 
                         className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-                        onClick={() => handleReplaceVideo(song)}
+                        onClick={(e) => handleReplaceVideo(song, e)}
                         title="Clique para ver esta música na coluna de vídeo"
                       >
                         <Play className="w-6 h-6 text-white" />
@@ -457,7 +464,7 @@ export default function Home() {
                       <div className="flex-1 min-w-0">
                         <h3 
                           className="font-bold text-gray-800 text-lg truncate cursor-pointer hover:underline"
-                          onClick={() => handleReplaceVideo(song)}
+                          onClick={(e) => handleReplaceVideo(song, e)}
                           title="Clique para ver esta música na coluna de vídeo"
                         >
                           {song.title}

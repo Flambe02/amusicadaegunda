@@ -1,4 +1,3 @@
-import React from 'react';
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle } from 'lucide-react';
 
 export default function Sobre() {
@@ -247,7 +246,7 @@ export default function Sobre() {
           </p>
           <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-2xl border border-white/30">
             <Mail className="w-5 h-5 text-white" />
-            <span className="text-white font-semibold">contato@musicadasegunda.com</span>
+            <span className="text-white font-semibold">pimentaoenchansons@gmail.com</span>
           </div>
         </div>
       </div>

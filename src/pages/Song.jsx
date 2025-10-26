@@ -167,10 +167,13 @@ export default function SongPage() {
               <Music className="w-5 h-5" />
               Vídeo TikTok
             </h2>
-            <TikTokEmbedOptimized 
-              videoId={song.tiktok_video_id}
-              title={song.title}
-            />
+            <div className="w-full max-w-md mx-auto">
+              <TikTokEmbedOptimized 
+                postId={song.tiktok_video_id}
+                className="w-full"
+                song={song}
+              />
+            </div>
           </div>
         )}
 

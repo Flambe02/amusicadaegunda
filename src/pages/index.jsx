@@ -71,6 +71,11 @@ function _getCurrentPage(url) {
         return 'TikTokDemo';
     }
 
+    // Gérer les routes chansons avec slug (ex: /chansons/nobel-prize)
+    if (url.startsWith('/chansons/') && urlLastPart !== 'chansons') {
+        return 'Song';
+    }
+
     const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
     return pageName || 'Home';
 }
@@ -94,6 +99,7 @@ function PagesContent() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/playlist" element={<Playlist />} />
                 <Route path="/chansons" element={<Playlist />} />
+                {/* Route pour accéder à une chanson individuelle */}
                 <Route path="/chansons/:slug" element={<Song />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
