@@ -59,21 +59,26 @@ export default function ProtectedAdmin() {
 
   const checkAdminStatus = async (userId) => {
     try {
+      console.warn('🔍 Checking admin status for user:', userId);
       const { data, error } = await supabase
         .from('admins')
         .select('user_id')
         .eq('user_id', userId)
         .single();
       
+      console.warn('📊 Admin check result:', { data, error });
+      
       if (error) {
-        console.error('Erreur vérification admin:', error);
+        console.error('❌ Erreur vérification admin:', error);
         setIsAdmin(false);
         return;
       }
       
-      setIsAdmin(!!data);
+      const isAdminUser = !!data;
+      console.warn('✅ User is admin:', isAdminUser);
+      setIsAdmin(isAdminUser);
     } catch (error) {
-      console.error('Erreur vérification admin:', error);
+      console.error('❌ Erreur vérification admin:', error);
       setIsAdmin(false);
     }
   };
