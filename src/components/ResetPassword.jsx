@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ export default function ResetPassword({ onBackToLogin }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/#/admin?reset=true`
+        redirectTo: `${window.location.origin}/#/admin`
       });
 
       if (error) {
@@ -141,7 +141,7 @@ export default function ResetPassword({ onBackToLogin }) {
           
           <div className="mt-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-xs text-blue-800 text-center">
-              💡 Le lien de réinitialisation sera envoyé à l'adresse email fournie
+              💡 Le lien de réinitialisation sera envoyé à l&apos;adresse email fournie
             </p>
           </div>
         </CardContent>
