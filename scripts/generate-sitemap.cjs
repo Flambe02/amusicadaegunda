@@ -30,12 +30,17 @@ const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, '
 
   for (const u of urlSet) {
     let lastmod = now;
+    let url = u === '/' ? '/' : u.endsWith('/') ? u : u + '/';
+    
+    // Ajouter le # pour les routes SPA avec HashRouter
     if (u.startsWith('/chansons/')) {
+      url = `#${url}`;
       const slug = u.split('/').pop();
       const s = songs.find(x => x.slug === slug);
       if (s?.datePublished) lastmod = formatISO(new Date(s.datePublished));
     }
-    sm.write({ url: u === '/' ? '/' : u.endsWith('/') ? u : u + '/', changefreq: 'weekly', priority: u === '/' ? 0.8 : 0.6, lastmod });
+    
+    sm.write({ url, changefreq: 'weekly', priority: u === '/' ? 0.8 : 0.6, lastmod });
   }
 
   sm.end();
