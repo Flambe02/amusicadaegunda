@@ -19,7 +19,7 @@ export default function ResetPassword({ onBackToLogin }) {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/#/admin`
+        redirectTo: `https://www.amusicadasegunda.com/#/admin`
       });
 
       if (error) {
