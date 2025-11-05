@@ -76,20 +76,11 @@
     <meta name="twitter:title" content="Música da Segunda" />
     <meta name="twitter:description" content="Nova música toda segunda-feira. Descubra, ouça e compartilhe." />
     
-    <!-- Preconnect pour performance -->
+    <!-- Preconnect pour performance - Uniquement ressources critiques -->
     <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
-    <link rel="preconnect" href="https://www.tiktok.com" />
-    <link rel="preconnect" href="https://v16m.tiktokcdn.com" />
-    <link rel="preconnect" href="https://v19.tiktokcdn.com" />
-    <link rel="preconnect" href="https://open.spotify.com" />
-    <link rel="preconnect" href="https://music.apple.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- DNS prefetch pour TikTok -->
-    <link rel="dns-prefetch" href="https://www.tiktok.com" />
-    <link rel="dns-prefetch" href="https://v16m.tiktokcdn.com" />
-    <link rel="dns-prefetch" href="https://v19.tiktokcdn.com" />
+    <!-- TikTok, Spotify, Apple Music, YouTube : préconnexions différées (chargées lazy) -->
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
@@ -125,7 +116,7 @@
       "url": "https://www.amusicadasegunda.com/",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://amusicadasegunda.com/?q={search_term_string}",
+        "target": "https://www.amusicadasegunda.com/?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     }
@@ -136,7 +127,7 @@
       "@type": "Organization",
       "name": "Música da Segunda",
       "url": "https://www.amusicadasegunda.com/",
-      "logo": "https://amusicadasegunda.com/icons/icon-512x512.png"
+      "logo": "https://www.amusicadasegunda.com/icons/icon-512x512.png"
     }
     </script>
   </head>

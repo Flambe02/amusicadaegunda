@@ -65,6 +65,7 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
           referrerPolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+          loading="lazy"
         />
       </div>
     );
@@ -80,6 +81,7 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
         referrerPolicy="strict-origin-when-cross-origin"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
+        loading="lazy"
       />
     </div>
   );

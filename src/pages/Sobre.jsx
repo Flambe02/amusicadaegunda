@@ -132,7 +132,7 @@ export default function Sobre() {
                   src="images/Musica da segunda.jpg" 
                   alt="Logo Música da Segunda" 
                   className="w-full h-full object-cover"
-                  loading="eager"
+                  loading="lazy"
                 />
               </div>
             </div>

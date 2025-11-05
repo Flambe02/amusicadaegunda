@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
+import { logger } from '@/lib/logger';
 import CountdownTimer from '../components/CountdownTimer';
 import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,11 +22,11 @@ import { useToast } from '@/components/ui/use-toast';
 // Composant d'intégration YouTube générique (remplace l'embed TikTok)
 // Props attendues: youtube_music_url, youtube_url, title
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
-  console.warn('🎬🎬🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
+  logger.debug('🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
   
   // Prioriser youtube_music_url, sinon youtube_url
   const targetUrl = youtube_music_url || youtube_url || '';
-  console.warn('🎬🎬🎬 YouTubeEmbed targetUrl:', targetUrl);
+  logger.debug('🎬 YouTubeEmbed targetUrl:', targetUrl);
 
   // Analyse l'URL et retourne { id, type }
   const getYouTubeEmbedInfo = (url) => {
@@ -64,10 +65,10 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   };
 
   const info = getYouTubeEmbedInfo(targetUrl);
-  console.warn('🎬🎬🎬 YouTubeEmbed info extraite:', info);
+  logger.debug('🎬 YouTubeEmbed info extraite:', info);
   
   if (!info) {
-    console.warn('🎬🎬🎬 YouTubeEmbed: Aucune info valide, affichage fallback');
+    logger.debug('🎬 YouTubeEmbed: Aucune info valide, affichage fallback');
     return (
       <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
         <p className="text-white text-sm">Vidéo non disponible</p>
@@ -84,8 +85,8 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
       ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1`
       : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
   
-  console.warn('🎬🎬🎬 YouTubeEmbed embedSrc généré:', embedSrc);
-  console.warn('🎬🎬🎬 YouTubeEmbed isShort (9:16):', isShort);
+  logger.debug('🎬 YouTubeEmbed embedSrc généré:', embedSrc);
+  logger.debug('🎬 YouTubeEmbed isShort (9:16):', isShort);
 
   // Format vertical 9:16 pour Shorts, horizontal 16:9 pour vidéos normales
   if (isShort) {
@@ -99,6 +100,7 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
           referrerPolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+          loading="lazy"
         />
       </div>
     );
@@ -114,13 +116,14 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
         referrerPolicy="strict-origin-when-cross-origin"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
+        loading="lazy"
       />
     </div>
   );
 }
 
 export default function Home() {
-  console.warn('🏠 Home component loaded');
+  logger.debug('🏠 Home component loaded');
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentSong, setCurrentSong] = useState(null);
@@ -136,7 +139,7 @@ export default function Home() {
   const [displayedSong, setDisplayedSong] = useState(null);
 
   useEffect(() => {
-    console.warn('🏠 Home useEffect triggered');
+    logger.debug('🏠 Home useEffect triggered');
     localStorageService.initialize();
     loadCurrentSong();
     loadRecentSongs();
@@ -147,14 +150,14 @@ export default function Home() {
     setError(null);
     
     try {
-      console.warn('🔄 Tentative de chargement depuis Supabase...');
+      logger.debug('🔄 Tentative de chargement depuis Supabase...');
       const song = await Song.getCurrent();
-      console.warn('📊 Chanson actuelle chargée:', song);
+      logger.debug('📊 Chanson actuelle chargée:', song);
       
       setCurrentSong(song);
       setDisplayedSong(song);
     } catch (err) {
-      console.error('❌ Erro ao carregar música atual:', err);
+      logger.error('❌ Erro ao carregar música atual:', err);
       setError('Erro ao carregar a música da semana. Tente novamente.');
     } finally {
       setIsLoading(false);
@@ -163,9 +166,9 @@ export default function Home() {
 
   const loadRecentSongs = async () => {
     try {
-      console.warn('🔄 Chargement des musiques récentes depuis Supabase...');
+      logger.debug('🔄 Chargement des musiques récentes depuis Supabase...');
       const allSongs = await Song.list('-release_date', null);
-      console.warn('📊 Toutes les musiques chargées:', allSongs);
+      logger.debug('📊 Toutes les musiques chargées:', allSongs);
       
       const currentMonth = new Date();
       const monthStart = startOfMonth(currentMonth);
@@ -176,10 +179,10 @@ export default function Home() {
         return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
       });
       
-      console.warn('📅 Musiques du mois en cours:', monthSongs);
+      logger.debug('📅 Musiques du mois en cours:', monthSongs);
       setRecentSongs(monthSongs);
     } catch (err) {
-      console.error('❌ Erro ao carregar músicas recentes:', err);
+      logger.error('❌ Erro ao carregar músicas recentes:', err);
     }
   };
 
@@ -193,7 +196,7 @@ export default function Home() {
       event.stopPropagation();
     }
     
-    console.warn('🎵 handleReplaceVideo appelé avec:', song.title);
+    logger.debug('🎵 handleReplaceVideo appelé avec:', song.title);
     setDisplayedSong(song);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -320,19 +323,29 @@ export default function Home() {
               src="images/Musica da segunda.jpg" 
               alt="Logo Música da Segunda"
               className="w-full h-full object-cover"
-              loading="eager"
+              loading="lazy"
             />
           </div>
           
           <div className="text-left">
-            <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
+            <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
               A Música da Segunda
-            </h2>
+            </h1>
             <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
               Descubra música nova toda segunda-feira
             </p>
           </div>
         </div>
+      </div>
+    
+      {/* ===== HEADER DESKTOP (H1 persistant pour SEO) ===== */}
+      <div className="hidden lg:block text-center mb-8">
+        <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
+          A Música da Segunda
+        </h1>
+        <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
+          Descubra música nova toda segunda-feira
+        </p>
       </div>
     
       {/* ===== LAYOUT DESKTOP: VIDÉO YOUTUBE + MÚSICAS DO MÊS ===== */}
