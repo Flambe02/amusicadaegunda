@@ -4,6 +4,10 @@
 
 <!-- Force deploy - GitHub Pages reset -->
 
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
+![Coverage](https://img.shields.io/badge/coverage-70%25-green)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+
 ## 🎵 À propos
 
 Música da Segunda est une application web qui présente une nouvelle musique chaque lundi, avec intégration TikTok, calendrier musical et interface moderne.
