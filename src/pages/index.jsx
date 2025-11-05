@@ -9,7 +9,6 @@ import AdventCalendar from "./AdventCalendar";
 // Admin component removed for private access
 
 import Sobre from "./Sobre";
-import FAQ from "./FAQ";
 import ContentForAI from "./ContentForAI";
 
 import Blog from "./Blog";
@@ -40,8 +39,6 @@ const PAGES = {
     Admin: ProtectedAdmin, // Admin protégé en production
     
     Sobre: Sobre,
-    
-    FAQ: FAQ,
     
     Blog: Blog,
     
@@ -104,7 +101,6 @@ function PagesContent() {
                 <Route path="/adventcalendar" element={<AdventCalendar />} />
                 {/* Admin route available in production */}
                 <Route path="/sobre" element={<Sobre />} />
-                <Route path="/faq" element={<FAQ />} />
                 <Route path="/api/content-for-ai.json" element={<ContentForAI />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/admin" element={<ProtectedAdmin />} />

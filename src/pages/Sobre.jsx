@@ -1,7 +1,76 @@
-import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle } from 'lucide-react';
+import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { useState } from 'react';
 
 export default function Sobre() {
+  const [openFAQIndex, setOpenFAQIndex] = useState(null);
+
+  const faqs = [
+    {
+      question: "O que é A Música da Segunda?",
+      answer: "A Música da Segunda é um projeto criativo brasileiro que produz paródias musicais inteligentes sobre a atualidade do Brasil. Toda segunda-feira, lanço uma nova música que transforma notícias e acontecimentos em canções divertidas, críticas e reflexivas. O projeto combina humor musical com análise social, oferecendo uma perspectiva única sobre os eventos do país através da música."
+    },
+    {
+      question: "Quando sai uma música nova?",
+      answer: "Uma nova música é publicada toda segunda-feira. Esta regularidade garante que os fãs sempre tenham conteúdo novo para começar a semana. A música é lançada simultaneamente em todas as plataformas: TikTok, YouTube, Spotify, Apple Music, YouTube Music e no site oficial."
+    },
+    {
+      question: "Como funciona o processo de criação?",
+      answer: "O processo começa com a seleção cuidadosa de notícias da semana anterior. Escolho temas relevantes que podem ser transformados em paródias musicais. Depois, crio as letras, que são escritas para serem inteligentes e equilibradas entre humor e crítica. A produção musical é feita com equipamentos profissionais, e cada música ganha um vídeo criativo para TikTok e YouTube."
+    },
+    {
+      question: "As músicas são sobre política?",
+      answer: "Não apenas sobre política. A Música da Segunda aborda diversos temas: política, economia, sociedade, cultura, esportes e até mesmo curiosidades. O importante é que cada tema seja relevante para os brasileiros e possa ser trabalhado de forma criativa e reflexiva. Busco diversidade nos temas para manter o projeto interessante e abrangente."
+    },
+    {
+      question: "Onde posso ouvir as músicas?",
+      answer: "Você pode ouvir as músicas em várias plataformas: TikTok para vídeos curtos, YouTube para vídeos completos, Spotify para streaming de áudio, Apple Music para podcasts e músicas, e no site oficial www.amusicadasegunda.com onde você pode ver todas as músicas, letras, calendário e mais informações sobre cada produção."
+    },
+    {
+      question: "As músicas são gratuitas?",
+      answer: "Sim! Todas as músicas são totalmente gratuitas e disponíveis em todas as plataformas. Você pode ouvir, compartilhar e comentar sem custo algum."
+    },
+    {
+      question: "Como posso compartilhar uma música?",
+      answer: "Cada página de música no site tem botões de compartilhamento para redes sociais como Facebook, Twitter, WhatsApp e mais. Você também pode copiar o link direto da música ou compartilhar diretamente do TikTok, YouTube ou outras plataformas. Compartilhar ajuda muito o projeto a crescer!"
+    },
+    {
+      question: "Posso usar as músicas em meus próprios vídeos?",
+      answer: "O uso das músicas depende do contexto. Para uso pessoal e não comercial, geralmente é permitido. Para uso comercial ou em projetos que gerem receita, é necessário entrar em contato através do email pimentaoenchansons@gmail.com para discutir permissões e possíveis licenças."
+    },
+    {
+      question: "Como são escolhidas as músicas que serão parodiadas?",
+      answer: "A escolha da música base (a canção original que será parodiada) é estratégica. Uso músicas conhecidas que, quando combinadas com novas letras sobre atualidades, criam um contraste interessante e memorável. Não me limito a um gênero: parodio MPB, pop, rock, samba, funk e outros estilos musicais brasileiros."
+    },
+    {
+      question: "O projeto tem algum viés político?",
+      answer: "A Música da Segunda busca criar humor e reflexão, não promover uma agenda política específica. As paródias podem criticar diferentes aspectos da política e sociedade, sempre com foco no humor e na análise crítica. Respeito a diversidade de opiniões e busco apresentar diferentes perspectivas através da música."
+    },
+    {
+      question: "Como posso apoiar o projeto?",
+      answer: "A melhor forma de apoiar é compartilhando as músicas, seguindo nas redes sociais (TikTok, Instagram, YouTube), e engajando com o conteúdo. Você também pode entrar em contato se quiser contribuir de outras formas ou fazer sugestões de temas para futuras músicas."
+    },
+    {
+      question: "Vocês fazem músicas personalizadas ou encomendas?",
+      answer: "Atualmente, o foco do projeto é nas músicas semanais sobre atualidades. No entanto, estou aberto a discussões sobre projetos especiais ou colaborações. Entre em contato através do email pimentaoenchansons@gmail.com para conversar sobre possibilidades."
+    },
+    {
+      question: "Onde posso ver todas as músicas já lançadas?",
+      answer: "No site oficial, você pode acessar o Calendário Musical que mostra todas as músicas organizadas por data. Há também a Playlist no Spotify e YouTube Music que reúne todas as músicas em ordem cronológica. Cada música tem sua própria página com letras completas, vídeos e links para todas as plataformas."
+    },
+    {
+      question: "As letras das músicas estão disponíveis?",
+      answer: "Sim! Todas as letras completas estão disponíveis no site. Basta clicar em qualquer música para ver a letra completa, além de informações sobre o tema abordado, contexto histórico e referências. As letras são apresentadas de forma clara e fácil de ler."
+    },
+    {
+      question: "Como posso sugerir um tema para uma música?",
+      answer: "Adoro sugestões! Você pode entrar em contato através do email pimentaoenchansons@gmail.com ou através das redes sociais. Enquanto não posso garantir que todas as sugestões serão usadas, considero todas as ideias e muitas vezes incorporo temas sugeridos pela comunidade."
+    }
+  ];
+
+  const toggleFAQ = (index) => {
+    setOpenFAQIndex(openFAQIndex === index ? null : index);
+  };
 
   return (
     <>
@@ -33,6 +102,21 @@ export default function Sobre() {
                 "name": "Brasil"
               }
             }
+          })}
+        </script>
+        {/* Schema.org FAQPage */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqs.map(faq => ({
+              "@type": "Question",
+              "name": faq.question,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": faq.answer
+              }
+            }))
           })}
         </script>
       </Helmet>
@@ -346,6 +430,64 @@ export default function Sobre() {
               </div>
             </div>
           </div>
+
+          {/* FAQ Section */}
+          <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                <HelpCircle className="w-6 h-6 text-white" />
+              </div>
+              Perguntas Frequentes
+            </h2>
+            
+            <div className="space-y-4">
+              {faqs.map((faq, index) => (
+                <article
+                  key={index}
+                  className="bg-white/80 rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl"
+                  itemScope
+                  itemType="https://schema.org/Question"
+                >
+                  <button
+                    onClick={() => toggleFAQ(index)}
+                    className="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                    aria-expanded={openFAQIndex === index}
+                    aria-controls={`faq-answer-${index}`}
+                  >
+                    <h3
+                      className="text-lg md:text-xl font-bold text-gray-900 pr-8"
+                      itemProp="name"
+                    >
+                      {faq.question}
+                    </h3>
+                    <ChevronDown
+                      className={`w-6 h-6 text-gray-500 flex-shrink-0 transition-transform duration-300 ${
+                        openFAQIndex === index ? 'transform rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+                  
+                  <div
+                    id={`faq-answer-${index}`}
+                    className={`overflow-hidden transition-all duration-300 ${
+                      openFAQIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div
+                      className="px-6 pb-5 text-gray-700 leading-relaxed"
+                      itemScope
+                      itemType="https://schema.org/Answer"
+                      itemProp="acceptedAnswer"
+                    >
+                      <p className="text-base md:text-lg" itemProp="text">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </article>
 
           {/* Social Media */}
           <div className="bg-white/20 rounded-3xl p-6 mb-6">

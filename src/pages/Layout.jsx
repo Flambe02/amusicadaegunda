@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Calendar, Gift, Info, FileText, ListMusic, HelpCircle } from 'lucide-react';
+import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
 
 export default function Layout({ children }) {
@@ -12,7 +12,6 @@ export default function Layout({ children }) {
     { name: 'Playlist', url: createPageUrl('Playlist'), icon: ListMusic },
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Ano 2025', url: createPageUrl('AdventCalendar'), icon: Gift },
-    { name: 'FAQ', url: createPageUrl('FAQ'), icon: HelpCircle },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
   ];
 
