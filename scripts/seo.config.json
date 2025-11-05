@@ -36,8 +36,8 @@
     ]
   },
   "search": {
-    "enabled": true,
-    "target": "/#/search",
+    "enabled": false,
+    "target": "/search",
     "param": "q"
   }
 }

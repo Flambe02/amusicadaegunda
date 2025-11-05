@@ -77,7 +77,7 @@ export default function Layout({ children }) {
       {/* Navegação Inferior - Mobile uniquement */}
       <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-2xl bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50" aria-label="Navigation mobile">
         <div className="flex gap-1 p-1">
-          {pages.filter(page => page.name !== 'Sobre').map((page) => (
+          {pages.map((page) => (
             <Link
               key={page.name}
               to={page.url}

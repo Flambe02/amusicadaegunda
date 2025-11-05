@@ -40,10 +40,12 @@ ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script
 <div id="app"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
 <script>
-// Redirection seulement pour les pages de chansons en production
+// Redirection seulement pour les navigateurs (pas pour les bots de recherche)
+// Les bots doivent voir le contenu HTML avec meta tags pour l'indexation
 if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-  if (window.location.pathname.startsWith('/chansons/')) {
-    // Rediriger vers la SPA avec hash routing
+  const isBot = /bot|crawler|spider|crawling|Googlebot|bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|ia_archiver/i.test(navigator.userAgent);
+  if (!isBot && window.location.pathname.startsWith('/chansons/')) {
+    // Rediriger vers la SPA avec hash routing (uniquement pour les navigateurs)
     const songSlug = window.location.pathname.split('/chansons/')[1].replace(/\/$/, '');
     window.location.replace('/#/chansons/' + songSlug);
   }
