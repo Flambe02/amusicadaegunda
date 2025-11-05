@@ -5,29 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- Favicon et Icônes -->
-    <link rel="icon" type="image/png" sizes="32x32" href="./icons/pwa/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="./icons/pwa/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple/apple-touch-icon-180x180.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="180x180" href="./icons/apple/apple-touch-icon-180x180.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="./icons/apple/apple-touch-icon-152x152.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="./icons/apple/apple-touch-icon-152x152.png" />
-    <link rel="apple-touch-icon" sizes="144x144" href="./icons/apple/apple-touch-icon-144x144.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="./icons/apple/apple-touch-icon-144x144.png" />
-    <link rel="apple-touch-icon" sizes="120x120" href="./icons/apple/apple-touch-icon-120x120.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="./icons/apple/apple-touch-icon-120x120.png" />
-    <link rel="apple-touch-icon" sizes="114x114" href="./icons/apple/apple-touch-icon-114x114.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="./icons/apple/apple-touch-icon-114x114.png" />
-    <link rel="apple-touch-icon" sizes="76x76" href="./icons/apple/apple-touch-icon-76x76.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="./icons/apple/apple-touch-icon-76x76.png" />
-    <link rel="apple-touch-icon" sizes="72x72" href="./icons/apple/apple-touch-icon-72x72.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="./icons/apple/apple-touch-icon-72x72.png" />
-    <link rel="apple-touch-icon" sizes="60x60" href="./icons/apple/apple-touch-icon-60x60.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="./icons/apple/apple-touch-icon-60x60.png" />
-    <link rel="apple-touch-icon" sizes="57x57" href="./icons/apple/apple-touch-icon-57x57.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="./icons/apple/apple-touch-icon-57x57.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="./icons/pwa/icon-192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="./icons/pwa/icon-512x512.png" />
-    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/pwa/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/pwa/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple/apple-touch-icon-180x180.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/icons/apple/apple-touch-icon-180x180.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="/icons/apple/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/icons/apple/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="/icons/apple/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/icons/apple/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/icons/apple/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/apple/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="/icons/apple/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/apple/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/icons/apple/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/apple/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="/icons/apple/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/apple/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="/icons/apple/apple-touch-icon-57x57.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/pwa/icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/pwa/icon-512x512.png" />
+    <link rel="manifest" href="/manifest.json" />
     
     <!-- SEO Principal -->
     <title>A Música da Segunda | Paródias Musicais das Notícias do Brasil</title>
@@ -83,12 +83,12 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy"
           content="
-            default-src 'self';
-            script-src 'self' 'unsafe-inline' https://www.tiktok.com;
+            default-src 'self' data: blob:;
+            script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.tiktok.com;
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
             img-src 'self' data: https:;
             font-src 'self' https://fonts.gstatic.com;
-            connect-src 'self'
+            connect-src 'self' ws: wss: http: https:
               https://efnzmpzkzeuktqkghwfa.functions.supabase.co
               https://efnzmpzkzeuktqkghwfa.supabase.co
               https://www.tiktok.com https://*.tiktokcdn.com
@@ -155,7 +155,7 @@
     </script>
     
     <!-- Sitemap -->
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="./sitemap.xml" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
@@ -174,18 +174,33 @@
       ]
     }
     </script>
-    <script type="module" crossorigin src="./assets/index-B7ONeS3z.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/vendor-S3TIWv48.js">
-    <link rel="modulepreload" crossorigin href="./assets/ui-DaS5WV7O.js">
-    <link rel="modulepreload" crossorigin href="./assets/utils-BrH8iV8Q.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-CN9jtPck.css">
+    <script type="module" crossorigin src="/assets/index-B_6WZ4Ze.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-S3TIWv48.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-Cj0cQA2E.js">
+    <link rel="modulepreload" crossorigin href="/assets/utils-BrH8iV8Q.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DFrvfwK2.css">
   </head>
   <body>
     <!-- Skip link pour accessibilité -->
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
     
     <div id="root"></div>
-    <script src="./pwa-install.js"></script>
-
+    
+    <!-- ✅ SEO: Script de redirection pour GitHub Pages (BrowserRouter) -->
+    <!-- Permet d'utiliser des URLs propres sans # -->
+    <script>
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    
+    <script src="/pwa-install.js"></script>
   </body>
 </html>

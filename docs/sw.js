@@ -10,6 +10,26 @@
  * - Versioning automatique des assets
  */
 
+// ⚠️ DEV MODE: Désactiver complètement le Service Worker sur localhost
+// Le script s'arrête ici sans faire de throw (qui causerait une erreur d'évaluation)
+if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1') {
+  console.log('🧹 DEV mode: Service Worker désactivé - pas de cache en développement');
+  // Ne rien faire - le SW s'enregistre mais ne fait rien
+  self.addEventListener('install', (event) => {
+    console.log('🧹 DEV: SW install - skipWaiting');
+    self.skipWaiting();
+  });
+  self.addEventListener('activate', (event) => {
+    console.log('🧹 DEV: SW activate - claim clients');
+    event.waitUntil(self.clients.claim());
+  });
+  self.addEventListener('fetch', (event) => {
+    // Laisser passer toutes les requêtes sans interception
+    return;
+  });
+} else {
+// ✅ PRODUCTION: Code normal du Service Worker
+
 const CACHE_NAME = 'musica-da-segunda-v2.1.0';
 const STATIC_CACHE = 'static-v2.1.0';
 const DYNAMIC_CACHE = 'dynamic-v2.1.0';
@@ -31,12 +51,12 @@ const STATIC_ASSETS = [
   '/images/LogoMusica.png'
 ];
 
-// Assets dynamiques (stale-while-revalidate)
+// ✅ PERFORMANCE: Assets dynamiques corrigés - chemins après build uniquement
+// Les fichiers /src/... n'existent plus après build (tout est dans /assets/)
 const DYNAMIC_ASSETS = [
-  '/src/main.jsx',
-  '/src/components/',
-  '/src/utils/',
-  '/src/hooks/'
+  // Après build Vite, les assets JS/CSS sont dans /assets/ avec des hashes
+  // Le SW va les intercepter automatiquement via les stratégies de fetch
+  // Pas besoin de les lister ici
 ];
 
 // API et TikTok (network-first) - EXCLURE SUPABASE
@@ -612,3 +632,5 @@ self.addEventListener('notificationclick', (event) => {
     await clients.openWindow(url);
   })());
 });
+
+} // Fin du bloc else (production)
