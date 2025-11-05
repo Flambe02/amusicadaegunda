@@ -10,9 +10,111 @@ import {
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Music, Calendar, User } from 'lucide-react';
-import TikTokEmbedOptimized from '../components/TikTokEmbedOptimized';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+// Composant d'intégration YouTube générique (identique à Home.jsx)
+// Props attendues: youtube_music_url, youtube_url, title
+function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
+  console.warn('🎬 [Song.jsx] YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
+  
+  // Prioriser youtube_music_url, sinon youtube_url
+  const targetUrl = youtube_music_url || youtube_url || '';
+  console.warn('🎬 [Song.jsx] targetUrl:', targetUrl);
+
+  // Analyse l'URL et retourne { id, type }
+  const getYouTubeEmbedInfo = (url) => {
+    if (!url || typeof url !== 'string') return null;
+
+    try {
+      const lower = url.toLowerCase();
+
+      // Cas playlist explicite (youtube normal ou music)
+      const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+      if (listMatch) {
+        return { id: listMatch[1], type: 'playlist' };
+      }
+
+      // Formats vidéo (inclut Shorts, watch, youtu.be)
+      const videoPatterns = [
+        /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/,
+        /^([A-Za-z0-9_-]{11})$/
+      ];
+      for (const re of videoPatterns) {
+        const m = url.match(re);
+        if (m) return { id: m[1], type: 'video' };
+      }
+
+      // music.youtube.com/watch?v=VIDEO_ID (sans list)
+      if (lower.includes('music.youtube.com')) {
+        const m = url.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+        if (m) return { id: m[1], type: 'video' };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const info = getYouTubeEmbedInfo(targetUrl);
+  console.warn('🎬 [Song.jsx] info extraite:', info);
+  
+  if (!info) {
+    console.warn('🎬 [Song.jsx] Aucune info valide, affichage fallback');
+    return (
+      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+        <p className="text-white text-sm">Vidéo non disponible</p>
+      </div>
+    );
+  }
+
+  // Détecter si c'est un Short (format vertical 9:16)
+  const isShort = targetUrl.includes('/shorts/');
+  
+  const base = 'https://www.youtube-nocookie.com/embed';
+  const embedSrc =
+    info.type === 'video'
+      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1`
+      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
+  
+  console.warn('🎬 [Song.jsx] embedSrc généré:', embedSrc);
+  console.warn('🎬 [Song.jsx] isShort (9:16):', isShort);
+
+  // Format vertical 9:16 pour Shorts, horizontal 16:9 pour vidéos normales
+  if (isShort) {
+    return (
+      <div className="w-full flex justify-center">
+        <div className="relative rounded-lg overflow-hidden shadow-lg" style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}>
+          <iframe
+            className="absolute top-0 left-0 w-full h-full"
+            src={embedSrc}
+            title={title || 'YouTube Short'}
+            frameBorder="0"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+      <iframe
+        className="w-full h-full"
+        src={embedSrc}
+        title={title || 'YouTube'}
+        frameBorder="0"
+        referrerPolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
 
 export default function SongPage() {
   const { slug } = useParams();
@@ -164,22 +266,30 @@ export default function SongPage() {
           )}
         </div>
 
-        {/* TikTok Video */}
-        {song.tiktok_video_id && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Music className="w-5 h-5" />
-              Vídeo TikTok
-            </h2>
-            <div className="w-full max-w-md mx-auto">
-              <TikTokEmbedOptimized 
-                postId={song.tiktok_video_id}
-                className="w-full"
-                song={song}
+        {/* Video Section - YouTube */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Music className="w-5 h-5" />
+            Vídeo
+          </h2>
+          <div className="w-full max-w-2xl mx-auto">
+            {(song.youtube_music_url || song.youtube_url) ? (
+              <YouTubeEmbed
+                youtube_music_url={song.youtube_music_url}
+                youtube_url={song.youtube_url}
+                title={song.title}
               />
-            </div>
+            ) : (
+              <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                <div className="text-center text-gray-500">
+                  <Music className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">Vidéo non disponible</p>
+                  <p className="text-sm">Cette musique n&apos;a pas encore de vidéo</p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Song Details */}
         <div className="bg-gray-50 rounded-lg p-6">

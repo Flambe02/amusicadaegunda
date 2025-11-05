@@ -72,6 +72,9 @@
     <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
     <link rel="preconnect" href="https://www.tiktok.com" />
     <link rel="preconnect" href="https://*.tiktokcdn.com" />
+    <link rel="preconnect" href="https://www.youtube.com" />
+    <link rel="preconnect" href="https://www.youtube-nocookie.com" />
+    <link rel="preconnect" href="https://i.ytimg.com" />
     <link rel="preconnect" href="https://open.spotify.com" />
     <link rel="preconnect" href="https://music.apple.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -80,24 +83,27 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy"
           content="
-            default-src 'self';
-            script-src 'self' 'unsafe-inline' https://www.tiktok.com;
+            default-src 'self' data: blob:;
+            script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.tiktok.com;
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
             img-src 'self' data: https:;
             font-src 'self' https://fonts.gstatic.com;
-            connect-src 'self'
+            connect-src 'self' ws: wss: http: https:
               https://efnzmpzkzeuktqkghwfa.functions.supabase.co
               https://efnzmpzkzeuktqkghwfa.supabase.co
               https://www.tiktok.com https://*.tiktokcdn.com
               https://open.spotify.com https://api.spotify.com
               https://music.apple.com https://*.apple.com;
-            frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com;
+            frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
             media-src https: data:;
           ">
     
     <!-- DNS prefetch -->
     <link rel="dns-prefetch" href="https://www.tiktok.com" />
     <link rel="dns-prefetch" href="https://*.tiktokcdn.com" />
+    <link rel="dns-prefetch" href="https://www.youtube.com" />
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
+    <link rel="dns-prefetch" href="https://i.ytimg.com" />
     
     <!-- Données structurées Schema.org -->
     <script type="application/ld+json">
@@ -174,6 +180,22 @@
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
     
     <div id="root"></div>
+    
+    <!-- ✅ SEO: Script de redirection pour GitHub Pages (BrowserRouter) -->
+    <!-- Permet d'utiliser des URLs propres sans # -->
+    <script>
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&')
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location))
+    </script>
+    
     <script src="/pwa-install.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>

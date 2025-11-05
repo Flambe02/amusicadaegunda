@@ -1818,186 +1818,52 @@ export default function AdminPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* ===== SECTION TIKTOK (EN PREMIER) ===== */}
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
-                    <h3 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-blue-600" />
-                      🎬 Informações TikTok (Obrigatório)
+                  {/* ===== SECTION YOUTUBE (EN PREMIER) ===== */}
+                  <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-6 border-2 border-red-200">
+                    <h3 className="text-lg font-bold text-red-900 mb-4 flex items-center gap-2">
+                      <Play className="w-5 h-5 text-red-600" />
+                      🎬 Link da Vídeo YouTube *
                     </h3>
                     
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Link da Vídeo TikTok * (Obrigatório)
+                          URL da Vídeo YouTube * (Obrigatório)
                         </label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={editingSong.tiktok_url}
-                            onChange={(e) => handleInputChange('tiktok_url', e.target.value)}
-                            placeholder="https://www.tiktok.com/@usuario/video/ID..."
-                            type="text"
-                            className={`flex-1 ${editingSong.tiktok_url && !editingSong.tiktok_url.includes('tiktok.com') && !editingSong.tiktok_url.match(/^\d{15,20}$/) ? 'border-orange-300 bg-orange-50' : ''}`}
-                          />
-                          <Button 
-                            type="button"
-                            onClick={() => extractTikTokInfo(editingSong.tiktok_url)}
-                            disabled={isExtracting || !editingSong.tiktok_url}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            {isExtracting ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Zap className="w-4 h-4" />
-                            )}
-                            {isExtracting ? 'Extraindo...' : 'Extrair'}
-                          </Button>
-                        </div>
-                        {/* Avertissement si le contenu ne ressemble pas à une URL TikTok */}
-                        {editingSong.tiktok_url && !editingSong.tiktok_url.includes('tiktok.com') && !editingSong.tiktok_url.match(/^\d{15,20}$/) && (
-                          <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-lg">
-                            <p className="text-xs text-orange-700">
-                              ⚠️ <strong>Atenção:</strong> O conteúdo não parece ser um link TikTok válido. 
-                              Cole apenas o link da vídeo, não o código HTML de incorporação.
-                            </p>
-                          </div>
-                        )}
+                        <Input
+                          value={editingSong.youtube_url}
+                          onChange={(e) => handleInputChange('youtube_url', e.target.value)}
+                          placeholder="https://www.youtube.com/watch?v=VIDEO_ID ou https://youtube.com/shorts/VIDEO_ID"
+                          type="url"
+                          required
+                        />
                         <div className="mt-2 space-y-1">
                           <p className="text-xs text-gray-500">
                             <strong>Formatos aceitos:</strong>
                           </p>
                           <ul className="text-xs text-gray-500 space-y-1 ml-2">
-                            <li>• https://www.tiktok.com/@usuario/video/ID</li>
-                            <li>• https://vm.tiktok.com/ID</li>
-                            <li>• ID direto (15-20 dígitos)</li>
+                            <li>• https://www.youtube.com/watch?v=VIDEO_ID</li>
+                            <li>• https://youtube.com/shorts/VIDEO_ID</li>
+                            <li>• https://youtu.be/VIDEO_ID</li>
+                            <li>• https://music.youtube.com/watch?v=VIDEO_ID</li>
                           </ul>
-                          <p className="text-xs text-blue-600 font-medium mt-2">
-                            💡 <strong>IMPORTANTE:</strong> Cole apenas o link da vídeo TikTok (ex: https://www.tiktok.com/@usuario/video/1234567890), 
-                            NÃO o código HTML de incorporação!
-                          </p>
-                          <p className="text-xs text-red-600 font-medium mt-1">
-                            🚫 <strong>NÃO COLE:</strong> Código HTML, scripts, ou código de incorporação
+                          <p className="text-xs text-red-600 font-medium mt-2">
+                            ✨ <strong>Dica:</strong> Para vídeos verticais (9:16), use YouTube Shorts!
                           </p>
                         </div>
                       </div>
 
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            ID da Vídeo TikTok {editingSong.tiktok_video_id && <span className="text-green-600">✅</span>}
-                          </label>
-                          <Input
-                            value={editingSong.tiktok_video_id}
-                            onChange={(e) => handleInputChange('tiktok_video_id', e.target.value)}
-                            placeholder="Clique em 'Extrair' para obter o ID"
-                            readOnly
-                            className={`${editingSong.tiktok_video_id ? 'bg-green-50 border-green-300' : 'bg-gray-50'}`}
-                          />
-                          {editingSong.tiktok_video_id && (
-                            <p className="text-xs text-green-600 mt-1">
-                              ✅ ID extraído com sucesso!
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <Button 
-                            type="button"
-                            variant="outline"
-                            onClick={() => window.open(editingSong.tiktok_url, '_blank')}
-                            disabled={!editingSong.tiktok_url}
-                            className="flex-1"
-                          >
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Abrir TikTok
-                          </Button>
-                          <Button 
-                            type="button"
-                            variant="outline"
-                            onClick={() => setShowVideoPlayer(true)}
-                            disabled={!editingSong.tiktok_video_id}
-                            className="bg-red-500 hover:bg-red-600 text-white border-red-500"
-                          >
-                            <Play className="w-4 h-4 mr-2" />
-                            Play
-                          </Button>
-                        </div>
-                      </div>
-
-                      {/* ===== MÉTADONNÉES EXTRACTES ===== */}
-                      {editingSong.tiktok_video_id && (
-                        <div className="pt-4 border-t border-blue-200">
-                          <h4 className="text-sm font-bold text-blue-800 mb-3 flex items-center gap-2">
-                            📊 Metadados Extraídos do TikTok
-                          </h4>
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="text-sm text-blue-800">
-                                <p className="font-medium mb-1">📝 Título:</p>
-                                <p className="text-xs">{editingSong.title || 'Extraindo...'}</p>
-                              </div>
-                            </div>
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="text-sm text-blue-800">
-                                <p className="font-medium mb-1">🏷️ Hashtags:</p>
-                                <p className="text-xs">{editingSong.hashtags?.join(', ') || 'Extraindo...'}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* ===== SECTION DATES ===== */}
-                      <div className="grid md:grid-cols-2 gap-4 pt-4 border-t border-blue-200">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            📅 Data de Publicação TikTok {editingSong.tiktok_publication_date && editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] && <span className="text-green-600">✅</span>}
-                          </label>
-                          <div className={`border rounded-lg p-3 ${editingSong.tiktok_publication_date && editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] ? 'bg-green-50 border-green-200' : 'bg-blue-50 border-blue-200'}`}>
-                            <div className="text-sm font-medium">
-                              {editingSong.tiktok_publication_date ? (
-                                <>
-                                  {editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] ? (
-                                    <>
-                                      <span className="text-green-600">✅ Data extraída com sucesso: </span>
-                                      <span className="text-green-800">{format(parseISO(editingSong.tiktok_publication_date), 'EEEE, d \'de\' MMMM \'de\' yyyy', { locale: ptBR })}</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <span className="text-blue-600">📱 Data padrão (hoje): </span>
-                                      <span className="text-blue-800">{format(parseISO(editingSong.tiktok_publication_date), 'EEEE, d \'de\' MMMM \'de\' yyyy', { locale: ptBR })}</span>
-                                    </>
-                                  )}
-                                </>
-                              ) : (
-                                <span className="text-blue-600">📱 Data será extraída automaticamente</span>
-                              )}
-                            </div>
-                            {editingSong.tiktok_publication_date && editingSong.tiktok_publication_date !== new Date().toISOString().split('T')[0] && (
-                              <p className="text-xs text-green-600 mt-2">
-                                🎯 Data real de publicação TikTok detectada!
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            🎯 Próxima Data Sugerida
-                          </label>
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                            <div className="text-sm text-green-800 font-medium">
-                              <span className="text-green-600">📅 Próximo lundi: </span>
-                              {getNextMonday() ? format(parseISO(getNextMonday()), 'EEEE, d \'de\' MMMM \'de\' yyyy', { locale: ptBR }) : 'Calculando...'}
-                            </div>
-                            <Button 
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleInputChange('release_date', getNextMonday())}
-                              className="mt-2 w-full text-green-700 border-green-300 hover:bg-green-100"
-                            >
-                              🎯 Usar Esta Data
-                            </Button>
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Button 
+                          type="button"
+                          variant="outline"
+                          onClick={() => window.open(editingSong.youtube_url, '_blank')}
+                          disabled={!editingSong.youtube_url}
+                          className="flex-1"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Abrir YouTube
+                        </Button>
                       </div>
                     </div>
                   </div>

@@ -360,9 +360,9 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Song Dialog */}
+      {/* Song Dialog - Optimisé pour YouTube Shorts (format vertical 9:16) */}
       <Dialog open={!!selectedSong} onOpenChange={(open) => !open && setSelectedSong(null)}>
-        <DialogContent className="max-w-md p-0 border-0 bg-transparent max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[min(95vw,420px)] p-0 gap-0 border-0 bg-transparent max-h-[95vh] overflow-y-auto [&>button]:hidden">
           <DialogTitle asChild>
             <VisuallyHidden>
               {selectedSong ? `${selectedSong.title} - ${selectedSong.artist}` : 'Détails de la musique'}

@@ -90,6 +90,24 @@ export const supabaseSongService = {
 
       const result = data[0];
       console.warn('🎯 Chanson sélectionnée:', result);
+      
+      // Logs détaillés pour debug - FORCE
+      console.warn('🔍 FORCE DEBUG getCurrent:');
+      console.warn('  - youtube_url:', result?.youtube_url);
+      console.warn('  - youtube_music_url:', result?.youtube_music_url);
+      console.warn('  - typeof youtube_music_url:', typeof result?.youtube_music_url);
+      console.warn('  - has_youtube_url:', !!result?.youtube_url);
+      console.warn('  - has_youtube_music_url:', !!result?.youtube_music_url);
+      console.warn('  - toutes les clés:', result ? Object.keys(result) : []);
+      console.warn('  - youtube_music_url in keys?', result ? ('youtube_music_url' in result) : false);
+      
+      // Vérifier si youtube_music_url existe dans l'objet
+      if (result && 'youtube_music_url' in result) {
+        console.warn('✅ youtube_music_url existe dans l\'objet:', result.youtube_music_url);
+      } else {
+        console.warn('❌ youtube_music_url N\'EXISTE PAS dans l\'objet retourné par Supabase');
+      }
+      
       return result;
     } catch (error) {
       console.error('❌ Erreur dans getCurrent:', error);

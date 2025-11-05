@@ -6,7 +6,93 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
+
+// Composant d'intégration YouTube générique (identique à Home.jsx)
+function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
+  console.warn('🎬 [AdventCalendar] YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
+  
+  const targetUrl = youtube_music_url || youtube_url || '';
+  console.warn('🎬 [AdventCalendar] targetUrl:', targetUrl);
+
+  const getYouTubeEmbedInfo = (url) => {
+    if (!url || typeof url !== 'string') return null;
+
+    try {
+      const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+      if (listMatch) {
+        return { id: listMatch[1], type: 'playlist' };
+      }
+
+      const videoPatterns = [
+        /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/,
+        /^([A-Za-z0-9_-]{11})$/
+      ];
+      for (const re of videoPatterns) {
+        const m = url.match(re);
+        if (m) return { id: m[1], type: 'video' };
+      }
+
+      if (url.toLowerCase().includes('music.youtube.com')) {
+        const m = url.match(/[?&]v=([A-Za-z0-9_-]{11})/);
+        if (m) return { id: m[1], type: 'video' };
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  const info = getYouTubeEmbedInfo(targetUrl);
+  
+  if (!info) {
+    return (
+      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+        <p className="text-white text-sm">Vidéo non disponible</p>
+      </div>
+    );
+  }
+
+  const isShort = targetUrl.includes('/shorts/');
+  const base = 'https://www.youtube-nocookie.com/embed';
+  const embedSrc =
+    info.type === 'video'
+      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1`
+      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
+
+  if (isShort) {
+    return (
+      <div className="w-full flex justify-center">
+        <div className="relative rounded-lg overflow-hidden shadow-lg" style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}>
+          <iframe
+            className="absolute top-0 left-0 w-full h-full"
+            src={embedSrc}
+            title={title || 'YouTube Short'}
+            frameBorder="0"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+      <iframe
+        className="w-full h-full"
+        src={embedSrc}
+        title={title || 'YouTube'}
+        frameBorder="0"
+        referrerPolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
 
 // Chanson spéciale "Calendario do Advento"
 const ADVENT_CALENDAR_SONG = {
@@ -303,39 +389,35 @@ export default function AdventCalendar() {
                 )}
               </div>
 
-              {/* Vídeo TikTok - Copié exactement de Home.jsx */}
-              {selectedSong?.tiktok_video_id && (
-                <div className="mb-4">
-                  <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
-                    <TikTokEmbedOptimized
-                      postId={selectedSong.tiktok_video_id}
-                      className="w-full"
-                      song={selectedSong}
-                    />
-                  </div>
-                  <div className="text-center mt-2">
-                    <p className="text-xs text-gray-600 font-medium">🎬 Vídeo TikTok - {selectedSong.title}</p>
-                  </div>
-                  
-                  {/* Bouton pour ouvrir en plein écran - Copié de Home.jsx */}
-                  <div className="mt-3 text-center">
-                    <Button 
-                      onClick={() => {
-                        handlePlayVideo(selectedSong);
-                        // Marquer cette vidéo comme visualisée
-                        handleVideoViewed(selectedSong);
-                      }}
-                      className="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105"
-                    >
-                      🎬 Ver no TikTok
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Fallback si pas de vidéo TikTok */}
-              {!selectedSong?.tiktok_video_id && (
-                <div className="mb-4">
+              {/* Vídeo YouTube */}
+              <div className="mb-4">
+                {(selectedSong?.youtube_music_url || selectedSong?.youtube_url) ? (
+                  <>
+                    <div className="bg-black rounded-2xl overflow-hidden shadow-xl">
+                      <YouTubeEmbed
+                        youtube_music_url={selectedSong.youtube_music_url}
+                        youtube_url={selectedSong.youtube_url}
+                        title={selectedSong.title}
+                      />
+                    </div>
+                    <div className="text-center mt-2">
+                      <p className="text-xs text-gray-600 font-medium">🎬 Vídeo YouTube - {selectedSong.title}</p>
+                    </div>
+                    
+                    {/* Bouton pour ouvrir YouTube */}
+                    <div className="mt-3 text-center">
+                      <Button 
+                        onClick={() => {
+                          const url = selectedSong.youtube_music_url || selectedSong.youtube_url;
+                          if (url) window.open(url, '_blank');
+                        }}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105"
+                      >
+                        📺 Ver no YouTube
+                      </Button>
+                    </div>
+                  </>
+                ) : (
                   <div className="bg-gray-100 rounded-2xl p-8 text-center">
                     <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-2xl flex items-center justify-center">
                       <div className="text-center text-gray-500">
@@ -345,8 +427,8 @@ export default function AdventCalendar() {
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Botões de ação - Copiés de Home.jsx */}
               <div className="space-y-3">
@@ -419,24 +501,25 @@ export default function AdventCalendar() {
                   </p>
                 </div>
 
-                {/* Lecteur TikTok intégré */}
-                {selectedVideo.tiktok_video_id && (
-                  <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
-                    <TikTokEmbedOptimized
-                      postId={selectedVideo.tiktok_video_id}
-                      className="w-full"
-                      song={selectedVideo}
-                    />
-                  </div>
-                )}
+                {/* Lecteur YouTube intégré */}
+                <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
+                  <YouTubeEmbed
+                    youtube_music_url={selectedVideo.youtube_music_url}
+                    youtube_url={selectedVideo.youtube_url}
+                    title={selectedVideo.title}
+                  />
+                </div>
 
                 {/* Boutons d'action */}
                 <div className="flex gap-4 justify-center">
                   <button
-                    onClick={() => window.open(selectedVideo.tiktok_url, '_blank')}
-                    className="bg-black text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2"
+                    onClick={() => {
+                      const url = selectedVideo.youtube_music_url || selectedVideo.youtube_url;
+                      if (url) window.open(url, '_blank');
+                    }}
+                    className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
                   >
-                    🎬 Ver no TikTok
+                    📺 Ver no YouTube
                   </button>
                   <button
                     onClick={() => setShowVideoModal(false)}

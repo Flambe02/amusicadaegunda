@@ -72,6 +72,9 @@
     <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
     <link rel="preconnect" href="https://www.tiktok.com" />
     <link rel="preconnect" href="https://*.tiktokcdn.com" />
+    <link rel="preconnect" href="https://www.youtube.com" />
+    <link rel="preconnect" href="https://www.youtube-nocookie.com" />
+    <link rel="preconnect" href="https://i.ytimg.com" />
     <link rel="preconnect" href="https://open.spotify.com" />
     <link rel="preconnect" href="https://music.apple.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -91,13 +94,16 @@
               https://www.tiktok.com https://*.tiktokcdn.com
               https://open.spotify.com https://api.spotify.com
               https://music.apple.com https://*.apple.com;
-            frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com;
+            frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
             media-src https: data:;
           ">
     
     <!-- DNS prefetch -->
     <link rel="dns-prefetch" href="https://www.tiktok.com" />
     <link rel="dns-prefetch" href="https://*.tiktokcdn.com" />
+    <link rel="dns-prefetch" href="https://www.youtube.com" />
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
+    <link rel="dns-prefetch" href="https://i.ytimg.com" />
     
     <!-- Données structurées Schema.org -->
     <script type="application/ld+json">
@@ -179,6 +185,7 @@
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
     
     <div id="root"></div>
-    <script src="./pwa-install.js"></script>
+    <script src="./pwa-install.js"></script>
+
   </body>
 </html>

@@ -15,7 +15,6 @@ import { localStorageService } from '@/lib/localStorage';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
-import { useToast } from '@/components/ui/use-toast';
 
 // Composant d'intégration YouTube générique (remplace l'embed TikTok)
 // Props attendues: youtube_music_url, youtube_url, title
@@ -89,16 +88,18 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   // Format vertical 9:16 pour Shorts, horizontal 16:9 pour vidéos normales
   if (isShort) {
     return (
-      <div className="relative rounded-lg overflow-hidden shadow-2xl" style={{ width: '100%', aspectRatio: '9/16', minHeight: 'min(500px, 70vh)', maxHeight: '70vh' }}>
-        <iframe
-          className="absolute top-0 left-0 w-full h-full"
-          src={embedSrc}
-          title={title || 'YouTube Short'}
-          frameBorder="0"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+      <div className="w-full flex justify-center">
+        <div className="relative rounded-lg overflow-hidden shadow-lg" style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}>
+          <iframe
+            className="absolute top-0 left-0 w-full h-full"
+            src={embedSrc}
+            title={title || 'YouTube Short'}
+            frameBorder="0"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
       </div>
     );
   }
@@ -118,10 +119,9 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   );
 }
 
-export default function Home() {
-  console.warn('🏠 Home component loaded');
+export default function Youtube() {
+  console.warn('🎬 Youtube component loaded');
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [currentSong, setCurrentSong] = useState(null);
   const [recentSongs, setRecentSongs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +135,7 @@ export default function Home() {
   const [displayedSong, setDisplayedSong] = useState(null);
 
   useEffect(() => {
-    console.warn('🏠 Home useEffect triggered');
+    console.warn('🎬 Youtube useEffect triggered');
     localStorageService.initialize();
     loadCurrentSong();
     loadRecentSongs();
@@ -150,8 +150,32 @@ export default function Home() {
       const song = await Song.getCurrent();
       console.warn('📊 Chanson actuelle chargée:', song);
       
+      if (song) {
+        console.warn('✅ Chanson trouvée - id:', song.id);
+        console.warn('✅ Chanson trouvée - title:', song.title);
+        console.warn('✅ Chanson trouvée - youtube_url:', song.youtube_url);
+        console.warn('✅ Chanson trouvée - youtube_music_url:', song.youtube_music_url);
+        console.warn('✅ Chanson trouvée - has_youtube_music_url:', !!song.youtube_music_url);
+        console.warn('✅ Chanson trouvée - typeof youtube_music_url:', typeof song.youtube_music_url);
+        console.warn('✅ Chanson trouvée - toutes les clés:', Object.keys(song));
+        console.warn('✅ Chanson trouvée - youtube_music_url in keys?', 'youtube_music_url' in song);
+      } else {
+        console.warn('❌ Aucune chanson trouvée par getCurrent()');
+      }
+      
       setCurrentSong(song);
+      
+      // FORCE DEBUG avant setDisplayedSong
+      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song:', song);
+      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song.youtube_music_url:', song?.youtube_music_url);
+      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song.youtube_url:', song?.youtube_url);
+      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - keys:', song ? Object.keys(song) : []);
+      
       setDisplayedSong(song);
+      
+      // FORCE DEBUG après setDisplayedSong
+      console.warn('🔍🔍🔍 FORCE DEBUG APRES setDisplayedSong - song:', song);
+      console.warn('🔍🔍🔍 FORCE DEBUG APRES setDisplayedSong - song.youtube_music_url:', song?.youtube_music_url);
     } catch (err) {
       console.error('❌ Erro ao carregar música atual:', err);
       setError('Erro ao carregar a música da semana. Tente novamente.');
@@ -222,14 +246,9 @@ export default function Home() {
         });
       } catch {}
     } else {
-      // ✅ UX: Toast au lieu d'alert() bloquante
       const shareText = `${song.title} - ${song.artist}\nConfira esta música incrível da Música da Segunda!`;
       navigator.clipboard.writeText(shareText);
-      toast({
-        title: "✅ Copiado!",
-        description: "Link copiado para a área de transferência",
-        duration: 3000,
-      });
+      alert('Link copiado para a área de transferência!');
     }
   };
 
@@ -242,6 +261,75 @@ export default function Home() {
   const handleNavigateToPreviousMonth = () => {
     const previousMonth = getPreviousMonth();
     navigate(`/calendar?month=${previousMonth}`);
+  };
+
+  // Fonction pour extraire l'ID YouTube depuis une URL (vidéo, Shorts ou playlist)
+  const extractYouTubeId = (url) => {
+    if (!url) {
+      console.warn('🔍 extractYouTubeId: URL vide ou null');
+      return null;
+    }
+    
+    console.warn('🔍 extractYouTubeId: Analyse de l\'URL:', url);
+    
+    // Si c'est une URL YouTube Music (playlist), on ne peut pas extraire un ID de vidéo
+    if (url.includes('music.youtube.com')) {
+      console.warn('⚠️ extractYouTubeId: URL YouTube Music détectée (playlist), pas de vidéo individuelle');
+      return null;
+    }
+    
+    // Supporte différents formats d'URL YouTube:
+    // - https://www.youtube.com/watch?v=VIDEO_ID
+    // - https://youtu.be/VIDEO_ID
+    // - https://www.youtube.com/embed/VIDEO_ID
+    // - https://youtube.com/watch?v=VIDEO_ID
+    // - https://m.youtube.com/watch?v=VIDEO_ID
+    // - https://www.youtube.com/shorts/VIDEO_ID (YouTube Shorts)
+    // - https://youtube.com/shorts/VIDEO_ID (YouTube Shorts)
+    // - youtube.com/watch?v=VIDEO_ID (sans https)
+    
+    // Pattern amélioré pour capturer l'ID YouTube (11 caractères)
+    // Inclut maintenant les YouTube Shorts
+    const patterns = [
+      // YouTube Shorts (priorité car format spécifique)
+      /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+      // Formats vidéo classiques
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/,
+      // Si c'est juste l'ID directement
+      /^([A-Za-z0-9_-]{11})$/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        const videoId = match[1];
+        console.warn('✅ extractYouTubeId: ID trouvé:', videoId, 'depuis URL:', url);
+        return videoId;
+      }
+    }
+    
+    console.warn('❌ extractYouTubeId: Aucun ID YouTube trouvé dans:', url);
+    return null;
+  };
+
+  // Fonction pour détecter si c'est une playlist YouTube
+  const isYouTubePlaylist = (url) => {
+    if (!url) return false;
+    // Détecte les playlists YouTube (normales ou Music)
+    return url.includes('playlist?list=') || url.includes('music.youtube.com');
+  };
+
+  // Fonction pour extraire l'ID de playlist YouTube
+  const extractPlaylistId = (url) => {
+    if (!url) return null;
+    
+    // Extraire l'ID de playlist depuis l'URL
+    const playlistMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+    if (playlistMatch) {
+      return playlistMatch[1];
+    }
+    
+    return null;
   };
 
   useSEO({
@@ -612,6 +700,81 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ===== MODAL VIDÉO YOUTUBE ===== */}
+      {showVideoModal && selectedVideo && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-blue-900">
+                  🎬 {selectedVideo.title}
+                </h2>
+                <button 
+                  onClick={() => setShowVideoModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Informations de la musique */}
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                  <h3 className="text-xl font-bold text-blue-900 mb-2">
+                    {selectedVideo.title}
+                  </h3>
+                  <p className="text-blue-700 font-medium">
+                    {selectedVideo.artist}
+                  </p>
+                  <p className="text-blue-600 text-sm">
+                    📅 Lançamento: {format(parseISO(selectedVideo.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                  </p>
+                </div>
+
+                {/* Lecteur YouTube intégré */}
+                {(() => {
+                  const youtubeUrl = selectedVideo.youtube_music_url || selectedVideo.youtube_url;
+                  const ytId = extractYouTubeId(youtubeUrl);
+                  if (ytId) {
+                    return (
+                      <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
+                        <YouTubePlayer videoId={ytId} className="w-full" title={selectedVideo.title} />
+                      </div>
+                    );
+                  }
+                  if (isYouTubePlaylist(youtubeUrl)) {
+                    return (
+                      <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
+                        <YouTubePlaylist playlistUrl={youtubeUrl} className="w-full" title={selectedVideo.title} />
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Boutons d'action */}
+                <div className="flex gap-4 justify-center">
+                  {(selectedVideo.youtube_music_url || selectedVideo.youtube_url) && (
+                    <button
+                      onClick={() => window.open(selectedVideo.youtube_music_url || selectedVideo.youtube_url, '_blank')}
+                      className="bg-[#FF0000] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#cc0000] transition-colors flex items-center gap-2"
+                    >
+                      📺 Ver no YouTube
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowVideoModal(false)}
+                    className="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
+                  >
+                    Fechar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== DIALOG PLATAFORMAS ===== */}
       <Dialog open={showPlatformsDialog} onOpenChange={setShowPlatformsDialog}>
         <DialogContent className="bg-[#f8f5f2] max-w-md">
@@ -747,3 +910,4 @@ export default function Home() {
     </div>
   );
 }
+

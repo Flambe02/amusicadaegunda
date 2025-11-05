@@ -39,20 +39,29 @@ export default function ProtectedAdmin() {
 
   const checkAuth = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.warn('🔐 Starting auth check...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ Session error:', sessionError);
+        throw sessionError;
+      }
       
       if (session) {
+        console.warn('✅ Session found, checking admin status...');
         setIsAuthenticated(true);
         await checkAdminStatus(session.user.id);
       } else {
+        console.warn('⚠️ No session found');
         setIsAuthenticated(false);
         setIsAdmin(false);
       }
     } catch (error) {
-      console.error('Erreur vérification auth:', error);
+      console.error('❌ Erreur vérification auth:', error);
       setIsAuthenticated(false);
       setIsAdmin(false);
     } finally {
+      console.warn('🏁 Auth check complete, setting loading to false');
       setIsLoading(false);
     }
   };
@@ -60,25 +69,34 @@ export default function ProtectedAdmin() {
   const checkAdminStatus = async (userId) => {
     try {
       console.warn('🔍 Checking admin status for user:', userId);
-      const { data, error } = await supabase
+      
+      // ✅ Ajouter un timeout de 5 secondes pour éviter le blocage infini
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('TIMEOUT: Admin check took too long (>5s)')), 5000)
+      );
+      
+      const queryPromise = supabase
         .from('admins')
         .select('user_id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
-      console.warn('📊 Admin check result:', { data, error });
+      const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+      
+      console.warn('📊 Admin check result:', { data, error, hasData: !!data });
       
       if (error) {
-        console.error('❌ Erreur vérification admin:', error);
+        console.error('❌ Erreur vérification admin:', error.message, error.code, error);
         setIsAdmin(false);
         return;
       }
       
       const isAdminUser = !!data;
-      console.warn('✅ User is admin:', isAdminUser);
+      console.warn(isAdminUser ? '✅ User IS admin' : '⚠️ User is NOT admin');
       setIsAdmin(isAdminUser);
     } catch (error) {
-      console.error('❌ Erreur vérification admin:', error);
+      console.error('❌ Exception vérification admin:', error.message || error);
+      // Si timeout ou erreur RLS, considérer comme non-admin
       setIsAdmin(false);
     }
   };

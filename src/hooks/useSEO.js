@@ -104,17 +104,22 @@ export function useSEO({
       }
     };
 
-    // Supprimer l'ancien script de données structurées
-    const oldScript = document.querySelector('script[type="application/ld+json"]');
-    if (oldScript) {
-      oldScript.remove();
-    }
-
-      // Ajouter le nouveau script de données structurées
-      const script = document.createElement('script');
+    // ✅ SEO: Gérer intelligemment le JSON-LD avec un ID unique
+    // Ne pas supprimer les scripts statiques (WebSite, Organization)
+    // Remplacer uniquement le script dynamique de la page courante
+    const dynamicScriptId = 'dynamic-page-jsonld';
+    let script = document.getElementById(dynamicScriptId);
+    
+    if (!script) {
+      // Créer le script s'il n'existe pas
+      script = document.createElement('script');
       script.type = 'application/ld+json';
-      script.textContent = JSON.stringify(structuredData);
+      script.id = dynamicScriptId;
       document.head.appendChild(script);
+    }
+    
+    // Mettre à jour le contenu
+    script.textContent = JSON.stringify(structuredData);
       
     } catch (error) {
       console.error('Erro ao atualizar SEO:', error);

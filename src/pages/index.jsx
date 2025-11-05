@@ -17,9 +17,12 @@ import Login from "./Login";
 
 import Playlist from "./Playlist";
 import Song from "./Song";
+import Youtube from "./Youtube";
+import YoutubeTest from "./YoutubeTest";
+import YoutubeSimple from "./YoutubeSimple";
 
 import { lazy } from 'react';
-import { HashRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 // Lazy loading de la route TikTok pour optimiser le bundle
 const TikTokDemo = lazy(() => import('./TikTokDemo'));
@@ -41,6 +44,8 @@ const PAGES = {
     Playlist: Playlist,
     
     Song: Song,
+    
+    Youtube: Youtube,
     
     TikTokDemo: TikTokDemo,
     
@@ -85,6 +90,7 @@ function PagesContent() {
     const location = useLocation();
     const currentPage = _getCurrentPage(location.pathname);
     
+    
     return (
         <Layout currentPageName={currentPage}>
             <Routes>            
@@ -101,6 +107,10 @@ function PagesContent() {
                 <Route path="/chansons" element={<Playlist />} />
                 {/* Route pour accéder à une chanson individuelle */}
                 <Route path="/chansons/:slug" element={<Song />} />
+                {/* YouTube routes - test versions first */}
+                <Route path="/youtube-test" element={<YoutubeTest />} />
+                <Route path="/youtube-simple" element={<YoutubeSimple />} />
+                <Route path="/youtube" element={<Youtube />} />
                 <Route path="/tiktokdemo" element={<TikTokDemo />} />
                 
                 {/* Route TikTok avec paramètre dynamique */}

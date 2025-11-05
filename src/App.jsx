@@ -1,6 +1,7 @@
 import Pages from "@/pages/index.jsx"
 import { Toaster } from "@/components/ui/toaster"
-import { HelmetProvider } from 'react-helmet-async';
+// ✅ PERFORMANCE: HelmetProvider supprimé ici (déjà dans main.jsx)
+// Garder un seul HelmetProvider à la racine évite la duplication de contextes
 import OfflineIndicator from "@/components/OfflineIndicator"
 import { useEffect } from 'react';
 import migrationService from '@/lib/migration';
@@ -24,14 +25,14 @@ function App() {
   }, []);
 
   return (
-    <HelmetProvider>
+    <>
       <OfflineIndicator />
       <Pages />
       {/* MigrationStatus supprimé pour la production */}
       {/* Composants de diagnostic supprimés pour la production */}
       {/* <TikTokDemo /> */}
       <Toaster />
-    </HelmetProvider>
+    </>
   )
 }
 

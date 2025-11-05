@@ -40,24 +40,26 @@ export default function Layout({ children }) {
                 />
               </Link>
               <div>
-                <h1 className="text-xl font-black text-gray-800">A Musica da Segunda: As Notícias do Brasil em Forma de Paródia</h1>
-                <p className="text-sm text-gray-600">Site oficial de paródias musicais inteligentes e divertidas</p>
+                <h1 className="text-2xl font-black text-gray-800 leading-tight">A Música da Segunda</h1>
+                <p className="text-sm text-gray-700 font-medium mt-0.5">(As Notícias do Brasil em Forma de Paródia)</p>
+                <p className="text-xs text-gray-600 mt-0.5">Site oficial de paródias musicais inteligentes e divertidas</p>
               </div>
             </div>
 
             {/* Navigation Desktop */}
-            <nav className="flex items-center gap-1">
+            <nav className="flex items-center gap-1" aria-label="Navigation principale">
               {pages.map((page) => (
                 <Link
                   key={page.name}
                   to={page.url}
+                  aria-current={isActive(page) ? 'page' : undefined}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 font-medium ${
                     isActive(page)
                       ? 'bg-[#32a2dc] text-white shadow-md'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                   }`}
                 >
-                  <page.icon className="w-4 h-4" />
+                  <page.icon className="w-4 h-4" aria-hidden="true" />
                   <span>{page.name}</span>
                 </Link>
               ))}
@@ -73,19 +75,20 @@ export default function Layout({ children }) {
       </main>
 
       {/* Navegação Inferior - Mobile uniquement */}
-      <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-2xl bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50">
+      <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-2xl bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50" aria-label="Navigation mobile">
         <div className="flex gap-1 p-1">
           {pages.filter(page => page.name !== 'Sobre').map((page) => (
             <Link
               key={page.name}
               to={page.url}
+              aria-current={isActive(page) ? 'page' : undefined}
               className={`flex flex-col items-center justify-center py-3 px-2 rounded-3xl transition-all duration-300 flex-1 min-w-0 ${
                 isActive(page)
                   ? 'bg-[#32a2dc] text-white shadow-lg transform scale-105'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
               }`}
             >
-              <page.icon className="w-5 h-5 mb-1 flex-shrink-0" />
+              <page.icon className="w-5 h-5 mb-1 flex-shrink-0" aria-hidden="true" />
               <span className="text-xs font-bold text-center leading-tight truncate">{page.name}</span>
             </Link>
           ))}

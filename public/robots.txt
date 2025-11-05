@@ -4,8 +4,8 @@ Allow: /
 # Sitemap
 Sitemap: https://www.amusicadasegunda.com/sitemap.xml
 
-# Crawl-delay pour éviter de surcharger le serveur
-Crawl-delay: 1
+# ✅ SEO: Crawl-delay supprimé - ralentit inutilement Google et Bing
+# GitHub Pages peut gérer le trafic des crawlers sans problème
 
 # Permettre l'indexation des pages principales
 Allow: /calendar
