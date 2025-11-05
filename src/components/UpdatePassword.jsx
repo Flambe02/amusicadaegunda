@@ -89,7 +89,7 @@ export default function UpdatePassword({ onBackToLogin }) {
                 Mot de passe mis à jour !
               </h2>
               <p className="text-gray-600 mb-4">
-                Votre mot de passe a été mis à jour avec succès. Redirection vers l'Admin...
+                Votre mot de passe a été mis à jour avec succès. Redirection vers l&apos;Admin...
               </p>
               <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
             </div>

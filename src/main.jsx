@@ -5,13 +5,28 @@ import './index.css'
 import './styles/tiktok-optimized.css'
 import './styles/a11y.css'
 import { HelmetProvider } from 'react-helmet-async'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const helmetContext = {}
+
+// Handler pour logger les erreurs vers un service externe (future Sentry integration)
+const handleError = (error, errorInfo) => {
+  // TODO: Intégrer avec Sentry
+  console.log('🔴 Global error handler:', { error, errorInfo });
+  
+  // En production, envoyer vers le service de monitoring
+  if (import.meta.env.PROD) {
+    // Future: Sentry.captureException(error, { contexts: { react: errorInfo } });
+  }
+};
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <HelmetProvider context={helmetContext}>
-      <App />
-    </HelmetProvider>
+    <ErrorBoundary onError={handleError}>
+      <HelmetProvider context={helmetContext}>
+        <App />
+      </HelmetProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )
 
