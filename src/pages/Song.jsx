@@ -16,11 +16,10 @@ import { ptBR } from 'date-fns/locale';
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 // Props attendues: youtube_music_url, youtube_url, title
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
-  console.warn('🎬 [Song.jsx] YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
+  // Logs de debug supprimés pour production
   
   // Prioriser youtube_music_url, sinon youtube_url
   const targetUrl = youtube_music_url || youtube_url || '';
-  console.warn('🎬 [Song.jsx] targetUrl:', targetUrl);
 
   // Analyse l'URL et retourne { id, type }
   const getYouTubeEmbedInfo = (url) => {
@@ -59,10 +58,8 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   };
 
   const info = getYouTubeEmbedInfo(targetUrl);
-  console.warn('🎬 [Song.jsx] info extraite:', info);
   
   if (!info) {
-    console.warn('🎬 [Song.jsx] Aucune info valide, affichage fallback');
     return (
       <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
         <p className="text-white text-sm">Vidéo non disponible</p>
@@ -78,9 +75,6 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
     info.type === 'video'
       ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1`
       : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
-  
-  console.warn('🎬 [Song.jsx] embedSrc généré:', embedSrc);
-  console.warn('🎬 [Song.jsx] isShort (9:16):', isShort);
 
   // Format vertical 9:16 pour Shorts, horizontal 16:9 pour vidéos normales
   if (isShort) {
@@ -132,7 +126,10 @@ export default function SongPage() {
         const songData = await Song.getBySlug(slug);
         setSong(songData);
       } catch (err) {
-        console.error('Error loading song:', err);
+        // Logger seulement en dev pour éviter les logs excessifs en production
+        if (import.meta.env?.DEV) {
+          console.error('Error loading song:', err);
+        }
         setError('Song not found');
       } finally {
         setIsLoading(false);
@@ -142,10 +139,11 @@ export default function SongPage() {
   }, [slug]);
 
   // SEO optimization for the song page
+  // useSEO gère déjà le canonical sans hash, donc on ne le redéfinit pas dans Helmet
   useSEO({
     title: song ? `${song.title} — A Música da Segunda` : 'A Música da Segunda',
     description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.',
-    keywords: song ? `${song.title}, A Música da Segunda, música da segunda, nova música, paródias musicais` : `música da segunda, paródias musicais, notícias do brasil`,
+    keywords: song ? `${song.title}, música da segunda, paródias musicais` : `música da segunda, paródias musicais`,
     url: `/chansons/${slug}`,
     type: 'article'
   });
@@ -177,7 +175,7 @@ export default function SongPage() {
     }
   }, [song, slug]);
 
-  const canonical = `https://www.amusicadasegunda.com/#/chansons/${slug}`;
+  // Note: canonical géré par useSEO (sans hash), pas besoin de le définir ici
 
   if (isLoading) {
     return (
@@ -197,7 +195,7 @@ export default function SongPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <Helmet>
-          <link rel="canonical" href={canonical} />
+          {/* Canonical géré par useSEO, pas besoin de le redéfinir ici */}
           <meta name="robots" content="noindex,follow" />
         </Helmet>
         <div className="max-w-4xl mx-auto text-center">
@@ -226,8 +224,7 @@ export default function SongPage() {
     <div className="container mx-auto px-4 py-8">
       <Helmet>
         <html lang="pt-BR" />
-        <link rel="canonical" href={canonical} />
-        <meta property="og:url" content={canonical} />
+        {/* Canonical et og:url gérés par useSEO, pas besoin de les redéfinir ici */}
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
       <div className="max-w-4xl mx-auto">

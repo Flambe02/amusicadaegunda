@@ -1,125 +1,25 @@
 import Layout from "./Layout.jsx";
-
-import Home from "./Home";
-
-import Calendar from "./Calendar";
-
-import AdventCalendar from "./AdventCalendar";
-
-// Admin component removed for private access
-
-import Sobre from "./Sobre";
-import ContentForAI from "./ContentForAI";
-
-import Blog from "./Blog";
-
-import ProtectedAdmin from "@/components/ProtectedAdmin";
-import Login from "./Login";
-
-import Playlist from "./Playlist";
-import Song from "./Song";
-import Youtube from "./Youtube";
-import YoutubeTest from "./YoutubeTest";
-import YoutubeSimple from "./YoutubeSimple";
-
-import { lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { ROUTES, getCurrentPage } from '@/config/routes';
 
-// Lazy loading de la route TikTok pour optimiser le bundle
-const TikTokDemo = lazy(() => import('./TikTokDemo'));
-
-const PAGES = {
-    
-    Home: Home,
-    
-    Calendar: Calendar,
-    
-    AdventCalendar: AdventCalendar,
-    
-    Admin: ProtectedAdmin, // Admin protégé en production
-    
-    Sobre: Sobre,
-    
-    Blog: Blog,
-    
-    Playlist: Playlist,
-    
-    Song: Song,
-    
-    Youtube: Youtube,
-    
-    TikTokDemo: TikTokDemo,
-    
-}
-
-function _getCurrentPage(url) {
-    // Pour HashRouter, l'URL commence par #
-    if (url.startsWith('#')) {
-        url = url.slice(1);
-    }
-    
-    if (url.endsWith('/')) {
-        url = url.slice(0, -1);
-    }
-    
-    let urlLastPart = url.split('/').pop();
-    if (urlLastPart.includes('?')) {
-        urlLastPart = urlLastPart.split('?')[0];
-    }
-
-    // Si on est sur la racine ou une URL vide, retourner Home
-    if (!urlLastPart || urlLastPart === 'amusicadaegunda') {
-        return 'Home';
-    }
-
-    // Gérer les routes TikTok avec paramètres
-    if (urlLastPart.startsWith('tiktok')) {
-        return 'TikTokDemo';
-    }
-
-    // Gérer les routes chansons avec slug (ex: /chansons/nobel-prize)
-    if (url.startsWith('/chansons/') && urlLastPart !== 'chansons') {
-        return 'Song';
-    }
-
-    const pageName = Object.keys(PAGES).find(page => page.toLowerCase() === urlLastPart.toLowerCase());
-    return pageName || 'Home';
-}
+// Export PAGES pour backward compatibility avec Layout.jsx
+export { PAGES } from '@/config/routes';
 
 // Create a wrapper component that uses useLocation inside the Router context
 function PagesContent() {
     const location = useLocation();
-    const currentPage = _getCurrentPage(location.pathname);
-    
+    const currentPage = getCurrentPage(location.pathname);
     
     return (
         <Layout currentPageName={currentPage}>
-            <Routes>            
-                <Route path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/adventcalendar" element={<AdventCalendar />} />
-                {/* Admin route available in production */}
-                <Route path="/sobre" element={<Sobre />} />
-                <Route path="/api/content-for-ai.json" element={<ContentForAI />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/admin" element={<ProtectedAdmin />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/playlist" element={<Playlist />} />
-                <Route path="/chansons" element={<Playlist />} />
-                {/* Route pour accéder à une chanson individuelle */}
-                <Route path="/chansons/:slug" element={<Song />} />
-                {/* YouTube routes - test versions first */}
-                <Route path="/youtube-test" element={<YoutubeTest />} />
-                <Route path="/youtube-simple" element={<YoutubeSimple />} />
-                <Route path="/youtube" element={<Youtube />} />
-                <Route path="/tiktokdemo" element={<TikTokDemo />} />
-                
-                {/* Route TikTok avec paramètre dynamique */}
-                <Route path="/tiktok/:id" element={<TikTokDemo />} />
-                
-                {/* Route Calendar avec paramètres d'URL */}
-                <Route path="/calendar" element={<Calendar />} />
+            <Routes>
+                {ROUTES.map((route) => (
+                    <Route 
+                        key={route.path} 
+                        path={route.path} 
+                        element={<route.component />} 
+                    />
+                ))}
             </Routes>
         </Layout>
     );
