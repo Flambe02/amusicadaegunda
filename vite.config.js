@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 // https://vitejs.dev/config/
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   // ✅ SEO: Base path correct pour GitHub Pages et URLs propres
   base: command === 'build' ? '/' : '/',
   plugins: [react()],
@@ -52,5 +52,24 @@ export default defineConfig(({ command }) => ({
     open: true,
     // HMR désactivé pour éviter les erreurs websocket dans cet environnement
     hmr: false
+  },
+  // Configuration Vitest
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.js'],
+    css: true,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.config.js',
+        '**/*.config.cjs',
+        'dist/',
+        'build/',
+      ],
+    },
   },
 })) 
