@@ -33,6 +33,8 @@ import { Separator } from '@/components/ui/separator';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
+import { songSchema, safeParse } from '@/lib/validation';
+import { sanitizeInput, sanitizeURL } from '@/lib/security';
 
 export default function AdminPage() {
   // ===== ESTADOS =====
@@ -1308,13 +1310,35 @@ export default function AdminPage() {
     e.preventDefault();
     console.warn('🚀 handleSubmit appelé - début de la fonction');
     
-    // Validation des champs requis
-    if (!editingSong.title || editingSong.title.trim() === '') {
+    // Sanitize all text inputs
+    const sanitizedSong = {
+      ...editingSong,
+      title: sanitizeInput(editingSong.title?.trim() || ''),
+      artist: sanitizeInput(editingSong.artist?.trim() || 'A Música da Segunda'),
+      description: sanitizeInput(editingSong.description?.trim() || ''),
+      lyrics: sanitizeInput(editingSong.lyrics?.trim() || ''),
+      tiktok_url: editingSong.tiktok_url ? sanitizeURL(editingSong.tiktok_url.trim()) : '',
+      youtube_url: editingSong.youtube_url ? sanitizeURL(editingSong.youtube_url.trim()) : '',
+      youtube_music_url: editingSong.youtube_music_url ? sanitizeURL(editingSong.youtube_music_url.trim()) : '',
+      spotify_url: editingSong.spotify_url ? sanitizeURL(editingSong.spotify_url.trim()) : '',
+      apple_music_url: editingSong.apple_music_url ? sanitizeURL(editingSong.apple_music_url.trim()) : '',
+    };
+    
+    // Validate with Zod
+    const validation = safeParse(songSchema, sanitizedSong);
+    
+    if (!validation.success) {
+      displayMessage('error', `❌ Erro de validação: ${validation.error}`);
+      return;
+    }
+    
+    // Validation des champs requis (double check)
+    if (!sanitizedSong.title || sanitizedSong.title.trim() === '') {
       displayMessage('error', '❌ O título é obrigatório!');
       return;
     }
     
-    if (!editingSong.release_date) {
+    if (!sanitizedSong.release_date) {
       displayMessage('error', '❌ A data de lançamento é obrigatória!');
       return;
     }
@@ -1331,12 +1355,10 @@ export default function AdminPage() {
       console.warn('📝 Aucun TikTok fourni, chanson sauvegardée en mode brouillon');
     }
     
-    // S'assurer que les champs requis sont présents
+    // Use validated and sanitized data
     const songToSave = {
-      ...editingSong,
-      title: editingSong.title?.trim() || '',
-      artist: editingSong.artist?.trim() || 'A Música da Segunda',
-      status: editingSong.status || 'draft'
+      ...validation.data,
+      status: validation.data.status || 'draft'
     };
     
     // Helper pour normaliser les dates

@@ -97,7 +97,30 @@
     <link rel="dns-prefetch" href="https://v16m.tiktokcdn.com" />
     <link rel="dns-prefetch" href="https://v19.tiktokcdn.com" />
     
-    <!-- CSP is defined in the root index.html used by Vite -->
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy"
+          content="
+            default-src 'self' data: blob:;
+            script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://www.tiktok.com;
+            style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+            img-src 'self' data: https:;
+            font-src 'self' https://fonts.gstatic.com;
+            connect-src 'self' ws: wss: http: https:
+              https://efnzmpzkzeuktqkghwfa.functions.supabase.co
+              https://efnzmpzkzeuktqkghwfa.supabase.co
+              https://www.tiktok.com https://*.tiktokcdn.com
+              https://open.spotify.com https://api.spotify.com
+              https://music.apple.com https://*.apple.com;
+            frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
+            media-src https: data:;
+          ">
     
     <!-- Structured Data JSON-LD -->
     <script type="application/ld+json">

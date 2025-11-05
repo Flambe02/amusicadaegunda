@@ -8,6 +8,8 @@ import { Lock, Eye, EyeOff, Loader2, Shield, KeyRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ResetPassword from '@/components/ResetPassword';
 import { Helmet } from 'react-helmet-async';
+import { loginSchema, safeParse } from '@/lib/validation';
+import { sanitizeInput } from '@/lib/security';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -73,10 +75,26 @@ export default function LoginPage() {
     setIsLoading(true);
     setError('');
 
+    // Sanitize inputs
+    const sanitizedEmail = sanitizeInput(email.trim());
+    const sanitizedPassword = sanitizeInput(password);
+
+    // Validate with Zod
+    const validation = safeParse(loginSchema, {
+      email: sanitizedEmail,
+      password: sanitizedPassword,
+    });
+
+    if (!validation.success) {
+      setError(validation.error);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password
+        email: validation.data.email,
+        password: validation.data.password
       });
 
       if (error) {
