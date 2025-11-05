@@ -138,7 +138,7 @@ export default function LoginPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <Helmet>
           <meta name="robots" content="noindex,nofollow" />
-          <link rel="canonical" href="https://www.amusicadasegunda.com/#/login" />
+          {/* Canonical géré par useSEO si nécessaire */}
         </Helmet>
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />

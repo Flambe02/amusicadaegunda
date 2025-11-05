@@ -62,6 +62,42 @@ export const supabaseSongService = {
     }
   },
 
+  // Récupérer une chanson par slug (optimisé - requête directe)
+  async getBySlug(slug) {
+    try {
+      // Essayer d'abord avec la colonne slug si elle existe
+      let { data, error } = await supabase
+        .from(TABLES.SONGS)
+        .select('*')
+        .eq('slug', slug)
+        .maybeSingle()
+
+      // Si pas trouvé par slug, essayer par titre transformé
+      // (fallback pour compatibilité avec anciens slugs calculés)
+      if (!data && !error) {
+        // Récupérer toutes les chansons et filtrer côté client pour le fallback
+        // Note: Ce cas devrait être rare une fois que tous les slugs sont en BDD
+        const { data: allSongs, error: listError } = await supabase
+          .from(TABLES.SONGS)
+          .select('*')
+        
+        if (listError) throw listError
+        
+        // Chercher par slug calculé depuis le titre
+        data = allSongs?.find(s => {
+          const titleSlug = s.title?.toLowerCase().replace(/\s+/g, '-')
+          return s.slug === slug || titleSlug === slug
+        }) || null
+      }
+
+      if (error) throw error
+      return data || null
+    } catch (error) {
+      handleSupabaseError(error, `Récupération chanson slug ${slug}`)
+      return null
+    }
+  },
+
   // Récupérer la chanson actuelle (la plus récente publiée)
   async getCurrent() {
     try {

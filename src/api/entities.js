@@ -314,9 +314,8 @@ export const Song = {
   getBySlug: async (slug) => {
     try {
       if (useSupabase) {
-        // Essayer de récupérer par slug depuis Supabase
-        const songs = await supabaseSongService.list();
-        const song = songs.find(s => s.slug === slug || s.title?.toLowerCase().replace(/\s+/g, '-') === slug);
+        // ✅ OPTIMISÉ : Requête directe par slug au lieu de charger toute la table
+        const song = await supabaseSongService.getBySlug(slug);
         return song || null;
       } else {
         // Fallback localStorage

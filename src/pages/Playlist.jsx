@@ -1,6 +1,7 @@
 //
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
+import OptimizedImage from '@/components/OptimizedImage';
 
 export default function Playlist() {
   // SEO pour la playlist
@@ -17,7 +18,7 @@ export default function Playlist() {
       <Helmet>
         <html lang="pt-BR" />
         <meta name="robots" content="index,follow" />
-        <link rel="canonical" href="https://www.amusicadasegunda.com/#/playlist" />
+        {/* Canonical géré par useSEO sans hash */}
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "ItemList",
@@ -29,7 +30,7 @@ export default function Playlist() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
-              <img 
+              <OptimizedImage 
                 src="images/Musica da segunda.jpg" 
                 alt="Logo Música da Segunda"
                 className="w-full h-full object-cover"
@@ -56,12 +57,13 @@ export default function Playlist() {
               style={{borderRadius: '12px'}} 
               src="https://open.spotify.com/embed/playlist/5z7Jan9yS1KRzwWEPYs4sH?utm_source=generator" 
               width="100%" 
-              height="800"
+              height="600"
               frameBorder="0" 
               allowFullScreen="" 
               allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
               loading="lazy"
-              className="shadow-lg md:h-[800px] h-[600px]"
+              title="Playlist Spotify - Música da Segunda"
+              className="shadow-lg md:h-[600px] h-[500px]"
             ></iframe>
           </div>
         </div>

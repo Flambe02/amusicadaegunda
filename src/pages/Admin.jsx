@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
+import { logger } from '@/lib/logger';
 import { 
   Plus, 
   Edit, 
@@ -98,7 +99,7 @@ export default function AdminPage() {
 
   // ===== EFEITOS =====
   useEffect(() => {
-    console.warn('🔄 Admin component mounted');
+    logger.warn('🔄 Admin component mounted');
     detectStorageMode();
     // Charger les chansons immédiatement après détection
     loadSongs();
@@ -114,28 +115,28 @@ export default function AdminPage() {
   const detectStorageMode = () => {
     // Toujours Supabase dans la version publiée (fallback géré dans lib/supabase)
     setStorageMode('supabase');
-    console.warn('🔄 Mode de stockage forcé: Supabase ☁️');
+    logger.warn('🔄 Mode de stockage forcé: Supabase ☁️');
   };
 
   // ===== FUNÇÕES =====
   const loadSongs = async () => {
     try {
-      console.warn(`🔄 Chargement des chansons en mode: ${storageMode}`);
+      logger.warn(`🔄 Chargement des chansons en mode: ${storageMode}`);
       
       if (storageMode === 'supabase') {
         // Utiliser Supabase
-        console.warn('☁️ Chargement depuis Supabase...');
+        logger.warn('☁️ Chargement depuis Supabase...');
         const allSongs = await Song.list('-release_date', null);
-        console.warn(`✅ ${allSongs.length} chansons chargées depuis Supabase:`, allSongs);
-        console.warn('🔍 IDs des chansons chargées:', allSongs.map(s => ({ id: s.id, title: s.title })));
+        logger.warn(`✅ ${allSongs.length} chansons chargées depuis Supabase`);
+        logger.debug('🔍 IDs des chansons chargées:', allSongs.map(s => ({ id: s.id, title: s.title })));
         setSongs(allSongs);
       } else {
         // Fallback localStorage
-        console.warn('📱 Chargement depuis localStorage...');
+        logger.warn('📱 Chargement depuis localStorage...');
         setSongs([]);
       }
     } catch (error) {
-      console.error('❌ Erreur lors du chargement des chansons:', error);
+      logger.error('❌ Erreur lors du chargement des chansons:', error);
       setSongs([]);
     }
   };
@@ -262,7 +263,7 @@ export default function AdminPage() {
     }
 
     const username = usernameMatch[1];
-    console.warn(`🔍 Analisando perfil TikTok: @${username}`);
+    logger.debug(`🔍 Analisando perfil TikTok: @${username}`);
 
     try {
       // Simuler l'extraction des vidéos du profil avec de vraies métadonnées
@@ -334,11 +335,11 @@ export default function AdminPage() {
       const processingTime = Math.min(mockVideos.length * 100, 3000); // Max 3 secondes
       await new Promise(resolve => setTimeout(resolve, processingTime));
       
-      console.warn(`✅ ${mockVideos.length} vídeos encontrados no perfil @${username}`);
+      logger.debug(`✅ ${mockVideos.length} vídeos encontrados no perfil @${username}`);
       return mockVideos;
       
     } catch (error) {
-      console.error('Erro ao extrair vídeos do perfil:', error);
+      logger.error('Erro ao extrair vídeos do perfil:', error);
       throw new Error(`❌ Erro ao analisar perfil: ${error.message}`);
     }
   };
@@ -651,8 +652,8 @@ export default function AdminPage() {
         release_date: suggestedReleaseDate
       };
       
-      console.warn('🎯 Métadonnées extraites:', metadata);
-      console.warn('📝 Chanson mise à jour:', updatedSong);
+      logger.debug('🎯 Métadonnées extraites:', metadata);
+      logger.debug('📝 Chanson mise à jour:', updatedSong);
       
       setEditingSong(updatedSong);
 

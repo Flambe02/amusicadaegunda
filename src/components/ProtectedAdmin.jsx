@@ -128,7 +128,7 @@ export default function ProtectedAdmin() {
     <>
       <Helmet>
         <meta name="robots" content="noindex,nofollow" />
-        <link rel="canonical" href="https://www.amusicadasegunda.com/#/admin" />
+        {/* Canonical géré par useSEO si nécessaire */}
       </Helmet>
       <Login />
     </>

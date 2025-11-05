@@ -265,7 +265,6 @@ export default function Home() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
             A Música da Segunda
           </h1>
-          <p className="text-lg md:text-xl text-white drop-shadow-lg">As Notícias do Brasil em Forma de Paródia</p>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
             Descubra música nova toda segunda-feira
           </p>
@@ -329,7 +328,6 @@ export default function Home() {
             <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
               A Música da Segunda
             </h2>
-            <p className="text-md md:text-lg text-white drop-shadow-lg">As Notícias do Brasil em Forma de Paródia</p>
             <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
               Descubra música nova toda segunda-feira
             </p>
