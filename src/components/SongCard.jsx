@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import TikTokEmbedOptimized from './TikTokEmbedOptimized';
 import LyricsDialog from './LyricsDialog';
 import { cleanTikTokId } from '@/lib/parseTikTokId';
+import OptimizedImage from './OptimizedImage';
 
 export default function SongCard({ song }) {
   const [showLyrics, setShowLyrics] = useState(false);
@@ -74,7 +75,12 @@ export default function SongCard({ song }) {
           className="relative aspect-video rounded-2xl overflow-hidden mb-5 cursor-pointer group"
           onClick={() => setShowVideo(true)}
         >
-                          <img loading="lazy" decoding="async" src={song.cover_image} alt={`Capa de ${song.title}`} className="w-full h-full object-cover" />
+                          <OptimizedImage 
+                            src={song.cover_image} 
+                            alt={`Capa de ${song.title}`} 
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <Play className="w-12 h-12 text-white drop-shadow-lg" />
           </div>

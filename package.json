@@ -39,7 +39,8 @@
     "build:seo": "npm run export:songs && npm run build",
     "qa:jsonld": "node scripts/check-jsonld-prod.js",
     "qa:sitemap": "node scripts/check-sitemap-prod.js",
-    "qa:prod": "npm run qa:jsonld && npm run qa:sitemap"
+    "qa:prod": "npm run qa:jsonld && npm run qa:sitemap",
+    "optimize:images": "node scripts/optimize-images.cjs"
   },
   "dependencies": {
     "@capacitor/core": "^7.4.3",

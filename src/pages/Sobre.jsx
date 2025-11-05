@@ -1,6 +1,7 @@
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
+import OptimizedImage from '../components/OptimizedImage';
 
 export default function Sobre() {
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
@@ -127,10 +128,11 @@ export default function Sobre() {
           <div className="text-center mb-12">
             <div className="inline-block p-2 bg-white/10 rounded-full mb-4 backdrop-blur-sm">
               <div className="w-16 h-16 mx-auto rounded-full overflow-hidden shadow-2xl ring-4 ring-white/20">
-                <img 
+                <OptimizedImage 
                   src="images/Musica da segunda.jpg" 
                   alt="Logo Música da Segunda" 
                   className="w-full h-full object-cover"
+                  loading="eager"
                 />
               </div>
             </div>
@@ -145,10 +147,11 @@ export default function Sobre() {
           {/* Logo Section */}
           <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-10 text-center mb-10 shadow-2xl border border-white/20">
             <div className="w-40 h-40 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl ring-8 ring-white/30 transform hover:scale-105 transition-transform duration-300">
-              <img 
+              <OptimizedImage 
                 src="images/Musica da segunda.jpg" 
                 alt="Logo Música da Segunda" 
                 className="w-full h-full object-cover"
+                loading="eager"
               />
             </div>
             <h2 className="text-4xl font-black text-gray-800 mb-3">Música da Segunda</h2>

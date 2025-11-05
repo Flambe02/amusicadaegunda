@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
+import OptimizedImage from '@/components/OptimizedImage';
 
 export default function Layout({ children }) {
   const location = useLocation();
@@ -32,11 +33,11 @@ export default function Layout({ children }) {
             {/* Logo + Titre */}
             <div className="flex items-center gap-4">
               <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
-                <img 
-                  decoding="async"
+                <OptimizedImage 
                   src="images/Musica da segunda.jpg" 
                   alt="Logo Música da Segunda"
                   className="w-full h-full object-cover"
+                  loading="eager"
                 />
               </Link>
               <div>

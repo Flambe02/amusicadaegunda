@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import LyricsDialog from '../components/LyricsDialog';
 import YouTubePlayer from '../components/YouTubePlayer';
 import YouTubePlaylist from '../components/YouTubePlaylist';
+import OptimizedImage from '../components/OptimizedImage';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
@@ -316,10 +317,11 @@ export default function Home() {
       <div className="lg:hidden text-center mb-8">
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
-            <img 
+            <OptimizedImage 
               src="images/Musica da segunda.jpg" 
               alt="Logo Música da Segunda"
               className="w-full h-full object-cover"
+              loading="eager"
             />
           </div>
           
