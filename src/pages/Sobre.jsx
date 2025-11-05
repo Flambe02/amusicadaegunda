@@ -1,41 +1,7 @@
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { useState, useEffect } from 'react';
-import { Song } from '@/api/entities';
-import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
-import YouTubePlayer from '@/components/YouTubePlayer';
-import { cleanTikTokId } from '@/lib/parseTikTokId';
 
 export default function Sobre() {
-  const [currentSong, setCurrentSong] = useState(null);
-
-  useEffect(() => {
-    const loadExampleSong = async () => {
-      try {
-        const song = await Song.getCurrent();
-        setCurrentSong(song);
-      } catch (error) {
-        console.error('Erro ao carregar música de exemplo:', error);
-      }
-    };
-
-    loadExampleSong();
-  }, []);
-
-  // Extraire l'ID YouTube de l'URL
-  const extractYouTubeId = (url) => {
-    if (!url) return null;
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|music\.youtube\.com\/watch\?v=)([A-Za-z0-9_-]{11})/,
-      /^([A-Za-z0-9_-]{11})$/,
-      /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/
-    ];
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) return match[1];
-    }
-    return null;
-  };
 
   return (
     <>
@@ -229,78 +195,6 @@ export default function Sobre() {
               </div>
             </div>
           </article>
-
-          {/* Exemples de Vídeos - NOUVELLE SECTION */}
-          {currentSong && (
-            <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-pink-400 to-rose-500 rounded-full flex items-center justify-center shadow-lg">
-                  <Video className="w-6 h-6 text-white" />
-                </div>
-                Exemplo de Produção
-              </h2>
-              
-              <p className="text-gray-700 text-lg mb-6 leading-relaxed">
-                Veja um exemplo de como as músicas são apresentadas em vídeo:
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Vídeo TikTok */}
-                {(currentSong.tiktok_video_id || currentSong.tiktok_url) && (
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6">
-                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                      <Video className="w-5 h-5 text-black" />
-                      Vídeo TikTok
-                    </h3>
-                    <div className="rounded-xl overflow-hidden shadow-lg">
-                      <TikTokEmbedOptimized
-                        postId={cleanTikTokId(currentSong.tiktok_video_id || currentSong.tiktok_url)}
-                        className="w-full"
-                        song={currentSong}
-                      />
-                    </div>
-                    <p className="text-sm text-gray-600 mt-3 text-center">
-                      {currentSong.title}
-                    </p>
-                  </div>
-                )}
-
-                {/* Vídeo YouTube */}
-                {(currentSong.youtube_url || currentSong.youtube_music_url) && (
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6">
-                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                      <Youtube className="w-5 h-5 text-red-600" />
-                      Vídeo YouTube
-                    </h3>
-                    <div className="rounded-xl overflow-hidden shadow-lg">
-                      <YouTubePlayer
-                        videoId={extractYouTubeId(currentSong.youtube_music_url || currentSong.youtube_url)}
-                        title={currentSong.title}
-                        className="w-full"
-                      />
-                    </div>
-                    <p className="text-sm text-gray-600 mt-3 text-center">
-                      {currentSong.title}
-                    </p>
-                  </div>
-                )}
-
-                {/* Fallback si pas de vidéos */}
-                {!currentSong.tiktok_video_id && !currentSong.tiktok_url && !currentSong.youtube_url && !currentSong.youtube_music_url && (
-                  <div className="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 text-center">
-                    <Video className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">
-                      Exemplos de vídeos serão exibidos aqui quando disponíveis
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-gray-600 text-sm mt-6 text-center">
-                Cada música é publicada simultaneamente no TikTok, YouTube e em todas as plataformas de streaming
-              </p>
-            </article>
-          )}
 
           {/* Público-Alvo - Section simplifiée */}
           <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
