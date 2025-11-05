@@ -83,30 +83,22 @@ export default function Sobre() {
             
             <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
               <p className="text-lg leading-relaxed">
-                <strong>A Música da Segunda</strong> é um projeto criativo brasileiro nascido da paixão por música e pela 
-                observação crítica da atualidade. Criado em 2025, o projeto tem como missão transformar as notícias e 
-                acontecimentos do Brasil em paródias musicais inteligentes, divertidas e reflexivas.
+                <strong>A Música da Segunda</strong> é um projeto criativo brasileiro que produz paródias musicais 
+                inteligentes sobre a atualidade do Brasil. O conceito é simples: toda segunda-feira, uma nova música é 
+                lançada, comentando com humor e sagacidade os principais eventos da semana anterior.
               </p>
               
-              <p className="text-lg leading-relaxed">
-                O conceito é simples mas poderoso: toda segunda-feira, uma nova música é lançada, comentando com humor 
-                e sagacidade os principais eventos da semana anterior. Não se trata apenas de entretenimento, mas de 
-                uma forma única de fazer crítica social através da arte musical.
-              </p>
-
               <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Origem e Inspiração</h3>
               <p className="text-lg leading-relaxed">
-                O projeto surgiu da necessidade de criar um espaço onde a música e o humor se encontram com a análise 
-                social. Em um Brasil onde a informação circula rapidamente mas muitas vezes sem profundidade, 
-                <strong> A Música da Segunda</strong> oferece uma perspectiva diferente: transformar notícias complexas em 
-                narrativas musicais acessíveis e memoráveis.
+                O conceito de <strong>A Música da Segunda</strong> é inspirado em <strong>La Chanson du Dimanche</strong>, 
+                um projeto musical francês que publicava uma chanson chaque semaine. A Música da Segunda se inspira deste 
+                conceito, mas com um <strong>ton brésilien</strong> único, adaptado à realidade e à cultura do Brasil.
               </p>
 
               <p className="text-lg leading-relaxed">
-                A inspiração vem de tradições de música de protesto e humor brasileiro, como os trabalhos de Chico Buarque, 
-                Tom Zé, e os humoristas musicais que sempre usaram a sátira para comentar a realidade do país. 
-                Porém, com uma abordagem moderna que combina produção musical contemporânea com letras que refletem 
-                o Brasil de hoje.
+                Assim como o projeto francês, o objetivo é criar paródias musicais que comentam a atualidade, mas aqui 
+                com uma abordagem totalmente brasileira, usando referências musicais locais, humor típico do Brasil e 
+                comentários sobre eventos que marcam a vida dos brasileiros.
               </p>
             </div>
           </article>
@@ -117,29 +109,20 @@ export default function Sobre() {
               <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
                 <Music className="w-6 h-6 text-white" />
               </div>
-              Nossa Missão e Valores
+              Nossa Missão
             </h2>
             
             <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
               <p className="text-lg leading-relaxed">
-                A missão de <strong>A Música da Segunda</strong> é tripla: <strong>informar, divertir e refletir</strong>. 
-                Através das paródias musicais, buscamos:
+                A missão de <strong>A Música da Segunda</strong> é transformar notícias e acontecimentos do Brasil em 
+                paródias musicais inteligentes, divertidas e reflexivas. Através do humor musical, buscamos informar, 
+                divertir e promover a reflexão sobre a atualidade do país.
               </p>
 
-              <ul className="list-disc list-inside space-y-2 text-lg text-gray-700 ml-4">
-                <li><strong>Democratizar o acesso à informação:</strong> Transformar notícias complexas em conteúdo acessível através da música</li>
-                <li><strong>Promover o pensamento crítico:</strong> Incentivar a reflexão sobre os acontecimentos do país através do humor</li>
-                <li><strong>Valorizar a cultura brasileira:</strong> Usar referências musicais e culturais do Brasil em cada produção</li>
-                <li><strong>Criar comunidade:</strong> Conectar pessoas através do compartilhamento de música e reflexões</li>
-                <li><strong>Manter a regularidade:</strong> Garantir que toda segunda-feira há uma nova música para começar a semana</li>
-              </ul>
-
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Nossos Valores</h3>
               <p className="text-lg leading-relaxed">
-                Acreditamos que o humor é uma ferramenta poderosa para o debate democrático. Nossas paródias não são apenas 
-                piadas, mas sim <strong>comentários musicais</strong> que buscam engajar o público em reflexões sobre política, 
-                sociedade, economia e cultura brasileira. Respeitamos a diversidade de opiniões e buscamos sempre apresentar 
-                diferentes perspectivas através da música.
+                Acreditamos que o humor é uma ferramenta poderosa para o debate democrático. Nossas paródias são 
+                <strong> comentários musicais</strong> que buscam engajar o público em reflexões sobre política, 
+                sociedade, economia e cultura brasileira, sempre respeitando a diversidade de opiniões.
               </p>
             </div>
           </article>
@@ -155,44 +138,29 @@ export default function Sobre() {
             
             <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
               <p className="text-lg leading-relaxed">
-                O processo de criação de cada música segue uma metodologia bem definida que garante qualidade e relevância:
+                O processo de criação é simples e focado em qualidade:
               </p>
 
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">1. Seleção de Notícias</h3>
+              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Seleção e Criação</h3>
               <p className="text-lg leading-relaxed">
-                Durante a semana, nossa equipe acompanha atentamente as principais notícias do Brasil. Não buscamos apenas 
-                eventos políticos, mas também acontecimentos sociais, culturais, econômicos e até mesmo curiosidades que 
-                merecem uma análise musical. A escolha prioriza temas que tenham impacto na vida dos brasileiros e que 
-                possam ser trabalhados de forma criativa e reflexiva.
+                Acompanho as principais notícias do Brasil e seleciono temas relevantes que podem ser transformados em 
+                paródias musicais. As letras são escritas para serem inteligentes, mantendo o equilíbrio entre humor e crítica. 
+                A escolha da música base é estratégica: uso músicas conhecidas que, quando combinadas com novas letras, 
+                criam um contraste interessante e memorável.
               </p>
 
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">2. Criação Musical</h3>
+              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Produção</h3>
               <p className="text-lg leading-relaxed">
-                Cada paródia é cuidadosamente escrita e produzida. As letras são criadas para serem inteligentes, 
-                mantendo o equilíbrio entre humor e crítica. A escolha da música base (a canção original que será parodiada) 
-                é estratégica: buscamos músicas conhecidas que, quando combinadas com novas letras, criam um contraste 
-                interessante e memorável.
+                Cada paródia é produzida com equipamentos profissionais, garantindo qualidade sonora. As gravações incluem 
+                vocais, instrumentos e arranjos que respeitam a estrutura da música original enquanto incorporam elementos 
+                únicos que refletem o tema abordado. Cada música também ganha um vídeo criativo para TikTok e YouTube.
               </p>
 
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">3. Produção e Gravação</h3>
+              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Publicação Semanal</h3>
               <p className="text-lg leading-relaxed">
-                A produção musical é feita com equipamentos profissionais, garantindo qualidade sonora. As gravações 
-                incluem vocais, instrumentos e arranjos que respeitam a estrutura da música original enquanto incorporam 
-                elementos únicos que refletem o tema abordado.
-              </p>
-
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">4. Produção de Vídeo</h3>
-              <p className="text-lg leading-relaxed">
-                Cada música ganha um vídeo criativo que é publicado no TikTok e YouTube. Os vídeos são produzidos para 
-                serem engajantes, combinando elementos visuais que complementam a mensagem musical. A estratégia de 
-                publicação prioriza o TikTok para alcance rápido e o YouTube para conteúdo permanente.
-              </p>
-
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">5. Publicação Semanal</h3>
-              <p className="text-lg leading-relaxed">
-                Toda segunda-feira, às 00:00, uma nova música é publicada simultaneamente em todas as plataformas: 
-                TikTok, YouTube, Spotify, Apple Music e no site oficial. Esta regularidade cria expectativa na comunidade 
-                e garante que os fãs sempre tenham conteúdo novo para começar a semana.
+                Toda segunda-feira, uma nova música é publicada simultaneamente em todas as plataformas de música: 
+                <strong> Spotify, Apple Music, YouTube Music</strong>, além de TikTok, YouTube e no site oficial. 
+                Esta regularidade cria expectativa e garante que sempre há conteúdo novo para começar a semana.
               </p>
             </div>
 
@@ -227,7 +195,7 @@ export default function Sobre() {
             </div>
           </article>
 
-          {/* Público-Alvo - NOUVELLE SECTION pour SEO IA */}
+          {/* Público-Alvo - Section simplifiée */}
           <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
@@ -239,26 +207,13 @@ export default function Sobre() {
             <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
               <p className="text-lg leading-relaxed">
                 <strong>A Música da Segunda</strong> é para todos os brasileiros que se interessam por música, humor e atualidades. 
-                Nosso público-alvo inclui:
-              </p>
-
-              <ul className="list-disc list-inside space-y-2 text-lg text-gray-700 ml-4">
-                <li><strong>Jovens e adultos</strong> que consomem música brasileira e querem se manter informados de forma divertida</li>
-                <li><strong>Fãs de humor musical</strong> e paródias que apreciam sátira inteligente</li>
-                <li><strong>Pessoas interessadas em política e atualidades</strong> que buscam uma perspectiva crítica e criativa</li>
-                <li><strong>Usuários de TikTok e YouTube</strong> que consomem conteúdo musical e de humor</li>
-                <li><strong>Comunidade musical brasileira</strong> que valoriza a produção nacional e independente</li>
-              </ul>
-
-              <p className="text-lg leading-relaxed mt-4">
-                Não importa sua orientação política ou seus gostos musicais específicos: o projeto busca criar pontes 
-                através do humor e da música, sempre respeitando a diversidade de opiniões e promovendo o diálogo 
-                construtivo sobre os temas abordados.
+                O projeto busca criar pontes através do humor e da música, sempre respeitando a diversidade de opiniões e 
+                promovendo o diálogo construtivo sobre os temas abordados.
               </p>
             </div>
           </article>
 
-          {/* Formato e Estilo Musical - NOUVELLE SECTION */}
+          {/* Formato e Estilo Musical - Section simplifiée */}
           <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
             <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
@@ -269,10 +224,9 @@ export default function Sobre() {
             
             <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
               <p className="text-lg leading-relaxed">
-                As paródias de <strong>A Música da Segunda</strong> seguem uma abordagem musical diversificada. Não nos limitamos 
-                a um único gênero: parodiamos desde MPB clássica até pop contemporâneo, rock, samba, funk e outros estilos 
-                musicais brasileiros. A escolha do estilo musical sempre tem relação com o tema abordado e com a mensagem 
-                que queremos transmitir.
+                As paródias de <strong>A Música da Segunda</strong> seguem uma abordagem musical diversificada. Não me limito 
+                a um único gênero: parodio desde MPB clássica até pop contemporâneo, rock, samba, funk e outros estilos 
+                musicais brasileiros. A escolha do estilo musical sempre tem relação com o tema abordado.
               </p>
 
               <p className="text-lg leading-relaxed">
@@ -281,11 +235,9 @@ export default function Sobre() {
                 engajante e reflexiva</strong>, convidando o ouvinte a pensar sobre o tema abordado enquanto se diverte.
               </p>
 
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Qualidade de Produção</h3>
               <p className="text-lg leading-relaxed">
-                Todas as músicas são produzidas com qualidade profissional. Utilizamos equipamentos de gravação de alta 
-                qualidade, arranjos cuidadosamente elaborados e uma produção musical que rivaliza com produções comerciais. 
-                Acreditamos que o conteúdo independente deve ter a mesma qualidade do conteúdo mainstream.
+                Todas as músicas são produzidas com qualidade profissional, utilizando equipamentos de gravação de alta 
+                qualidade e arranjos cuidadosamente elaborados.
               </p>
             </div>
           </article>
@@ -316,7 +268,7 @@ export default function Sobre() {
               <div className="space-y-4">
                 <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-gray-700 font-medium">Links para plataformas de streaming</span>
+                  <span className="text-gray-700 font-medium">Disponível em Spotify, Apple Music e YouTube Music</span>
                 </div>
                 <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
                   <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
