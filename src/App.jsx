@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 // ✅ PERFORMANCE: HelmetProvider supprimé ici (déjà dans main.jsx)
 // Garder un seul HelmetProvider à la racine évite la duplication de contextes
 import OfflineIndicator from "@/components/OfflineIndicator"
+import PushCTA from "@/components/PushCTA"
 import { useEffect } from 'react';
 import migrationService from '@/lib/migration';
 // MigrationStatus supprimé pour la production
@@ -32,6 +33,7 @@ function App() {
       {/* Composants de diagnostic supprimés pour la production */}
       {/* <TikTokDemo /> */}
       <Toaster />
+      <PushCTA />
     </>
   )
 }

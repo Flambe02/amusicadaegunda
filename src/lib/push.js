@@ -153,24 +153,47 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
   });
   console.warn('✅ Push subscription created');
 
-  console.warn('📡 Sending subscription to server...');
-  const res = await fetch(`${API_BASE}/push/subscribe`, {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({
-      subscription: sub,
+  // Extraire les clés de la subscription
+  const p256dh = btoa(String.fromCharCode(...new Uint8Array(sub.getKey('p256dh'))));
+  const auth = btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth'))));
+
+  console.warn('📡 Sending subscription to server (Supabase)...');
+  
+  try {
+    // Utiliser Supabase directement pour sauvegarder l'abonnement
+    await upsertPushSubscription({
+      endpoint: sub.endpoint,
+      p256dh,
+      auth,
       topic: 'new-song',
       locale,
       vapidKeyVersion: VAPID_KEY_VERSION
-    })
-  });
-  
-  console.warn('📊 Server response:', res.status, res.statusText);
-  
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error('❌ Subscribe failed:', errorText);
-    throw new Error(`Subscribe failed: ${res.status} ${res.statusText}`);
+    });
+    
+    console.warn('✅ Subscription saved to Supabase');
+  } catch (supabaseError) {
+    console.error('❌ Supabase save failed, trying API fallback:', supabaseError);
+    
+    // Fallback vers l'API externe si Supabase échoue
+    const res = await fetch(`${API_BASE}/push/subscribe`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        subscription: sub,
+        topic: 'new-song',
+        locale,
+        vapidKeyVersion: VAPID_KEY_VERSION
+      })
+    });
+    
+    console.warn('📊 API fallback response:', res.status, res.statusText);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('❌ Both Supabase and API failed:', errorText);
+      await sub.unsubscribe(); // Nettoyer l'abonnement échoué
+      throw new Error(`Subscribe failed: ${res.status} ${res.statusText}`);
+    }
   }
   
   console.warn('✅ Push activation completed successfully');

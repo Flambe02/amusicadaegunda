@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import { 
   Plus, 
@@ -35,6 +35,41 @@ import { ptBR } from 'date-fns/locale';
 import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
 import { songSchema, safeParse } from '@/lib/validation';
 import { sanitizeInput, sanitizeURL } from '@/lib/security';
+
+/**
+ * Fonction pour envoyer des notifications push à tous les abonnés
+ * Utilise l'API serverless (Vercel/Netlify) ou Supabase Edge Function
+ */
+async function notifyAllSubscribers({ title, body, icon, url }) {
+  // Utiliser Supabase Edge Functions (pas Vercel)
+  const API_BASE = import.meta.env?.VITE_PUSH_API_BASE || 'https://efnzmpzkzeuktqkghwfa.functions.supabase.co';
+  
+  try {
+    // Envoyer les notifications via Supabase Edge Function (sans attendre la réponse)
+    // L'endpoint /push/send existe dans supabase/functions/push/
+    fetch(`${API_BASE}/push/send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // TODO: Ajouter un token d'autorisation si nécessaire
+        // 'Authorization': `Bearer ${process.env.ADMIN_TOKEN}`
+      },
+      body: JSON.stringify({
+        title: title || 'Nouvelle Chanson ! 🎶',
+        body: body || 'Une nouvelle chanson est disponible !',
+        icon: icon || '/icons/pwa/icon-192x192.png',
+        url: url || '/',
+        tag: 'nova-musica',
+        topic: 'new-song',
+        locale: 'pt-BR'
+      }),
+    }).catch(err => {
+      console.error('Erreur envoi notifications push:', err);
+    });
+  } catch (error) {
+    console.error('Erreur préparation notification:', error);
+  }
+}
 
 export default function AdminPage() {
   // ===== ESTADOS =====
@@ -1442,6 +1477,17 @@ export default function AdminPage() {
           }
           
           displayMessage('success', '✅ Música criada com sucesso!');
+          
+          // Envoyer les notifications push (sans attendre la réponse)
+          notifyAllSubscribers({
+            title: 'Nouvelle Chanson ! 🎶',
+            body: `"${clean.title || 'Nova música'}" est maintenant disponible !`,
+            icon: clean.cover_image || '/icons/pwa/icon-192x192.png',
+            url: clean.slug ? `/chansons/${clean.slug}` : '/'
+          }).catch(err => {
+            console.error('Erreur envoi notifications:', err);
+            // Ne pas bloquer l'UI si l'envoi échoue
+          });
           
           // Fermer seulement en cas de succès
           console.warn('🔄 Fermeture du formulaire et rechargement...');
