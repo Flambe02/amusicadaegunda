@@ -6,17 +6,16 @@ test.describe('Sobre Page with FAQ', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     
     // Wait for page to load and check main title
     const header = page.locator('h1').first();
-    await expect(header).toBeVisible({ timeout: 15000 });
+    await expect(header).toBeVisible({ timeout: 10000 });
     await expect(header).toContainText(/Sobre/i, { timeout: 5000 });
     
-    // Check FAQ section exists (wait for it to be rendered)
-    // FAQ section may take time to load
+    // Check FAQ section exists
     const faqSection = page.locator('text=Perguntas Frequentes, text=/perguntas frequentes/i');
-    await expect(faqSection.first()).toBeVisible({ timeout: 15000 });
+    await expect(faqSection.first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should expand FAQ items when clicked', async ({ page }) => {
@@ -24,13 +23,13 @@ test.describe('Sobre Page with FAQ', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     
     // Wait for FAQ section to be ready
-    await page.waitForSelector('text=Perguntas Frequentes, text=/perguntas frequentes/i', { timeout: 15000 });
+    await page.waitForSelector('text=Perguntas Frequentes, text=/perguntas frequentes/i', { timeout: 10000 });
     
-    // Find first FAQ question (try multiple possible selectors)
-    const firstFAQ = page.locator('button:has-text("O que é"), button:has-text("Como"), [role="button"]:has-text("O que"), button:has-text("O que é")').first();
+    // Find first FAQ question
+    const firstFAQ = page.locator('button:has-text("O que é"), button:has-text("Como"), [role="button"]:has-text("O que")').first();
     
     const count = await firstFAQ.count();
     if (count > 0) {
@@ -38,9 +37,7 @@ test.describe('Sobre Page with FAQ', () => {
       await firstFAQ.click();
       await page.waitForTimeout(500); // Wait for animation
       
-      // Check if answer is visible (look for common FAQ answer text)
-      const answerVisible = await page.locator('text=/paródias musicais/i, text=/música/i').first().isVisible().catch(() => false);
-      // If answer is not immediately visible, that's okay - the test verifies the click works
+      // Verify the click worked (button was found and clicked)
       expect(count).toBeGreaterThan(0);
     } else {
       // If no FAQ button found, skip this test gracefully
@@ -55,7 +52,7 @@ test.describe('Sobre Page with FAQ', () => {
     await page.waitForLoadState('domcontentloaded');
     
     // Wait for page to fully load including JSON-LD
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(2000);
     
     // Check for FAQPage schema in JSON-LD scripts
     const schemaScripts = page.locator('script[type="application/ld+json"]');

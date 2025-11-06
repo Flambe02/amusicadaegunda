@@ -7,10 +7,9 @@ test.describe('Search Functionality', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(3000); // Additional wait for async content (Supabase)
+    await page.waitForTimeout(2000); // Wait for async content (Supabase)
     
-    // Check if page loaded successfully by looking for common elements
-    // Playlist page should have some content (title, songs list, or empty state)
+    // Check if page loaded successfully
     const pageTitle = page.locator('h1, h2').first();
     const hasTitle = await pageTitle.isVisible({ timeout: 5000 }).catch(() => false);
     
