@@ -9,10 +9,10 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Retry on CI only - reduced to 1 for speed */
+  retries: process.env.CI ? 1 : 0,
+  /* Use 2 workers in CI for parallelization */
+  workers: process.env.CI ? 2 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -24,17 +24,21 @@ export default defineConfig({
   },
 
   /* Configure projects for major browsers */
-  projects: [
+  /* In CI, only test Chromium for speed. Test all browsers locally. */
+  projects: process.env.CI ? [
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
+  ] : [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
     },
-
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
@@ -56,7 +60,7 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes for server to start
+    timeout: 60 * 1000, // 1 minute for server to start (reduced from 2)
     stdout: 'ignore',
     stderr: 'pipe',
   },
