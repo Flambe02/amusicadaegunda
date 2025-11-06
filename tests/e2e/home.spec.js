@@ -2,11 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Home Page', () => {
   test('should load the home page', async ({ page }) => {
-    await page.goto('/');
-    // Wait for React to hydrate
-    await page.waitForSelector('#root', { state: 'attached' });
-    await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000); // Give React time to render
+    await page.goto('/', { waitUntil: 'networkidle' });
     await expect(page).toHaveTitle(/A Música da Segunda/i);
   });
 
