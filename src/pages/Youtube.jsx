@@ -320,7 +320,7 @@ export default function Youtube() {
   };
 
   // Fonction pour extraire l'ID de playlist YouTube
-  const extractPlaylistId = (url) => {
+  const _extractPlaylistId = (url) => {
     if (!url) return null;
     
     // Extraire l'ID de playlist depuis l'URL
@@ -337,7 +337,7 @@ export default function Youtube() {
     description: 'A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas.',
     keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda',
     image: currentSong?.cover_image,
-    url: '/',
+    url: '/youtube',
     type: 'website'
   });
 
