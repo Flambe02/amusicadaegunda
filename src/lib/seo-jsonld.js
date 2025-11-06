@@ -13,6 +13,7 @@ const CANONICAL_HOST = 'https://www.amusicadasegunda.com';
  * @param {string} [params.datePublished] - Publication date (ISO format)
  * @param {string} [params.image] - Song image URL
  * @param {string} [params.byArtist] - Artist name
+ * @param {string[]} [params.streamingUrls] - Array of URLs for streaming platforms
  * @returns {Object} JSON-LD schema object
  */
 export function musicRecordingJsonLd({ 
@@ -20,11 +21,12 @@ export function musicRecordingJsonLd({
   slug, 
   datePublished, 
   image, 
-  byArtist = 'A Música da Segunda' 
+  byArtist = 'A Música da Segunda',
+  streamingUrls = []
 }) {
   const url = `${CANONICAL_HOST}/chansons/${slug}`;
   
-  return {
+  const schema = {
     "@context": "https://schema.org",
     "@type": "MusicRecording",
     "name": title || slug,
@@ -38,6 +40,14 @@ export function musicRecordingJsonLd({
     "genre": ["Indie", "Música Brasileira", "Pop"],
     ...(image ? { "image": image } : {})
   };
+
+  // Ajoute les liens sameAs s'ils existent
+  const validUrls = streamingUrls.filter(u => u && typeof u === 'string');
+  if (validUrls.length > 0) {
+    schema.sameAs = validUrls;
+  }
+
+  return schema;
 }
 
 /**

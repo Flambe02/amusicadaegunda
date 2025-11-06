@@ -154,12 +154,20 @@ export default function SongPage() {
   // Inject JSON-LD schemas
   useEffect(() => {
     if (song) {
+      const streamingUrls = [
+        song.spotify_url,
+        song.apple_music_url,
+        song.youtube_url,
+        song.youtube_music_url
+      ].filter(Boolean); // Filtre les valeurs null/undefined
+
       const musicSchema = musicRecordingJsonLd({
         title: song.title,
         slug: slug,
         datePublished: song.release_date,
         image: song.cover_image,
-        byArtist: song.artist || 'A Música da Segunda'
+        byArtist: song.artist || 'A Música da Segunda',
+        streamingUrls: streamingUrls
       });
       injectJsonLd(musicSchema, 'song-music-schema');
 
