@@ -6,7 +6,14 @@ test.describe('Sobre Page with FAQ', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    
+    // Wait for React to actually render content
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
+    await page.waitForTimeout(2000);
     
     // Wait for page to load and check main title
     const header = page.locator('h1').first();
@@ -23,10 +30,18 @@ test.describe('Sobre Page with FAQ', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
+    
+    // Wait for React to actually render content
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
+    await page.waitForTimeout(2000);
     
     // Wait for FAQ section to be ready
-    await page.waitForSelector('text=Perguntas Frequentes, text=/perguntas frequentes/i', { timeout: 10000 });
+    const faqText = page.locator('text=Perguntas Frequentes, text=/perguntas frequentes/i');
+    await expect(faqText.first()).toBeVisible({ timeout: 10000 });
     
     // Find first FAQ question
     const firstFAQ = page.locator('button:has-text("O que é"), button:has-text("Como"), [role="button"]:has-text("O que")').first();
@@ -51,8 +66,14 @@ test.describe('Sobre Page with FAQ', () => {
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
     
+    // Wait for React to actually render content
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
     // Wait for page to fully load including JSON-LD
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     
     // Check for FAQPage schema in JSON-LD scripts
     const schemaScripts = page.locator('script[type="application/ld+json"]');

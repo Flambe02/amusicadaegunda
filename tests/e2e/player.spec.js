@@ -6,6 +6,13 @@ test.describe('Video Player', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
+    
+    // Wait for React to actually render content
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
     await page.waitForTimeout(2000); // Wait for Supabase data to load
     
     // Check for YouTube iframe or player container

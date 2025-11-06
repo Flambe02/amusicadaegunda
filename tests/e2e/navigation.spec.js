@@ -6,10 +6,17 @@ test.describe('Navigation', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000); // Give React time to render
     
-    // Navigate to Sobre
-    const sobreLink = page.locator('text=Sobre, a:has-text("Sobre"), nav a:has-text("Sobre")').first();
+    // Wait for React to actually render content
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
+    await page.waitForTimeout(2000); // Give React time to render
+    
+    // Navigate to Sobre - navigation can be desktop (lg:block) or mobile (lg:hidden)
+    const sobreLink = page.locator('text=Sobre, a:has-text("Sobre")').first();
     await expect(sobreLink).toBeVisible({ timeout: 10000 });
     await sobreLink.click();
     await expect(page).toHaveURL(/.*sobre/, { timeout: 10000 });
@@ -49,11 +56,18 @@ test.describe('Navigation', () => {
     // Wait for React to hydrate
     await page.waitForSelector('#root', { state: 'attached' });
     await page.waitForLoadState('domcontentloaded');
-    await page.waitForTimeout(1000);
     
-    // Wait for navigation to be rendered
-    await page.waitForSelector('nav, [role="navigation"]', { timeout: 10000 });
-    const navLinks = page.locator('nav a, [role="navigation"] a');
+    // Wait for React to actually render content
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
+    await page.waitForTimeout(2000);
+    
+    // Wait for navigation to be rendered (desktop or mobile)
+    await page.waitForSelector('nav', { timeout: 10000 });
+    const navLinks = page.locator('nav a');
     const count = await navLinks.count();
     
     expect(count).toBeGreaterThan(0);
