@@ -4,9 +4,9 @@ export const SEO_CONFIG = {
   // Informations du site
   site: {
     name: 'Música da Segunda',
-    url: 'https://amusicadaegunda.com',
+    url: 'https://www.amusicadasegunda.com',
     description: 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.',
-    logo: 'https://amusicadaegunda.com/images/Logo.png',
+    logo: 'https://www.amusicadasegunda.com/images/Logo.png',
     language: 'pt-BR',
     locale: 'pt_BR',
   },
@@ -16,7 +16,7 @@ export const SEO_CONFIG = {
     title: 'Música da Segunda - Nova música toda segunda-feira',
     description: 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais, playlists Spotify e conteúdo exclusivo.',
     keywords: 'música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music, spotify, tiktok',
-    image: 'https://amusicadaegunda.com/images/Logo.png',
+    image: 'https://www.amusicadasegunda.com/images/Logo.png',
     type: 'website',
   },
 
@@ -70,8 +70,8 @@ export const SEO_CONFIG = {
     organization: {
       '@type': 'Organization',
       name: 'Música da Segunda',
-      url: 'https://amusicadaegunda.com',
-      logo: 'https://amusicadaegunda.com/images/Logo.png',
+      url: 'https://www.amusicadasegunda.com',
+      logo: 'https://www.amusicadasegunda.com/images/Logo.png',
       description: 'Projeto musical que lança uma nova música toda segunda-feira',
       sameAs: [
         'https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH',
@@ -82,8 +82,8 @@ export const SEO_CONFIG = {
       '@type': 'MusicGroup',
       name: 'A Música da Segunda',
       description: 'Projeto musical que lança uma nova música toda segunda-feira',
-      url: 'https://amusicadaegunda.com',
-      image: 'https://amusicadaegunda.com/images/Logo.png',
+      url: 'https://www.amusicadasegunda.com',
+      image: 'https://www.amusicadasegunda.com/images/Logo.png',
       genre: ['Indie', 'Música Brasileira', 'Pop'],
       sameAs: [
         'https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH',
@@ -93,14 +93,14 @@ export const SEO_CONFIG = {
     website: {
       '@type': 'WebSite',
       name: 'Música da Segunda',
-      url: 'https://amusicadaegunda.com',
+      url: 'https://www.amusicadasegunda.com',
       description: 'Descubra uma nova música incrível toda segunda-feira',
       publisher: {
         '@type': 'Organization',
         name: 'Música da Segunda',
         logo: {
           '@type': 'ImageObject',
-          url: 'https://amusicadaegunda.com/images/Logo.png',
+          url: 'https://www.amusicadasegunda.com/images/Logo.png',
           width: 512,
           height: 512,
         },

@@ -41,7 +41,7 @@ export default function Layout({ children }) {
                 />
               </Link>
               <div>
-                <h1 className="text-2xl font-black text-gray-800 leading-tight">A Música da Segunda</h1>
+                <div className="text-2xl font-black text-gray-800 leading-tight">A Música da Segunda</div>
                 <p className="text-xs text-gray-600 mt-0.5">Site oficial de paródias musicais inteligentes e divertidas</p>
               </div>
             </div>
