@@ -3,19 +3,11 @@ import { test, expect } from '@playwright/test';
 test.describe('Navigation', () => {
   test('should navigate between main pages', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    
-    // Wait for React to hydrate
-    await page.waitForFunction(() => {
-      const root = document.getElementById('root');
-      return root && root.children.length > 0;
-    }, { timeout: 15000 });
-    
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     
     // Navigate to Sobre - navigation can be desktop (lg:block) or mobile (lg:hidden)
-    // Try multiple selectors to find the link
     const sobreLink = page.locator('a:has-text("Sobre")').first();
-    await expect(sobreLink).toBeVisible({ timeout: 15000 });
+    await expect(sobreLink).toBeVisible({ timeout: 20000 });
     await sobreLink.click();
     await expect(page).toHaveURL(/.*sobre/, { timeout: 15000 });
     await page.waitForLoadState('networkidle');
@@ -51,18 +43,11 @@ test.describe('Navigation', () => {
 
   test('should have accessible navigation links', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    
-    // Wait for React to hydrate
-    await page.waitForFunction(() => {
-      const root = document.getElementById('root');
-      return root && root.children.length > 0;
-    }, { timeout: 15000 });
-    
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     
     // Wait for navigation to be rendered (desktop or mobile)
     const nav = page.locator('nav').first();
-    await expect(nav).toBeVisible({ timeout: 15000 });
+    await expect(nav).toBeVisible({ timeout: 20000 });
     const navLinks = page.locator('nav a');
     const count = await navLinks.count();
     

@@ -8,20 +8,13 @@ test.describe('Home Page', () => {
 
   test('should display the main header', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(2000);
-    
-    // Wait for React to hydrate - check if root has content
-    await page.waitForFunction(() => {
-      const root = document.getElementById('root');
-      return root && root.children.length > 0;
-    }, { timeout: 15000 });
+    await page.waitForTimeout(3000);
     
     // Wait for any h1 to appear (desktop header in Layout or mobile header in Home)
-    // Try multiple selectors to find the header
     const header = page.locator('h1').first();
     
-    // Wait up to 15 seconds for header to appear (Supabase may be slow)
-    await expect(header).toBeVisible({ timeout: 15000 });
+    // Wait up to 20 seconds for header to appear (Supabase may be slow)
+    await expect(header).toBeVisible({ timeout: 20000 });
     
     // Verify it contains the expected text
     await expect(header).toContainText(/Música da Segunda/i, { timeout: 5000 });

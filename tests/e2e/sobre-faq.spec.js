@@ -3,39 +3,25 @@ import { test, expect } from '@playwright/test';
 test.describe('Sobre Page with FAQ', () => {
   test('should display Sobre page with FAQ section', async ({ page }) => {
     await page.goto('/sobre', { waitUntil: 'networkidle' });
-    
-    // Wait for React to hydrate
-    await page.waitForFunction(() => {
-      const root = document.getElementById('root');
-      return root && root.children.length > 0;
-    }, { timeout: 15000 });
-    
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     
     // Wait for page to load and check main title
     const header = page.locator('h1').first();
-    await expect(header).toBeVisible({ timeout: 15000 });
+    await expect(header).toBeVisible({ timeout: 20000 });
     await expect(header).toContainText(/Sobre/i, { timeout: 5000 });
     
     // Check FAQ section exists - try multiple selectors (separate CSS and text selectors)
     const faqSection = page.locator('h2:has-text("Perguntas Frequentes")').or(page.locator('text=/Perguntas Frequentes/i')).first();
-    await expect(faqSection).toBeVisible({ timeout: 15000 });
+    await expect(faqSection).toBeVisible({ timeout: 20000 });
   });
 
   test('should expand FAQ items when clicked', async ({ page }) => {
     await page.goto('/sobre', { waitUntil: 'networkidle' });
-    
-    // Wait for React to hydrate
-    await page.waitForFunction(() => {
-      const root = document.getElementById('root');
-      return root && root.children.length > 0;
-    }, { timeout: 15000 });
-    
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     
     // Wait for FAQ section to be ready (separate CSS and text selectors)
     const faqText = page.locator('h2:has-text("Perguntas Frequentes")').or(page.locator('text=/Perguntas Frequentes/i')).first();
-    await expect(faqText).toBeVisible({ timeout: 15000 });
+    await expect(faqText).toBeVisible({ timeout: 20000 });
     
     // Find first FAQ question
     const firstFAQ = page.locator('button:has-text("O que é"), button:has-text("Como"), [role="button"]:has-text("O que")').first();
@@ -56,13 +42,6 @@ test.describe('Sobre Page with FAQ', () => {
 
   test('should have Schema.org FAQPage structured data', async ({ page }) => {
     await page.goto('/sobre', { waitUntil: 'networkidle' });
-    
-    // Wait for React to hydrate
-    await page.waitForFunction(() => {
-      const root = document.getElementById('root');
-      return root && root.children.length > 0;
-    }, { timeout: 15000 });
-    
     // Wait for page to fully load including JSON-LD
     await page.waitForTimeout(3000);
     
