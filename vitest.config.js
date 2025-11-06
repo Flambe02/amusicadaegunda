@@ -14,6 +14,15 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
     css: true,
+    // Exclure les tests E2E Playwright de Vitest
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/scripts/**',
+      '**/tests/e2e/**',
+      '**/*.e2e.{js,ts,jsx,tsx}',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -25,6 +34,7 @@ export default defineConfig({
         'dist/',
         'build/',
         'scripts/',
+        'tests/e2e/',
       ],
     },
   },

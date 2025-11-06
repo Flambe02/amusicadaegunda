@@ -31,9 +31,14 @@ describe('TikTokPlayer', () => {
     
     // Créer un vrai iframe mock
     mockIframe = document.createElement('iframe');
-    mockIframe.contentWindow = {
-      postMessage: mockPostMessage,
-    };
+    // contentWindow est en lecture seule, utiliser Object.defineProperty
+    Object.defineProperty(mockIframe, 'contentWindow', {
+      writable: false,
+      configurable: true,
+      value: {
+        postMessage: mockPostMessage,
+      },
+    });
     mockIframe.onload = vi.fn();
     mockIframe.onerror = vi.fn();
     mockIframe.style = {};
