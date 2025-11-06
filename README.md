@@ -19,13 +19,13 @@ Música da Segunda est une application web qui présente une nouvelle musique ch
 - 📅 **Calendário Musical**: Visualize todas as músicas lançadas
 - 🎨 **Interface Admin**: Gerencie conteúdo facilmente
 - 📱 **Design Responsivo**: Funciona em todos os dispositivos
-- 🌐 **100% Local**: Sem dependências externas
+- 🌐 **Backend Cloud**: Supabase (PostgreSQL + APIs)
 
 ## 🚀 **Tecnologias**
 
 - **Frontend**: React 18 + Vite
 - **Styling**: Tailwind CSS + Radix UI
-- **Storage**: LocalStorage + JSON (100% local)
+- **Storage**: Supabase (PostgreSQL) — sem fallback local em produção
 - **Icons**: Lucide React
 - **Routing**: React Router DOM
 
@@ -93,34 +93,17 @@ src/
 └── hooks/              # Hooks personalizados
 ```
 
-## 💾 **Sistema de Storage Hybride (Local + Cloud)**
+## 💾 **Sistema de Storage (Cloud)
 
-### **🆕 NOUVEAU : Supabase Cloud Database**
-- ✅ **Sauvegarde automatique** - Données synchronisées en temps réel
-- ✅ **Base de données PostgreSQL** - Robuste et scalable
-- ✅ **Sauvegarde cloud** - Vos données sont protégées
-- ✅ **Synchronisation multi-appareils** - Accès depuis partout
-- ✅ **API REST automatique** - Intégration facile
+### **Supabase Cloud Database (production)**
+- ✅ Données synchronizadas em tempo real
+- ✅ PostgreSQL gerenciado, escalável
+- ✅ APIs REST/Realtime prontas
+- ✅ Multi-dispositivos
 
-### **📱 Fallback localStorage**
-- ✅ **Zero configuration** - Fonctionne immédiatement
-- ✅ **100% local** - Sans serveurs externes
-- ✅ **Portable** - Données dans le navigateur
-- ✅ **Backup facile** - Export/import JSON
-- ✅ **Sans limites** - Stockage local illimité
-
-### **🔄 Migration Automatique**
-- ✅ **Détection automatique** du mode de stockage
-- ✅ **Migration en un clic** localStorage → Supabase
-- ✅ **Fallback automatique** en cas de problème
-- ✅ **Synchronisation bidirectionnelle** des données
-- ✅ **Vérification d'intégrité** des données migrées
-
-### **Comment ça fonctionne**
-1. **Mode Supabase** : Données sauvegardées dans la base cloud
-2. **Mode localStorage** : Données stockées localement (fallback)
-3. **Migration** : Transfert automatique des données existantes
-4. **Synchronisation** : Maintien des deux sources à jour
+### **Sem fallback local em produção**
+- Em produção, todas as leituras/escritas de músicas passam pelo Supabase exclusivamente.
+- Ferramentas locais (ex.: `localStorageService`) permanecem apenas para scripts de migração/desenvolvimento.
 
 ## 🎨 **Personalização**
 

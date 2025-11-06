@@ -187,17 +187,17 @@ export default function Blog() {
     return (
       <div className="p-5 max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
+          <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-2">
             Blog Musical
           </h2>
-          <p className="text-white/80 font-medium text-lg drop-shadow-md">
+          <p className="text-gray-700 font-medium text-lg">
             Histórias por trás de cada música
           </p>
         </div>
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-white/80">Carregando posts do blog...</p>
+            <p className="text-gray-700">Carregando posts do blog...</p>
           </div>
         </div>
       </div>
@@ -208,10 +208,10 @@ export default function Blog() {
     return (
       <div className="p-5 max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
+          <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-2">
             Blog Musical
           </h2>
-          <p className="text-white/80 font-medium text-lg drop-shadow-md">
+          <p className="text-gray-700 font-medium text-lg">
             Histórias por trás de cada música
           </p>
         </div>
@@ -237,23 +237,23 @@ export default function Blog() {
       </Helmet>
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
+        <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-2">
           Blog Musical
         </h1>
-        <p className="text-white/80 font-medium text-lg drop-shadow-md">
+        <p className="text-gray-700 font-medium text-lg">
           Histórias por trás de cada música
         </p>
-        <p className="text-white/60 text-sm mt-2">
+        <p className="text-gray-600 text-sm mt-2">
           Descrições detalhadas e significado de cada canção
         </p>
       </div>
 
       {/* Filtre par mois */}
-      <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-white/30">
+      <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-gray-200">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Filter className="w-5 h-5 text-white" />
-            <span className="text-white font-medium">Filtrar por mês:</span>
+            <Filter className="w-5 h-5 text-gray-700" />
+            <span className="text-gray-800 font-medium">Filtrar por mês:</span>
           </div>
           
           <div className="flex items-center gap-3">
@@ -280,7 +280,7 @@ export default function Blog() {
               <Button 
                 onClick={resetFilter}
                 variant="outline"
-                className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+                className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
               >
                 Limpar filtro
               </Button>
@@ -375,15 +375,13 @@ export default function Blog() {
                       )}
                       
                       {song.tiktok_url && (
-                        <button 
+                        <Button 
                           onClick={() => handlePlayTikTok(song)}
-                          className="block w-full"
+                          className="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105"
                         >
-                          <Button className="w-full bg-black hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:scale-105">
-                            <Video className="w-4 h-4 mr-2" />
-                            Video
-                          </Button>
-                        </button>
+                          <Video className="w-4 h-4 mr-2" />
+                          Video
+                        </Button>
                       )}
 
                       {!song.spotify_url && !song.youtube_url && !song.tiktok_url && (
@@ -419,12 +417,12 @@ export default function Blog() {
             );
           })
         ) : (
-          <div className="bg-white/20 rounded-3xl p-8 text-center">
-            <Search className="w-16 h-16 text-white/60 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">
+          <div className="bg-white/70 rounded-3xl p-8 text-center border border-gray-200">
+            <Search className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Nenhum artigo encontrado
             </h3>
-            <p className="text-white/80 mb-4">
+            <p className="text-gray-700 mb-4">
               {selectedMonth === 'all' 
                 ? 'Não há artigos no blog ainda.'
                 : `Não há artigos publicados em ${availableMonths.find(m => m.key === selectedMonth)?.label}.`
@@ -433,7 +431,7 @@ export default function Blog() {
             {selectedMonth !== 'all' && (
               <Button 
                 onClick={resetFilter}
-                className="bg-white/20 text-white border-white/30 hover:bg-white/30"
+                className="bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
               >
                 Ver todos os artigos
               </Button>
