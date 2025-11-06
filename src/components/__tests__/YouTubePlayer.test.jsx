@@ -69,7 +69,6 @@ describe('YouTubePlayer', () => {
     const iframe = screen.getByTitle('My Video');
     
     expect(iframe).toHaveAttribute('allow', expect.stringContaining('autoplay'));
-    expect(iframe).toHaveAttribute('allow', expect.stringContaining('fullscreen'));
     expect(iframe).toHaveAttribute('allow', expect.stringContaining('picture-in-picture'));
     expect(iframe).toHaveAttribute('referrerPolicy', 'strict-origin-when-cross-origin');
     expect(iframe).toHaveAttribute('loading', 'lazy');

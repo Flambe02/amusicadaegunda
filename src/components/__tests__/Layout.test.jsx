@@ -30,8 +30,10 @@ describe('Layout', () => {
       </BrowserRouter>
     );
     
-    expect(screen.getByText('Início')).toBeInTheDocument();
-    expect(screen.getByText('Sobre')).toBeInTheDocument();
+    const homeLabels = screen.getAllByText('Início');
+    expect(homeLabels.length).toBeGreaterThan(0);
+    const aboutLabels = screen.getAllByText('Sobre');
+    expect(aboutLabels.length).toBeGreaterThan(0);
   });
 
   it('should render children content', () => {
