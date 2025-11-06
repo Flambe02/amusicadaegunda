@@ -7,10 +7,7 @@ import { Button } from "@/components/ui/button";
 
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
-  console.warn('🎬 [AdventCalendar] YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
-  
   const targetUrl = youtube_music_url || youtube_url || '';
-  console.warn('🎬 [AdventCalendar] targetUrl:', targetUrl);
 
   const getYouTubeEmbedInfo = (url) => {
     if (!url || typeof url !== 'string') return null;
