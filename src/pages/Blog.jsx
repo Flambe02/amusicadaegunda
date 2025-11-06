@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Helmet } from 'react-helmet-async';
+import { useSEO } from '@/hooks/useSEO';
 
 // Composant d'intégration YouTube (identique aux autres pages)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
@@ -183,6 +183,15 @@ export default function Blog() {
     setShowVideoModal(true);
   };
 
+  // SEO optimization - DOIT être avant tous les return
+  useSEO({
+    title: 'Blog Musical',
+    description: 'Histórias por trás de cada música publicada na A Música da Segunda. Descrições detalhadas e significado de cada canção.',
+    keywords: 'blog musical, histórias de músicas, música da segunda, paródias musicais, descrições de canções',
+    url: '/blog',
+    type: 'website'
+  });
+
   if (isLoading) {
     return (
       <div className="p-5 max-w-4xl mx-auto">
@@ -229,12 +238,6 @@ export default function Blog() {
 
   return (
     <div className="p-5 max-w-4xl mx-auto">
-      <Helmet>
-        <html lang="pt-BR" />
-        <title>Blog Musical | A Música da Segunda</title>
-        <meta name="description" content="Histórias por trás de cada música publicada na A Música da Segunda." />
-        {/* Canonical géré par useSEO sans hash */}
-      </Helmet>
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-2">

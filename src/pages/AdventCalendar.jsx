@@ -4,6 +4,7 @@ import { AdventSong } from '@/api/entities';
 import { Gift, Lock, Music, Play, Sparkles, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useSEO } from '@/hooks/useSEO';
 
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
@@ -175,6 +176,15 @@ export default function AdventCalendar() {
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
   const [viewedSongs, setViewedSongs] = useState(new Set()); // Nouvel état pour tracker toutes les vidéos visualisées
   const calendarDays = Array.from({ length: 24 }, (_, i) => i + 1);
+
+  // SEO optimization
+  useSEO({
+    title: 'Calendário do Advento Musical',
+    description: 'Calendário do Advento Musical 2025 - Uma surpresa musical a cada dia de dezembro. Descubra novas músicas e paródias inteligentes.',
+    keywords: 'calendário do advento, advento musical, dezembro 2025, música da segunda, surpresas musicais, calendário musical',
+    url: '/adventcalendar',
+    type: 'website'
+  });
 
   useEffect(() => {
     const fetchSongs = async () => {

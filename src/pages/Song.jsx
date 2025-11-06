@@ -141,11 +141,12 @@ export default function SongPage() {
   }, [slug]);
 
   // SEO optimization for the song page
-  // useSEO gère déjà le canonical sans hash, donc on ne le redéfinit pas dans Helmet
+  // useSEO ajoute automatiquement "| Música da Segunda" au titre, donc on ne le met pas ici
   useSEO({
-    title: song ? `${song.title} — A Música da Segunda` : 'A Música da Segunda',
+    title: song ? song.title : 'A Música da Segunda',
     description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.',
     keywords: song ? `${song.title}, música da segunda, paródias musicais` : `música da segunda, paródias musicais`,
+    image: song?.cover_image, // Image de couverture pour OG
     url: `/chansons/${slug}`,
     type: 'article'
   });

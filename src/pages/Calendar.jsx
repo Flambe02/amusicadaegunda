@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Song } from '@/api/entities';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, addDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -49,12 +49,7 @@ export default function Calendar() {
     }
   }, []);
 
-  // Recharger les chansons à chaque changement de mois
-  useEffect(() => {
-    loadSongsForMonth();
-  }, [currentDate]);
-
-  const loadSongsForMonth = async () => {
+  const loadSongsForMonth = useCallback(async () => {
     try {
       setIsLoading(true);
       const year = currentDate.getFullYear();
@@ -79,11 +74,12 @@ export default function Calendar() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentDate]);
 
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  // Recharger les chansons à chaque changement de mois
+  useEffect(() => {
+    loadSongsForMonth();
+  }, [loadSongsForMonth]);
 
   const getSongForDate = (date) => {
     return songs.find(song => {
@@ -156,11 +152,12 @@ export default function Calendar() {
   const monthYear = format(currentDate, 'MMMM yyyy', { locale: ptBR });
   const songsCount = songs.length;
   
+  // SEO optimization - canonical sans query string pour stabilité
   useSEO({
     title: `Calendário Musical ${monthYear}`,
     description: `Explore ${songsCount} descobertas musicais de ${monthYear}. Calendário completo das músicas da segunda no Música da Segunda.`,
     keywords: `calendário musical, ${monthYear}, descobertas musicais, ${songsCount} músicas, música da segunda, playlist mensal`,
-    url: `/calendar?month=${format(currentDate, 'yyyy-MM')}`,
+    url: '/calendar', // Canonical stable sans query string
     type: 'website'
   });
 

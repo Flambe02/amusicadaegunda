@@ -1,7 +1,7 @@
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
 import { useState } from 'react';
 import OptimizedImage from '../components/OptimizedImage';
+import { useSEO } from '../hooks/useSEO';
 
 export default function Sobre() {
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
@@ -73,25 +73,39 @@ export default function Sobre() {
     setOpenFAQIndex(openFAQIndex === index ? null : index);
   };
 
+  // SEO optimization
+  useSEO({
+    title: 'Sobre',
+    description: 'A Música da Segunda é um projeto criativo brasileiro que produz paródias musicais inteligentes sobre a atualidade do Brasil. Toda segunda-feira, lançamos uma nova música que transforma notícias em canções divertidas e críticas.',
+    keywords: 'música da segunda, paródias musicais, música brasileira, humor musical, atualidades brasil, música semanal, paródias políticas, música de humor',
+    url: '/sobre',
+    type: 'website'
+  });
+
   return (
     <>
-      {/* SEO Meta Tags enrichis pour IA */}
-      <Helmet>
-        <title>Sobre - A Música da Segunda | Paródias Musicais do Brasil</title>
-        <meta name="description" content="A Música da Segunda é um projeto criativo brasileiro que produz paródias musicais inteligentes sobre a atualidade do Brasil. Toda segunda-feira, lançamos uma nova música que transforma notícias em canções divertidas e críticas." />
-        <meta name="keywords" content="música da segunda, paródias musicais, música brasileira, humor musical, atualidades brasil, música semanal, paródias políticas, música de humor" />
-        
-        {/* Open Graph */}
-        <meta property="og:title" content="Sobre - A Música da Segunda | Paródias Musicais do Brasil" />
-        <meta property="og:description" content="Descubra a história por trás do projeto A Música da Segunda, que transforma notícias do Brasil em paródias musicais inteligentes e divertidas." />
-        <meta property="og:type" content="website" />
-        
-        {/* Schema.org pour IA */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "AboutPage",
-            "name": "Sobre A Música da Segunda",
+      {/* Schema.org FAQPage - conservé pour les FAQ */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqs.map(faq => ({
+            "@type": "Question",
+            "name": faq.question,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": faq.answer
+            }
+          }))
+        })}
+      </script>
+      
+      {/* Schema.org AboutPage */}
+      <script type="application/ld+json">
+        {JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "AboutPage",
+          "name": "Sobre A Música da Segunda",
             "description": "Informações sobre o projeto A Música da Segunda, que produz paródias musicais sobre a atualidade do Brasil",
             "mainEntity": {
               "@type": "MusicGroup",
@@ -105,22 +119,6 @@ export default function Sobre() {
             }
           })}
         </script>
-        {/* Schema.org FAQPage */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": faqs.map(faq => ({
-              "@type": "Question",
-              "name": faq.question,
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": faq.answer
-              }
-            }))
-          })}
-        </script>
-      </Helmet>
 
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
         <div className="p-5 max-w-5xl mx-auto">
