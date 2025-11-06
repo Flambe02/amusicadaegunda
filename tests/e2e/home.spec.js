@@ -3,7 +3,11 @@ import { test, expect } from '@playwright/test';
 test.describe('Home Page', () => {
   test('should load the home page', async ({ page }) => {
     await page.goto('/', { waitUntil: 'networkidle' });
-    await expect(page).toHaveTitle(/A Música da Segunda/i);
+    // Wait for useSEO to update the title (can be static initial or dynamic)
+    await page.waitForTimeout(2000);
+    // Accept either the static title or the dynamic title from useSEO
+    const title = await page.title();
+    expect(title).toMatch(/Música da Segunda/i);
   });
 
   test('should display the main header', async ({ page }) => {
@@ -13,8 +17,10 @@ test.describe('Home Page', () => {
     await page.waitForLoadState('load');
     await page.waitForTimeout(5000); // Give React and Supabase time to load
     
-    // Check if page loaded at all - verify title first
-    await expect(page).toHaveTitle(/A Música da Segunda/i, { timeout: 10000 });
+    // Check if page loaded at all - verify title first (wait for useSEO to update)
+    await page.waitForTimeout(2000);
+    const title = await page.title();
+    expect(title).toMatch(/Música da Segunda/i);
     
     // Wait for any h1 to appear (desktop header in Layout or mobile header in Home)
     // Try to find h1, but don't fail if it's not there - page might still be loading

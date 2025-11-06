@@ -1,5 +1,0 @@
-[33m15c8602[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Fix: Enable song individual pages routing and correct TikTok video display - Activate /chansons/:slug route for direct access to songs - Fix TikTokEmbedOptimized props (postId instead of videoId) - Add proper slug-based routing detection - Update Song.jsx to properly display videos with correct props - Fix linting errors (console.warn and remove unused React import)
-[33md5fbe3d[m[33m ([m[1;33mtag: [m[1;33mv5.0[m[33m, [m[1;33mtag: [m[1;33mv2.2.2[m[33m)[m Fix: Replace song navigation with in-place video update - no new page opens
-[33m6bde622[m[33m ([m[1;33mtag: [m[1;33mv2.2.1[m[33m)[m Lint clean: remove unused var in push.js; ready to tag & push
-[33m464742d[m Restore localStorage fallback with detailed error logging for Supabase failures
-[33m25ef937[m Fix: add validation check for Supabase song creation + expose real errors

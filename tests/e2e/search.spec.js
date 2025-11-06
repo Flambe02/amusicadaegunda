@@ -2,8 +2,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Search Functionality', () => {
   test('should display playlist page content', async ({ page }) => {
-    await page.goto('/playlist', { waitUntil: 'networkidle' });
-    await page.waitForTimeout(2000); // Wait for async content (Supabase)
+    await page.goto('/playlist', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('load');
+    await page.waitForTimeout(5000); // Wait for React, Supabase and useSEO to load
+    
+    // Wait for React to hydrate
+    await page.waitForSelector('#root', { state: 'attached' });
+    await page.waitForTimeout(3000);
     
     // Check if page loaded successfully
     const pageTitle = page.locator('h1, h2').first();
@@ -17,7 +22,7 @@ test.describe('Search Functionality', () => {
     const hasContent = await page.locator('body').textContent();
     
     // Page should have loaded (either with content or empty state or at least some text)
-    expect(hasTitle || hasSongs > 0 || hasMusicText > 0 || hasEmptyState > 0 || (hasContent && hasContent.length > 100)).toBeTruthy();
+    expect(hasTitle || hasSongs > 0 || hasMusicText > 0 || hasEmptyState > 0 || (hasContent && hasContent && hasContent.length > 100)).toBeTruthy();
   });
 });
 
