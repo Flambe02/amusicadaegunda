@@ -1,10 +1,21 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import YouTubePlayer from '../YouTubePlayer';
+
+// Supprimer les console.warn en mode test
+beforeEach(() => {
+  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+});
 
 describe('YouTubePlayer', () => {
   it('should render nothing when videoId is not provided', () => {
     const { container } = render(<YouTubePlayer />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('should render nothing when videoId is empty string', () => {
+    const { container } = render(<YouTubePlayer videoId="" />);
     expect(container.firstChild).toBeNull();
   });
 
