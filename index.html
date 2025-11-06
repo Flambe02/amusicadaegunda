@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Favicon et Icônes -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/pwa/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/pwa/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/icons/pwa/favicon-48x48.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/icons/pwa/favicon-64x64.png" />
+    <link rel="icon" type="image/png" sizes="128x128" href="/icons/pwa/icon-128x128.png" />
+    <link rel="icon" type="image/png" sizes="256x256" href="/icons/pwa/icon-256x256.png" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple/apple-touch-icon-180x180.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/icons/apple/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/apple/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/apple/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/apple/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/apple/apple-touch-icon-57x57.png" />
+    
+    <!-- Apple Touch Icons Precomposed (force square display on iOS) -->
+    <link rel="apple-touch-icon-precomposed" sizes="180x180" href="/icons/apple/apple-touch-icon-180x180.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="/icons/apple/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/icons/apple/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="/icons/apple/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/icons/apple/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="/icons/apple/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/icons/apple/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="/icons/apple/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="/icons/apple/apple-touch-icon-57x57.png" />
+    
+    <!-- Windows Tiles -->
+    <meta name="msapplication-TileColor" content="#32a2dc" />
+    <meta name="msapplication-TileImage" content="/icons/pwa/icon-144x144.png" />
+    <meta name="msapplication-config" content="none" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Música da Segunda" />
+    <meta name="application-name" content="Música da Segunda" />
+    <meta name="msapplication-TileColor" content="#32a2dc" />
+    <meta name="theme-color" content="#32a2dc" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.amusicadasegunda.com/" />
+    
+    <!-- SEO Principal -->
+    <title>Música da Segunda - Nova música toda segunda-feira</title>
+    <meta name="description" content="Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais." />
+    <meta name="keywords" content="música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music" />
+    <meta name="author" content="Música da Segunda" />
+    <meta name="robots" content="index, follow" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Música da Segunda" />
+    <meta property="og:description" content="Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais." />
+    <meta property="og:url" content="https://www.amusicadasegunda.com/" />
+    <meta property="og:image" content="https://www.amusicadasegunda.com/icons/icon-512x512.png" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Música da Segunda" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Música da Segunda" />
+    <meta name="twitter:description" content="Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais." />
+    <meta name="twitter:image" content="https://www.amusicadasegunda.com/icons/icon-512x512.png" />
+    
+    <!-- Preconnect pour performance - Uniquement ressources critiques -->
+    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- TikTok, Spotify, Apple Music, YouTube : préconnexions différées (chargées lazy) -->
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy"
+          content="
+            default-src 'self' data: blob:;
+            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com;
+            style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+            img-src 'self' data: https:;
+            font-src 'self' https://fonts.gstatic.com;
+            connect-src 'self' ws: wss: http: https:
+              https://efnzmpzkzeuktqkghwfa.functions.supabase.co
+              https://efnzmpzkzeuktqkghwfa.supabase.co
+              https://www.tiktok.com https://*.tiktokcdn.com
+              https://open.spotify.com https://api.spotify.com
+              https://music.apple.com https://*.apple.com;
+            frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
+            media-src https: data:;
+          ">
+    
+    <!-- Structured Data JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Música da Segunda",
+      "url": "https://www.amusicadasegunda.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.amusicadasegunda.com/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Música da Segunda",
+      "url": "https://www.amusicadasegunda.com/",
+      "logo": "https://www.amusicadasegunda.com/icons/icon-512x512.png"
+    }
+    </script>
+  </head>
+  <body>
+    <!-- Skip link pour accessibilité -->
+    <a href="#main" class="skip-link">Ir para o conteúdo</a>
+    
+    <div id="root"></div>
+    <script src="/pwa-install.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
+    
+  </body>
+</html>
+
