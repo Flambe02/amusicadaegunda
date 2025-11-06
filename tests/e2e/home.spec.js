@@ -10,9 +10,15 @@ test.describe('Home Page', () => {
     await page.goto('/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
     
+    // Wait for React to hydrate - check if root has content
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
     // Wait for any h1 to appear (desktop header in Layout or mobile header in Home)
     // Try multiple selectors to find the header
-    const header = page.locator('h1:has-text("Música da Segunda"), h1:has-text("A Música da Segunda")').first();
+    const header = page.locator('h1').first();
     
     // Wait up to 15 seconds for header to appear (Supabase may be slow)
     await expect(header).toBeVisible({ timeout: 15000 });

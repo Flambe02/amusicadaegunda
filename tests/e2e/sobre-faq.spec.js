@@ -3,6 +3,13 @@ import { test, expect } from '@playwright/test';
 test.describe('Sobre Page with FAQ', () => {
   test('should display Sobre page with FAQ section', async ({ page }) => {
     await page.goto('/sobre', { waitUntil: 'networkidle' });
+    
+    // Wait for React to hydrate
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
     await page.waitForTimeout(2000);
     
     // Wait for page to load and check main title
@@ -10,17 +17,24 @@ test.describe('Sobre Page with FAQ', () => {
     await expect(header).toBeVisible({ timeout: 15000 });
     await expect(header).toContainText(/Sobre/i, { timeout: 5000 });
     
-    // Check FAQ section exists - try multiple selectors
-    const faqSection = page.locator('h2:has-text("Perguntas Frequentes"), h2:has-text("perguntas frequentes"), text=/Perguntas Frequentes/i, text=/perguntas frequentes/i').first();
+    // Check FAQ section exists - try multiple selectors (separate CSS and text selectors)
+    const faqSection = page.locator('h2:has-text("Perguntas Frequentes")').or(page.locator('text=/Perguntas Frequentes/i')).first();
     await expect(faqSection).toBeVisible({ timeout: 15000 });
   });
 
   test('should expand FAQ items when clicked', async ({ page }) => {
     await page.goto('/sobre', { waitUntil: 'networkidle' });
+    
+    // Wait for React to hydrate
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
     await page.waitForTimeout(2000);
     
-    // Wait for FAQ section to be ready
-    const faqText = page.locator('h2:has-text("Perguntas Frequentes"), h2:has-text("perguntas frequentes"), text=/Perguntas Frequentes/i, text=/perguntas frequentes/i').first();
+    // Wait for FAQ section to be ready (separate CSS and text selectors)
+    const faqText = page.locator('h2:has-text("Perguntas Frequentes")').or(page.locator('text=/Perguntas Frequentes/i')).first();
     await expect(faqText).toBeVisible({ timeout: 15000 });
     
     // Find first FAQ question
@@ -42,6 +56,13 @@ test.describe('Sobre Page with FAQ', () => {
 
   test('should have Schema.org FAQPage structured data', async ({ page }) => {
     await page.goto('/sobre', { waitUntil: 'networkidle' });
+    
+    // Wait for React to hydrate
+    await page.waitForFunction(() => {
+      const root = document.getElementById('root');
+      return root && root.children.length > 0;
+    }, { timeout: 15000 });
+    
     // Wait for page to fully load including JSON-LD
     await page.waitForTimeout(3000);
     
@@ -63,7 +84,9 @@ test.describe('Sobre Page with FAQ', () => {
     }
     
         // FAQPage schema may be added dynamically, so we check if it exists or if FAQ section exists
-        const faqSectionExists = await page.locator('h2:has-text("Perguntas Frequentes"), h2:has-text("perguntas frequentes"), text=/Perguntas Frequentes/i, text=/perguntas frequentes/i').count() > 0;
+        const faqH2 = await page.locator('h2:has-text("Perguntas Frequentes")').count();
+        const faqText = await page.locator('text=/Perguntas Frequentes/i').count();
+        const faqSectionExists = faqH2 > 0 || faqText > 0;
         // If FAQ section exists, that's good enough - schema may be added by Helmet
         expect(hasFAQPage || faqSectionExists).toBeTruthy();
   });
