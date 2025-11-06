@@ -1,11 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AdventSong } from '@/api/entities';
-import { Gift, Lock, Music, Play, Sparkles, Youtube, ExternalLink, X, Calendar, ChevronLeft, FileText } from 'lucide-react';
+import { Gift, Lock, Music, Play, Sparkles, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
@@ -62,17 +60,27 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
       : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
 
   if (isShort) {
+    // Format optimisé pour YouTube Shorts (9:16 vertical)
     return (
-      <div className="w-full flex justify-center">
-        <div className="relative rounded-lg overflow-hidden shadow-lg" style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}>
+      <div className="w-full flex justify-center items-center py-4">
+        <div 
+          className="relative rounded-2xl overflow-hidden shadow-2xl bg-black"
+          style={{ 
+            width: '100%', 
+            maxWidth: '360px', 
+            aspectRatio: '9/16',
+            margin: '0 auto'
+          }}
+        >
           <iframe
             className="absolute top-0 left-0 w-full h-full"
             src={embedSrc}
             title={title || 'YouTube Short'}
             frameBorder="0"
             referrerPolicy="strict-origin-when-cross-origin"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
+            loading="lazy"
           />
         </div>
       </div>
@@ -94,27 +102,6 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   );
 }
 
-// Chanson spéciale "Calendario do Advento"
-const ADVENT_CALENDAR_SONG = {
-  id: 'advent-calendar-special',
-  title: 'Calendário do Advento',
-  artist: 'A Música da Segunda',
-  description: 'Música especial do calendário do advento musical',
-  lyrics: 'Calendário do advento...\nUma surpresa a cada dia...',
-  release_date: '2025-12-01',
-  status: 'published',
-  tiktok_video_id: '7540762684149517590', // ID de "Confissão Bancárias" pour l'exemple
-  tiktok_url: 'https://www.tiktok.com/@amusicadaegunda/video/7540762684149517590',
-  tiktok_publication_date: null,
-  spotify_url: null,
-  apple_music_url: null,
-  youtube_url: null,
-  cover_image: null,
-  hashtags: ['advent', 'calendario', 'musica', 'dezembro', 'surpresa'],
-  created_at: '2025-08-30T10:00:00Z',
-  updated_at: '2025-08-30T10:00:00Z',
-  day_of_december: 15
-};
 
 // Componente Porta do Advento corrigido
 const AdventDoor = ({ day, song, onOpen, hasBeenViewed = false }) => {
@@ -186,8 +173,6 @@ const AdventDoor = ({ day, song, onOpen, hasBeenViewed = false }) => {
 export default function AdventCalendar() {
   const [songs, setSongs] = useState([]);
   const [selectedSong, setSelectedSong] = useState(null);
-  const [showVideoModal, setShowVideoModal] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState(null);
   const [showPlatformsDialog, setShowPlatformsDialog] = useState(false);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
@@ -259,11 +244,6 @@ export default function AdventCalendar() {
   }
 
   // Fonctions pour gérer les modals (copiées de Home.jsx)
-  const handlePlayVideo = (song) => {
-    setSelectedVideo(song);
-    setShowVideoModal(true);
-  };
-
   const handleShowPlatforms = (song) => {
     setSelectedSongForDialog(song);
     setShowPlatformsDialog(true);
@@ -288,17 +268,6 @@ export default function AdventCalendar() {
     }
   };
 
-  // Fonction pour marquer une vidéo comme visualisée
-  const handleVideoViewed = (song) => {
-    if (song && song.day_of_december) {
-      const newViewedSongs = new Set(viewedSongs);
-      newViewedSongs.add(song.day_of_december);
-      setViewedSongs(newViewedSongs);
-      
-      // Sauvegarder dans localStorage
-      localStorage.setItem('advent_viewed_songs', JSON.stringify([...newViewedSongs]));
-    }
-  };
   
   return (
     <>
@@ -348,6 +317,12 @@ export default function AdventCalendar() {
       {/* Modal de Música Redesenhado - Copié exactement de Home.jsx */}
       <Dialog open={!!selectedSong} onOpenChange={() => setSelectedSong(null)}>
         <DialogContent className="p-0 border-0 bg-transparent max-w-md w-[95vw] max-h-[95vh] overflow-y-auto mx-auto my-4">
+          <DialogTitle className="sr-only">
+            {selectedSong?.title || 'Vídeo do Calendário do Advento'}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Vídeo musical do dia {selectedSong?.day_of_december} de dezembro de 2025
+          </DialogDescription>
           <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-3xl shadow-2xl overflow-hidden">
             {/* Cabeçalho com número do dia */}
             <div className="bg-gradient-to-r from-red-500 to-rose-600 p-4 text-center relative">
@@ -469,70 +444,6 @@ export default function AdventCalendar() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Modal Vidéo TikTok - Copié exactement de Home.jsx */}
-      {showVideoModal && selectedVideo && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-3xl font-bold text-blue-900">
-                  🎬 {selectedVideo.title}
-                </h2>
-                <button 
-                  onClick={() => setShowVideoModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                {/* Informations de la musique */}
-                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
-                  <h3 className="text-xl font-bold text-blue-900 mb-2">
-                    {selectedVideo.title}
-                  </h3>
-                  <p className="text-blue-700 font-medium">
-                    {selectedVideo.artist}
-                  </p>
-                  <p className="text-blue-600 text-sm">
-                    📅 Lançamento: {format(parseISO(selectedVideo.release_date), 'dd/MM/yyyy', { locale: ptBR })}
-                  </p>
-                </div>
-
-                {/* Lecteur YouTube intégré */}
-                <div className="bg-black rounded-xl overflow-hidden shadow-2xl">
-                  <YouTubeEmbed
-                    youtube_music_url={selectedVideo.youtube_music_url}
-                    youtube_url={selectedVideo.youtube_url}
-                    title={selectedVideo.title}
-                  />
-                </div>
-
-                {/* Boutons d'action */}
-                <div className="flex gap-4 justify-center">
-                  <button
-                    onClick={() => {
-                      const url = selectedVideo.youtube_music_url || selectedVideo.youtube_url;
-                      if (url) window.open(url, '_blank');
-                    }}
-                    className="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
-                  >
-                    📺 Ver no YouTube
-                  </button>
-                  <button
-                    onClick={() => setShowVideoModal(false)}
-                    className="bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-                  >
-                    Fechar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Dialog Plataformas - Copié de Home.jsx */}
       <Dialog open={showPlatformsDialog} onOpenChange={setShowPlatformsDialog}>

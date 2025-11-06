@@ -8,7 +8,8 @@ test.describe('Navigation', () => {
     await page.waitForTimeout(2000);
     
     // Navigate to Sobre - navigation can be desktop (lg:block) or mobile (lg:hidden)
-    const sobreLink = page.locator('text=Sobre, a:has-text("Sobre")').first();
+    // Try multiple selectors to find the link
+    const sobreLink = page.locator('a:has-text("Sobre"), nav a:has-text("Sobre"), [role="navigation"] a:has-text("Sobre")').first();
     await expect(sobreLink).toBeVisible({ timeout: 15000 });
     await sobreLink.click();
     await expect(page).toHaveURL(/.*sobre/, { timeout: 15000 });
@@ -21,7 +22,7 @@ test.describe('Navigation', () => {
     await expect(sobreHeader).toContainText(/Sobre/i, { timeout: 5000 });
     
     // Navigate to Calendar
-    const calendarLink = page.locator('text=Calendário, a:has-text("Calendário")').first();
+    const calendarLink = page.locator('a:has-text("Calendário"), nav a:has-text("Calendário")').first();
     await expect(calendarLink).toBeVisible({ timeout: 15000 });
     await calendarLink.click();
     await expect(page).toHaveURL(/.*calendar/, { timeout: 15000 });
@@ -29,7 +30,7 @@ test.describe('Navigation', () => {
     await page.waitForTimeout(1000);
     
     // Navigate to Playlist
-    const playlistLink = page.locator('text=Playlist, a:has-text("Playlist")').first();
+    const playlistLink = page.locator('a:has-text("Playlist"), nav a:has-text("Playlist")').first();
     await expect(playlistLink).toBeVisible({ timeout: 15000 });
     await playlistLink.click();
     await expect(page).toHaveURL(/.*playlist/, { timeout: 15000 });
@@ -37,7 +38,7 @@ test.describe('Navigation', () => {
     await page.waitForTimeout(1000);
     
     // Navigate back to Home
-    const inicioLink = page.locator('text=Início, a:has-text("Início")').first();
+    const inicioLink = page.locator('a:has-text("Início"), nav a:has-text("Início")').first();
     await expect(inicioLink).toBeVisible({ timeout: 15000 });
     await inicioLink.click();
     await expect(page).toHaveURL(/\//, { timeout: 15000 });

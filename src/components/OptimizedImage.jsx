@@ -19,7 +19,6 @@ export default function OptimizedImage({
   ...props 
 }) {
   const [imageError, setImageError] = useState(false);
-  const [webpError, setWebpError] = useState(false);
 
   // Générer le chemin WebP
   const getWebpPath = (imagePath) => {
@@ -37,10 +36,6 @@ export default function OptimizedImage({
 
   const webpSrc = getWebpPath(src);
   const fallbackSrc = src;
-
-  const handleWebpError = () => {
-    setWebpError(true);
-  };
 
   const handleImageError = () => {
     setImageError(true);
@@ -60,7 +55,7 @@ export default function OptimizedImage({
   }
 
   // Si WebP n'est pas disponible, utiliser directement l'image
-  if (!webpSrc || webpError) {
+  if (!webpSrc) {
     return (
       <img
         src={fallbackSrc}
@@ -76,9 +71,9 @@ export default function OptimizedImage({
 
   return (
     <picture>
-      {/* Source WebP */}
+      {/* Source WebP - srcSet doit avoir un descripteur valide */}
       <source 
-        srcSet={webpSrc} 
+        srcSet={`${webpSrc} 1x`} 
         type="image/webp"
       />
       
