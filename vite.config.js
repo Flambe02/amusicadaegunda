@@ -18,25 +18,25 @@ export default defineConfig(({ command, mode }) => ({
     outDir: 'dist',
     // ✅ PERFORMANCE: Optimisations pour les Core Web Vitals
     target: 'es2015',
-    // ✅ ROLLBACK: esbuild (Terser trop agressif cassait React Scheduler)
+    // ✅ FIX FINAL: esbuild sans drop (scheduler a besoin de console/debugger intacts)
     minify: 'esbuild',
     sourcemap: false,
     cssCodeSplit: true, // Code splitting CSS pour réduire les blocs
     esbuild: {
-      drop: command === 'build' ? ['console', 'debugger'] : [],
-      legalComments: 'none', // Supprimer les commentaires de licence
-      minifyIdentifiers: true,
-      minifySyntax: true,
-      minifyWhitespace: true,
+      // ❌ NE PAS drop console/debugger (casse React Scheduler)
+      legalComments: 'none',
     },
     rollupOptions: {
       output: {
-        // ✅ QUICK WIN 5: Chunk splitting agressif optimisé
+        // ✅ CHUNK SPLITTING CORRIGÉ: scheduler DOIT rester avec React
         manualChunks: (id) => {
           // Vendor chunks séparés par dépendance
           if (id.includes('node_modules')) {
-            // React core (toujours nécessaire)
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            // React core + scheduler + react-dom + react-router (ENSEMBLE)
+            if (id.includes('react') || 
+                id.includes('react-dom') || 
+                id.includes('react-router') ||
+                id.includes('scheduler')) {  // ✅ CRITIQUE: scheduler avec React
               return 'vendor';
             }
             // UI components (Radix UI, Lucide icons)
