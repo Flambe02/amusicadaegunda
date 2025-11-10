@@ -3,203 +3,200 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Force Update - A Música da Segunda</title>
+  <title>Forcer la mise à jour - A Música da Segunda</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
       padding: 20px;
+      background: linear-gradient(to bottom, #f9fafb, #e5e7eb);
     }
     .container {
       background: white;
-      border-radius: 16px;
-      padding: 40px;
-      max-width: 600px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      text-align: center;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    h1 {
-      color: #667eea;
-      margin-bottom: 20px;
-    }
+    h1 { color: #1f2937; margin-top: 0; }
     .status {
-      font-size: 18px;
-      margin: 20px 0;
-      padding: 20px;
+      padding: 15px;
+      margin: 15px 0;
       border-radius: 8px;
-      background: #f0f4ff;
+      font-weight: 500;
     }
-    .success {
-      background: #d4edda;
-      color: #155724;
-    }
-    .error {
-      background: #f8d7da;
-      color: #721c24;
-    }
+    .info { background: #dbeafe; color: #1e40af; }
+    .success { background: #d1fae5; color: #065f46; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .warning { background: #fef3c7; color: #92400e; }
     button {
-      background: #667eea;
+      background: #3b82f6;
       color: white;
       border: none;
-      padding: 15px 30px;
+      padding: 12px 24px;
       border-radius: 8px;
       font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
-      margin: 10px;
+      margin: 10px 5px;
     }
-    button:hover {
-      background: #5568d3;
+    button:hover { background: #2563eb; }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
     }
     .logs {
-      text-align: left;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 20px;
+      background: #f3f4f6;
+      padding: 15px;
       border-radius: 8px;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
+      margin-top: 20px;
       max-height: 400px;
       overflow-y: auto;
-      margin-top: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
     }
     .log-entry {
       margin: 5px 0;
+      padding: 5px;
+      border-left: 3px solid #3b82f6;
+      padding-left: 10px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔄 Force Update - A Música da Segunda</h1>
-    <p>Cette page force la mise à jour complète de l'application.</p>
+    <h1>🔄 Forcer la mise à jour</h1>
+    <p>Cette page va forcer la mise à jour du Service Worker et vider tous les caches.</p>
     
-    <div class="status" id="status">
-      Cliquez sur "Forcer la mise à jour" pour commencer
+    <div id="status" class="status info">
+      ⏳ Prêt à démarrer la mise à jour...
     </div>
     
-    <button onclick="forceUpdate()">🚀 Forcer la mise à jour</button>
-    <button onclick="clearAllCaches()">🗑️ Vider tous les caches</button>
-    <button onclick="unregisterSW()">❌ Désinstaller le Service Worker</button>
-    <button onclick="goHome()">🏠 Retour à l'accueil</button>
+    <button id="updateBtn" onclick="forceUpdate()">🚀 Forcer la mise à jour</button>
+    <button onclick="location.href='/'">🏠 Retour à l'accueil</button>
     
     <div class="logs" id="logs"></div>
   </div>
 
   <script>
-    const logsDiv = document.getElementById('logs');
-    const statusDiv = document.getElementById('status');
+    const logs = [];
     
-    function log(message, type = 'info') {
+    function addLog(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString('pt-BR');
+      const logEntry = `[${timestamp}] ${message}`;
+      logs.push(logEntry);
+      
+      const logsDiv = document.getElementById('logs');
       const entry = document.createElement('div');
       entry.className = 'log-entry';
-      const time = new Date().toLocaleTimeString();
-      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-      entry.textContent = `[${time}] ${icon} ${message}`;
+      entry.textContent = logEntry;
       logsDiv.appendChild(entry);
       logsDiv.scrollTop = logsDiv.scrollHeight;
+      
+      console.log(logEntry);
     }
     
-    function updateStatus(message, success = true) {
+    function updateStatus(message, type = 'info') {
+      const statusDiv = document.getElementById('status');
+      statusDiv.className = `status ${type}`;
       statusDiv.textContent = message;
-      statusDiv.className = success ? 'status success' : 'status error';
-    }
-    
-    async function clearAllCaches() {
-      log('Début du nettoyage des caches...');
-      
-      try {
-        const cacheNames = await caches.keys();
-        log(`Trouvé ${cacheNames.length} caches`);
-        
-        for (const cacheName of cacheNames) {
-          await caches.delete(cacheName);
-          log(`Cache supprimé: ${cacheName}`, 'success');
-        }
-        
-        updateStatus(`✅ ${cacheNames.length} caches supprimés avec succès`, true);
-      } catch (error) {
-        log(`Erreur: ${error.message}`, 'error');
-        updateStatus('❌ Erreur lors de la suppression des caches', false);
-      }
-    }
-    
-    async function unregisterSW() {
-      log('Début de la désinstallation du Service Worker...');
-      
-      if (!('serviceWorker' in navigator)) {
-        log('Service Worker non supporté', 'error');
-        updateStatus('❌ Service Worker non supporté', false);
-        return;
-      }
-      
-      try {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        log(`Trouvé ${registrations.length} Service Worker(s)`);
-        
-        for (const registration of registrations) {
-          await registration.unregister();
-          log(`Service Worker désinstallé: ${registration.scope}`, 'success');
-        }
-        
-        updateStatus(`✅ ${registrations.length} Service Worker(s) désinstallé(s)`, true);
-      } catch (error) {
-        log(`Erreur: ${error.message}`, 'error');
-        updateStatus('❌ Erreur lors de la désinstallation', false);
-      }
     }
     
     async function forceUpdate() {
-      log('Début de la mise à jour forcée...');
-      updateStatus('⏳ Mise à jour en cours...', true);
+      const btn = document.getElementById('updateBtn');
+      btn.disabled = true;
       
-      // 1. Vider tous les caches
-      await clearAllCaches();
-      
-      // 2. Désinstaller le Service Worker
-      await unregisterSW();
-      
-      // 3. Vider le localStorage
-      log('Nettoyage du localStorage...');
-      localStorage.clear();
-      log('localStorage vidé', 'success');
-      
-      // 4. Vider le sessionStorage
-      log('Nettoyage du sessionStorage...');
-      sessionStorage.clear();
-      log('sessionStorage vidé', 'success');
-      
-      // 5. Vider IndexedDB
       try {
-        const databases = await indexedDB.databases();
-        for (const db of databases) {
-          indexedDB.deleteDatabase(db.name);
-          log(`IndexedDB supprimé: ${db.name}`, 'success');
+        addLog('🚀 Début de la mise à jour forcée');
+        updateStatus('⏳ Mise à jour en cours...', 'info');
+        
+        // 1. Désactiver tous les Service Workers
+        if ('serviceWorker' in navigator) {
+          addLog('🔍 Recherche des Service Workers actifs...');
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          
+          if (registrations.length > 0) {
+            addLog(`📋 ${registrations.length} Service Worker(s) trouvé(s)`);
+            
+            for (const registration of registrations) {
+              addLog(`🗑️ Désactivation du Service Worker: ${registration.scope}`);
+              await registration.unregister();
+            }
+            
+            addLog('✅ Tous les Service Workers ont été désactivés');
+          } else {
+            addLog('ℹ️ Aucun Service Worker actif trouvé');
+          }
         }
+        
+        // 2. Vider tous les caches
+        if ('caches' in window) {
+          addLog('🔍 Recherche des caches...');
+          const cacheNames = await caches.keys();
+          
+          if (cacheNames.length > 0) {
+            addLog(`📋 ${cacheNames.length} cache(s) trouvé(s)`);
+            
+            for (const cacheName of cacheNames) {
+              addLog(`🗑️ Suppression du cache: ${cacheName}`);
+              await caches.delete(cacheName);
+            }
+            
+            addLog('✅ Tous les caches ont été vidés');
+          } else {
+            addLog('ℹ️ Aucun cache trouvé');
+          }
+        }
+        
+        // 3. Vider localStorage
+        addLog('🗑️ Vidage du localStorage...');
+        localStorage.clear();
+        addLog('✅ localStorage vidé');
+        
+        // 4. Vider sessionStorage
+        addLog('🗑️ Vidage du sessionStorage...');
+        sessionStorage.clear();
+        addLog('✅ sessionStorage vidé');
+        
+        // 5. Réenregistrer le Service Worker
+        if ('serviceWorker' in navigator) {
+          addLog('🔄 Réenregistrement du Service Worker...');
+          const registration = await navigator.serviceWorker.register('/sw.js', {
+            updateViaCache: 'none'
+          });
+          
+          addLog('✅ Service Worker réenregistré');
+          
+          // Forcer la mise à jour
+          if (registration.waiting) {
+            addLog('🔄 Service Worker en attente détecté, activation...');
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+          
+          await registration.update();
+          addLog('✅ Mise à jour du Service Worker forcée');
+        }
+        
+        addLog('🎉 Mise à jour terminée avec succès !');
+        updateStatus('✅ Mise à jour terminée ! Rechargement dans 3 secondes...', 'success');
+        
+        // Recharger la page après 3 secondes
+        setTimeout(() => {
+          addLog('🔄 Rechargement de la page...');
+          window.location.href = '/';
+        }, 3000);
+        
       } catch (error) {
-        log(`Erreur IndexedDB: ${error.message}`, 'error');
+        addLog(`❌ Erreur: ${error.message}`, 'error');
+        updateStatus(`❌ Erreur: ${error.message}`, 'error');
+        console.error('Erreur lors de la mise à jour:', error);
+        btn.disabled = false;
       }
-      
-      updateStatus('✅ Mise à jour terminée ! Redirection dans 3 secondes...', true);
-      log('Redirection vers l\'accueil...', 'success');
-      
-      // 6. Rediriger vers l'accueil avec cache-busting
-      setTimeout(() => {
-        window.location.href = '/?_=' + Date.now();
-      }, 3000);
     }
     
-    function goHome() {
-      window.location.href = '/';
-    }
-    
-    // Log initial
-    log('Page de force update chargée');
-    log('Prêt pour la mise à jour');
+    // Ajouter un message initial
+    addLog('✅ Page de mise à jour chargée');
+    addLog('ℹ️ Cliquez sur "Forcer la mise à jour" pour commencer');
   </script>
 </body>
 </html>
-
