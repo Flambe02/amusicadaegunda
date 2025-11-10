@@ -22,8 +22,9 @@ export default defineConfig(({ command, mode }) => ({
     sourcemap: false,
     esbuild: {
       drop: command === 'build' ? ['debugger'] : [],
+      // Garder console.warn et console.error en production pour le debug
       pure: command === 'build' 
-        ? ['console.log', 'console.debug', 'console.info', 'console.trace', 'console.warn', 'console.error'] 
+        ? ['console.log', 'console.debug', 'console.info', 'console.trace'] 
         : [],
     },
     rollupOptions: {
