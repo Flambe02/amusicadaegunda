@@ -107,6 +107,7 @@ export const supabaseSongService = {
       // Ajouter un paramètre de cache-busting pour forcer la requête fraîche
       const cacheBuster = `?t=${Date.now()}`;
       
+      // Forcer une requête fraîche en ajoutant un header de cache-busting
       const { data, error } = await supabase
         .from(TABLES.SONGS)
         .select('*')
@@ -117,7 +118,8 @@ export const supabaseSongService = {
         .order('updated_at', { ascending: false })
         .order('release_date', { ascending: false })
         .limit(1)
-        .single(); // Utiliser .single() pour obtenir un objet unique ou null, plus propre que .limit(1)
+        .single() // Utiliser .single() pour obtenir un objet unique ou null, plus propre que .limit(1)
+        .abortSignal(AbortSignal.timeout(10000)); // Timeout de 10s pour éviter les requêtes bloquées
 
       if (error) {
         // Gérer le cas où .single() ne trouve rien sans que ce soit une erreur bloquante

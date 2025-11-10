@@ -171,6 +171,9 @@ export default function Home() {
     
     try {
       logger.debug('🔄 Tentative de chargement depuis Supabase...');
+      console.warn('🔄 loadCurrentSong appelé à:', new Date().toISOString());
+      
+      // Forcer un rechargement complet en production
       const song = await Song.getCurrent();
       logger.debug('📊 Chanson actuelle chargée:', song);
       
@@ -180,8 +183,17 @@ export default function Home() {
           title: song.title,
           created_at: song.created_at,
           updated_at: song.updated_at,
-          release_date: song.release_date
+          release_date: song.release_date,
+          id: song.id
         });
+        
+        // Vérifier si c'est bien la bonne chanson
+        if (song.title === 'Rio continua lindo (só que não)') {
+          console.error('⚠️ PROBLÈME: Ancienne chanson chargée (Rio) au lieu de William!');
+          console.error('⚠️ Vérifier les dates dans Supabase et le tri');
+        }
+      } else {
+        console.warn('⚠️ Aucune chanson chargée');
       }
       
       setCurrentSong(song);
