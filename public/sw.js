@@ -30,10 +30,10 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
 } else {
 // ✅ PRODUCTION: Code normal du Service Worker
 
-const CACHE_NAME = 'musica-da-segunda-v5.0.4';
-const STATIC_CACHE = 'static-v5.0.4';
-const DYNAMIC_CACHE = 'dynamic-v5.0.4';
-const API_CACHE = 'api-v5.0.4';
+const CACHE_NAME = 'musica-da-segunda-v5.0.5';
+const STATIC_CACHE = 'static-v5.0.5';
+const DYNAMIC_CACHE = 'dynamic-v5.0.5';
+const API_CACHE = 'api-v5.0.5';
 
 // Assets statiques critiques (cache-first)
 const STATIC_ASSETS = [
@@ -137,12 +137,12 @@ self.addEventListener('activate', (event) => {
       console.log('✅ Service Worker: Anciens caches nettoyés');
       // Forcer la prise de contrôle immédiate de tous les clients
       return self.clients.claim().then(() => {
-        // Envoyer un message à tous les clients pour forcer le rechargement
-        return self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: 'SW_UPDATED', version: 'v5.0.4' });
-          });
-        });
+              // Envoyer un message à tous les clients pour forcer le rechargement
+              return self.clients.matchAll().then(clients => {
+                clients.forEach(client => {
+                  client.postMessage({ type: 'SW_UPDATED', version: 'v5.0.5' });
+                });
+              });
       });
     }).catch((error) => {
       console.error('❌ Service Worker: Erreur lors de l\'activation', error);

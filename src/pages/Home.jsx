@@ -146,9 +146,18 @@ export default function Home() {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'SW_UPDATED') {
-          console.warn('🔄 Service Worker mis à jour, rechargement de la chanson...');
-          loadCurrentSong();
+          console.warn('🔄 Service Worker mis à jour, rechargement complet de la page...');
+          // Forcer un hard reload pour récupérer les nouveaux fichiers JS
+          window.location.reload(true);
         }
+      });
+      
+      // Forcer la mise à jour du Service Worker à chaque chargement
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          console.warn('🔍 Vérification des mises à jour du Service Worker...');
+          registration.update();
+        });
       });
     }
     
