@@ -1,30 +1,71 @@
-# Cache headers pour GitHub Pages
-# https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#static-site-generators
+# Headers optimaux pour GitHub Pages + Cloudflare
+# Améliore performance et sécurité
 
-# Assets statiques (JS, CSS) - Cache 1 an (avec hash dans le nom)
+# ===== ASSETS STATIQUES (Cache 1 an) =====
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
-# Images - Cache 1 mois
-/images/*
-  Cache-Control: public, max-age=2592000
-
-# Icônes - Cache 1 an
+# ===== ICÔNES (Cache 1 an) =====
 /icons/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Manifest et SW - Pas de cache (doivent être toujours à jour)
-/manifest.json
-  Cache-Control: public, max-age=0, must-revalidate
+# ===== IMAGES (Cache 1 mois) =====
+/images/*
+  Cache-Control: public, max-age=2592000
+  X-Content-Type-Options: nosniff
 
-/sw.js
-  Cache-Control: public, max-age=0, must-revalidate
-
-# HTML - Cache court avec revalidation
-/*.html
-  Cache-Control: public, max-age=3600, must-revalidate
-
-# Fonts - Cache 1 an
-/fonts/*
+# ===== FONTS (Cache 1 an) =====
+*.woff2
   Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
 
+*.woff
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+# ===== SERVICE WORKER (Pas de cache) =====
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
+
+# ===== MANIFEST (Cache 1 semaine) =====
+/manifest.json
+  Cache-Control: public, max-age=604800
+  X-Content-Type-Options: nosniff
+
+# ===== HTML (Cache court avec revalidation) =====
+*.html
+  Cache-Control: public, max-age=3600, must-revalidate
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# ===== ROOT (Cache court avec revalidation) =====
+/
+  Cache-Control: public, max-age=3600, must-revalidate
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# ===== SITEMAPS (Cache 1 jour) =====
+*.xml
+  Cache-Control: public, max-age=86400
+
+# ===== CSS (Cache 1 an avec hash) =====
+*.css
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# ===== JS (Cache 1 an avec hash) =====
+*.js
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
+
+# ===== SÉCURITÉ GLOBALE =====
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()

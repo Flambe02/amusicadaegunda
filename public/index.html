@@ -4,6 +4,60 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
+    <!-- ✅ PHASE 2 #3: Critical CSS inline pour réduire render blocking -->
+    <style>
+      /* Critical CSS - Above the fold styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        line-height: 1.5;
+        color: #1f2937;
+        background: linear-gradient(to bottom, #f9fafb, #e5e7eb);
+        min-height: 100vh;
+      }
+      
+      #root {
+        min-height: 100vh;
+      }
+      
+      /* Loading spinner */
+      .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid #e5e7eb;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      /* Skeleton loader */
+      .skeleton {
+        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+    </style>
+    
+    <!-- ✅ PHASE 2: Preconnect et DNS Prefetch pour domaines externes -->
+    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.supabase.co" crossorigin>
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    
     <!-- Favicon et Icônes -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/pwa/favicon-16x16.png" />
@@ -77,11 +131,15 @@
     <meta name="twitter:description" content="Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais." />
     <meta name="twitter:image" content="https://www.amusicadasegunda.com/icons/icon-512x512.png" />
     
-    <!-- Preconnect pour performance - Uniquement ressources critiques -->
+    <!-- ✅ PHASE 2 #5: Resource hints optimisés pour performance -->
+    <!-- Preconnect Supabase (critique - chargé immédiatement) -->
+    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.supabase.co" crossorigin />
     <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- TikTok, Spotify, Apple Music, YouTube : préconnexions différées (chargées lazy) -->
+    <!-- DNS prefetch pour domaines secondaires -->
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <!-- TikTok, Spotify, Apple Music : chargés lazy -->
     
     <!-- Security Headers -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />

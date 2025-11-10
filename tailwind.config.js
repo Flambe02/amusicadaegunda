@@ -1,7 +1,21 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ["class"],
-    content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+    // ✅ PHASE 2 #2: Content optimisé pour PurgeCSS
+    content: [
+      "./index.html", 
+      "./src/**/*.{ts,tsx,js,jsx}",
+      "./public/pwa-install.js" // Inclure tous les fichiers JS
+    ],
+    // Classes à toujours garder (safelist)
+    safelist: [
+      'animate-spin',
+      'animate-pulse',
+      'bg-green-500',
+      'bg-red-500',
+      'bg-yellow-500',
+      'bg-blue-500',
+    ],
   theme: {
   	extend: {
   		borderRadius: {
