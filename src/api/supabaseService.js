@@ -102,6 +102,10 @@ export const supabaseSongService = {
   async getCurrent() {
     try {
       console.warn('🔍 getCurrent() - Début de la fonction');
+      console.warn('🔍 Timestamp:', new Date().toISOString());
+      
+      // Ajouter un paramètre de cache-busting pour forcer la requête fraîche
+      const cacheBuster = `?t=${Date.now()}`;
       
       const { data, error } = await supabase
         .from(TABLES.SONGS)

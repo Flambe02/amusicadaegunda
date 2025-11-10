@@ -141,8 +141,18 @@ export default function Home() {
   useEffect(() => {
     logger.debug('🏠 Home useEffect triggered');
     localStorageService.initialize();
+    
+    // Forcer le rechargement à chaque montage pour éviter le cache
     loadCurrentSong();
     loadRecentSongs();
+    
+    // Recharger périodiquement pour s'assurer d'avoir la dernière chanson
+    const interval = setInterval(() => {
+      console.warn('🔄 Rechargement périodique de la chanson actuelle...');
+      loadCurrentSong();
+    }, 30000); // Toutes les 30 secondes
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadCurrentSong = async () => {
