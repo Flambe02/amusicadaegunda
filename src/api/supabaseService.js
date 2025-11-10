@@ -98,7 +98,7 @@ export const supabaseSongService = {
     }
   },
 
-  // Récupérer la chanson actuelle (la plus récente publiée)
+  // Récupérer la chanson actuelle (la plus récente enregistrée dans Supabase)
   async getCurrent() {
     try {
       console.warn('🔍 getCurrent() - Début de la fonction');
@@ -107,7 +107,10 @@ export const supabaseSongService = {
         .from(TABLES.SONGS)
         .select('*')
         .eq('status', 'published')
-        // Correction: Trier uniquement par la date de sortie pour garantir que la plus récente est toujours la première.
+        // Trier par created_at (date d'enregistrement dans Supabase) pour obtenir la dernière vidéo enregistrée
+        // Si plusieurs ont le même created_at, utiliser updated_at puis release_date comme critères secondaires
+        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .order('release_date', { ascending: false })
         .limit(1)
         .single(); // Utiliser .single() pour obtenir un objet unique ou null, plus propre que .limit(1)

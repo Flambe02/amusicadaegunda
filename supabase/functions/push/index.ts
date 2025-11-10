@@ -1,6 +1,37 @@
 // Supabase Edge Function - Web Push backend
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-// import webpush from "https://esm.sh/web-push@3.6.7"; // Temporarily disabled
+
+// Import web-push pour l'envoi des notifications
+// Note: Import dynamique avec gestion d'erreur pour compatibilité Deno
+let webpush: any = null;
+let webpushInitialized = false;
+
+// Fonction d'initialisation lazy de web-push
+async function initWebPush() {
+  // Si déjà initialisé (succès ou échec), retourner le résultat
+  if (webpushInitialized) {
+    return webpush && webpush !== false ? webpush : null;
+  }
+  
+  // Si pas encore initialisé, essayer de charger
+  if (webpush === null) {
+    try {
+      // Import dynamique pour gérer les erreurs de compatibilité
+      const webpushModule = await import("https://esm.sh/web-push@3.6.7");
+      webpush = webpushModule.default || webpushModule;
+      console.log("✅ web-push library loaded");
+      webpushInitialized = true;
+      return webpush;
+    } catch (e) {
+      console.warn("⚠️ web-push import failed, notifications will be disabled:", e);
+      webpush = false; // Marquer comme échec pour éviter de réessayer
+      webpushInitialized = true;
+      return null;
+    }
+  }
+  
+  return webpush && webpush !== false ? webpush : null;
+}
 
 // Environment variables with fallbacks
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? Deno.env.get("SUPABASE_DB_URL") ?? "";
@@ -88,20 +119,30 @@ function extractIP(req: Request): string {
   return "unknown";
 }
 
-// Initialize webpush only if we have VAPID keys
-// Temporarily disabled due to compatibility issues
-/*
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  try {
-    webpush.setVapidDetails("mailto:admin@amusicadasegunda.com", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
-    console.log("✅ Webpush initialized successfully");
-  } catch (e) {
-    console.error("❌ Failed to initialize webpush:", e);
+// Fonction pour initialiser webpush avec les clés VAPID
+async function ensureWebPushInitialized() {
+  const wp = await initWebPush();
+  if (!wp) {
+    return false;
   }
-} else {
-  console.warn("⚠️ Missing VAPID keys");
+  
+  // Mettre à jour la variable globale
+  webpush = wp;
+  
+  if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+    try {
+      webpush.setVapidDetails("mailto:admin@amusicadasegunda.com", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+      console.log("✅ Webpush initialized successfully");
+      return true;
+    } catch (e) {
+      console.error("❌ Failed to initialize webpush:", e);
+      return false;
+    }
+  } else {
+    console.warn("⚠️ Missing VAPID keys");
+    return false;
+  }
 }
-*/
 
 // Localized messages
 const MESSAGES: Record<string, { title: string; body: string }> = {
@@ -306,14 +347,111 @@ Deno.serve(async (req: Request) => {
     }
   }
 
-  // POST|GET /push/send → no-op here; delivery is done by Node sender
+  // POST|GET /push/send → Envoi réel des notifications
   if (pathname.endsWith("/send") && (req.method === "POST" || req.method === "GET")) {
     try {
+      // Initialiser webpush si nécessaire
+      const isInitialized = await ensureWebPushInitialized();
+      if (!isInitialized || !webpush) {
+        return new Response(JSON.stringify({ 
+          error: "web-push library not available",
+          message: "Notifications are temporarily disabled. Please check VAPID keys configuration."
+        }), { 
+          status: 503, 
+          headers: cors({ "Content-Type": "application/json" }) 
+        });
+      }
+
+      // Rate limiting check
+      const ip = extractIP(req);
+      const rateLimit = checkRateLimit(ip);
+      
+      if (!rateLimit.allowed) {
+        return new Response(JSON.stringify({ 
+          error: "rate_limited", 
+          retry_after: Math.ceil(rateLimit.retryAfter! / 1000)
+        }), { 
+          status: 429, 
+          headers: cors({ "Content-Type": "application/json" }) 
+        });
+      }
+
+      // Récupérer les paramètres
       const params = req.method === "GET" ? {} : await req.json();
+      const locale = params.locale || PUSH_DEFAULT_LOCALE;
+      const t = MESSAGES[locale] || MESSAGES["pt-BR"];
+      
+      const {
+        title = t.title,
+        body = t.body,
+        url = "/",
+        tag = "nova-musica",
+        topic = "new-song",
+        icon,
+        badge
+      } = params;
+
+      // Récupérer les subscriptions pour ce topic
+      const subs = await listByTopic(topic);
+      
+      if (subs.length === 0) {
+        return new Response(JSON.stringify({ 
+          ok: true, 
+          sent: 0,
+          message: "No subscriptions found for this topic"
+        }), { 
+          headers: cors({ "Content-Type": "application/json" }) 
+        });
+      }
+
+      // Préparer le payload
+      const payload = JSON.stringify({
+        title,
+        body,
+        url,
+        tag,
+        icon: icon || "/icons/pwa/icon-192x192.png",
+        badge: badge || "/icons/badge-72.png"
+      });
+
+      // Envoyer les notifications
+      let sent = 0;
+      let failed = 0;
+      const results = await Promise.allSettled(
+        subs.map(async (s: any) => {
+          try {
+            await webpush.sendNotification(
+              { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+              payload
+            );
+            sent++;
+            return { success: true, endpoint: s.endpoint };
+          } catch (e: any) {
+            // Supprimer les subscriptions invalides (404/410)
+            if (e.statusCode === 404 || e.statusCode === 410) {
+              console.warn(`Removing invalid subscription: ${s.endpoint}`);
+              await removeByEndpoint(s.endpoint).catch(() => {});
+            }
+            failed++;
+            return { success: false, endpoint: s.endpoint, error: e.message };
+          }
+        })
+      );
+
+      console.log(JSON.stringify({
+        at: new Date().toISOString(),
+        fn: "push-edge",
+        topic,
+        total: subs.length,
+        sent,
+        failed
+      }));
+
       return new Response(JSON.stringify({ 
         ok: true, 
-        note: "sender-node handles delivery", 
-        params 
+        sent,
+        failed,
+        total: subs.length
       }), { 
         headers: cors({ "Content-Type": "application/json" }) 
       });
@@ -324,10 +462,10 @@ Deno.serve(async (req: Request) => {
         error: String(e?.message ?? e)
       }));
       return new Response(JSON.stringify({ 
-        error: "Invalid JSON", 
+        error: "Send failed", 
         message: String(e) 
       }), { 
-        status: 400, 
+        status: 500, 
         headers: cors({ "Content-Type": "application/json" }) 
       });
     }

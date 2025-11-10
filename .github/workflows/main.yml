@@ -40,6 +40,8 @@ jobs:
           echo "VITE_SUPABASE_URL=${{ secrets.VITE_SUPABASE_URL }}" >> .env
           echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}" >> .env
           echo "VITE_VAPID_PUBLIC_KEY=${{ secrets.VITE_VAPID_PUBLIC_KEY }}" >> .env
+          echo "VITE_PUSH_API_BASE=${{ secrets.VITE_PUSH_API_BASE }}" >> .env
+          echo "VITE_VAPID_KEY_VERSION=${{ secrets.VITE_VAPID_KEY_VERSION }}" >> .env
         shell: bash
         
       - name: Build application

@@ -40,21 +40,19 @@ import { Label } from '@/components/ui/label';
 
 /**
  * Fonction pour envoyer des notifications push à tous les abonnés
- * Utilise l'API serverless (Vercel/Netlify) ou Supabase Edge Function
+ * Utilise Supabase Edge Function
+ * @returns {Promise<{success: boolean, sent?: number, error?: string}>}
  */
 async function notifyAllSubscribers({ title, body, icon, url }) {
-  // Utiliser Supabase Edge Functions (pas Vercel)
+  // Utiliser Supabase Edge Functions
   const API_BASE = import.meta.env?.VITE_PUSH_API_BASE || 'https://efnzmpzkzeuktqkghwfa.functions.supabase.co';
   
   try {
-    // Envoyer les notifications via Supabase Edge Function (sans attendre la réponse)
-    // L'endpoint /push/send existe dans supabase/functions/push/
-    fetch(`${API_BASE}/push/send`, {
+    // Envoyer les notifications via Supabase Edge Function
+    const response = await fetch(`${API_BASE}/push/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        // TODO: Ajouter un token d'autorisation si nécessaire
-        // 'Authorization': `Bearer ${process.env.ADMIN_TOKEN}`
       },
       body: JSON.stringify({
         title: title || 'Nouvelle Chanson ! 🎶',
@@ -65,11 +63,25 @@ async function notifyAllSubscribers({ title, body, icon, url }) {
         topic: 'new-song',
         locale: 'pt-BR'
       }),
-    }).catch(err => {
-      console.error('Erreur envoi notifications push:', err);
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('Erreur envoi notifications push:', response.status, errorData);
+      return { success: false, error: `HTTP ${response.status}: ${errorData.error || errorData.message || 'Erreur inconnue'}` };
+    }
+
+    const result = await response.json();
+    console.warn('✅ Notifications envoyées:', result);
+    
+    if (result.ok && result.sent !== undefined) {
+      return { success: true, sent: result.sent, total: result.total, failed: result.failed };
+    } else {
+      return { success: false, error: result.message || 'Réponse inattendue' };
+    }
   } catch (error) {
     console.error('Erreur préparation notification:', error);
+    return { success: false, error: error.message || 'Erreur réseau' };
   }
 }
 
@@ -1468,12 +1480,22 @@ export default function AdminPage() {
           
           displayMessage('success', '✅ Música criada com sucesso!');
           
-          // Envoyer les notifications push (sans attendre la réponse)
+          // Envoyer les notifications push (en arrière-plan, sans bloquer)
           notifyAllSubscribers({
             title: 'Nouvelle Chanson ! 🎶',
             body: `"${clean.title || 'Nova música'}" est maintenant disponible !`,
             icon: clean.cover_image || '/icons/pwa/icon-192x192.png',
             url: clean.slug ? `/chansons/${clean.slug}` : '/'
+          }).then(result => {
+            if (result.success) {
+              console.warn(`✅ Notifications envoyées: ${result.sent || 0} sur ${result.total || 0} abonnés`);
+              if (result.sent > 0) {
+                displayMessage('success', `📢 ${result.sent} notification${result.sent > 1 ? 's' : ''} envoyée${result.sent > 1 ? 's' : ''} !`);
+              }
+            } else {
+              console.error('❌ Erreur envoi notifications:', result.error);
+              // Ne pas afficher d'erreur à l'admin si l'envoi échoue (non bloquant)
+            }
           }).catch(err => {
             console.error('Erreur envoi notifications:', err);
             // Ne pas bloquer l'UI si l'envoi échoue

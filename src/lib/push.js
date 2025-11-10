@@ -27,8 +27,9 @@ export function testPush() {
 }
 
 // Variables d'environnement - obligatoires
-const VAPID_PUBLIC_KEY = import.meta.env?.VITE_VAPID_PUBLIC_KEY || 'BNmWY52nhsYuohsMsFuFw5-vPv20qLw6nehrF-vyzPm87xU-6cPUoJhwtAVxj_18TcREBqx2uLdr5dcl57gVVNw';
-const API_BASE = import.meta.env?.VITE_PUSH_API_BASE || 'https://musica-da-segunda-push.vercel.app';
+// Note: Pas de fallback hardcodé pour la sécurité
+const VAPID_PUBLIC_KEY = import.meta.env?.VITE_VAPID_PUBLIC_KEY;
+const API_BASE = import.meta.env?.VITE_PUSH_API_BASE || 'https://efnzmpzkzeuktqkghwfa.functions.supabase.co';
 const VAPID_KEY_VERSION = import.meta.env?.VITE_VAPID_KEY_VERSION || 'v1';
 
 const isIOS = () =>
@@ -175,11 +176,20 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     console.error('❌ Supabase save failed, trying API fallback:', supabaseError);
     
     // Fallback vers l'API externe si Supabase échoue
+    // Extraire les données de la subscription pour la sérialisation JSON
+    const subscriptionData = {
+      endpoint: sub.endpoint,
+      keys: {
+        p256dh: btoa(String.fromCharCode(...new Uint8Array(sub.getKey('p256dh')))),
+        auth: btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth'))))
+      }
+    };
+    
     const res = await fetch(`${API_BASE}/push/subscribe`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
-        subscription: sub,
+        subscription: subscriptionData,
         topic: 'new-song',
         locale,
         vapidKeyVersion: VAPID_KEY_VERSION
