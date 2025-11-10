@@ -18,28 +18,16 @@ export default defineConfig(({ command, mode }) => ({
     outDir: 'dist',
     // ✅ PERFORMANCE: Optimisations pour les Core Web Vitals
     target: 'es2015',
-    // ✅ QUICK WIN 4: Terser pour minification agressive
-    minify: 'terser',
+    // ✅ ROLLBACK: esbuild (Terser trop agressif cassait React Scheduler)
+    minify: 'esbuild',
     sourcemap: false,
     cssCodeSplit: true, // Code splitting CSS pour réduire les blocs
-    // ✅ Configuration Terser optimale
-    terserOptions: {
-      compress: {
-        drop_console: true, // Supprimer TOUS les console.* en production
-        drop_debugger: true,
-        pure_funcs: ['console.log', 'console.debug', 'console.info', 'console.trace', 'console.warn'],
-        passes: 2, // 2 passes de compression pour meilleure optimisation
-      },
-      mangle: {
-        safari10: true, // Compatibilité Safari 10+
-      },
-      format: {
-        comments: false, // Supprimer tous les commentaires
-      },
-    },
     esbuild: {
-      drop: command === 'build' ? ['debugger'] : [],
+      drop: command === 'build' ? ['console', 'debugger'] : [],
       legalComments: 'none', // Supprimer les commentaires de licence
+      minifyIdentifiers: true,
+      minifySyntax: true,
+      minifyWhitespace: true,
     },
     rollupOptions: {
       output: {
