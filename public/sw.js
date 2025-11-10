@@ -325,12 +325,27 @@ async function handleDynamicAsset(request) {
  */
 async function handleNetworkFirst(request) {
   try {
-    const networkResponse = await fetch(request);
+    const url = new URL(request.url);
+    const isJS = isJavaScriptFile(request);
+    
+    // Pour les fichiers JS, forcer une requête fraîche avec cache-busting
+    if (isJS) {
+      url.searchParams.set('_sw', CACHE_NAME);
+    }
+    
+    const networkResponse = await fetch(url.toString(), {
+      cache: isJS ? 'no-store' : 'default', // Forcer le rechargement pour les JS
+      headers: isJS ? {
+        'Cache-Control': 'no-cache'
+      } : {}
+    });
     
     if (networkResponse.ok) {
-      // Mettre en cache pour fallback
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
+      // Pour les fichiers JS, ne PAS mettre en cache pour éviter les problèmes
+      if (!isJS) {
+        const cache = await caches.open(DYNAMIC_CACHE);
+        cache.put(request, networkResponse.clone());
+      }
       return networkResponse;
     }
     
@@ -338,7 +353,15 @@ async function handleNetworkFirst(request) {
   } catch (error) {
     console.log('📡 Service Worker: Fallback cache pour', request.url);
     
-    // Fallback : essayer le cache
+    const isJS = isJavaScriptFile(request);
+    
+    // Pour les fichiers JS, ne pas utiliser le cache en fallback
+    if (isJS) {
+      console.error('❌ Service Worker: Impossible de charger le fichier JS', request.url);
+      return new Response('Service temporairement indisponible', { status: 503 });
+    }
+    
+    // Fallback : essayer le cache (pour les autres fichiers)
     const cache = await caches.open(DYNAMIC_CACHE);
     const cachedResponse = await cache.match(request);
     
