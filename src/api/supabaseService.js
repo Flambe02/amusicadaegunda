@@ -105,15 +105,15 @@ export const supabaseSongService = {
       console.warn('🔍 Timestamp:', new Date().toISOString());
       
       // Forcer une requête fraîche - Supabase n'a pas de cache par défaut mais on s'assure
+      // IMPORTANT: Supabase ne supporte qu'un seul .order() à la fois
+      // On doit utiliser created_at comme critère principal car c'est la date d'enregistrement dans Supabase
       const { data, error } = await supabase
         .from(TABLES.SONGS)
         .select('*')
         .eq('status', 'published')
-        // Trier par created_at (date d'enregistrement dans Supabase) pour obtenir la dernière vidéo enregistrée
-        // Si plusieurs ont le même created_at, utiliser updated_at puis release_date comme critères secondaires
+        // Trier UNIQUEMENT par created_at (date d'enregistrement dans Supabase) pour obtenir la dernière vidéo enregistrée
+        // C'est le critère le plus fiable pour déterminer la "dernière" chanson
         .order('created_at', { ascending: false })
-        .order('updated_at', { ascending: false })
-        .order('release_date', { ascending: false })
         .limit(1)
         .single(); // Utiliser .single() pour obtenir un objet unique ou null, plus propre que .limit(1)
 
