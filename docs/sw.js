@@ -30,10 +30,10 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
 } else {
 // ✅ PRODUCTION: Code normal du Service Worker
 
-const CACHE_NAME = 'musica-da-segunda-v5.1.2';
-const STATIC_CACHE = 'static-v5.1.2';
-const DYNAMIC_CACHE = 'dynamic-v5.1.2';
-const API_CACHE = 'api-v5.1.2';
+const CACHE_NAME = 'musica-da-segunda-v5.2.0';
+const STATIC_CACHE = 'static-v5.2.0';
+const DYNAMIC_CACHE = 'dynamic-v5.2.0';
+const API_CACHE = 'api-v5.2.0';
 
 // Assets statiques critiques (cache-first)
 const STATIC_ASSETS = [

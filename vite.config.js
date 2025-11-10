@@ -28,37 +28,9 @@ export default defineConfig(({ command, mode }) => ({
     },
     rollupOptions: {
       output: {
-        // ✅ CHUNK SPLITTING CORRIGÉ: scheduler DOIT rester avec React
-        manualChunks: (id) => {
-          // Vendor chunks séparés par dépendance
-          if (id.includes('node_modules')) {
-            // React core + scheduler + react-dom + react-router (ENSEMBLE)
-            if (id.includes('react') || 
-                id.includes('react-dom') || 
-                id.includes('react-router') ||
-                id.includes('scheduler')) {  // ✅ CRITIQUE: scheduler avec React
-              return 'vendor';
-            }
-            // UI components (Radix UI, Lucide icons)
-            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
-              return 'ui';
-            }
-            // Supabase (API backend)
-            if (id.includes('@supabase')) {
-              return 'supabase';
-            }
-            // Utilities (date-fns, etc.)
-            if (id.includes('date-fns') || id.includes('clsx') || id.includes('tailwind-merge')) {
-              return 'utils';
-            }
-            // Analytics & monitoring
-            if (id.includes('web-vitals')) {
-              return 'webvitals';
-            }
-            // Autres dépendances
-            return 'libs';
-          }
-        },
+        // ✅ CHUNK SPLITTING AUTOMATIQUE (Vite gère les dépendances)
+        // On laisse Vite décider comment splitter pour éviter de casser les dépendances
+        manualChunks: undefined,
         // Optimisation des noms de fichiers
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
