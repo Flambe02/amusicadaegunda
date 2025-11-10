@@ -154,6 +154,16 @@ export default function Home() {
       const song = await Song.getCurrent();
       logger.debug('📊 Chanson actuelle chargée:', song);
       
+      // Log détaillé pour debug production
+      if (song) {
+        console.warn('🎵 Chanson chargée:', {
+          title: song.title,
+          created_at: song.created_at,
+          updated_at: song.updated_at,
+          release_date: song.release_date
+        });
+      }
+      
       setCurrentSong(song);
       setDisplayedSong(song);
     } catch (err) {
