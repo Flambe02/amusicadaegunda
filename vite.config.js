@@ -16,36 +16,56 @@ export default defineConfig(({ command, mode }) => ({
   },
   build: {
     outDir: 'dist',
-    // Optimisations pour les Core Web Vitals
+    // ✅ PERFORMANCE: Optimisations pour les Core Web Vitals
     target: 'es2015',
-    minify: 'esbuild',
+    // ✅ QUICK WIN 4: Terser pour minification agressive
+    minify: 'terser',
     sourcemap: false,
     cssCodeSplit: true, // Code splitting CSS pour réduire les blocs
+    // ✅ Configuration Terser optimale
+    terserOptions: {
+      compress: {
+        drop_console: true, // Supprimer TOUS les console.* en production
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.debug', 'console.info', 'console.trace', 'console.warn'],
+        passes: 2, // 2 passes de compression pour meilleure optimisation
+      },
+      mangle: {
+        safari10: true, // Compatibilité Safari 10+
+      },
+      format: {
+        comments: false, // Supprimer tous les commentaires
+      },
+    },
     esbuild: {
       drop: command === 'build' ? ['debugger'] : [],
-      // Garder console.warn et console.error en production pour le debug
-      pure: command === 'build' 
-        ? ['console.log', 'console.debug', 'console.info', 'console.trace'] 
-        : [],
       legalComments: 'none', // Supprimer les commentaires de licence
     },
     rollupOptions: {
       output: {
-        // Chunk splitting agressif pour réduire JavaScript inutilisé
+        // ✅ QUICK WIN 5: Chunk splitting agressif optimisé
         manualChunks: (id) => {
-          // Vendor chunks séparés
+          // Vendor chunks séparés par dépendance
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
+            // React core (toujours nécessaire)
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'vendor';
             }
-            if (id.includes('@radix-ui')) {
+            // UI components (Radix UI, Lucide icons)
+            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
               return 'ui';
             }
+            // Supabase (API backend)
             if (id.includes('@supabase')) {
               return 'supabase';
             }
+            // Utilities (date-fns, etc.)
             if (id.includes('date-fns') || id.includes('clsx') || id.includes('tailwind-merge')) {
               return 'utils';
+            }
+            // Analytics & monitoring
+            if (id.includes('web-vitals')) {
+              return 'webvitals';
             }
             // Autres dépendances
             return 'libs';
