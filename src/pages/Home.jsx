@@ -142,36 +142,9 @@ export default function Home() {
     logger.debug('🏠 Home useEffect triggered');
     localStorageService.initialize();
     
-    // Écouter les messages du Service Worker pour forcer le rechargement
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'SW_UPDATED') {
-          console.warn('🔄 Service Worker mis à jour, rechargement complet de la page...');
-          // Forcer un hard reload pour récupérer les nouveaux fichiers JS
-          window.location.reload(true);
-        }
-      });
-      
-      // Forcer la mise à jour du Service Worker à chaque chargement
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        registrations.forEach(registration => {
-          console.warn('🔍 Vérification des mises à jour du Service Worker...');
-          registration.update();
-        });
-      });
-    }
-    
-    // Forcer le rechargement à chaque montage pour éviter le cache
+    // Charger les chansons
     loadCurrentSong();
     loadRecentSongs();
-    
-    // Recharger périodiquement pour s'assurer d'avoir la dernière chanson
-    const interval = setInterval(() => {
-      console.warn('🔄 Rechargement périodique de la chanson actuelle...');
-      loadCurrentSong();
-    }, 30000); // Toutes les 30 secondes
-    
-    return () => clearInterval(interval);
   }, []);
 
   const loadCurrentSong = async () => {
