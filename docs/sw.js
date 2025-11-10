@@ -136,14 +136,7 @@ self.addEventListener('activate', (event) => {
     }).then(() => {
       console.log('✅ Service Worker: Anciens caches nettoyés');
       // Forcer la prise de contrôle immédiate de tous les clients
-      return self.clients.claim().then(() => {
-              // Envoyer un message à tous les clients pour forcer le rechargement
-              return self.clients.matchAll().then(clients => {
-                clients.forEach(client => {
-                  client.postMessage({ type: 'SW_UPDATED', version: 'v5.0.5' });
-                });
-              });
-      });
+      return self.clients.claim();
     }).catch((error) => {
       console.error('❌ Service Worker: Erreur lors de l\'activation', error);
     })
