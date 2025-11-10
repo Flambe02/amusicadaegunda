@@ -34,7 +34,7 @@
     "test:all": "npm run test:run && npm run test:e2e",
     "test:admin": "node scripts/test-admin-crud.js",
     "test:push": "node scripts/test-push-upsert.js",
-    "postbuild": "node scripts/generate-stubs.cjs && node scripts/generate-sitemap.cjs",
+    "postbuild": "node scripts/generate-stubs.cjs && node scripts/generate-sitemap.cjs && node scripts/copy-to-docs.cjs",
     "export:songs": "node scripts/export-songs-from-supabase.cjs",
     "build:seo": "npm run export:songs && npm run build",
     "qa:jsonld": "node scripts/check-jsonld-prod.js",
