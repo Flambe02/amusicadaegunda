@@ -20,20 +20,36 @@ export default defineConfig(({ command, mode }) => ({
     target: 'es2015',
     minify: 'esbuild',
     sourcemap: false,
+    cssCodeSplit: true, // Code splitting CSS pour réduire les blocs
     esbuild: {
       drop: command === 'build' ? ['debugger'] : [],
       // Garder console.warn et console.error en production pour le debug
       pure: command === 'build' 
         ? ['console.log', 'console.debug', 'console.info', 'console.trace'] 
         : [],
+      legalComments: 'none', // Supprimer les commentaires de licence
     },
     rollupOptions: {
       output: {
-        // Chunk splitting pour améliorer le caching
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          utils: ['date-fns', 'clsx', 'tailwind-merge'],
+        // Chunk splitting agressif pour réduire JavaScript inutilisé
+        manualChunks: (id) => {
+          // Vendor chunks séparés
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'ui';
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase';
+            }
+            if (id.includes('date-fns') || id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'utils';
+            }
+            // Autres dépendances
+            return 'libs';
+          }
         },
         // Optimisation des noms de fichiers
         chunkFileNames: 'assets/[name]-[hash].js',
@@ -41,9 +57,9 @@ export default defineConfig(({ command, mode }) => ({
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
-    // Optimisation des assets
-    assetsInlineLimit: 4096,
-    chunkSizeWarningLimit: 1000,
+    // Optimisation des assets - réduire la limite pour forcer l'externalisation
+    assetsInlineLimit: 2048, // Réduit de 4096 à 2048 pour réduire le JS inline
+    chunkSizeWarningLimit: 500, // Réduire pour forcer plus de splitting
   },
   // Optimisations de développement
   server: {

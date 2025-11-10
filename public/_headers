@@ -1,0 +1,30 @@
+# Cache headers pour GitHub Pages
+# https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages#static-site-generators
+
+# Assets statiques (JS, CSS) - Cache 1 an (avec hash dans le nom)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Images - Cache 1 mois
+/images/*
+  Cache-Control: public, max-age=2592000
+
+# Icônes - Cache 1 an
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Manifest et SW - Pas de cache (doivent être toujours à jour)
+/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+# HTML - Cache court avec revalidation
+/*.html
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# Fonts - Cache 1 an
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
