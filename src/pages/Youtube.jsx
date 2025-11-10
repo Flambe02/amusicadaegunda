@@ -21,7 +21,7 @@ import { Helmet } from 'react-helmet-async';
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   console.warn('🎬🎬🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
   
-  // Prioriser youtube_music_url, sinon youtube_url
+  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
   const targetUrl = youtube_music_url || youtube_url || '';
   console.warn('🎬🎬🎬 YouTubeEmbed targetUrl:', targetUrl);
 

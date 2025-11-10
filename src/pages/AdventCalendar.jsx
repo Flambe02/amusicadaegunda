@@ -8,6 +8,7 @@ import { useSEO } from '@/hooks/useSEO';
 
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
+  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
   const targetUrl = youtube_music_url || youtube_url || '';
 
   const getYouTubeEmbedInfo = (url) => {

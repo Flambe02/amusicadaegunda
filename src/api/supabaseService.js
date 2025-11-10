@@ -103,28 +103,33 @@ export const supabaseSongService = {
     try {
       console.warn('🔍 getCurrent() - Début de la fonction');
       
-      // Utiliser une requête SQL avec coalesce() pour le tri côté serveur
       const { data, error } = await supabase
         .from(TABLES.SONGS)
         .select('*')
         .eq('status', 'published')
-        .order('tiktok_publication_date', { ascending: false, nullsFirst: false })
-        .order('release_date', { ascending: false, nullsFirst: false })
+        // Correction: Trier uniquement par la date de sortie pour garantir que la plus récente est toujours la première.
+        .order('release_date', { ascending: false })
         .limit(1)
+        .single(); // Utiliser .single() pour obtenir un objet unique ou null, plus propre que .limit(1)
 
       if (error) {
+        // Gérer le cas où .single() ne trouve rien sans que ce soit une erreur bloquante
+        if (error.code === 'PGRST116') {
+          console.warn('⚠️ Aucune chanson "published" trouvée, ce n\'est pas une erreur.');
+          return null;
+        }
         console.error('❌ Erreur Supabase getCurrent:', error);
         throw error;
       }
       
-      console.warn('📊 Chanson actuelle trouvée:', data?.[0] || null);
+      console.warn('📊 Chanson actuelle trouvée:', data || null);
 
-      if (!data || data.length === 0) {
+      if (!data) {
         console.warn('⚠️ Aucune chanson published trouvée');
         return null;
       }
 
-      const result = data[0];
+      const result = data;
       console.warn('🎯 Chanson sélectionnée:', result);
       
       // Logs détaillés pour debug - FORCE

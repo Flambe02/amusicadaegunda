@@ -36,6 +36,7 @@ import { ptBR } from 'date-fns/locale';
 import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
 import { songSchema, safeParse } from '@/lib/validation';
 import { sanitizeInput, sanitizeURL } from '@/lib/security';
+import { Label } from '@/components/ui/label';
 
 /**
  * Fonction pour envoyer des notifications push à tous les abonnés
@@ -100,23 +101,11 @@ export default function AdminPage() {
   // ===== EFEITOS =====
   useEffect(() => {
     logger.warn('🔄 Admin component mounted');
-    detectStorageMode();
-    // Charger les chansons immédiatement après détection
+    // storageMode est déjà initialisé à 'supabase', pas besoin de detectStorageMode()
+    // Charger les chansons une seule fois au montage
     loadSongs();
-  }, []);
-
-  // Charger les chansons après détection du mode de stockage
-  useEffect(() => {
-    if (storageMode) {
-      loadSongs();
-    }
-  }, [storageMode]);
-
-  const detectStorageMode = () => {
-    // Toujours Supabase dans la version publiée (fallback géré dans lib/supabase)
-    setStorageMode('supabase');
-    logger.warn('🔄 Mode de stockage forcé: Supabase ☁️');
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Dépendances vides = exécution unique au montage (loadSongs est stable)
 
   // ===== FUNÇÕES =====
   const loadSongs = async () => {
@@ -875,7 +864,7 @@ export default function AdminPage() {
   // ===== GERAÇÃO INTELIGENTE DE DESCRIÇÃO =====
   const gerarDescricaoInteligente = async (letras, dataPublicacao, titulo = '') => {
     try {
-      console.warn('🧠 Gerando descrição inteligente para:', titulo || 'música');
+      console.warn('🧠 Gerando descrição inteligente pour:', titulo || 'música');
       
       // 1. ANÁLISE DAS LETRAS - Tema principal
       const temaPrincipal = analisarTemaPrincipal(letras);
@@ -912,7 +901,7 @@ export default function AdminPage() {
       return 'confissões bancárias de Moraes';
     }
     
-    // Análise específica para "UBER" (Golpe Uber)
+    // Análise específica pour "UBER" (Golpe Uber)
     if (letrasLower.includes('uber') && (letrasLower.includes('golpe') || letrasLower.includes('mentira') || letrasLower.includes('fictivo') || letrasLower.includes('sumiu'))) {
       return 'golpe uber e fraude no transporte';
     }
@@ -2061,37 +2050,37 @@ export default function AdminPage() {
                     </h3>
                     
                     <div className="grid md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Spotify
-                        </label>
+                      <div className="flex flex-col">
+                        <Label className="mb-2 font-semibold text-gray-700">Spotify</Label>
                         <Input
+                          type="url"
+                          name="spotify_url"
                           value={editingSong.spotify_url}
                           onChange={(e) => handleInputChange('spotify_url', e.target.value)}
                           placeholder="URL Spotify"
-                          type="url"
+                          className="transition-colors duration-200 ease-in-out focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Apple Music
-                        </label>
+                      <div className="flex flex-col">
+                        <Label className="mb-2 font-semibold text-gray-700">Apple Music</Label>
                         <Input
+                          type="url"
+                          name="apple_music_url"
                           value={editingSong.apple_music_url}
                           onChange={(e) => handleInputChange('apple_music_url', e.target.value)}
                           placeholder="URL Apple Music"
-                          type="url"
+                          className="transition-colors duration-200 ease-in-out focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          YouTube
-                        </label>
+                      <div className="flex flex-col">
+                        <Label className="mb-2 font-semibold text-gray-700">YouTube</Label>
                         <Input
-                          value={editingSong.youtube_url}
-                          onChange={(e) => handleInputChange('youtube_url', e.target.value)}
-                          placeholder="URL YouTube"
                           type="url"
+                          name="youtube_music_url"
+                          value={editingSong.youtube_music_url || ''}
+                          onChange={(e) => handleInputChange('youtube_music_url', e.target.value)}
+                          placeholder="URL YouTube Music"
+                          className="transition-colors duration-200 ease-in-out focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         />
                       </div>
                     </div>

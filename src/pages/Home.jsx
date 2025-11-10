@@ -24,7 +24,7 @@ import { useToast } from '@/components/ui/use-toast';
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   logger.debug('🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
   
-  // Prioriser youtube_music_url, sinon youtube_url
+  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
   const targetUrl = youtube_music_url || youtube_url || '';
   logger.debug('🎬 YouTubeEmbed targetUrl:', targetUrl);
 

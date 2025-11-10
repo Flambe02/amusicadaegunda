@@ -18,7 +18,7 @@ import { ptBR } from 'date-fns/locale';
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   // Logs de debug supprimés pour production
   
-  // Prioriser youtube_music_url, sinon youtube_url
+  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
   const targetUrl = youtube_music_url || youtube_url || '';
 
   // Analyse l'URL et retourne { id, type }
@@ -113,26 +113,47 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
 }
 
 export default function SongPage() {
-  const { slug } = useParams();
+  const { slug: rawSlug } = useParams();
   const navigate = useNavigate();
+  // Normaliser le slug (supprimer trailing slash et espaces)
+  const slug = rawSlug ? rawSlug.replace(/\/$/, '').trim() : null;
   const [song, setSong] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Rediriger si l'URL a un trailing slash pour éviter les doublons
+  useEffect(() => {
+    if (rawSlug && rawSlug.endsWith('/')) {
+      navigate(`/chansons/${slug}`, { replace: true });
+    }
+  }, [rawSlug, slug, navigate]);
+
   useEffect(() => {
     const loadSongData = async () => {
-      if (!slug) return;
+      if (!slug) {
+        setIsLoading(false);
+        setError('Slug inválido');
+        return;
+      }
       setIsLoading(true);
       setError(null);
       try {
         const songData = await Song.getBySlug(slug);
-        setSong(songData);
+        if (!songData) {
+          // Si la chanson n'existe pas, définir explicitement l'erreur
+          setError('Song not found');
+          setSong(null);
+        } else {
+          setSong(songData);
+          setError(null);
+        }
       } catch (err) {
         // Logger seulement en dev pour éviter les logs excessifs en production
         if (import.meta.env?.DEV) {
           console.error('Error loading song:', err);
         }
         setError('Song not found');
+        setSong(null);
       } finally {
         setIsLoading(false);
       }
@@ -142,12 +163,14 @@ export default function SongPage() {
 
   // SEO optimization for the song page
   // useSEO ajoute automatiquement "| Música da Segunda" au titre, donc on ne le met pas ici
+  // Normaliser l'URL (sans trailing slash) pour éviter les doublons
+  const normalizedUrl = slug ? `/chansons/${slug.replace(/\/$/, '')}` : '/chansons';
   useSEO({
-    title: song ? song.title : 'A Música da Segunda',
-    description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.',
+    title: song ? song.title : (slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda'),
+    description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : `Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.`,
     keywords: song ? `${song.title}, música da segunda, paródias musicais` : `música da segunda, paródias musicais`,
     image: song?.cover_image, // Image de couverture pour OG
-    url: `/chansons/${slug}`,
+    url: normalizedUrl,
     type: 'article'
   });
 
@@ -189,9 +212,21 @@ export default function SongPage() {
   // Note: canonical géré par useSEO (sans hash), pas besoin de le définir ici
 
   if (isLoading) {
+    // Contenu de fallback visible pour les crawlers même pendant le chargement
     return (
       <div className="container mx-auto px-4 py-8">
+        <Helmet>
+          <html lang="pt-BR" />
+          <meta name="robots" content="index, follow" />
+        </Helmet>
         <div className="max-w-4xl mx-auto">
+          {/* Contenu visible pour les crawlers */}
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {slug ? slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'A Música da Segunda'}
+          </h1>
+          <p className="text-gray-600 mb-8">
+            Carregando informações da música...
+          </p>
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
