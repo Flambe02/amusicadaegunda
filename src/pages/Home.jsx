@@ -142,6 +142,16 @@ export default function Home() {
     logger.debug('🏠 Home useEffect triggered');
     localStorageService.initialize();
     
+    // Écouter les messages du Service Worker pour forcer le rechargement
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SW_UPDATED') {
+          console.warn('🔄 Service Worker mis à jour, rechargement de la chanson...');
+          loadCurrentSong();
+        }
+      });
+    }
+    
     // Forcer le rechargement à chaque montage pour éviter le cache
     loadCurrentSong();
     loadRecentSongs();

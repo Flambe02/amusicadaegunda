@@ -103,6 +103,7 @@ self.addEventListener('install', (event) => {
       return staticCache.addAll(STATIC_ASSETS);
     }).then(() => {
       console.log('✅ Service Worker: Assets statiques pré-cachés');
+      // Forcer l'activation immédiate du nouveau Service Worker
       return self.skipWaiting();
     }).catch((error) => {
       console.error('❌ Service Worker: Erreur lors de l\'installation', error);
@@ -134,7 +135,15 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('✅ Service Worker: Anciens caches nettoyés');
-      return self.clients.claim();
+      // Forcer la prise de contrôle immédiate de tous les clients
+      return self.clients.claim().then(() => {
+        // Envoyer un message à tous les clients pour forcer le rechargement
+        return self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({ type: 'SW_UPDATED', version: 'v5.0.4' });
+          });
+        });
+      });
     }).catch((error) => {
       console.error('❌ Service Worker: Erreur lors de l\'activation', error);
     })
