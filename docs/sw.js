@@ -30,10 +30,10 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
 } else {
 // ✅ PRODUCTION: Code normal du Service Worker
 
-const CACHE_NAME = 'musica-da-segunda-v2.1.0';
-const STATIC_CACHE = 'static-v2.1.0';
-const DYNAMIC_CACHE = 'dynamic-v2.1.0';
-const API_CACHE = 'api-v2.1.0';
+const CACHE_NAME = 'musica-da-segunda-v5.0.5';
+const STATIC_CACHE = 'static-v5.0.5';
+const DYNAMIC_CACHE = 'dynamic-v5.0.5';
+const API_CACHE = 'api-v5.0.5';
 
 // Assets statiques critiques (cache-first)
 const STATIC_ASSETS = [
@@ -103,6 +103,7 @@ self.addEventListener('install', (event) => {
       return staticCache.addAll(STATIC_ASSETS);
     }).then(() => {
       console.log('✅ Service Worker: Assets statiques pré-cachés');
+      // Forcer l'activation immédiate du nouveau Service Worker
       return self.skipWaiting();
     }).catch((error) => {
       console.error('❌ Service Worker: Erreur lors de l\'installation', error);
@@ -134,7 +135,15 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('✅ Service Worker: Anciens caches nettoyés');
-      return self.clients.claim();
+      // Forcer la prise de contrôle immédiate de tous les clients
+      return self.clients.claim().then(() => {
+              // Envoyer un message à tous les clients pour forcer le rechargement
+              return self.clients.matchAll().then(clients => {
+                clients.forEach(client => {
+                  client.postMessage({ type: 'SW_UPDATED', version: 'v5.0.5' });
+                });
+              });
+      });
     }).catch((error) => {
       console.error('❌ Service Worker: Erreur lors de l\'activation', error);
     })
@@ -162,7 +171,11 @@ self.addEventListener('fetch', (event) => {
   }
   
   // Stratégie selon le type de ressource
-  if (isStaticAsset(request)) {
+  // IMPORTANT: Les fichiers JS doivent utiliser network-first pour éviter le cache d'ancien code
+  if (isJavaScriptFile(request)) {
+    // Network-first pour les fichiers JS : toujours vérifier le réseau d'abord
+    event.respondWith(handleNetworkFirst(request));
+  } else if (isStaticAsset(request)) {
     event.respondWith(handleStaticAsset(request));
   } else if (isApiRequest(request)) {
     event.respondWith(handleApiRequest(request));
@@ -312,12 +325,27 @@ async function handleDynamicAsset(request) {
  */
 async function handleNetworkFirst(request) {
   try {
-    const networkResponse = await fetch(request);
+    const url = new URL(request.url);
+    const isJS = isJavaScriptFile(request);
+    
+    // Pour les fichiers JS, forcer une requête fraîche avec cache-busting
+    if (isJS) {
+      url.searchParams.set('_sw', CACHE_NAME);
+    }
+    
+    const networkResponse = await fetch(url.toString(), {
+      cache: isJS ? 'no-store' : 'default', // Forcer le rechargement pour les JS
+      headers: isJS ? {
+        'Cache-Control': 'no-cache'
+      } : {}
+    });
     
     if (networkResponse.ok) {
-      // Mettre en cache pour fallback
-      const cache = await caches.open(DYNAMIC_CACHE);
-      cache.put(request, networkResponse.clone());
+      // Pour les fichiers JS, ne PAS mettre en cache pour éviter les problèmes
+      if (!isJS) {
+        const cache = await caches.open(DYNAMIC_CACHE);
+        cache.put(request, networkResponse.clone());
+      }
       return networkResponse;
     }
     
@@ -325,7 +353,15 @@ async function handleNetworkFirst(request) {
   } catch (error) {
     console.log('📡 Service Worker: Fallback cache pour', request.url);
     
-    // Fallback : essayer le cache
+    const isJS = isJavaScriptFile(request);
+    
+    // Pour les fichiers JS, ne pas utiliser le cache en fallback
+    if (isJS) {
+      console.error('❌ Service Worker: Impossible de charger le fichier JS', request.url);
+      return new Response('Service temporairement indisponible', { status: 503 });
+    }
+    
+    // Fallback : essayer le cache (pour les autres fichiers)
     const cache = await caches.open(DYNAMIC_CACHE);
     const cachedResponse = await cache.match(request);
     
@@ -502,6 +538,12 @@ function isApiRequest(request) {
          url.includes('/api/') ||
          url.includes('tiktok.com') ||
          url.includes('spotify.com');
+}
+
+function isJavaScriptFile(request) {
+  const url = request.url;
+  // Détecter les fichiers JavaScript (assets JS du build Vite)
+  return url.endsWith('.js') || (url.includes('/assets/') && url.endsWith('.js'));
 }
 
 function isDynamicAsset(request) {
