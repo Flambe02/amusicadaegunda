@@ -171,7 +171,11 @@ self.addEventListener('fetch', (event) => {
   }
   
   // Stratégie selon le type de ressource
-  if (isStaticAsset(request)) {
+  // IMPORTANT: Les fichiers JS doivent utiliser network-first pour éviter le cache d'ancien code
+  if (isJavaScriptFile(request)) {
+    // Network-first pour les fichiers JS : toujours vérifier le réseau d'abord
+    event.respondWith(handleNetworkFirst(request));
+  } else if (isStaticAsset(request)) {
     event.respondWith(handleStaticAsset(request));
   } else if (isApiRequest(request)) {
     event.respondWith(handleApiRequest(request));
