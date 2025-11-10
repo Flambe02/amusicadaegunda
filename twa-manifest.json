@@ -1,0 +1,66 @@
+{
+  "packageId": "com.amusicadasegunda.www.twa",
+  "host": "www.amusicadasegunda.com",
+  "name": "Música da Segunda - Nova música toda segunda-feira",
+  "launcherName": "Música da 2a",
+  "display": "standalone",
+  "themeColor": "#32A2DC",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#32A2DC",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://www.amusicadasegunda.com/icons/pwa/icon-512x512.webp",
+  "maskableIconUrl": "https://www.amusicadasegunda.com/icons/pwa/icon-512x512.webp",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\flore\\OneDrive\\POIVRON_ROUGE\\PIM\\MusicaDa2nda\\android.keystore",
+    "alias": "android"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [
+    {
+      "name": "Música da Semana",
+      "shortName": "Música da Semana",
+      "url": "https://www.amusicadasegunda.com/",
+      "chosenIconUrl": "https://www.amusicadasegunda.com/icons/pwa/icon-96x96.png"
+    },
+    {
+      "name": "Playlist",
+      "shortName": "Playlist",
+      "url": "https://www.amusicadasegunda.com/playlist",
+      "chosenIconUrl": "https://www.amusicadasegunda.com/icons/pwa/icon-96x96.png"
+    },
+    {
+      "name": "Blog",
+      "shortName": "Blog",
+      "url": "https://www.amusicadasegunda.com/blog",
+      "chosenIconUrl": "https://www.amusicadasegunda.com/icons/pwa/icon-96x96.png"
+    }
+  ],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://www.amusicadasegunda.com/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://www.amusicadasegunda.com/",
+  "minSdkVersion": 21,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "protocolHandlers": [],
+  "fileHandlers": [],
+  "launchHandlerClientMode": "",
+  "displayOverride": [],
+  "appVersion": "1"
+}
