@@ -517,6 +517,12 @@ function isApiRequest(request) {
          url.includes('spotify.com');
 }
 
+function isJavaScriptFile(request) {
+  const url = request.url;
+  // Détecter les fichiers JavaScript (assets JS du build Vite)
+  return url.endsWith('.js') || (url.includes('/assets/') && url.endsWith('.js'));
+}
+
 function isDynamicAsset(request) {
   const url = request.url;
   return DYNAMIC_ASSETS.some(asset => url.includes(asset)) ||
