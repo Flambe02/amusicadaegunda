@@ -30,10 +30,10 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
 } else {
 // ✅ PRODUCTION: Code normal du Service Worker
 
-const CACHE_NAME = 'musica-da-segunda-v5.2.0';
-const STATIC_CACHE = 'static-v5.2.0';
-const DYNAMIC_CACHE = 'dynamic-v5.2.0';
-const API_CACHE = 'api-v5.2.0';
+const CACHE_NAME = 'musica-da-segunda-v5.2.1';
+const STATIC_CACHE = 'static-v5.2.1';
+const DYNAMIC_CACHE = 'dynamic-v5.2.1';
+const API_CACHE = 'api-v5.2.1';
 
 // Assets statiques critiques (cache-first)
 const STATIC_ASSETS = [
@@ -164,10 +164,11 @@ self.addEventListener('fetch', (event) => {
   }
   
   // Stratégie selon le type de ressource
-  // IMPORTANT: Les fichiers JS doivent utiliser network-first pour éviter le cache d'ancien code
+  // IMPORTANT: Ne PAS intercepter les fichiers JS - laisser le navigateur les gérer
   if (isJavaScriptFile(request)) {
-    // Network-first pour les fichiers JS : toujours vérifier le réseau d'abord
-    event.respondWith(handleNetworkFirst(request));
+    // Ne pas intercepter les JS - laisser passer directement
+    // Cela évite les problèmes de page blanche lors du lazy loading
+    return; // Laisser le navigateur gérer directement
   } else if (isStaticAsset(request)) {
     event.respondWith(handleStaticAsset(request));
   } else if (isApiRequest(request)) {
