@@ -37,7 +37,7 @@ export default function Sobre() {
     },
     {
       question: "Posso usar as músicas em meus próprios vídeos?",
-      answer: "O uso das músicas depende do contexto. Para uso pessoal e não comercial, geralmente é permitido. Para uso comercial ou em projetos que gerem receita, é necessário entrar em contato através do email pimentaoenchansons@gmail.com para discutir permissões e possíveis licenças."
+      answer: "O uso das músicas depende do contexto. Para uso pessoal e não comercial, geralmente é permitido. Para uso comercial ou em projetos que gerem receita, é necessário entrar em contato através do email contact@amusicadasegunda.com para discutir permissões e possíveis licenças."
     },
     {
       question: "Como são escolhidas as músicas que serão parodiadas?",
@@ -53,7 +53,7 @@ export default function Sobre() {
     },
     {
       question: "Vocês fazem músicas personalizadas ou encomendas?",
-      answer: "Atualmente, o foco do projeto é nas músicas semanais sobre atualidades. No entanto, estou aberto a discussões sobre projetos especiais ou colaborações. Entre em contato através do email pimentaoenchansons@gmail.com para conversar sobre possibilidades."
+      answer: "Atualmente, o foco do projeto é nas músicas semanais sobre atualidades. No entanto, estou aberto a discussões sobre projetos especiais ou colaborações. Entre em contato através do email contact@amusicadasegunda.com para conversar sobre possibilidades."
     },
     {
       question: "Onde posso ver todas as músicas já lançadas?",
@@ -65,7 +65,7 @@ export default function Sobre() {
     },
     {
       question: "Como posso sugerir um tema para uma música?",
-      answer: "Adoro sugestões! Você pode entrar em contato através do email pimentaoenchansons@gmail.com ou através das redes sociais. Enquanto não posso garantir que todas as sugestões serão usadas, considero todas as ideias e muitas vezes incorporo temas sugeridos pela comunidade."
+      answer: "Adoro sugestões! Você pode entrar em contato através do email contact@amusicadasegunda.com ou através das redes sociais. Enquanto não posso garantir que todas as sugestões serão usadas, considero todas as ideias e muitas vezes incorporo temas sugeridos pela comunidade."
     }
   ];
 
@@ -529,7 +529,7 @@ export default function Sobre() {
             </p>
             <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-2xl border border-white/30">
               <Mail className="w-5 h-5 text-white" />
-              <span className="text-white font-semibold">pimentaoenchansons@gmail.com</span>
+              <span className="text-white font-semibold">contact@amusicadasegunda.com</span>
             </div>
           </div>
         </div>

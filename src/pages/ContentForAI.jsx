@@ -62,7 +62,7 @@ export default function ContentForAI() {
             appleMusic: "https://music.apple.com/us/artist/the-piment%C3%A3o-rouge-project/1791441717"
           },
           contact: {
-            email: "pimentaoenchansons@gmail.com"
+            email: "contact@amusicadasegunda.com"
           },
           lastUpdated: new Date().toISOString(),
           version: "1.0"
@@ -80,20 +80,7 @@ export default function ContentForAI() {
   }, []);
 
   // Retourner du JSON pur
-  useEffect(() => {
-    if (data && !loading) {
-      // Définir le Content-Type pour JSON
-      const jsonString = JSON.stringify(data, null, 2);
-      
-      // Créer un blob et télécharger (pour développement)
-      // En production, cette page sera servie avec le bon Content-Type
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      
-      // Si on veut afficher le JSON dans la page pour les IA crawlers
-      // Les IA peuvent lire le contenu de la page même si c'est du JSON
-    }
-  }, [data, loading]);
+  // Le JSON sera affiché dans la page pour les IA crawlers
 
   if (loading) {
     return (
