@@ -527,10 +527,13 @@ export default function Sobre() {
             <p className="text-white/90 mb-6 text-lg max-w-2xl mx-auto">
               Tem sugestões, críticas ou quer participar do projeto? Adoraríamos ouvir de você!
             </p>
-            <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-sm px-6 py-3 rounded-2xl border border-white/30">
-              <Mail className="w-5 h-5 text-white" />
-              <span className="text-white font-semibold">contact@amusicadasegunda.com</span>
-            </div>
+            <a 
+              href="mailto:contact@amusicadasegunda.com"
+              className="inline-flex items-center gap-2 md:gap-3 bg-white/20 backdrop-blur-sm px-4 md:px-6 py-3 rounded-2xl border border-white/30 hover:bg-white/30 transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              <Mail className="w-5 h-5 text-white flex-shrink-0" />
+              <span className="text-white font-semibold text-sm md:text-base break-all">contact@amusicadasegunda.com</span>
+            </a>
           </div>
         </div>
       </div>
