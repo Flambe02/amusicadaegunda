@@ -195,6 +195,18 @@
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
     
     <div id="root"></div>
+    
+    <!-- Restore route after 404 redirect (GitHub Pages SPA support) -->
+    <script>
+      (function(){
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect != location.href) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
+    
     <script src="/pwa-install.js"></script>
     <script type="module" src="/src/main.jsx"></script>
     
