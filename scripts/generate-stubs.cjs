@@ -16,31 +16,13 @@ const siteUrl = cfg.siteUrl;
   const org = orgJsonLd({ name: cfg.brand.name, url: siteUrl, logo: `${siteUrl}${IMAGE}` });
   const website = websiteJsonLd({ url: siteUrl, search: cfg.search });
 
-  // Static pages (skip root to avoid overwriting Vite's SPA index.html)
-  for (const r of cfg.routes.static) {
-    if (r.path === '/') continue;
-    const dir = path.join(OUT, r.path === '/' ? '' : r.path.replace(/^\//, ''));
-    const file = path.join(dir, 'index.html');
-    await fs.ensureDir(dir);
-    const url = `${siteUrl}${r.path === '/' ? '' : r.path}${r.path !== '/' && !r.path.endsWith('/') ? '/' : ''}`;
-    const jsonld = [org, website];
-
-    if (r.path === '/playlist') {
-      jsonld.push(playlistJsonLd({ name: 'Playlist — A Música da Segunda', url, image: `${siteUrl}${IMAGE}` }));
-    }
-
-    const html = baseHtml({
-      lang: cfg.defaultLocale,
-      title: r.title,
-      desc: r.description,
-      url,
-      image: `${siteUrl}${IMAGE}`,
-      jsonld
-    });
-    const versionComment = `<!-- build:${new Date().toISOString()} -->\n`;
-    const htmlWithVersion = versionComment + html;
-    await fs.writeFile(file, htmlWithVersion, { encoding: 'utf8' });
-  }
+  // Static pages - DÉSACTIVÉ pour SPA
+  // Les pages SPA (sobre, playlist, blog, etc.) utilisent le 404.html pour le routing
+  // Seules les pages chansons ont besoin de stubs SEO
+  // for (const r of cfg.routes.static) {
+  //   if (r.path === '/') continue;
+  //   ...
+  // }
 
   // Song pages
   for (const s of songs) {
