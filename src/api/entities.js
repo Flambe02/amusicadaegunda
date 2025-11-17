@@ -92,6 +92,24 @@ export const Song = {
     }
   },
 
+  getByYouTubeUrl: async (youtubeUrl) => {
+    try {
+      return await supabaseSongService.getByYouTubeUrl(youtubeUrl);
+    } catch (error) {
+      console.error('❌ Erreur recherche par youtube_url:', error);
+      return null;
+    }
+  },
+
+  getByTikTokId: async (tiktokVideoId) => {
+    try {
+      return await supabaseSongService.getByTikTokId(tiktokVideoId);
+    } catch (error) {
+      console.error('❌ Erreur recherche par tiktok_video_id:', error);
+      return null;
+    }
+  },
+
   create: async (songData) => {
     try {
       // Forcer l'utilisation de Supabase
@@ -105,6 +123,9 @@ export const Song = {
       console.error('❌ Code:', error.code);
       console.error('❌ Details:', error.details);
       console.error('❌ Hint:', error.hint);
+      if (error.existingSong) {
+        console.error('❌ Chanson existante:', error.existingSong);
+      }
       throw error;
     }
   },
@@ -218,29 +239,14 @@ export const AdventSong = {
         });
         return limit ? adventSongs.slice(0, limit) : adventSongs;
       } else {
-        // Fallback localStorage
-        const songs = localStorageService.songs.getAll();
-        const adventSongs = songs.filter(song => {
-          const releaseDate = new Date(song.release_date);
-          const month = releaseDate.getMonth();
-                  return month === 11 || song.status === 'published';
-        });
-        
-        const sortedSongs = adventSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
-        return limit ? sortedSongs.slice(0, limit) : sortedSongs;
+        // Supabase-only: pas de fallback localStorage
+        console.warn('⚠️ Supabase indisponible pour getByYear2025');
+        return [];
       }
     } catch (error) {
       console.error('Erro ao carregar músicas do Ano 2025:', error);
-      // Fallback localStorage
-      const songs = localStorageService.songs.getAll();
-      const adventSongs = songs.filter(song => {
-        const releaseDate = new Date(song.release_date);
-        const month = releaseDate.getMonth();
-        return month === 11 || song.status === 'published';
-      });
-      
-      const sortedSongs = adventSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
-      return limit ? sortedSongs.slice(0, limit) : sortedSongs;
+      // Supabase-only: pas de fallback localStorage
+      return [];
     }
   }
 };

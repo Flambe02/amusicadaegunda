@@ -153,9 +153,306 @@ export const supabaseSongService = {
     }
   },
 
+  // Extraire l'ID YouTube depuis une URL
+  extractYouTubeId(url) {
+    if (!url || typeof url !== 'string') return null;
+    
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) return null;
+    
+    // Patterns pour différentes URLs YouTube
+    const patterns = [
+      // https://www.youtube.com/watch?v=VIDEO_ID
+      /[?&]v=([A-Za-z0-9_-]{11})/,
+      // https://youtu.be/VIDEO_ID
+      /youtu\.be\/([A-Za-z0-9_-]{11})/,
+      // https://www.youtube.com/embed/VIDEO_ID
+      /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/,
+      // https://www.youtube.com/v/VIDEO_ID
+      /youtube\.com\/v\/([A-Za-z0-9_-]{11})/,
+      // https://www.youtube.com/shorts/VIDEO_ID
+      /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,
+      // ID direct (11 caractères)
+      /^([A-Za-z0-9_-]{11})$/,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = trimmedUrl.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  },
+
+  // Normaliser une URL YouTube pour la comparaison (enlever les paramètres si, etc.)
+  normalizeYouTubeUrl(url) {
+    if (!url || typeof url !== 'string') return null;
+    
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+    
+    // Extraire l'ID ou la partie principale de l'URL
+    // Pour les playlists : garder la partie list=...
+    // Pour les vidéos : extraire l'ID vidéo
+    // Pour les shorts : extraire l'ID
+    
+    // YouTube Shorts : https://youtube.com/shorts/VIDEO_ID?si=...
+    const shortsMatch = trimmed.match(/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/);
+    if (shortsMatch) {
+      return `https://youtube.com/shorts/${shortsMatch[1]}`;
+    }
+    
+    // YouTube Music playlist : garder la partie list=
+    const playlistMatch = trimmed.match(/(music\.youtube\.com\/playlist\?list=[A-Za-z0-9_-]+)/);
+    if (playlistMatch) {
+      return `https://${playlistMatch[1]}`;
+    }
+    
+    // YouTube Music watch : extraire l'ID vidéo
+    const musicWatchMatch = trimmed.match(/music\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/);
+    if (musicWatchMatch) {
+      return `https://music.youtube.com/watch?v=${musicWatchMatch[1]}`;
+    }
+    
+    // YouTube normal watch : extraire l'ID vidéo
+    const watchMatch = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    if (watchMatch) {
+      return `https://youtube.com/watch?v=${watchMatch[1]}`;
+    }
+    
+    // Si on ne peut pas normaliser, retourner l'URL originale sans paramètres
+    try {
+      const urlObj = new URL(trimmed);
+      // Reconstruire l'URL sans les paramètres si, feature, etc.
+      const cleanParams = new URLSearchParams();
+      if (urlObj.searchParams.has('v')) {
+        cleanParams.set('v', urlObj.searchParams.get('v'));
+      }
+      if (urlObj.searchParams.has('list')) {
+        cleanParams.set('list', urlObj.searchParams.get('list'));
+      }
+      return `${urlObj.origin}${urlObj.pathname}${cleanParams.toString() ? '?' + cleanParams.toString() : ''}`;
+    } catch {
+      return trimmed;
+    }
+  },
+
+  // Trouver une chanson par son youtube_url
+  async getByYouTubeUrl(youtubeUrl) {
+    try {
+      if (!youtubeUrl || !youtubeUrl.trim()) {
+        return null;
+      }
+
+      const originalUrl = youtubeUrl.trim();
+      const normalizedUrl = this.normalizeYouTubeUrl(originalUrl);
+      const videoId = this.extractYouTubeId(originalUrl);
+      
+      console.warn('🔍 Recherche YouTube URL:', { originalUrl, normalizedUrl, videoId });
+      
+      // Méthode 1: Chercher avec l'URL originale exacte
+      let { data, error } = await supabase
+        .from(TABLES.SONGS)
+        .select('*')
+        .eq('youtube_url', originalUrl)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ Erreur recherche par youtube_url (original):', error);
+      }
+
+      // Méthode 2: Si pas trouvé, chercher avec l'URL normalisée
+      if (!data && normalizedUrl && normalizedUrl !== originalUrl) {
+        const { data: data2, error: error2 } = await supabase
+          .from(TABLES.SONGS)
+          .select('*')
+          .eq('youtube_url', normalizedUrl)
+          .maybeSingle();
+        
+        if (error2 && error2.code !== 'PGRST116') {
+          console.error('❌ Erreur recherche par youtube_url (normalisée):', error2);
+        } else if (data2) {
+          data = data2;
+        }
+      }
+
+      // Méthode 3: Si toujours pas trouvé et qu'on a un videoId, chercher toutes les chansons et comparer les IDs
+      if (!data && videoId) {
+        const { data: allSongs, error: error3 } = await supabase
+          .from(TABLES.SONGS)
+          .select('*')
+          .not('youtube_url', 'is', null);
+        
+        if (!error3 && allSongs && allSongs.length > 0) {
+          const found = allSongs.find(song => {
+            if (!song.youtube_url) return false;
+            const songVideoId = this.extractYouTubeId(song.youtube_url);
+            return songVideoId === videoId;
+          });
+          if (found) {
+            console.warn('✅ Chanson trouvée par ID vidéo:', found.title);
+            data = found;
+          }
+        }
+      }
+
+      // Méthode 4: Recherche partielle (contient l'URL)
+      if (!data) {
+        const { data: partialMatches, error: error4 } = await supabase
+          .from(TABLES.SONGS)
+          .select('*')
+          .ilike('youtube_url', `%${videoId || originalUrl.split('/').pop()}%`);
+        
+        if (!error4 && partialMatches && partialMatches.length > 0) {
+          // Vérifier que c'est vraiment la même vidéo
+          const found = partialMatches.find(song => {
+            if (!song.youtube_url) return false;
+            const songVideoId = this.extractYouTubeId(song.youtube_url);
+            return songVideoId === videoId;
+          });
+          if (found) {
+            console.warn('✅ Chanson trouvée par recherche partielle:', found.title);
+            data = found;
+          }
+        }
+      }
+
+      return data || null;
+    } catch (error) {
+      console.error('❌ Exception recherche par youtube_url:', error);
+      return null;
+    }
+  },
+
+  // Trouver une chanson par son tiktok_video_id (déprécié, gardé pour compatibilité)
+  async getByTikTokId(tiktokVideoId) {
+    try {
+      if (!tiktokVideoId || !tiktokVideoId.trim()) {
+        return null;
+      }
+
+      const { data, error } = await supabase
+        .from(TABLES.SONGS)
+        .select('*')
+        .eq('tiktok_video_id', tiktokVideoId.trim())
+        .maybeSingle();
+
+      if (error) {
+        console.error('❌ Erreur recherche par tiktok_video_id:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('❌ Exception recherche par tiktok_video_id:', error);
+      return null;
+    }
+  },
+
   // Créer une nouvelle chanson
   async create(songData) {
     try {
+      let normalizedUrl = null;
+      
+      // Vérifier d'abord que l'utilisateur est bien authentifié et admin
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        const authError = new Error('❌ Vous devez être connecté pour créer une chanson');
+        authError.code = 'NOT_AUTHENTICATED';
+        throw authError;
+      }
+
+      // Vérifier que l'utilisateur est admin avant d'essayer d'insérer
+      const { data: adminCheck, error: adminError } = await supabase
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
+
+      if (adminError) {
+        console.error('❌ Erreur vérification admin avant insertion:', adminError);
+        const adminCheckError = new Error('❌ Erreur lors de la vérification des droits admin');
+        adminCheckError.code = 'ADMIN_CHECK_FAILED';
+        adminCheckError.originalError = adminError;
+        throw adminCheckError;
+      }
+
+      if (!adminCheck) {
+        const notAdminError = new Error('❌ Vous n\'avez pas les droits administrateur pour créer une chanson');
+        notAdminError.code = 'NOT_ADMIN';
+        throw notAdminError;
+      }
+
+      console.warn('✅ Vérification admin OK, vérification des doublons...');
+
+      // Vérifier les doublons AVANT l'insertion (en tant qu'admin, on peut voir toutes les chansons)
+      // normalizedUrl est déjà déclaré plus haut
+      
+      // Vérifier si un youtube_url est fourni et s'il existe déjà
+      if (songData.youtube_url && songData.youtube_url.trim()) {
+        // Normaliser l'URL pour la comparaison
+        normalizedUrl = this.normalizeYouTubeUrl(songData.youtube_url.trim());
+        
+        // Chercher avec l'URL originale (en tant qu'admin, on peut voir toutes les chansons)
+        let existingSong = await this.getByYouTubeUrl(songData.youtube_url.trim());
+        
+        // Si pas trouvé, chercher avec l'URL normalisée
+        if (!existingSong && normalizedUrl && normalizedUrl !== songData.youtube_url.trim()) {
+          const { data: existingByNormalized, error: searchError } = await supabase
+            .from(TABLES.SONGS)
+            .select('*')
+            .eq('youtube_url', normalizedUrl)
+            .maybeSingle();
+          
+          if (searchError && searchError.code !== 'PGRST116') {
+            console.warn('⚠️ Erreur lors de la recherche de doublon (normalisée):', searchError);
+          } else if (existingByNormalized) {
+            existingSong = existingByNormalized;
+          }
+        }
+        
+        // Si toujours pas trouvé, chercher par ID vidéo extrait
+        if (!existingSong) {
+          const videoId = this.extractYouTubeId(songData.youtube_url.trim());
+          if (videoId) {
+            const { data: allSongs, error: allSongsError } = await supabase
+              .from(TABLES.SONGS)
+              .select('*')
+              .not('youtube_url', 'is', null);
+            
+            if (allSongsError) {
+              console.warn('⚠️ Erreur lors de la recherche de toutes les chansons:', allSongsError);
+            } else if (allSongs) {
+              existingSong = allSongs.find(song => {
+                if (!song.youtube_url) return false;
+                const songVideoId = this.extractYouTubeId(song.youtube_url);
+                return songVideoId === videoId;
+              });
+            }
+          }
+        }
+        
+        if (existingSong) {
+          const error = new Error(`Une chanson avec cette URL YouTube existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+          error.code = 'DUPLICATE_YOUTUBE_URL';
+          error.existingSong = existingSong;
+          throw error;
+        }
+      }
+      
+      // Vérifier aussi tiktok_video_id pour compatibilité (déprécié)
+      if (songData.tiktok_video_id && songData.tiktok_video_id.trim()) {
+        const existingSong = await this.getByTikTokId(songData.tiktok_video_id.trim());
+        if (existingSong) {
+          const error = new Error(`Une chanson avec cet ID TikTok existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+          error.code = 'DUPLICATE_TIKTOK_ID';
+          error.existingSong = existingSong;
+          throw error;
+        }
+      }
+
       // Nettoyer et valider les données
       const cleanData = {
         title: songData.title?.trim(),
@@ -174,18 +471,87 @@ export const supabaseSongService = {
         hashtags: Array.isArray(songData.hashtags) ? songData.hashtags : []
       }
 
+      console.warn('✅ Vérification des doublons OK, insertion de la chanson...');
+
       const { data, error } = await supabase
         .from(TABLES.SONGS)
         .insert([cleanData])
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        // Gérer spécifiquement les erreurs de permission (RLS)
+        if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('new row violates row-level security') || error.message?.includes('row-level security')) {
+          console.error('❌ ERREUR PERMISSION RLS:', error);
+          console.error('❌ Code:', error.code);
+          console.error('❌ Message:', error.message);
+          console.error('❌ Détails:', error.details);
+          console.error('❌ Hint:', error.hint);
+          console.error('❌ User ID:', session.user.id);
+          console.error('❌ Admin check result:', adminCheck);
+          
+          const permissionError = new Error('❌ Erreur de permission RLS : La policy RLS bloque l\'insertion. Vérifiez que la policy "Allow admins full access" ou "songs_admin_full_access" a bien une clause WITH CHECK qui vérifie la table admins. Exécutez le script supabase/scripts/fix_songs_rls_complete.sql dans Supabase SQL Editor.');
+          permissionError.code = 'PERMISSION_DENIED';
+          permissionError.originalError = error;
+          throw permissionError;
+        }
+        
+        // Gérer spécifiquement l'erreur de duplicate key (23505)
+        // Cette erreur peut se produire si une contrainte UNIQUE dans la base bloque l'insertion
+        if (error.code === '23505' || error.message?.includes('duplicate key')) {
+          console.warn('⚠️ Erreur duplicate key détectée, recherche de la chanson existante...');
+          
+          // Extraire le champ en conflit depuis le message d'erreur
+          const conflictField = error.message?.match(/Key \(([^)]+)\)/)?.[1] || 'unknown';
+          console.warn('⚠️ Champ en conflit:', conflictField);
+          
+          let existingSong = null;
+          let errorCode = 'DUPLICATE_KEY';
+          
+          // Essayer de trouver la chanson existante
+          // Si c'est youtube_url qui est en conflit
+          if (conflictField.includes('youtube') || cleanData.youtube_url) {
+            existingSong = await this.getByYouTubeUrl(cleanData.youtube_url || '');
+            if (existingSong) {
+              errorCode = 'DUPLICATE_YOUTUBE_URL';
+            }
+          }
+          
+          // Si c'est tiktok_video_id qui est en conflit
+          if (!existingSong && (conflictField.includes('tiktok') || cleanData.tiktok_video_id)) {
+            existingSong = await this.getByTikTokId(cleanData.tiktok_video_id || '');
+            if (existingSong) {
+              errorCode = 'DUPLICATE_TIKTOK_ID';
+            }
+          }
+          
+          // Si on a trouvé la chanson existante
+          if (existingSong) {
+            const platform = errorCode === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : 'ID TikTok';
+            const duplicateError = new Error(`Une chanson avec cette ${platform} existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+            duplicateError.code = errorCode;
+            duplicateError.existingSong = existingSong;
+            throw duplicateError;
+          }
+          
+          // Si on n'a pas trouvé mais qu'il y a une erreur de duplicate key
+          // C'est probablement une contrainte UNIQUE sur un autre champ
+          const duplicateError = new Error(`Une contrainte d'unicité empêche la création de cette chanson. Vérifiez que l'URL YouTube ou l'ID TikTok n'existe pas déjà.`);
+          duplicateError.code = 'DUPLICATE_KEY';
+          duplicateError.originalError = error;
+          duplicateError.conflictField = conflictField;
+          throw duplicateError;
+        }
+        throw error;
+      }
 
       console.warn('✅ Chanson créée avec succès:', data)
       return data
     } catch (error) {
-      handleSupabaseError(error, 'Création chanson')
+      // Ne pas appeler handleSupabaseError si c'est déjà notre erreur personnalisée
+      if (error.code !== 'DUPLICATE_TIKTOK_ID' && error.code !== 'DUPLICATE_YOUTUBE_URL') {
+        handleSupabaseError(error, 'Création chanson')
+      }
       throw error
     }
   },
@@ -204,9 +570,14 @@ export const supabaseSongService = {
         if (key === 'id' || key === 'created_at' || key === 'updated_at') {
           return
         }
-        if (updates[key] !== undefined && updates[key] !== null) {
-          if (key === 'hashtags' && !Array.isArray(updates[key])) {
-            cleanUpdates[key] = []
+        // Inclure tous les champs (même null ou chaînes vides) pour permettre la mise à null
+        // Mais convertir les chaînes vides en null pour les champs optionnels
+        if (updates[key] !== undefined) {
+          if (key === 'hashtags') {
+            cleanUpdates[key] = Array.isArray(updates[key]) ? updates[key] : []
+          } else if (key === 'tiktok_video_id' || key === 'tiktok_url') {
+            // Convertir les chaînes vides en null pour les champs TikTok
+            cleanUpdates[key] = (updates[key]?.trim() || null);
           } else {
             cleanUpdates[key] = updates[key]
           }
@@ -214,6 +585,59 @@ export const supabaseSongService = {
       })
 
       console.warn('🔄 Updates nettoyés:', JSON.stringify(cleanUpdates, null, 2));
+
+      // Récupérer la chanson actuelle pour comparer les valeurs
+      const currentSong = await this.get(id);
+      if (!currentSong) {
+        throw new Error(`Chanson avec l'ID ${id} introuvable`);
+      }
+
+      // Vérifier les doublons AVANT la mise à jour (seulement si la valeur change et n'est pas vide)
+      // Vérifier tiktok_video_id
+      if (cleanUpdates.tiktok_video_id !== undefined) {
+        // Normaliser : convertir chaînes vides en null
+        const newTikTokId = cleanUpdates.tiktok_video_id?.trim() || null;
+        const currentTikTokId = currentSong.tiktok_video_id?.trim() || null;
+        
+        // Ne vérifier que si :
+        // 1. La nouvelle valeur n'est pas vide/null
+        // 2. La valeur change réellement
+        if (newTikTokId && newTikTokId !== currentTikTokId) {
+          const existingSong = await this.getByTikTokId(newTikTokId);
+          // Comparer les IDs en les convertissant en nombres pour éviter les problèmes de type
+          const existingId = existingSong ? Number(existingSong.id) : null;
+          const currentId = Number(id);
+          
+          if (existingSong && existingId !== currentId) {
+            const error = new Error(`Une chanson avec cet ID TikTok existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+            error.code = 'DUPLICATE_TIKTOK_ID';
+            error.existingSong = existingSong;
+            throw error;
+          }
+        }
+        // Si la nouvelle valeur est vide/null, ne pas vérifier les doublons (on peut mettre à null)
+      }
+
+      // Vérifier youtube_url
+      if (cleanUpdates.youtube_url !== undefined) {
+        const newYouTubeUrl = cleanUpdates.youtube_url?.trim() || null;
+        const currentYouTubeUrl = currentSong.youtube_url?.trim() || null;
+        
+        // Ne vérifier que si la valeur change
+        if (newYouTubeUrl && newYouTubeUrl !== currentYouTubeUrl) {
+          const existingSong = await this.getByYouTubeUrl(newYouTubeUrl);
+          // Comparer les IDs en les convertissant en nombres pour éviter les problèmes de type
+          const existingId = existingSong ? Number(existingSong.id) : null;
+          const currentId = Number(id);
+          
+          if (existingSong && existingId !== currentId) {
+            const error = new Error(`Une chanson avec cette URL YouTube existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+            error.code = 'DUPLICATE_YOUTUBE_URL';
+            error.existingSong = existingSong;
+            throw error;
+          }
+        }
+      }
 
       // Requête avec .select().single() pour forcer un retour cohérent
       const { data, error } = await supabase
@@ -229,6 +653,58 @@ export const supabaseSongService = {
       if (error) {
         console.error('[Supabase][UPDATE][ERROR]', error);
         console.error('❌ Erreur Supabase:', error.message, '\nCode:', error.code, '\nDetails:', error.details, '\nHint:', error.hint, '\nStack:', error.stack);
+        
+        // Gérer spécifiquement les erreurs de permission RLS
+        if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+          const permissionError = new Error('❌ Erreur de permission : Vous n\'avez pas les droits de mise à jour sur la table songs. Vérifiez que vous êtes bien connecté en tant qu\'admin et que les RLS policies sont correctement configurées.');
+          permissionError.code = 'PERMISSION_DENIED';
+          permissionError.originalError = error;
+          throw permissionError;
+        }
+        
+        // Gérer spécifiquement l'erreur de duplicate key (23505)
+        if (error.code === '23505' || error.message?.includes('duplicate key')) {
+          console.warn('⚠️ Erreur duplicate key détectée lors de la mise à jour');
+          
+          // Extraire le champ en conflit depuis le message d'erreur
+          const conflictField = error.message?.match(/Key \(([^)]+)\)/)?.[1] || 'unknown';
+          console.warn('⚠️ Champ en conflit:', conflictField);
+          
+          let existingSong = null;
+          let errorCode = 'DUPLICATE_KEY';
+          
+          // Essayer de trouver la chanson existante
+          if (conflictField.includes('tiktok') || cleanUpdates.tiktok_video_id) {
+            existingSong = await this.getByTikTokId(cleanUpdates.tiktok_video_id || '');
+            if (existingSong && existingSong.id !== id) {
+              errorCode = 'DUPLICATE_TIKTOK_ID';
+            }
+          }
+          
+          if (!existingSong && (conflictField.includes('youtube') || cleanUpdates.youtube_url)) {
+            existingSong = await this.getByYouTubeUrl(cleanUpdates.youtube_url || '');
+            if (existingSong && existingSong.id !== id) {
+              errorCode = 'DUPLICATE_YOUTUBE_URL';
+            }
+          }
+          
+          // Si on a trouvé la chanson existante
+          if (existingSong) {
+            const platform = errorCode === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : 'ID TikTok';
+            const duplicateError = new Error(`Une chanson avec cette ${platform} existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+            duplicateError.code = errorCode;
+            duplicateError.existingSong = existingSong;
+            throw duplicateError;
+          }
+          
+          // Si on n'a pas trouvé mais qu'il y a une erreur de duplicate key
+          const duplicateError = new Error(`Une contrainte d'unicité empêche la mise à jour de cette chanson. Vérifiez que l'URL YouTube ou l'ID TikTok n'existe pas déjà dans une autre chanson.`);
+          duplicateError.code = 'DUPLICATE_KEY';
+          duplicateError.originalError = error;
+          duplicateError.conflictField = conflictField;
+          throw duplicateError;
+        }
+        
         throw new Error(error.message || 'Update failed');
       }
 
@@ -242,6 +718,15 @@ export const supabaseSongService = {
         details: error.details,
         hint: error.hint
       });
+      
+      // Gérer spécifiquement les erreurs de permission RLS
+      if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+        const permissionError = new Error('❌ Erreur de permission : Vous n\'avez pas les droits de mise à jour sur la table songs. Vérifiez que vous êtes bien connecté en tant qu\'admin et que les RLS policies sont correctement configurées.');
+        permissionError.code = 'PERMISSION_DENIED';
+        permissionError.originalError = error;
+        throw permissionError;
+      }
+      
       throw error;
     }
   },

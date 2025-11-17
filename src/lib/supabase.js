@@ -9,7 +9,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Variables d\'environnement Supabase manquantes: VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY sont obligatoires')
 }
 
-// Client Supabase avec options pour désactiver le cache
+// Client Supabase avec options pour désactiver le cache et améliorer la persistance de session
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   db: {
     schema: 'public',
@@ -17,6 +17,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true, // Détecter la session dans l'URL (pour les redirections)
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined, // Utiliser localStorage en production
+    storageKey: 'supabase.auth.token', // Clé de stockage pour la session
   },
   global: {
     headers: {
@@ -44,18 +47,18 @@ export const handleSupabaseError = (error, context = 'Supabase operation') => {
 export const checkConnection = async () => {
   try {
     // Vérifier la connexion en testant une requête simple
-    const { data, error } = await supabase.from(TABLES.SONGS).select('count').limit(1)
+    const { error } = await supabase.from(TABLES.SONGS).select('count').limit(1)
     
     if (error) {
       // Si la table n'existe pas, c'est normal au début
       if (error.code === 'PGRST116') {
-        console.log('✅ Connexion Supabase réussie (table songs non créée)')
+        console.warn('✅ Connexion Supabase réussie (table songs non créée)')
         return true
       }
       throw error
     }
 
-    console.log('✅ Connexion Supabase réussie')
+    console.warn('✅ Connexion Supabase réussie')
     return true
   } catch (error) {
     console.error('❌ Erreur de connexion Supabase:', error)
@@ -70,7 +73,7 @@ export const checkSupabaseData = async () => {
     if (error) throw error
     
     const hasData = data && data.length > 0
-    console.log(`📊 Supabase contient des données: ${hasData ? 'Oui' : 'Non'}`)
+    console.warn(`📊 Supabase contient des données: ${hasData ? 'Oui' : 'Non'}`)
     return hasData
   } catch (error) {
     console.error('❌ Erreur vérification données Supabase:', error)

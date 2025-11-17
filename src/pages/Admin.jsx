@@ -1450,19 +1450,37 @@ export default function AdminPage() {
         try {
           const result = await Song.update(editingSong.id, clean);
           console.warn('✅ Mise à jour réussie:', result);
+          
+          // Vérifier que la mise à jour a bien fonctionné
+          if (!result || !result.id) {
+            throw new Error('La mise à jour a échoué (pas de résultat retourné)');
+          }
+          
           displayMessage('success', '✅ Música atualizada com sucesso!');
           
-          // Fermer seulement en cas de succès
-          console.warn('🔄 Fermeture du formulaire et rechargement...');
-          console.warn('🔄 setShowForm(false) appelé');
-          setShowForm(false);
-          console.warn('🔄 setEditingSong(null) appelé');
-          setEditingSong(null);
-          console.warn('🔄 loadSongs() appelé pour recharger les données...');
+          // Attendre un peu pour que Supabase finalise la transaction
+          console.warn('⏳ Attente de 500ms pour finaliser la transaction Supabase...');
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Recharger les données AVANT de fermer le formulaire pour éviter la réinitialisation
+          console.warn('🔄 Rechargement des données avant fermeture...');
           await loadSongs();
-          console.warn('✅ Rechargement terminé - fenêtre fermée');
+          console.warn('✅ Données rechargées, fermeture du formulaire...');
+          
+          // Fermer seulement après avoir rechargé les données
+          setShowForm(false);
+          setEditingSong(null);
+          console.warn('✅ Formulaire fermé');
         } catch (error) {
           console.error('[Admin][Update][Failed]', error);
+          
+          // Gérer les erreurs de permission RLS
+          if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+            displayMessage('error', '❌ Erreur de permission : Vous n\'avez pas les droits de mise à jour. Vérifiez que vous êtes bien connecté en tant qu\'admin et que les RLS policies sont correctement configurées dans Supabase.');
+            console.error('❌ Détails de l\'erreur de permission:', error.originalError || error);
+            return;
+          }
+          
           displayMessage('error', `❌ Échec mise à jour: ${error.message || error}`);
           // NE PAS fermer la fenêtre en cas d'erreur
           return;
@@ -1479,6 +1497,10 @@ export default function AdminPage() {
           }
           
           displayMessage('success', '✅ Música criada com sucesso!');
+          
+          // Attendre un peu pour que Supabase finalise la transaction AVANT d'envoyer les notifications
+          console.warn('⏳ Attente de 500ms pour finaliser la transaction Supabase...');
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           // Envoyer les notifications push (en arrière-plan, sans bloquer)
           notifyAllSubscribers({
@@ -1501,16 +1523,83 @@ export default function AdminPage() {
             // Ne pas bloquer l'UI si l'envoi échoue
           });
           
-          // Fermer seulement en cas de succès
-          console.warn('🔄 Fermeture du formulaire et rechargement...');
+          // Recharger les données AVANT de fermer le formulaire pour éviter la réinitialisation
+          console.warn('🔄 Rechargement des données avant fermeture...');
+          await loadSongs();
+          console.warn('✅ Données rechargées, fermeture du formulaire...');
+          
+          // Fermer seulement après avoir rechargé les données
           setShowForm(false);
           setEditingSong(null);
-          await loadSongs();
-          console.warn('✅ Rechargement terminé - fenêtre fermée');
+          console.warn('✅ Formulaire fermé');
         } catch (error) {
           console.error('[Admin][Create][Failed]', error);
           console.error('[Admin][Create][Failed] Full error:', JSON.stringify(error, null, 2));
+          
+          // Gérer spécifiquement l'erreur de duplicate youtube_url
+          if (error.code === 'DUPLICATE_YOUTUBE_URL' || error.code === 'DUPLICATE_TIKTOK_ID' || error.code === 'DUPLICATE_KEY' || error.message?.includes('duplicate key') || error.message?.includes('existe déjà')) {
+            console.warn('🔄 Erreur duplicate détectée:', error);
+            const existingSong = error.existingSong;
+            
+            if (existingSong) {
+              // Proposer de modifier la chanson existante
+              const platform = error.code === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : 'ID TikTok';
+              const confirmMessage = `❌ Une chanson avec cette ${platform} existe déjà : "${existingSong.title}" (ID: ${existingSong.id})\n\nVoulez-vous modifier cette chanson au lieu d'en créer une nouvelle ?`;
+              
+              if (window.confirm(confirmMessage)) {
+                // Charger la chanson existante pour modification
+                console.warn('📝 Chargement de la chanson existante pour modification');
+                setEditingSong(existingSong);
+                setIsEditing(true);
+                setShowForm(true);
+                displayMessage('info', `📝 Modification de la chanson existante : "${existingSong.title}"`);
+                // ARRÊTER LE PROCESSUS - ne pas continuer
+                return;
+              } else {
+                displayMessage('error', `❌ Création annulée. Une chanson avec cette ${platform} existe déjà : "${existingSong.title}"`);
+                // ARRÊTER LE PROCESSUS - ne pas continuer
+                return;
+              }
+            } else {
+              // Pas de chanson existante trouvée, mais erreur de duplicate
+              const platform = error.code === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : (error.code === 'DUPLICATE_TIKTOK_ID' ? 'ID TikTok' : 'URL/ID');
+              displayMessage('error', `❌ Une chanson avec cette ${platform} existe déjà. Veuillez utiliser une URL/ID différente.`);
+              console.error('❌ Duplicate détecté mais existingSong est null');
+              // ARRÊTER LE PROCESSUS - ne pas continuer
+              return;
+            }
+          }
+          
+          // Gérer les erreurs d'authentification
+          if (error.code === 'NOT_AUTHENTICATED') {
+            displayMessage('error', '❌ Vous devez être connecté pour créer une chanson. Veuillez vous reconnecter.');
+            console.error('❌ Erreur d\'authentification:', error);
+            return;
+          }
+
+          // Gérer les erreurs de vérification admin
+          if (error.code === 'ADMIN_CHECK_FAILED') {
+            displayMessage('error', '❌ Erreur lors de la vérification des droits administrateur. Vérifiez votre connexion et réessayez.');
+            console.error('❌ Erreur vérification admin:', error.originalError || error);
+            return;
+          }
+
+          if (error.code === 'NOT_ADMIN') {
+            displayMessage('error', '❌ Vous n\'avez pas les droits administrateur pour créer une chanson. Contactez un administrateur.');
+            console.error('❌ Utilisateur non admin:', error);
+            return;
+          }
+
+          // Gérer les erreurs de permission RLS
+          if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+            displayMessage('error', '❌ Erreur de permission RLS : La policy RLS bloque l\'insertion. Exécutez le script supabase/scripts/verify_and_fix_rls.sql dans Supabase SQL Editor pour corriger les policies.');
+            console.error('❌ Détails de l\'erreur de permission:', error.originalError || error);
+            console.error('❌ Message complet:', error.message);
+            return;
+          }
+          
           displayMessage('error', `❌ Échec création: ${error.message || error}`);
+          console.error('❌ Erreur complète:', error);
           // NE PAS fermer la fenêtre en cas d'erreur
           return;
         }
@@ -1518,12 +1607,20 @@ export default function AdminPage() {
     } catch (error) {
       console.error('❌ Erro detalhado ao salvar:', error);
       
-      // Messages d'erreur plus spécifiques
+      // Si c'est une erreur de duplicate, elle a déjà été gérée dans le catch interne
+      // Ne pas fermer le formulaire automatiquement pour les duplicates
+      if (error.code === 'DUPLICATE_YOUTUBE_URL' || error.code === 'DUPLICATE_TIKTOK_ID' || error.code === 'DUPLICATE_KEY') {
+        console.warn('⚠️ Erreur duplicate déjà gérée, ne pas fermer le formulaire');
+        return; // Arrêter ici, ne pas continuer
+      }
+      
+      // Messages d'erreur plus spécifiques pour les autres erreurs
       let errorMessage = 'Erro desconhecido';
       
       if (error.message) {
-        if (error.message.includes('duplicate key')) {
-          errorMessage = '❌ Erro: Já existe uma música com este ID do TikTok';
+        if (error.message.includes('duplicate key') || error.message.includes('existe déjà')) {
+          // Déjà géré plus haut, ne pas afficher à nouveau
+          return;
         } else if (error.message.includes('permission denied')) {
           errorMessage = '❌ Erro: Sem permissão para salvar (verifique a conexão)';
         } else if (error.message.includes('network')) {
@@ -1535,13 +1632,8 @@ export default function AdminPage() {
       
       displayMessage('error', errorMessage);
       
-      // Fermer la fenêtre même en cas d'erreur après un délai
-      console.warn('🔄 Fermeture de la fenêtre après erreur...');
-      setTimeout(() => {
-        setShowForm(false);
-        setEditingSong(null);
-        console.warn('✅ Fenêtre fermée après erreur');
-      }, 2000);
+      // Ne pas fermer automatiquement le formulaire pour permettre à l'utilisateur de corriger
+      console.warn('⚠️ Erreur non-duplicate, formulaire reste ouvert pour correction');
     }
   };
 
@@ -1911,7 +2003,7 @@ export default function AdminPage() {
                           URL da Vídeo YouTube * (Obrigatório)
                         </label>
                         <Input
-                          value={editingSong.youtube_url}
+                          value={editingSong.youtube_url || ''}
                           onChange={(e) => handleInputChange('youtube_url', e.target.value)}
                           placeholder="https://www.youtube.com/watch?v=VIDEO_ID ou https://youtube.com/shorts/VIDEO_ID"
                           type="url"
@@ -1961,7 +2053,7 @@ export default function AdminPage() {
                           Título * {editingSong.tiktok_video_id && editingSong.title && editingSong.title !== `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}` && <span className="text-green-600">✅</span>}
                         </label>
                         <Input
-                          value={editingSong.title}
+                          value={editingSong.title || ''}
                           onChange={(e) => handleInputChange('title', e.target.value)}
                           required
                           placeholder="Título da música"
@@ -1978,7 +2070,7 @@ export default function AdminPage() {
                           Artista
                         </label>
                         <Input
-                          value={editingSong.artist}
+                          value={editingSong.artist || ''}
                           onChange={(e) => handleInputChange('artist', e.target.value)}
                           placeholder="Nome do artista"
                         />
@@ -2003,7 +2095,7 @@ export default function AdminPage() {
                         )}
                       </label>
                       <Textarea
-                        value={editingSong.description}
+                        value={editingSong.description || ''}
                         onChange={(e) => handleInputChange('description', e.target.value)}
                         placeholder="Descrição da música"
                         rows={3}
@@ -2015,7 +2107,7 @@ export default function AdminPage() {
                         Letra
                       </label>
                       <Textarea
-                        value={editingSong.lyrics}
+                        value={editingSong.lyrics || ''}
                         onChange={(e) => handleInputChange('lyrics', e.target.value)}
                         placeholder="Letra da música"
                         rows={6}
@@ -2029,7 +2121,7 @@ export default function AdminPage() {
                         </label>
                         <Input
                           type="date"
-                          value={editingSong.release_date}
+                          value={editingSong.release_date || ''}
                           onChange={(e) => handleInputChange('release_date', e.target.value)}
                           required
                         />
@@ -2077,7 +2169,7 @@ export default function AdminPage() {
                         <Input
                           type="url"
                           name="spotify_url"
-                          value={editingSong.spotify_url}
+                          value={editingSong.spotify_url || ''}
                           onChange={(e) => handleInputChange('spotify_url', e.target.value)}
                           placeholder="URL Spotify"
                           className="transition-colors duration-200 ease-in-out focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
@@ -2088,7 +2180,7 @@ export default function AdminPage() {
                         <Input
                           type="url"
                           name="apple_music_url"
-                          value={editingSong.apple_music_url}
+                          value={editingSong.apple_music_url || ''}
                           onChange={(e) => handleInputChange('apple_music_url', e.target.value)}
                           placeholder="URL Apple Music"
                           className="transition-colors duration-200 ease-in-out focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
@@ -2121,7 +2213,7 @@ export default function AdminPage() {
                           Hashtags (separados por vírgula)
                         </label>
                         <Input
-                          value={editingSong.hashtags.join(', ')}
+                          value={Array.isArray(editingSong.hashtags) ? editingSong.hashtags.join(', ') : ''}
                           onChange={(e) => handleHashtagChange(e.target.value)}
                           placeholder="humor, musica, trending, novidade"
                         />
@@ -2135,7 +2227,7 @@ export default function AdminPage() {
                           Imagem de Capa (URL)
                         </label>
                         <Input
-                          value={editingSong.cover_image}
+                          value={editingSong.cover_image || ''}
                           onChange={(e) => handleInputChange('cover_image', e.target.value)}
                           placeholder="https://exemplo.com/imagem.jpg"
                           type="url"
