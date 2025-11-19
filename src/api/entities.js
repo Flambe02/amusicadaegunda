@@ -239,14 +239,29 @@ export const AdventSong = {
         });
         return limit ? adventSongs.slice(0, limit) : adventSongs;
       } else {
-        // Supabase-only: pas de fallback localStorage
-        console.warn('⚠️ Supabase indisponible pour getByYear2025');
-        return [];
+        // Fallback localStorage
+        const songs = localStorageService.songs.getAll();
+        const adventSongs = songs.filter(song => {
+          const releaseDate = new Date(song.release_date);
+          const month = releaseDate.getMonth();
+                  return month === 11 || song.status === 'published';
+        });
+        
+        const sortedSongs = adventSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+        return limit ? sortedSongs.slice(0, limit) : sortedSongs;
       }
     } catch (error) {
       console.error('Erro ao carregar músicas do Ano 2025:', error);
-      // Supabase-only: pas de fallback localStorage
-      return [];
+      // Fallback localStorage
+      const songs = localStorageService.songs.getAll();
+      const adventSongs = songs.filter(song => {
+        const releaseDate = new Date(song.release_date);
+        const month = releaseDate.getMonth();
+        return month === 11 || song.status === 'published';
+      });
+      
+      const sortedSongs = adventSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+      return limit ? sortedSongs.slice(0, limit) : sortedSongs;
     }
   }
 };

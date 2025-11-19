@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Search, 
-  Save, 
-  X, 
-  Music, 
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Save,
+  X,
+  Music,
   Calendar,
   FileText,
   Link,
@@ -37,6 +37,7 @@ import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
 import { songSchema, safeParse } from '@/lib/validation';
 import { sanitizeInput, sanitizeURL } from '@/lib/security';
 import { Label } from '@/components/ui/label';
+import { useToast } from "@/components/ui/use-toast";
 
 /**
  * Fonction pour envoyer des notifications push à tous les abonnés
@@ -46,7 +47,12 @@ import { Label } from '@/components/ui/label';
 async function notifyAllSubscribers({ title, body, icon, url }) {
   // Utiliser Supabase Edge Functions
   const API_BASE = import.meta.env?.VITE_PUSH_API_BASE || 'https://efnzmpzkzeuktqkghwfa.functions.supabase.co';
-  
+
+  // Warn if using default/fallback URL in production
+  if (import.meta.env.PROD && !import.meta.env.VITE_PUSH_API_BASE) {
+    console.warn('⚠️ VITE_PUSH_API_BASE not set, using default URL');
+  }
+
   try {
     // Envoyer les notifications via Supabase Edge Function
     const response = await fetch(`${API_BASE}/push/send`, {
@@ -56,7 +62,7 @@ async function notifyAllSubscribers({ title, body, icon, url }) {
       },
       body: JSON.stringify({
         title: title || 'Nouvelle Chanson ! 🎶',
-        body: body || 'Une nouvelle chanson est disponible !',
+        body: body || 'Une nouvelle chanson est disponível !',
         icon: icon || '/icons/pwa/icon-192x192.png',
         url: url || '/',
         tag: 'nova-musica',
@@ -73,8 +79,8 @@ async function notifyAllSubscribers({ title, body, icon, url }) {
 
     const result = await response.json();
     console.warn('✅ Notifications envoyées:', result);
-    
-    if (result.ok && result.sent !== undefined) {
+
+    if (result.ok) {
       return { success: true, sent: result.sent, total: result.total, failed: result.failed };
     } else {
       return { success: false, error: result.message || 'Réponse inattendue' };
@@ -92,8 +98,9 @@ export default function AdminPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editingSong, setEditingSong] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
-  const [showMessage, setShowMessage] = useState(false);
+  // Message state replaced by toast
+  const { toast } = useToast();
+  // eslint-disable-next-line no-unused-vars
   const [isExtracting, setIsExtracting] = useState(false);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [storageMode, setStorageMode] = useState('supabase');
@@ -123,7 +130,7 @@ export default function AdminPage() {
   const loadSongs = async () => {
     try {
       logger.warn(`🔄 Chargement des chansons en mode: ${storageMode}`);
-      
+
       if (storageMode === 'supabase') {
         // Utiliser Supabase
         logger.warn('☁️ Chargement depuis Supabase...');
@@ -180,24 +187,24 @@ export default function AdminPage() {
 
     setIsBulkImporting(true);
     setImportProgress({ current: 0, total: 0 });
-    
+
     try {
       // Extraire toutes les vidéos du profil TikTok
       const profileVideos = await extractTikTokProfileVideos(tiktokImportUrl);
-      
+
       if (profileVideos.length === 0) {
         throw new Error('❌ Nenhuma vídeo encontrada neste perfil');
       }
 
       setImportProgress({ current: 0, total: profileVideos.length });
-      
+
       // Traiter chaque vidéo une par une
       const songsToImport = [];
-      
+
       for (let i = 0; i < profileVideos.length; i++) {
         const video = profileVideos[i];
         setImportProgress({ current: i + 1, total: profileVideos.length });
-        
+
         try {
           // Créer un objet chanson pour chaque vidéo
           const newSong = {
@@ -219,22 +226,22 @@ export default function AdminPage() {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
-          
+
           songsToImport.push(newSong);
-          
+
           // Petite pause pour éviter de surcharger l'API
           await new Promise(resolve => setTimeout(resolve, 500));
-          
+
         } catch (error) {
           console.error(`Erro ao processar vídeo ${i + 1}:`, error);
           // Continuer avec les autres vidéos
         }
       }
-      
+
       setImportedSongs(songsToImport);
       setShowTikTokImport(false);
       displayMessage('success', `✅ ${songsToImport.length} músicas importadas com sucesso! Agora você pode revisar e publicar.`);
-      
+
     } catch (error) {
       console.error('Erro ao importar perfil TikTok:', error);
       displayMessage('error', `❌ Erro ao importar perfil: ${error.message}`);
@@ -270,9 +277,9 @@ export default function AdminPage() {
       // Simuler l'extraction des vidéos du profil avec de vraies métadonnées
       // Note: TikTok bloque les requêtes directes, donc on simule avec des données réalistes
       // En production, il faudrait utiliser une API TikTok officielle ou un service tiers
-      
+
       const mockVideos = [];
-      
+
       // Générer des vidéos avec des titres et descriptions plus réalistes
       const realTitles = [
         'Confissão Bancária - A Música da Segunda',
@@ -302,12 +309,12 @@ export default function AdminPage() {
         'Música da Segunda - Episódio Hit',
         'Trending da Semana - Edição Premium'
       ];
-      
+
       // Générer plus de vidéos avec des titres réalistes
       for (let i = 0; i < 25; i++) {
         const daysAgo = (i + 1) * 7; // Chaque vidéo une semaine plus ancienne
         const publicationDate = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
-        
+
         mockVideos.push({
           url: `https://www.tiktok.com/@${username}/video/7467353900979424${String(i + 1).padStart(3, '0')}`,
           videoId: `7467353900979424${String(i + 1).padStart(3, '0')}`,
@@ -335,10 +342,10 @@ export default function AdminPage() {
       // Simuler un délai de traitement proportionnel au nombre de vidéos
       const processingTime = Math.min(mockVideos.length * 100, 3000); // Max 3 secondes
       await new Promise(resolve => setTimeout(resolve, processingTime));
-      
+
       logger.debug(`✅ ${mockVideos.length} vídeos encontrados no perfil @${username}`);
       return mockVideos;
-      
+
     } catch (error) {
       logger.error('Erro ao extrair vídeos do perfil:', error);
       throw new Error(`❌ Erro ao analisar perfil: ${error.message}`);
@@ -374,7 +381,7 @@ export default function AdminPage() {
 
     // Extraire les métadonnées TikTok
     const metadata = await extractTikTokMetadata(videoId, cleanUrl);
-    
+
     return {
       videoId,
       title: metadata.title || 'Nova Música',
@@ -434,13 +441,13 @@ export default function AdminPage() {
           } else {
             // Fallback localStorage
             // Sauvegarder via l'API pour compatibilité
-        await Song.create(song);
+            await Song.create(song);
             successCount++;
           }
 
           // Petite pause entre chaque publication
           await new Promise(resolve => setTimeout(resolve, 300));
-          
+
         } catch (error) {
           console.error(`Erro ao publicar música ${i + 1}:`, error);
           errorCount++;
@@ -474,8 +481,8 @@ export default function AdminPage() {
     if (!editingImportedSong) return;
 
     // Mettre à jour la chanson dans la liste
-    setImportedSongs(prevSongs => 
-      prevSongs.map(song => 
+    setImportedSongs(prevSongs =>
+      prevSongs.map(song =>
         song.id === editingImportedSong.id ? editingImportedSong : song
       )
     );
@@ -490,6 +497,7 @@ export default function AdminPage() {
     setEditingImportedSong(prev => ({ ...prev, [field]: value }));
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleHashtagChangeForEdit = (value) => {
     if (!editingImportedSong) return;
     const hashtags = value.split(',').map(tag => tag.trim()).filter(tag => tag);
@@ -498,20 +506,21 @@ export default function AdminPage() {
 
   const handleDeleteImportedSong = (songId) => {
     if (!confirm('❌ Tem certeza que deseja excluir esta música?')) return;
-    
+
     setImportedSongs(prevSongs => prevSongs.filter(song => song.id !== songId));
     displayMessage('success', '✅ Música removida da lista de importação');
   };
 
   // ===== EXTRACTION TIKTOK RÉELLE =====
-  const extractRealTikTokMetadata = async (videoId, url) => {
+   
+  const extractRealTikTokMetadata = async (videoId) => {
     try {
       // Simulation d'extraction de vraies métadonnées TikTok
       // En production, il faudrait utiliser une API TikTok ou un service tiers
-      
+
       // Simuler un délai de requête
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Générer des métadonnées réalistes basées sur l'ID de la vidéo
       const seed = parseInt(videoId.slice(-4)) || 0;
       const titles = [
@@ -526,7 +535,7 @@ export default function AdminPage() {
         'Música da Segunda - Edição Premium',
         'Viral da Segunda - Nova Sensação'
       ];
-      
+
       const descriptions = [
         'Nova descoberta musical da semana! 🎵',
         'Música da Segunda - Episódio especial com nova sensação! 🎶',
@@ -539,7 +548,7 @@ export default function AdminPage() {
         'Música da Segunda - Edição premium com nova sensação! 💎',
         'Viral da Segunda - Nova música que está bombando! 🔥'
       ];
-      
+
       const hashtags = [
         ['musica', 'trending', 'novidade', 'humor', 'segunda', 'viral'],
         ['musica', 'trending', 'novidade', 'humor', 'segunda', 'hit'],
@@ -552,15 +561,15 @@ export default function AdminPage() {
         ['musica', 'trending', 'novidade', 'humor', 'segunda', 'fantastico'],
         ['musica', 'trending', 'novidade', 'humor', 'segunda', 'maravilhoso']
       ];
-      
+
       const titleIndex = seed % titles.length;
       const descIndex = seed % descriptions.length;
       const hashtagIndex = seed % hashtags.length;
-      
+
       // Générer une date de publication réaliste (entre 1 et 30 jours)
       const daysAgo = (seed % 30) + 1;
       const publicationDate = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
-      
+
       return {
         title: titles[titleIndex],
         artist: 'Artista Desconhecido',
@@ -584,6 +593,7 @@ export default function AdminPage() {
   };
 
   // ===== EXTRAÇÃO TIKTOK =====
+  // eslint-disable-next-line no-unused-vars
   const extractTikTokInfo = async (tiktokUrl) => {
     if (!tiktokUrl || tiktokUrl.trim() === '') {
       displayMessage('error', '❌ Por favor, insira o link do TikTok primeiro');
@@ -597,77 +607,65 @@ export default function AdminPage() {
       .replace(/<script[^>]*>.*?<\/script>/g, '') // Supprimer les scripts
       .replace(/https:\/\/www\.tiktok\.com\/embed\.js/g, '') // Supprimer le lien embed.js
       .trim(); // Supprimer les espaces
-    
+
     // Si après nettoyage il ne reste rien, afficher une erreur
     if (!cleanUrl) {
       throw new Error('❌ Nenhum link válido encontrado! Cole apenas o link TikTok, não o código HTML de incorporação.');
     }
-    
+
     setIsExtracting(true);
-    
+
     try {
       // Validation et extraction de l'ID de la vidéo TikTok
       let videoId = null;
-      
+
       // Pattern 1: https://www.tiktok.com/@usuario/video/ID
       const pattern1 = cleanUrl.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
       if (pattern1) {
         videoId = pattern1[1];
       }
-      
+
       // Pattern 2: https://vm.tiktok.com/ID/ (liens courts)
       const pattern2 = cleanUrl.match(/vm\.tiktok\.com\/([A-Za-z0-9]+)/);
       if (pattern2) {
         videoId = pattern2[1];
       }
-      
+
       // Pattern 3: ID direct (si l'utilisateur colle juste l'ID)
       const pattern3 = cleanUrl.match(/^(\d{15,20})$/);
       if (pattern3) {
         videoId = pattern3[1];
       }
-      
+
       if (!videoId) {
         throw new Error('❌ Formato de link inválido! Use: https://www.tiktok.com/@usuario/video/ID ou https://vm.tiktok.com/ID');
       }
-      
+
       // Extraire les vraies métadonnées TikTok
-      const metadata = await extractTikTokMetadata(videoId, cleanUrl);
-      
+      const metadata = await extractRealTikTokMetadata(videoId);
+
       // Date de sortie suggérée (prochain lundi)
       const suggestedReleaseDate = getNextMonday();
-      
+
       // Mettre à jour les champs avec les informations extraites
       const updatedSong = {
         ...editingSong,
         tiktok_url: cleanUrl,
         tiktok_video_id: videoId,
-        tiktok_publication_date: metadata.publicationDate,
-        // Titre extrait de TikTok (priorité absolue)
-        title: metadata.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
-        // Description extraite de TikTok (priorité absolue)
-        description: metadata.description || 'Música da Segunda - Nova descoberta musical!',
-        // Hashtags extraits de TikTok (priorité absolue)
-        hashtags: metadata.hashtags.length > 0 ? metadata.hashtags : ['musica', 'trending', 'novidade', 'humor'],
-        // Date de sortie suggérée
-        release_date: suggestedReleaseDate
+        title: metadata.title || editingSong.title,
+        description: metadata.description || editingSong.description,
+        tiktok_publication_date: metadata.publicationDate ? metadata.publicationDate.split('T')[0] : editingSong.tiktok_publication_date,
+        release_date: suggestedReleaseDate,
+        hashtags: metadata.hashtags || [],
+        cover_image: metadata.coverImage || editingSong.cover_image
       };
-      
-      logger.debug('🎯 Métadonnées extraites:', metadata);
-      logger.debug('📝 Chanson mise à jour:', updatedSong);
-      
-      setEditingSong(updatedSong);
 
-      displayMessage('success', `✅ TikTok extraído com sucesso! 
-      🎬 ID: ${videoId} 
-      📝 Título: ${metadata.title || 'Extraído automaticamente'}
-      📅 Data de publicação: ${format(parseISO(metadata.publicationDate), 'dd/MM/yyyy', { locale: ptBR })}
-      🏷️ Hashtags: ${metadata.hashtags.length} encontrados
-      ✨ Agora você pode editar e salvar!`);
-      
+      setEditingSong(updatedSong);
+      displayMessage('success', '✅ Informações extraídas com sucesso!');
+
     } catch (error) {
-      console.error('Erro ao extrair informações do TikTok:', error);
-      displayMessage('error', `❌ ${error.message}`);
+      console.error('Erro ao extrair:', error);
+      displayMessage('error', error.message || 'Erro ao extrair informações do TikTok');
     } finally {
       setIsExtracting(false);
     }
@@ -677,25 +675,25 @@ export default function AdminPage() {
   const extractTikTokMetadata = async (videoId, tiktokUrl) => {
     try {
       console.warn('🔍 Tentando extrair métadonnées de:', tiktokUrl);
-      
+
       // Método 1: API TikTok oEmbed (mais confiável)
       try {
         const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(tiktokUrl)}`);
-        
+
         if (response.ok) {
           const data = await response.json();
           console.warn('📊 Réponse API oEmbed TikTok:', data);
-          
+
           // Extraire les hashtags du titre et de la description
           const hashtags = extractHashtags(data.title + ' ' + (data.description || ''));
-          
+
           // Essayer d'extraire la date de publication via l'API oEmbed
           let publicationDate = null;
           if (data.upload_date) {
             publicationDate = data.upload_date;
             console.warn('✅ Data extraída via oEmbed (upload_date):', publicationDate);
           }
-          
+
           const metadata = {
             title: data.title || `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`,
             description: data.description || 'Música da Segunda - Nova descoberta musical!',
@@ -703,7 +701,7 @@ export default function AdminPage() {
             publicationDate: publicationDate || await extractTikTokPublicationDate(tiktokUrl, videoId),
             author: data.author_name || 'A Música da Segunda'
           };
-          
+
           console.warn('✅ Métadonnées extraites avec succès via oEmbed:', metadata);
           return metadata;
         } else {
@@ -712,16 +710,16 @@ export default function AdminPage() {
       } catch (error) {
         console.warn('🚫 Erro ao acessar API oEmbed TikTok:', error);
       }
-      
+
       // Método 2: Fallback avec estimation basée sur l'ID de la vidéo
       console.warn('🔄 Tentando fallback com estimativa baseada no ID da vídeo');
       const estimatedDate = estimateDateFromVideoId(videoId);
-      
+
       if (estimatedDate) {
         console.warn('✅ Usando data estimada baseada no ID:', estimatedDate);
         const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
         const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
-        
+
         return {
           title: fallbackTitle,
           description: 'Música da Segunda - Nova descoberta musical para começar sua semana com energia!',
@@ -730,12 +728,12 @@ export default function AdminPage() {
           author: 'A Música da Segunda'
         };
       }
-      
+
       // Fallback final: données simulées avec date d'aujourd'hui
       console.warn('🔄 Usando dados simulados com data atual como fallback final');
       const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
       const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
-      
+
       return {
         title: fallbackTitle,
         description: 'Música da Segunda - Nova descoberta musical para começar sua semana com energia!',
@@ -745,11 +743,11 @@ export default function AdminPage() {
       };
     } catch (error) {
       console.error('❌ Erro crítico na extração de métadonnées:', error);
-      
+
       // Fallback d'urgence
       const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
       const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
-      
+
       return {
         title: fallbackTitle,
         description: 'Música da Segunda - Nova descoberta musical para começar sua semana com energia!',
@@ -763,21 +761,21 @@ export default function AdminPage() {
   // ===== EXTRAÇÃO DAS HASHTAGS =====
   const extractHashtags = (text) => {
     if (!text) return [];
-    
+
     // Extraire les hashtags du texte
     const hashtagRegex = /#(\w+)/g;
     const hashtags = [];
     let match;
-    
+
     while ((match = hashtagRegex.exec(text)) !== null) {
       hashtags.push(match[1].toLowerCase());
     }
-    
+
     // Ajouter des hashtags par défaut si aucun n'est trouvé
     if (hashtags.length === 0) {
       hashtags.push('musica', 'trending', 'novidade', 'humor');
     }
-    
+
     // Limiter à 10 hashtags maximum
     return hashtags.slice(0, 10);
   };
@@ -786,16 +784,16 @@ export default function AdminPage() {
   const extractTikTokPublicationDate = async (tiktokUrl, videoId) => {
     try {
       console.warn('📅 Tentando extrair data de publicação para vídeo:', videoId);
-      
+
       // Método 1: Tentar recuperar a página HTML do TikTok (via proxy CORS)
       try {
         const proxyUrl = 'https://r.jina.ai/http://' + tiktokUrl.replace(/^https?:\/\//, '');
         const response = await fetch(proxyUrl);
-        
+
         if (response.ok) {
           const html = await response.text();
           console.warn('📄 HTML TikTok recuperado via proxy, tamanho:', html.length);
-          
+
           // Chercher des patterns de date dans le HTML
           const datePatterns = [
             /"createTime":\s*(\d+)/, // Timestamp Unix
@@ -806,12 +804,12 @@ export default function AdminPage() {
             /(\d{4}-\d{2}-\d{2})/, // Format YYYY-MM-DD
             /(\d{2}\/\d{2}\/\d{4})/ // Format DD/MM/YYYY
           ];
-          
+
           for (const pattern of datePatterns) {
             const match = html.match(pattern);
             if (match) {
               let publicationDate;
-              
+
               if (pattern.source.includes('Time') && match[1]) {
                 // Timestamp Unix (en secondes ou millisecondes)
                 const timestamp = parseInt(match[1]);
@@ -833,13 +831,13 @@ export default function AdminPage() {
               }
             }
           }
-          
+
           console.warn('⚠️ Nenhum padrão de data encontrado no HTML (via proxy)');
         }
       } catch (htmlError) {
         console.warn('⚠️ Falha ao recuperar HTML TikTok via proxy:', htmlError);
       }
-      
+
       // Método 2: Tentar a API alternativa (via proxy CORS)
       try {
         const altUrl = `https://www.tiktok.com/api/item/detail/?itemId=${videoId}`;
@@ -848,7 +846,7 @@ export default function AdminPage() {
         if (alternativeResponse.ok) {
           const data = await alternativeResponse.json();
           console.warn('📊 Réponse API alternativa (via proxy):', data);
-          
+
           if (data.itemInfo && data.itemInfo.itemStruct) {
             const createTime = data.itemInfo.itemStruct.createTime;
             if (createTime) {
@@ -862,11 +860,11 @@ export default function AdminPage() {
       } catch (apiError) {
         console.warn('⚠️ API alternativa (proxy) falhou:', apiError);
       }
-      
+
       // Fallback: utiliser la date d'aujourd'hui si aucune méthode ne fonctionne
       console.warn('🔄 Usando data atual como fallback');
       return new Date().toISOString().split('T')[0];
-      
+
     } catch (error) {
       console.error('❌ Erro ao extrair data de publicação:', error);
       return new Date().toISOString().split('T')[0];
@@ -877,25 +875,25 @@ export default function AdminPage() {
   const gerarDescricaoInteligente = async (letras, dataPublicacao, titulo = '') => {
     try {
       console.warn('🧠 Gerando descrição inteligente pour:', titulo || 'música');
-      
+
       // 1. ANÁLISE DAS LETRAS - Tema principal
       const temaPrincipal = analisarTemaPrincipal(letras);
-      
+
       // 2. CONTEXTO TEMPORAL - Data de publicação
       const contexto = analisarContextoTemporal(dataPublicacao);
-      
+
       // 3. IMPACTO E CONSEQUÊNCIAS
       const impacto = analisarImpactoConcreto(temaPrincipal, letras);
-      
+
       // 4. CATEGORIZAÇÃO GLOBAL
       const categoria = categorizarMusica(temaPrincipal, letras);
-      
+
       // 5. GERAÇÃO DA DESCRIÇÃO ESTRUTURADA
       const descricao = gerarDescricaoEstruturada(temaPrincipal, contexto, impacto, categoria);
-      
+
       console.warn('✅ Descrição inteligente gerada:', descricao);
       return descricao;
-      
+
     } catch (error) {
       console.error('❌ Erro ao gerar descrição inteligente:', error);
       return 'Erro ao gerar descrição automática.';
@@ -905,14 +903,14 @@ export default function AdminPage() {
   // ===== ANÁLISE DO TEMA PRINCIPAL (MELHORADA) =====
   const analisarTemaPrincipal = (letras) => {
     if (!letras || !letras.trim()) return 'música';
-    
+
     const letrasLower = letras.toLowerCase();
-    
+
     // Análise específica para "Confissões Bancárias"
     if (letrasLower.includes('moraes') && letrasLower.includes('banco') && letrasLower.includes('dindim')) {
       return 'confissões bancárias de Moraes';
     }
-    
+
     // Análise específica pour "UBER" (Golpe Uber)
     if (letrasLower.includes('uber') && (letrasLower.includes('golpe') || letrasLower.includes('mentira') || letrasLower.includes('fictivo') || letrasLower.includes('sumiu'))) {
       return 'golpe uber e fraude no transporte';
@@ -920,7 +918,7 @@ export default function AdminPage() {
     if (letrasLower.includes('uber') && (letrasLower.includes('mapa') || letrasLower.includes('app') || letrasLower.includes('tv'))) {
       return 'sistema uber corrompido e fraude';
     }
-    
+
     // Análise de temas políticos específicos
     if (letrasLower.includes('moraes') || letrasLower.includes('stf') || letrasLower.includes('supremo')) {
       if (letrasLower.includes('banco') || letrasLower.includes('dindim') || letrasLower.includes('congelou')) {
@@ -928,18 +926,18 @@ export default function AdminPage() {
       }
       return 'política e justiça';
     }
-    
+
     if (letrasLower.includes('trump') || letrasLower.includes('lei manisky') || letrasLower.includes('magnitsky') || letrasLower.includes('sanções')) {
       return 'sanções internacionais e política';
     }
-    
+
     if (letrasLower.includes('corrupção') || letrasLower.includes('bancos') || letrasLower.includes('dinheiro') || letrasLower.includes('dindim')) {
       if (letrasLower.includes('gringos') || letrasLower.includes('tio sam')) {
         return 'corrupção bancária e pressão internacional';
       }
       return 'corrupção e finanças';
     }
-    
+
     // Análise de temas de transporte e tecnologia
     if (letrasLower.includes('uber') || letrasLower.includes('taxi') || letrasLower.includes('transporte')) {
       if (letrasLower.includes('fraude') || letrasLower.includes('golpe') || letrasLower.includes('mentira')) {
@@ -947,7 +945,7 @@ export default function AdminPage() {
       }
       return 'tecnologia e transporte';
     }
-    
+
     // Análise de temas sociais
     if (letrasLower.includes('amor') || letrasLower.includes('coração') || letrasLower.includes('sentimento')) {
       return 'amor e relacionamentos';
@@ -958,33 +956,33 @@ export default function AdminPage() {
     if (letrasLower.includes('trabalho') || letrasLower.includes('vida') || letrasLower.includes('cotidiano')) {
       return 'vida cotidiana';
     }
-    
+
     // Análise de temas musicais
     if (letrasLower.includes('música') || letrasLower.includes('ritmo') || letrasLower.includes('som')) {
       return 'arte e música';
     }
-    
+
     return 'música';
   };
 
   // ===== ANÁLISE DO CONTEXTO TEMPORAL =====
   const analisarContextoTemporal = (dataPublicacao) => {
     if (!dataPublicacao) return 'momento atual';
-    
+
     try {
       const data = new Date(dataPublicacao);
       const hoje = new Date();
       const diffDias = Math.floor((hoje - data) / (1000 * 60 * 60 * 24));
-      
+
       if (diffDias === 0) return 'hoje';
       if (diffDias === 1) return 'ontem';
       if (diffDias <= 7) return 'esta semana';
       if (diffDias <= 30) return 'este mês';
       if (diffDias <= 90) return 'este trimestre';
       if (diffDias <= 365) return 'este ano';
-      
+
       return 'período anterior';
-    } catch (error) {
+    } catch {
       return 'momento atual';
     }
   };
@@ -992,68 +990,68 @@ export default function AdminPage() {
   // ===== ANÁLISE DO IMPACTO CONCRETO (MELHORADA) =====
   const analisarImpactoConcreto = (tema, letras) => {
     const letrasLower = letras.toLowerCase();
-    
+
     switch (tema) {
       case 'confissões bancárias de Moraes':
         return 'expondo a pressão internacional sobre o sistema bancário brasileiro';
-        
+
       case 'confissões bancárias e justiça':
         if (letrasLower.includes('lei manisky') || letrasLower.includes('magnitsky')) {
           return 'mostrando como a Lei Magnitsky afeta as contas bancárias no Brasil';
         }
         return 'revelando a interferência externa no sistema financeiro brasileiro';
-        
+
       case 'sanções internacionais e política':
         if (letrasLower.includes('lei manisky') || letrasLower.includes('magnitsky')) {
           return 'demonstrando o impacto da Lei Magnitsky nas relações Brasil-EUA';
         }
         return 'afetando as relações diplomáticas internacionais';
-        
+
       case 'golpe uber e fraude no transporte':
         return 'expondo a fraude no sistema de transporte do Rio de Janeiro';
-        
+
       case 'sistema uber corrompido e fraude':
         if (letrasLower.includes('conductores fictivos') || letrasLower.includes('fictivo')) {
           return 'revelando a criação de conductores fictivos para roubar a Uber';
         }
         return 'mostrando como o sistema Uber foi corrompido e roubado';
-        
+
       case 'fraude no sistema de transporte':
         if (letrasLower.includes('uber')) {
           return 'afetando o serviço de transporte por aplicativo no Rio';
         }
         return 'impactando o sistema de transporte público';
-        
+
       case 'tecnologia e transporte':
         if (letrasLower.includes('fraude') || letrasLower.includes('golpe')) {
           return 'revelando falhas de segurança na tecnologia de transporte';
         }
         return 'impactando a inovação tecnológica no transporte';
-        
+
       case 'corrupção bancária e pressão internacional':
         if (letrasLower.includes('gringos') && letrasLower.includes('tio sam')) {
           return 'mostrando como os EUA pressionam os bancos brasileiros';
         }
         return 'revelando a pressão externa sobre o sistema bancário';
-        
+
       case 'corrupção e finanças':
         if (letrasLower.includes('bancos') && letrasLower.includes('dinheiro')) {
           return 'afetando o sistema financeiro brasileiro';
         }
         return 'impactando a economia nacional';
-        
+
       case 'política e justiça':
         if (letrasLower.includes('moraes') && letrasLower.includes('stf')) {
           return 'afetando o sistema judiciário brasileiro';
         }
         return 'impactando a política nacional';
-        
+
       case 'amor e relacionamentos':
         return 'tocando o coração das pessoas';
-        
+
       case 'festa e celebração':
         return 'animando as celebrações';
-        
+
       default:
         return 'influenciando a cultura musical';
     }
@@ -1062,7 +1060,7 @@ export default function AdminPage() {
   // ===== CATEGORIZAÇÃO DA MÚSICA (MELHORADA) =====
   const categorizarMusica = (tema, letras) => {
     const letrasLower = letras.toLowerCase();
-    
+
     // Categorização específica pour "Confissões Bancárias"
     if (tema.includes('confissões bancárias')) {
       if (letrasLower.includes('lei manisky') || letrasLower.includes('magnitsky')) {
@@ -1073,7 +1071,7 @@ export default function AdminPage() {
       }
       return 'sistema bancário brasileiro, pressão internacional e justiça';
     }
-    
+
     // Categorização específica pour "UBER" (Golpe Uber)
     if (tema.includes('golpe uber') || tema.includes('sistema uber corrompido')) {
       if (letrasLower.includes('conductores fictivos') || letrasLower.includes('fictivo')) {
@@ -1084,59 +1082,59 @@ export default function AdminPage() {
       }
       return 'Golpe Uber, fraude no sistema de transporte e corrupção tecnológica';
     }
-    
+
     if (tema.includes('fraude no sistema de transporte')) {
       if (letrasLower.includes('uber')) {
         return 'fraude no Uber, sistema de transporte corrompido e tecnologia';
       }
       return 'corrupção no sistema de transporte e falhas de segurança';
     }
-    
+
     if (tema.includes('sanções internacionais')) {
       if (letrasLower.includes('lei manisky') || letrasLower.includes('magnitsky')) {
         return 'Lei Magnitsky, relações Brasil-EUA e impacto nas contas bancárias';
       }
       return 'sanções internacionais e impacto na política brasileira';
     }
-    
+
     if (tema.includes('política') || tema.includes('corrupção')) {
       if (letrasLower.includes('bancos') || letrasLower.includes('dindim')) {
         return 'corrupção bancária, pressão internacional e sistema financeiro';
       }
       return 'política, corrupção e impacto das sanções internacionais';
     }
-    
+
     if (tema.includes('amor')) {
       return 'romance e sentimentos humanos';
     }
-    
+
     if (letrasLower.includes('festa')) {
       return 'celebração e alegria';
     }
-    
+
     if (tema.includes('vida')) {
       return 'reflexões sobre a vida cotidiana';
     }
-    
+
     return 'cultura e expressão musical';
   };
 
   // ===== GERAÇÃO DA DESCRIÇÃO ESTRUTURADA =====
   const gerarDescricaoEstruturada = (tema, contexto, impacto, categoria) => {
     let descricao = `Uma música sobre ${tema}`;
-    
+
     if (contexto && contexto !== 'momento atual') {
       descricao += `, criada ${contexto}`;
     }
-    
+
     if (impacto) {
       descricao += `. ${impacto.charAt(0).toUpperCase() + impacto.slice(1)}`;
     }
-    
+
     if (categoria && categoria !== 'cultura e expressão musical') {
       descricao += `. É sobre ${categoria}`;
     }
-    
+
     return descricao;
   };
 
@@ -1148,19 +1146,19 @@ export default function AdminPage() {
     }
 
     setIsGeneratingDescription(true);
-    
+
     try {
       const descricaoSugerida = await gerarDescricaoInteligente(
         editingSong.lyrics,
         editingSong.release_date || editingSong.tiktok_publication_date,
         editingSong.title
       );
-      
+
       // Atualizar o campo de descrição
       handleInputChange('description', descricaoSugerida);
-      
+
       displayMessage('success', '✅ Descrição gerada automaticamente!');
-      
+
     } catch (error) {
       console.error('Erro ao gerar descrição:', error);
       displayMessage('error', '❌ Erro ao gerar descrição automática');
@@ -1177,19 +1175,19 @@ export default function AdminPage() {
     }
 
     setIsGeneratingDescription(true);
-    
+
     try {
       const descricaoSugerida = await gerarDescricaoInteligente(
         editingImportedSong.lyrics,
         editingImportedSong.release_date || editingImportedSong.tiktok_publication_date,
         editingImportedSong.title
       );
-      
+
       // Atualizar o campo de descrição
-      setEditingImportedSong({...editingImportedSong, description: descricaoSugerida});
-      
+      setEditingImportedSong({ ...editingImportedSong, description: descricaoSugerida });
+
       displayMessage('success', '✅ Descrição gerada automaticamente!');
-      
+
     } catch (error) {
       console.error('Erro ao gerar descrição:', error);
       displayMessage('error', '❌ Erro ao gerar descrição automática');
@@ -1202,7 +1200,7 @@ export default function AdminPage() {
   const getNextMonday = () => {
     const today = new Date();
     let daysUntilMonday;
-    
+
     // Lundi = 1, Mardi = 2, ..., Dimanche = 0
     if (today.getDay() === 1) {
       // Si aujourd'hui est lundi, prendre le lundi prochain
@@ -1214,10 +1212,10 @@ export default function AdminPage() {
       // Pour tous les autres jours
       daysUntilMonday = (8 - today.getDay()) % 7;
     }
-    
+
     const nextMonday = new Date(today);
     nextMonday.setDate(today.getDate() + daysUntilMonday);
-    
+
     // Vérification de sécurité
     if (nextMonday.getDay() !== 1) {
       console.error('Erro na função getNextMonday: data não é segunda-feira');
@@ -1226,66 +1224,66 @@ export default function AdminPage() {
       fallbackMonday.setDate(today.getDate() + ((8 - today.getDay()) % 7));
       return fallbackMonday.toISOString().split('T')[0];
     }
-    
+
     return nextMonday.toISOString().split('T')[0];
   };
 
   // Fonction utilitaire pour vérifier si une date est un lundi
-  const isMonday = (dateString) => {
-    const date = new Date(dateString);
-    return date.getDay() === 1;
-  };
+  // const isMonday = (dateString) => {
+  //   const date = new Date(dateString);
+  //   return date.getDay() === 1;
+  // };
 
   // Fonction pour obtenir le lundi le plus proche (passé ou futur)
-  const getClosestMonday = () => {
-    const today = new Date();
-    const currentDay = today.getDay();
-    
-    if (currentDay === 1) {
-      // Aujourd'hui est lundi
-      return today.toISOString().split('T')[0];
-    }
-    
-    // Calculer le lundi le plus proche
-    let daysToAdd;
-    if (currentDay === 0) {
-      // Dimanche
-      daysToAdd = 1;
-    } else if (currentDay <= 3) {
-      // Lundi à Mercredi: lundi prochain
-      daysToAdd = 8 - currentDay;
-    } else {
-      // Jeudi à Samedi: lundi prochain
-      daysToAdd = 8 - currentDay;
-    }
-    
-    const closestMonday = new Date(today);
-    closestMonday.setDate(today.getDate() + daysToAdd);
-    
-    return closestMonday.toISOString().split('T')[0];
-  };
+  // const getClosestMonday = () => {
+  //   const today = new Date();
+  //   const currentDay = today.getDay();
+  //
+  //   if (currentDay === 1) {
+  //     // Aujourd'hui est lundi
+  //     return today.toISOString().split('T')[0];
+  //   }
+  //
+  //   // Calculer le lundi le plus proche
+  //   let daysToAdd;
+  //   if (currentDay === 0) {
+  //     // Dimanche
+  //     daysToAdd = 1;
+  //   } else if (currentDay <= 3) {
+  //     // Lundi à Mercredi: lundi prochain
+  //     daysToAdd = 8 - currentDay;
+  //   } else {
+  //     // Jeudi à Samedi: lundi prochain
+  //     daysToAdd = 8 - currentDay;
+  //   }
+  //
+  //   const closestMonday = new Date(today);
+  //   closestMonday.setDate(today.getDate() + daysToAdd);
+  //
+  //   return closestMonday.toISOString().split('T')[0];
+  // };
 
   // ===== ESTIMAÇÃO DE DATA BASEADA NO ID DA VÍDEO TIKTOK =====
   const estimateDateFromVideoId = (videoId) => {
     try {
       // TikTok IDs são sequenciais e podem dar uma ideia aproximada da data
       // Este é um método de fallback quand as outras méthodes falham
-      
+
       const id = parseInt(videoId);
       if (isNaN(id)) return null;
-      
+
       // Base aproximada: IDs mais altos = vídeos mais recentes
       // Estimativa: cada 1000 IDs ≈ 1 dia (varia muito, mas é melhor que nada)
-      
+
       const today = new Date();
       const estimatedDaysAgo = Math.floor((1000000000000000 - id) / 1000000000);
-      
+
       if (estimatedDaysAgo > 0 && estimatedDaysAgo < 365) {
         const estimatedDate = new Date(today);
         estimatedDate.setDate(today.getDate() - estimatedDaysAgo);
         return estimatedDate.toISOString().split('T')[0];
       }
-      
+
       return null;
     } catch (error) {
       console.warn('⚠️ Erro na estimativa de data:', error);
@@ -1295,7 +1293,7 @@ export default function AdminPage() {
 
   const handleCreate = () => {
     const today = new Date().toISOString().split('T')[0];
-    
+
     setEditingSong({
       title: '',
       artist: 'A Música da Segunda',
@@ -1312,7 +1310,7 @@ export default function AdminPage() {
       cover_image: '',
       hashtags: []
     });
-    
+
     console.warn('📝 Création d\'une nouvelle chanson en mode brouillon');
     setShowForm(true);
     setIsEditing(false);
@@ -1338,6 +1336,7 @@ export default function AdminPage() {
         displayMessage('success', 'Música deletada com sucesso!');
         loadSongs();
       } catch (error) {
+        console.error('Erreur suppression:', error);
         displayMessage('error', 'Erro ao deletar música');
       }
     }
@@ -1346,7 +1345,7 @@ export default function AdminPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.warn('🚀 handleSubmit appelé - début de la fonction');
-    
+
     // Sanitize all text inputs
     const sanitizedSong = {
       ...editingSong,
@@ -1360,55 +1359,57 @@ export default function AdminPage() {
       spotify_url: editingSong.spotify_url ? sanitizeURL(editingSong.spotify_url.trim()) : '',
       apple_music_url: editingSong.apple_music_url ? sanitizeURL(editingSong.apple_music_url.trim()) : '',
     };
-    
+
     // Validate with Zod
     const validation = safeParse(songSchema, sanitizedSong);
-    
+
     if (!validation.success) {
       displayMessage('error', `❌ Erro de validação: ${validation.error}`);
       return;
     }
-    
+
     // Validation des champs requis (double check)
     if (!sanitizedSong.title || sanitizedSong.title.trim() === '') {
       displayMessage('error', '❌ O título é obrigatório!');
       return;
     }
-    
+
     if (!sanitizedSong.release_date) {
       displayMessage('error', '❌ A data de lançamento é obrigatória!');
       return;
     }
-    
+
     // Validation TikTok optionnelle - seulement si l'utilisateur a commencé à remplir
     if (editingSong.tiktok_url && editingSong.tiktok_url.trim() !== '' && (!editingSong.tiktok_video_id || editingSong.tiktok_video_id.trim() === '')) {
       displayMessage('warning', '⚠️ Link TikTok preenchido mas ID não extraído. Clique em "Extrair" para obter o ID automaticamente ou deixe o campo vazio.');
       // Ne pas bloquer l'enregistrement, juste avertir
     }
-    
+
     // Si pas de TikTok, définir le statut en brouillon
     if (!editingSong.tiktok_url || editingSong.tiktok_url.trim() === '') {
       editingSong.status = 'draft';
       console.warn('📝 Aucun TikTok fourni, chanson sauvegardée en mode brouillon');
     }
-    
+
     // Use validated and sanitized data
     const songToSave = {
       ...validation.data,
       status: validation.data.status || 'draft'
     };
-    
+
     // Helper pour normaliser les dates
-    const toISO = (d) => d ? new Date(d).toISOString().slice(0,10) : null;
-    
+    const toISO = (d) => d ? new Date(d).toISOString().slice(0, 10) : null;
+
     // Nettoyage strict du payload avec gestion des champs de texte long
     const clean = {
       ...songToSave,
       // Normaliser les dates
       release_date: toISO(songToSave.release_date ?? null),
       tiktok_publication_date: toISO(songToSave.tiktok_publication_date ?? null),
-      // Gérer les hashtags
-      hashtags: Array.isArray(songToSave.hashtags) ? songToSave.hashtags : [],
+      // Gérer les hashtags (nettoyage final avant sauvegarde)
+      hashtags: Array.isArray(songToSave.hashtags)
+        ? songToSave.hashtags.map(t => t.trim()).filter(t => t)
+        : [],
       // S'assurer que les champs de texte sont bien des strings
       title: String(songToSave.title || ''),
       artist: String(songToSave.artist || ''),
@@ -1423,271 +1424,83 @@ export default function AdminPage() {
       youtube_url: songToSave.youtube_url || null,
       cover_image: songToSave.cover_image || null
     };
-    
+
     // Supprimer TOUS les champs système
     delete clean.id;
     delete clean.created_at;
     delete clean.updated_at;
-    
-    // Logs détaillés pour debug
-    console.warn('🔍 songToSave après nettoyage:', clean);
-    console.warn('🔍 Clés de songToSave:', Object.keys(clean));
-    console.warn('🔍 songToSave contient-il un ID?', 'id' in clean);
-    console.warn('🔍 Description longueur:', clean.description?.length || 0);
-    console.warn('🔍 Description preview:', clean.description?.substring(0, 100) + '...');
-    
-    console.warn('📋 Données à sauvegarder:', songToSave);
-    console.warn('🆔 ID de la chanson:', editingSong.id);
-    console.warn('✏️ Mode édition:', isEditing);
-    
+
     try {
-      console.warn('💾 Tentative de sauvegarde:', { isEditing, songData: songToSave });
-      console.warn('🆔 ID de la chanson à modifier:', editingSong.id);
-      console.warn('📊 Type de l\'ID:', typeof editingSong.id);
-      
       if (isEditing) {
-        console.warn('🔄 Début de la mise à jour...');
-        try {
-          const result = await Song.update(editingSong.id, clean);
-          console.warn('✅ Mise à jour réussie:', result);
-          
-          // Vérifier que la mise à jour a bien fonctionné
-          if (!result || !result.id) {
-            throw new Error('La mise à jour a échoué (pas de résultat retourné)');
-          }
-          
-          displayMessage('success', '✅ Música atualizada com sucesso!');
-          
-          // Attendre un peu pour que Supabase finalise la transaction
-          console.warn('⏳ Attente de 500ms pour finaliser la transaction Supabase...');
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Recharger les données AVANT de fermer le formulaire pour éviter la réinitialisation
-          console.warn('🔄 Rechargement des données avant fermeture...');
-          await loadSongs();
-          console.warn('✅ Données rechargées, fermeture du formulaire...');
-          
-          // Fermer seulement après avoir rechargé les données
-          setShowForm(false);
-          setEditingSong(null);
-          console.warn('✅ Formulaire fermé');
-        } catch (error) {
-          console.error('[Admin][Update][Failed]', error);
-          
-          // Gérer les erreurs de permission RLS
-          if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
-            displayMessage('error', '❌ Erreur de permission : Vous n\'avez pas les droits de mise à jour. Vérifiez que vous êtes bien connecté en tant qu\'admin et que les RLS policies sont correctement configurées dans Supabase.');
-            console.error('❌ Détails de l\'erreur de permission:', error.originalError || error);
-            return;
-          }
-          
-          displayMessage('error', `❌ Échec mise à jour: ${error.message || error}`);
-          // NE PAS fermer la fenêtre en cas d'erreur
-          return;
-        }
+        const result = await Song.update(editingSong.id, clean);
+        if (!result || !result.id) throw new Error('La mise à jour a échoué');
+
+        displayMessage('success', '✅ Música atualizada com sucesso!');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await loadSongs();
+        setShowForm(false);
+        setEditingSong(null);
       } else {
-        console.warn('🔄 Début de la création...');
-        try {
-          const result = await Song.create(clean);
-          console.warn('✅ Création réussie:', result);
-          
-          // Vérifier que la chanson a bien un ID
-          if (!result || !result.id) {
-            throw new Error('La chanson n\'a pas été sauvegardée (pas d\'ID retourné)');
-          }
-          
-          displayMessage('success', '✅ Música criada com sucesso!');
-          
-          // Attendre un peu pour que Supabase finalise la transaction AVANT d'envoyer les notifications
-          console.warn('⏳ Attente de 500ms pour finaliser la transaction Supabase...');
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Envoyer les notifications push (en arrière-plan, sans bloquer)
-          notifyAllSubscribers({
-            title: 'Nouvelle Chanson ! 🎶',
-            body: `"${clean.title || 'Nova música'}" est maintenant disponible !`,
-            icon: clean.cover_image || '/icons/pwa/icon-192x192.png',
-            url: clean.slug ? `/chansons/${clean.slug}` : '/'
-          }).then(result => {
-            if (result.success) {
-              console.warn(`✅ Notifications envoyées: ${result.sent || 0} sur ${result.total || 0} abonnés`);
-              if (result.sent > 0) {
-                displayMessage('success', `📢 ${result.sent} notification${result.sent > 1 ? 's' : ''} envoyée${result.sent > 1 ? 's' : ''} !`);
-              }
-            } else {
-              console.error('❌ Erreur envoi notifications:', result.error);
-              // Ne pas afficher d'erreur à l'admin si l'envoi échoue (non bloquant)
-            }
-          }).catch(err => {
-            console.error('Erreur envoi notifications:', err);
-            // Ne pas bloquer l'UI si l'envoi échoue
-          });
-          
-          // Recharger les données AVANT de fermer le formulaire pour éviter la réinitialisation
-          console.warn('🔄 Rechargement des données avant fermeture...');
-          await loadSongs();
-          console.warn('✅ Données rechargées, fermeture du formulaire...');
-          
-          // Fermer seulement après avoir rechargé les données
-          setShowForm(false);
-          setEditingSong(null);
-          console.warn('✅ Formulaire fermé');
-        } catch (error) {
-          console.error('[Admin][Create][Failed]', error);
-          console.error('[Admin][Create][Failed] Full error:', JSON.stringify(error, null, 2));
-          
-          // Gérer spécifiquement l'erreur de duplicate youtube_url
-          if (error.code === 'DUPLICATE_YOUTUBE_URL' || error.code === 'DUPLICATE_TIKTOK_ID' || error.code === 'DUPLICATE_KEY' || error.message?.includes('duplicate key') || error.message?.includes('existe déjà')) {
-            console.warn('🔄 Erreur duplicate détectée:', error);
-            const existingSong = error.existingSong;
-            
-            if (existingSong) {
-              // Proposer de modifier la chanson existante
-              const platform = error.code === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : 'ID TikTok';
-              const confirmMessage = `❌ Une chanson avec cette ${platform} existe déjà : "${existingSong.title}" (ID: ${existingSong.id})\n\nVoulez-vous modifier cette chanson au lieu d'en créer une nouvelle ?`;
-              
-              if (window.confirm(confirmMessage)) {
-                // Charger la chanson existante pour modification
-                console.warn('📝 Chargement de la chanson existante pour modification');
-                setEditingSong(existingSong);
-                setIsEditing(true);
-                setShowForm(true);
-                displayMessage('info', `📝 Modification de la chanson existante : "${existingSong.title}"`);
-                // ARRÊTER LE PROCESSUS - ne pas continuer
-                return;
-              } else {
-                displayMessage('error', `❌ Création annulée. Une chanson avec cette ${platform} existe déjà : "${existingSong.title}"`);
-                // ARRÊTER LE PROCESSUS - ne pas continuer
-                return;
-              }
-            } else {
-              // Pas de chanson existante trouvée, mais erreur de duplicate
-              const platform = error.code === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : (error.code === 'DUPLICATE_TIKTOK_ID' ? 'ID TikTok' : 'URL/ID');
-              displayMessage('error', `❌ Une chanson avec cette ${platform} existe déjà. Veuillez utiliser une URL/ID différente.`);
-              console.error('❌ Duplicate détecté mais existingSong est null');
-              // ARRÊTER LE PROCESSUS - ne pas continuer
-              return;
-            }
-          }
-          
-          // Gérer les erreurs d'authentification
-          if (error.code === 'NOT_AUTHENTICATED') {
-            displayMessage('error', '❌ Vous devez être connecté pour créer une chanson. Veuillez vous reconnecter.');
-            console.error('❌ Erreur d\'authentification:', error);
-            return;
-          }
+        const result = await Song.create(clean);
+        if (!result || !result.id) throw new Error('La chanson n\'a pas été sauvegardée');
 
-          // Gérer les erreurs de vérification admin
-          if (error.code === 'ADMIN_CHECK_FAILED') {
-            displayMessage('error', '❌ Erreur lors de la vérification des droits administrateur. Vérifiez votre connexion et réessayez.');
-            console.error('❌ Erreur vérification admin:', error.originalError || error);
-            return;
-          }
+        displayMessage('success', '✅ Música criada com sucesso!');
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-          if (error.code === 'NOT_ADMIN') {
-            displayMessage('error', '❌ Vous n\'avez pas les droits administrateur pour créer une chanson. Contactez un administrateur.');
-            console.error('❌ Utilisateur non admin:', error);
-            return;
+        // Notifications
+        notifyAllSubscribers({
+          title: 'Nouvelle Chanson ! 🎶',
+          body: `"${clean.title || 'Nova música'}" est maintenant disponible !`,
+          icon: clean.cover_image || '/icons/pwa/icon-192x192.png',
+          url: clean.slug ? `/chansons/${clean.slug}` : '/'
+        }).then(res => {
+          if (res.success && res.sent > 0) {
+            toast({ title: "Notifications envoyées", description: `📢 ${res.sent} envoyées !` });
           }
+        });
 
-          // Gérer les erreurs de permission RLS
-          if (error.code === 'PERMISSION_DENIED' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
-            displayMessage('error', '❌ Erreur de permission RLS : La policy RLS bloque l\'insertion. Exécutez le script supabase/scripts/verify_and_fix_rls.sql dans Supabase SQL Editor pour corriger les policies.');
-            console.error('❌ Détails de l\'erreur de permission:', error.originalError || error);
-            console.error('❌ Message complet:', error.message);
-            return;
-          }
-          
-          displayMessage('error', `❌ Échec création: ${error.message || error}`);
-          console.error('❌ Erreur complète:', error);
-          // NE PAS fermer la fenêtre en cas d'erreur
-          return;
-        }
+        await loadSongs();
+        setShowForm(false);
+        setEditingSong(null);
       }
     } catch (error) {
-      console.error('❌ Erro detalhado ao salvar:', error);
-      
-      // Si c'est une erreur de duplicate, elle a déjà été gérée dans le catch interne
-      // Ne pas fermer le formulaire automatiquement pour les duplicates
-      if (error.code === 'DUPLICATE_YOUTUBE_URL' || error.code === 'DUPLICATE_TIKTOK_ID' || error.code === 'DUPLICATE_KEY') {
-        console.warn('⚠️ Erreur duplicate déjà gérée, ne pas fermer le formulaire');
-        return; // Arrêter ici, ne pas continuer
+      console.error('❌ Erreur sauvegarde:', error);
+      if (error.code === 'DUPLICATE_YOUTUBE_URL' || error.code === 'DUPLICATE_TIKTOK_ID') {
+        displayMessage('error', '❌ Cette vidéo existe déjà !');
+        return;
       }
-      
-      // Messages d'erreur plus spécifiques pour les autres erreurs
-      let errorMessage = 'Erro desconhecido';
-      
-      if (error.message) {
-        if (error.message.includes('duplicate key') || error.message.includes('existe déjà')) {
-          // Déjà géré plus haut, ne pas afficher à nouveau
-          return;
-        } else if (error.message.includes('permission denied')) {
-          errorMessage = '❌ Erro: Sem permissão para salvar (verifique a conexão)';
-        } else if (error.message.includes('network')) {
-          errorMessage = '❌ Erro: Problema de conexão. Tente novamente.';
-        } else {
-          errorMessage = `❌ Erro ao salvar: ${error.message}`;
-        }
-      }
-      
-      displayMessage('error', errorMessage);
-      
-      // Ne pas fermer automatiquement le formulaire pour permettre à l'utilisateur de corriger
-      console.warn('⚠️ Erreur non-duplicate, formulaire reste ouvert pour correction');
+      displayMessage('error', `❌ Erreur: ${error.message || 'Inconnue'}`);
     }
   };
 
   const handleInputChange = (field, value) => {
-    console.warn(`🔄 Modification du champ ${field}:`, value);
-    
-    // Nettoyer automatiquement le contenu collé dans le champ TikTok
     if (field === 'tiktok_url') {
-      // Supprimer le code HTML et extraire seulement l'URL
-      const cleanValue = value
-        .replace(/<[^>]*>/g, '') // Supprimer les balises HTML
-        .replace(/on>.*?<\/blockquote>/g, '') // Supprimer le code embed
-        .replace(/<script[^>]*>.*?<\/script>/g, '') // Supprimer les scripts
-        .replace(/https:\/\/www\.tiktok\.com\/embed\.js/g, '') // Supprimer le lien embed.js
-        .trim(); // Supprimer les espaces
-      
-      console.warn(`🧹 Valeur nettoyée pour ${field}:`, cleanValue);
-      
-      setEditingSong(prev => {
-        const updated = {
-          ...prev,
-          [field]: cleanValue
-        };
-        console.warn('📝 État de chanson mis à jour:', updated);
-        return updated;
-      });
+      // Nettoyage basique
+      const cleanValue = value.replace(/<[^>]*>/g, '').trim();
+      setEditingSong(prev => ({ ...prev, [field]: cleanValue }));
     } else {
-      setEditingSong(prev => {
-        const updated = {
-          ...prev,
-          [field]: value
-        };
-        console.warn('📝 État de chanson mis à jour:', updated);
-        return updated;
-      });
+      setEditingSong(prev => ({ ...prev, [field]: value }));
     }
   };
 
   const handleHashtagChange = (value) => {
-    const hashtags = value.split(',').map(tag => tag.trim()).filter(tag => tag);
+    // Ne pas filtrer les tags vides pendant la saisie pour permettre l'ajout de virgules
+    console.warn('🏷️ handleHashtagChange:', value);
+    const hashtags = value.split(',').map(tag => tag);
     handleInputChange('hashtags', hashtags);
   };
 
   const displayMessage = (type, text) => {
-    setMessage({ type, text });
-    setShowMessage(true);
-    
-    // Durée différente selon le type de message
-    const duration = type === 'warning' ? 7000 : 5000;
-    setTimeout(() => setShowMessage(false), duration);
+    toast({
+      variant: type === 'error' ? 'destructive' : 'default',
+      title: type === 'error' ? 'Erro' : (type === 'success' ? 'Sucesso' : 'Info'),
+      description: text,
+      duration: type === 'warning' ? 7000 : 5000,
+    });
   };
 
   const exportData = () => {
-          const data = { songs: songs, albums: [] }; // Export des données actuelles
+    const data = { songs: songs, albums: [] }; // Export des données actuelles
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1698,29 +1511,29 @@ export default function AdminPage() {
     displayMessage('success', 'Dados exportados com sucesso!');
   };
 
-  const importData = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const data = JSON.parse(e.target.result);
-          // Import des données via l'API
-        console.warn('Import des données:', data);
-          loadSongs();
-          displayMessage('success', 'Dados importados com sucesso!');
-        } catch (error) {
-          displayMessage('error', 'Erro ao importar dados');
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
+  // const importData = (event) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       try {
+  //         const data = JSON.parse(e.target.result);
+  //         // Import des données via l'API
+  //         console.warn('Import des données:', data);
+  //         loadSongs();
+  //         displayMessage('success', 'Dados importados com sucesso!');
+  //       } catch (error) {
+  //         displayMessage('error', 'Erro ao importar dados');
+  //       }
+  //     };
+  //     reader.readAsText(file);
+  //   }
+  // };
 
   const clearAllData = () => {
     if (window.confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados! Tem certeza?')) {
-              // Nettoyer les données via l'API
-        console.warn('Nettoyage des données');
+      // Nettoyer les données via l'API
+      console.warn('Nettoyage des données');
       loadSongs();
       displayMessage('success', 'Todos os dados foram apagados');
     }
@@ -1747,13 +1560,13 @@ export default function AdminPage() {
         <div className="lg:hidden text-center mb-6 sm:mb-8">
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-blue-200 shadow-xl flex-shrink-0">
-              <img 
-                src="images/Musica da segunda.jpg" 
+              <img
+                src="images/Musica da segunda.jpg"
                 alt="Logo Música da Segunda"
                 className="w-full h-full object-cover"
               />
             </div>
-            
+
             <div className="text-left">
               <h1 className="text-xl sm:text-3xl md:text-4xl font-black text-blue-900 mb-1">
                 🎵 Admin Panel - Música da Segunda
@@ -1765,16 +1578,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Message */}
-        {showMessage && (
-          <div className={`mb-6 p-4 rounded-lg ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 
-            message.type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-            {message.text}
-          </div>
-        )}
+        {/* Message state removed - using toast */}
 
         {/* Actions Bar */}
         <div className="bg-white rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-lg">
@@ -1790,9 +1594,9 @@ export default function AdminPage() {
                 <span className="hidden sm:inline">Exportar</span>
                 <span className="sm:hidden">Export</span>
               </Button>
-              <Button 
-                onClick={handleTikTokImport} 
-                variant="outline" 
+              <Button
+                onClick={handleTikTokImport}
+                variant="outline"
                 className="flex-1 sm:flex-none"
               >
                 <Upload className="w-4 h-4 mr-2" />
@@ -1801,14 +1605,14 @@ export default function AdminPage() {
               </Button>
             </div>
           </div>
-          
+
           {/* Actions secondaires - en ligne sur mobile */}
           <div className="flex gap-2 sm:gap-3 justify-center sm:justify-end items-center">
             {/* Indicateur du nombre de chansons */}
             <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
               📊 {songs.length} chanson{songs.length > 1 ? 's' : ''} chargée{songs.length > 1 ? 's' : ''}
             </div>
-            
+
             <Button onClick={loadSongs} variant="outline" size="sm" className="flex-1 sm:flex-none">
               <RefreshCw className="w-4 h-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Atualizar</span>
@@ -1833,9 +1637,9 @@ export default function AdminPage() {
                 Mode actuel: <span className="font-semibold text-green-600">☁️ Cloud (Supabase)</span>
               </p>
             </div>
-            
+
             <div className="flex gap-2">
-              <Button 
+              <Button
                 onClick={handleMigration}
                 disabled={isMigrating}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -1848,8 +1652,8 @@ export default function AdminPage() {
                 )}
                 {isMigrating ? 'Migrando...' : 'Migrar para Supabase'}
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={handleVerifyMigration}
                 variant="outline"
                 size="sm"
@@ -1882,7 +1686,7 @@ export default function AdminPage() {
 
           {/* Actions Supabase */}
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={handleRestoreFromSupabase}
               variant="outline"
               size="sm"
@@ -1891,7 +1695,7 @@ export default function AdminPage() {
               <Download className="w-4 h-4 mr-2" />
               Restaurar do Supabase
             </Button>
-            
+
             {/* Local mode actions removed in published version */}
           </div>
 
@@ -1996,7 +1800,7 @@ export default function AdminPage() {
                       <Play className="w-5 h-5 text-red-600" />
                       🎬 Link da Vídeo YouTube *
                     </h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2026,7 +1830,7 @@ export default function AdminPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <Button 
+                        <Button
                           type="button"
                           variant="outline"
                           onClick={() => window.open(editingSong.youtube_url, '_blank')}
@@ -2046,7 +1850,7 @@ export default function AdminPage() {
                       <Music className="w-5 h-5 text-green-600" />
                       🎵 Informações da Música
                     </h3>
-                    
+
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2162,7 +1966,7 @@ export default function AdminPage() {
                       <Link className="w-5 h-5 text-purple-600" />
                       🎧 Links de Streaming
                     </h3>
-                    
+
                     <div className="grid md:grid-cols-3 gap-4">
                       <div className="flex flex-col">
                         <Label className="mb-2 font-semibold text-gray-700">Spotify</Label>
@@ -2206,7 +2010,7 @@ export default function AdminPage() {
                       <Hash className="w-5 h-5 text-orange-600" />
                       🏷️ Métadados
                     </h3>
-                    
+
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2242,9 +2046,9 @@ export default function AdminPage() {
                       <Save className="w-5 h-5 mr-2" />
                       {isEditing ? 'Atualizar Música' : 'Criar Nova Música'}
                     </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={() => setShowForm(false)}
                       className="flex-1 text-lg py-3"
                     >
@@ -2291,7 +2095,7 @@ export default function AdminPage() {
                   </div>
 
                   <div className="text-center">
-                    <Button 
+                    <Button
                       onClick={() => window.open(editingSong.tiktok_url, '_blank')}
                       className="bg-red-500 hover:bg-red-600 text-white"
                     >
@@ -2353,7 +2157,7 @@ export default function AdminPage() {
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
                         />
@@ -2362,7 +2166,7 @@ export default function AdminPage() {
                   )}
 
                   <div className="flex gap-3 pt-4">
-                    <Button 
+                    <Button
                       onClick={handleTikTokImportSubmit}
                       disabled={isBulkImporting || !tiktokImportUrl.trim()}
                       className="flex-1 bg-blue-600 hover:bg-blue-700"
@@ -2374,7 +2178,7 @@ export default function AdminPage() {
                       )}
                       {isBulkImporting ? 'Analisando...' : 'Analisar Perfil'}
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => setShowTikTokImport(false)}
                       variant="outline"
                       className="flex-1"
@@ -2406,7 +2210,7 @@ export default function AdminPage() {
                   {/* Résumé */}
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                     <p className="text-green-800 text-sm">
-                      <strong>✅ Sucesso!</strong> {importedSongs.length} músicas foram importadas do perfil TikTok. 
+                      <strong>✅ Sucesso!</strong> {importedSongs.length} músicas foram importadas do perfil TikTok.
                       Revise os detalhes e publique todas de uma vez no Supabase.
                     </p>
                   </div>
@@ -2438,35 +2242,35 @@ export default function AdminPage() {
                               <span className="text-gray-600">Descrição:</span> {song.description}
                             </div>
                           </div>
-                                                     <div className="ml-4 flex gap-2">
-                             <Button
-                               onClick={() => handleEditImportedSong(song)}
-                               variant="outline"
-                               size="sm"
-                               className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                             >
-                               <Edit className="w-4 h-4 mr-1" />
-                               Editar
-                             </Button>
-                             <Button
-                               onClick={() => window.open(song.tiktok_url, '_blank')}
-                               variant="outline"
-                               size="sm"
-                               className="text-red-600 border-red-300 hover:bg-red-50"
-                             >
-                               <ExternalLink className="w-4 h-4 mr-1" />
-                               Ver TikTok
-                             </Button>
-                             <Button
-                               onClick={() => handleDeleteImportedSong(song.id)}
-                               variant="outline"
-                               size="sm"
-                               className="text-red-600 border-red-300 hover:bg-red-50"
-                             >
-                               <Trash2 className="w-4 h-4 mr-1" />
-                               Excluir
-                             </Button>
-                           </div>
+                          <div className="ml-4 flex gap-2">
+                            <Button
+                              onClick={() => handleEditImportedSong(song)}
+                              variant="outline"
+                              size="sm"
+                              className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Editar
+                            </Button>
+                            <Button
+                              onClick={() => window.open(song.tiktok_url, '_blank')}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-300 hover:bg-red-50"
+                            >
+                              <ExternalLink className="w-4 h-4 mr-1" />
+                              Ver TikTok
+                            </Button>
+                            <Button
+                              onClick={() => handleDeleteImportedSong(song.id)}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-300 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Excluir
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -2474,7 +2278,7 @@ export default function AdminPage() {
 
                   {/* Actions */}
                   <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
-                    <Button 
+                    <Button
                       onClick={handlePublishAllImportedSongs}
                       disabled={isBulkImporting}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-lg py-3"
@@ -2486,7 +2290,7 @@ export default function AdminPage() {
                       )}
                       {isBulkImporting ? 'Publicando...' : 'Publier'}
                     </Button>
-                    <Button 
+                    <Button
                       onClick={() => setImportedSongs([])}
                       variant="outline"
                       className="flex-1 text-lg py-3"
@@ -2507,7 +2311,7 @@ export default function AdminPage() {
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-green-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
                         />
@@ -2542,7 +2346,7 @@ export default function AdminPage() {
                         <Video className="w-5 h-5 text-blue-600" />
                         📱 Informações TikTok (Obrigatório)
                       </h3>
-                      
+
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2551,11 +2355,11 @@ export default function AdminPage() {
                           <div className="flex gap-2">
                             <Input
                               value={editingImportedSong.tiktok_url}
-                              onChange={(e) => setEditingImportedSong({...editingImportedSong, tiktok_url: e.target.value})}
+                              onChange={(e) => setEditingImportedSong({ ...editingImportedSong, tiktok_url: e.target.value })}
                               placeholder="https://www.tiktok.com/@usuario/video/1234567890"
                               className="flex-1"
                             />
-                            <Button 
+                            <Button
                               type="button"
                               onClick={() => window.open(editingImportedSong.tiktok_url, '_blank')}
                               variant="outline"
@@ -2565,7 +2369,7 @@ export default function AdminPage() {
                               Abrir TikTok
                             </Button>
                           </div>
-                          
+
                           <div className="mt-2 text-xs text-gray-600">
                             <p className="font-medium mb-1">Formatos aceitos:</p>
                             <ul className="list-disc list-inside space-y-1">
@@ -2574,7 +2378,7 @@ export default function AdminPage() {
                               <li>ID direto (15-20 dígitos)</li>
                             </ul>
                           </div>
-                          
+
                           <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <div className="flex items-start gap-2">
                               <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
@@ -2593,7 +2397,7 @@ export default function AdminPage() {
                             </label>
                             <Input
                               value={editingImportedSong.tiktok_video_id}
-                              onChange={(e) => setEditingImportedSong({...editingImportedSong, tiktok_video_id: e.target.value})}
+                              onChange={(e) => setEditingImportedSong({ ...editingImportedSong, tiktok_video_id: e.target.value })}
                               placeholder="ID da vídeo"
                             />
                           </div>
@@ -2603,9 +2407,9 @@ export default function AdminPage() {
                             </label>
                             <Input
                               type="datetime-local"
-                              value={editingImportedSong.tiktok_publication_date ? 
+                              value={editingImportedSong.tiktok_publication_date ?
                                 editingImportedSong.tiktok_publication_date.slice(0, 16) : ''}
-                              onChange={(e) => setEditingImportedSong({...editingImportedSong, tiktok_publication_date: e.target.value})}
+                              onChange={(e) => setEditingImportedSong({ ...editingImportedSong, tiktok_publication_date: e.target.value })}
                             />
                           </div>
                         </div>
@@ -2618,7 +2422,7 @@ export default function AdminPage() {
                         <Music className="w-5 h-5 text-green-600" />
                         🎵 Métadados Extraídos do TikTok
                       </h3>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2626,7 +2430,7 @@ export default function AdminPage() {
                           </label>
                           <Input
                             value={editingImportedSong.title}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, title: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, title: e.target.value })}
                             placeholder="Título da música"
                           />
                         </div>
@@ -2636,7 +2440,7 @@ export default function AdminPage() {
                           </label>
                           <Input
                             value={editingImportedSong.artist}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, artist: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, artist: e.target.value })}
                             placeholder="Nome do artista"
                           />
                         </div>
@@ -2661,7 +2465,7 @@ export default function AdminPage() {
                         </label>
                         <Textarea
                           value={editingImportedSong.description}
-                          onChange={(e) => setEditingImportedSong({...editingImportedSong, description: e.target.value})}
+                          onChange={(e) => setEditingImportedSong({ ...editingImportedSong, description: e.target.value })}
                           placeholder="Descrição da música"
                           rows={3}
                         />
@@ -2673,7 +2477,7 @@ export default function AdminPage() {
                         </label>
                         <Input
                           value={editingImportedSong.hashtags.join(', ')}
-                          onChange={(e) => setEditingImportedSong({...editingImportedSong, hashtags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag)})}
+                          onChange={(e) => setEditingImportedSong({ ...editingImportedSong, hashtags: e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag) })}
                           placeholder="humor, musica, trending, novidade"
                         />
                         <p className="text-xs text-gray-500 mt-1">
@@ -2688,7 +2492,7 @@ export default function AdminPage() {
                         <Calendar className="w-5 h-5 text-purple-600" />
                         📅 Datas de Publicação
                       </h3>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2697,7 +2501,7 @@ export default function AdminPage() {
                           <Input
                             type="date"
                             value={editingImportedSong.release_date}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, release_date: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, release_date: e.target.value })}
                           />
                           <p className="text-xs text-gray-500 mt-1">
                             Data sugerida: {getNextMonday() ? format(parseISO(getNextMonday()), 'EEEE, d \'de\' MMMM \'de\' yyyy', { locale: ptBR }) : 'Calculando...'}
@@ -2707,9 +2511,9 @@ export default function AdminPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Status
                           </label>
-                          <Select 
-                            value={editingImportedSong.status} 
-                            onValueChange={(value) => setEditingImportedSong({...editingImportedSong, status: value})}
+                          <Select
+                            value={editingImportedSong.status}
+                            onValueChange={(value) => setEditingImportedSong({ ...editingImportedSong, status: value })}
                           >
                             <SelectTrigger>
                               <SelectValue />
@@ -2730,7 +2534,7 @@ export default function AdminPage() {
                         <Link className="w-5 h-5 text-violet-600" />
                         🎧 Links de Streaming
                       </h3>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2738,7 +2542,7 @@ export default function AdminPage() {
                           </label>
                           <Input
                             value={editingImportedSong.spotify_url || ''}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, spotify_url: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, spotify_url: e.target.value })}
                             placeholder="URL Spotify"
                             type="url"
                           />
@@ -2749,7 +2553,7 @@ export default function AdminPage() {
                           </label>
                           <Input
                             value={editingImportedSong.apple_music_url || ''}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, apple_music_url: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, apple_music_url: e.target.value })}
                             placeholder="URL Apple Music"
                             type="url"
                           />
@@ -2760,7 +2564,7 @@ export default function AdminPage() {
                           </label>
                           <Input
                             value={editingImportedSong.youtube_url || ''}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, youtube_url: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, youtube_url: e.target.value })}
                             placeholder="URL YouTube"
                             type="url"
                           />
@@ -2774,7 +2578,7 @@ export default function AdminPage() {
                         <Hash className="w-5 h-5 text-orange-600" />
                         🏷️ Métadados
                       </h3>
-                      
+
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2782,7 +2586,7 @@ export default function AdminPage() {
                           </label>
                           <Input
                             value={editingImportedSong.cover_image || ''}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, cover_image: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, cover_image: e.target.value })}
                             placeholder="https://exemplo.com/imagem.jpg"
                             type="url"
                           />
@@ -2794,7 +2598,7 @@ export default function AdminPage() {
                           </label>
                           <Textarea
                             value={editingImportedSong.lyrics || ''}
-                            onChange={(e) => setEditingImportedSong({...editingImportedSong, lyrics: e.target.value})}
+                            onChange={(e) => setEditingImportedSong({ ...editingImportedSong, lyrics: e.target.value })}
                             placeholder="Letras da música..."
                             rows={4}
                           />
@@ -2804,14 +2608,14 @@ export default function AdminPage() {
 
                     {/* ===== ACTIONS ===== */}
                     <div className="flex gap-3 pt-4 border-t-2 border-gray-200">
-                      <Button 
+                      <Button
                         type="submit"
                         className="flex-1 bg-green-600 hover:bg-green-700 text-lg py-3"
                       >
                         <Save className="w-5 h-5 mr-2" />
                         Salvar Alterações
                       </Button>
-                      <Button 
+                      <Button
                         type="button"
                         onClick={() => setShowEditDialog(false)}
                         variant="outline"

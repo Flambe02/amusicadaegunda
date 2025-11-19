@@ -87,7 +87,7 @@ export default function ProtectedAdmin() {
       
       // Essayer d'abord une requête simple pour vérifier la connexion
       try {
-        const { data: _testData, error: testError } = await supabase
+        const { data: testData, error: testError } = await supabase
           .from('admins')
           .select('user_id')
           .limit(1);

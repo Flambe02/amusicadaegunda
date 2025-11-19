@@ -4,9 +4,23 @@ import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
 import OptimizedImage from '@/components/OptimizedImage';
+import { useSEO } from '../hooks/useSEO';
+import { getRouteSEO, getCurrentPage } from '@/config/routes';
 
 export default function Layout({ children }) {
   const location = useLocation();
+
+  // ✅ SEO: Application automatique des métadonnées globales
+  const pageName = getCurrentPage(location.pathname);
+  const seoData = getRouteSEO(pageName);
+
+  // N'applique le SEO que si des données sont définies dans routes.js
+  // Les pages dynamiques (comme Song) ont seo: null et gèrent leur propre SEO
+  useSEO({
+    ...seoData,
+    enabled: !!seoData
+  });
+
   const pages = [
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
     { name: 'Calendário', url: createPageUrl('Calendar'), icon: Calendar },
@@ -25,7 +39,7 @@ export default function Layout({ children }) {
     <div className="min-h-screen bg-gradient-to-b from-teal-200 to-rose-200">
       {/* Skip link pour accessibilité */}
       <a href="#main" className="skip-link">Ir para o conteúdo</a>
-      
+
       {/* Header Desktop avec Navigation */}
       <header className="hidden lg:block bg-white/90 backdrop-blur-lg border-b border-white/50 shadow-lg sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -33,8 +47,8 @@ export default function Layout({ children }) {
             {/* Logo + Titre */}
             <div className="flex items-center gap-4">
               <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
-                <OptimizedImage 
-                  src="images/Musica da segunda.jpg" 
+                <OptimizedImage
+                  src="images/Musica da segunda.jpg"
                   alt="Logo Música da Segunda"
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -53,17 +67,16 @@ export default function Layout({ children }) {
                   key={page.name}
                   to={page.url}
                   aria-current={isActive(page) ? 'page' : undefined}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 font-medium ${
-                    isActive(page)
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 font-medium ${isActive(page)
                       ? 'bg-[#32a2dc] text-white shadow-md'
                       : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <page.icon className="w-4 h-4" aria-hidden="true" />
                   <span>{page.name}</span>
                 </Link>
               ))}
-              
+
 
             </nav>
           </div>
@@ -82,11 +95,10 @@ export default function Layout({ children }) {
               key={page.name}
               to={page.url}
               aria-current={isActive(page) ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center py-3 px-2 rounded-3xl transition-all duration-300 flex-1 min-w-0 ${
-                isActive(page)
+              className={`flex flex-col items-center justify-center py-3 px-2 rounded-3xl transition-all duration-300 flex-1 min-w-0 ${isActive(page)
                   ? 'bg-[#32a2dc] text-white shadow-lg transform scale-105'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-              }`}
+                }`}
             >
               <page.icon className="w-5 h-5 mb-1 flex-shrink-0" aria-hidden="true" />
               <span className="text-xs font-bold text-center leading-tight truncate">{page.name}</span>
@@ -95,7 +107,7 @@ export default function Layout({ children }) {
         </div>
       </nav>
 
-      
+
       {/* Gestionnaire de tutoriel intégré */}
       <TutorialManager />
     </div>

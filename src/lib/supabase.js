@@ -47,18 +47,18 @@ export const handleSupabaseError = (error, context = 'Supabase operation') => {
 export const checkConnection = async () => {
   try {
     // Vérifier la connexion en testant une requête simple
-    const { error } = await supabase.from(TABLES.SONGS).select('count').limit(1)
+    const { data, error } = await supabase.from(TABLES.SONGS).select('count').limit(1)
     
     if (error) {
       // Si la table n'existe pas, c'est normal au début
       if (error.code === 'PGRST116') {
-        console.warn('✅ Connexion Supabase réussie (table songs non créée)')
+        console.log('✅ Connexion Supabase réussie (table songs non créée)')
         return true
       }
       throw error
     }
 
-    console.warn('✅ Connexion Supabase réussie')
+    console.log('✅ Connexion Supabase réussie')
     return true
   } catch (error) {
     console.error('❌ Erreur de connexion Supabase:', error)
@@ -73,7 +73,7 @@ export const checkSupabaseData = async () => {
     if (error) throw error
     
     const hasData = data && data.length > 0
-    console.warn(`📊 Supabase contient des données: ${hasData ? 'Oui' : 'Non'}`)
+    console.log(`📊 Supabase contient des données: ${hasData ? 'Oui' : 'Non'}`)
     return hasData
   } catch (error) {
     console.error('❌ Erreur vérification données Supabase:', error)
