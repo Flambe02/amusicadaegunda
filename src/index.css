@@ -79,8 +79,52 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+  /* Mobile Immersive Layout - Écran fixe */
+  html {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  
   body {
     @apply bg-background text-foreground;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  
+  /* Conteneur principal pour mobile immersif */
+  #root {
+    height: 100dvh;
+    background-color: #000000;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  /* Desktop: réinitialiser les styles pour ne pas affecter le layout desktop */
+  @media (min-width: 1024px) {
+    html {
+      height: auto;
+      overflow: auto;
+      overscroll-behavior: auto;
+    }
+    
+    body {
+      height: auto;
+      overflow: auto;
+      overscroll-behavior: auto;
+    }
+    
+    #root {
+      height: auto;
+      background-color: transparent;
+      color: inherit;
+      display: block;
+      flex-direction: unset;
+    }
   }
 }
 
@@ -122,4 +166,15 @@
   border: none !important;
   outline: none !important;
   text-decoration: none !important;
+}
+
+/* Bottom Navigation - Glassmorphism et Safe Area */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Touch targets optimisés pour les pouces */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }

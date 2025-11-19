@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
 import CountdownTimer from '../components/CountdownTimer';
-import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, Play, FileText } from 'lucide-react';
+import { AlertCircle, RefreshCw, Music, Calendar, ChevronLeft, ChevronRight, Play, FileText, Share2, ExternalLink, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import LyricsDialog from '../components/LyricsDialog';
+import LyricsDrawer from '../components/LyricsDrawer';
+import PlatformsDrawer from '../components/PlatformsDrawer';
+import HistoryDrawer from '../components/HistoryDrawer';
 import YouTubePlayer from '../components/YouTubePlayer';
 import YouTubePlaylist from '../components/YouTubePlaylist';
 import OptimizedImage from '../components/OptimizedImage';
@@ -128,15 +131,20 @@ export default function Home() {
   const { toast } = useToast();
   const [currentSong, setCurrentSong] = useState(null);
   const [recentSongs, setRecentSongs] = useState([]);
+  const [allSongs, setAllSongs] = useState([]); // Toutes les chansons pour la navigation
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedVideo, _setSelectedVideo] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showPlatformsDialog, setShowPlatformsDialog] = useState(false);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
+  const [showLyricsDrawer, setShowLyricsDrawer] = useState(false);
+  const [showPlatformsDrawer, setShowPlatformsDrawer] = useState(false);
+  const [showHistoryDrawer, setShowHistoryDrawer] = useState(false);
   const [showDescriptionDialog, setShowDescriptionDialog] = useState(false);
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
   const [displayedSong, setDisplayedSong] = useState(null);
+  const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
 
   useEffect(() => {
     logger.debug('🏠 Home useEffect triggered');
@@ -180,6 +188,7 @@ export default function Home() {
       
       setCurrentSong(song);
       setDisplayedSong(song);
+      setBackgroundImageLoaded(false); // Réinitialiser l'état de chargement de l'image
     } catch (err) {
       logger.error('❌ Erro ao carregar música atual:', err);
       setError('Erro ao carregar a música da semana. Tente novamente.');
@@ -190,15 +199,19 @@ export default function Home() {
 
   const loadRecentSongs = async () => {
     try {
-      logger.debug('🔄 Chargement des musiques récentes depuis Supabase...');
-      const allSongs = await Song.list('-release_date', null);
-      logger.debug('📊 Toutes les musiques chargées:', allSongs);
+      logger.debug('🔄 Chargement des musiques depuis Supabase...');
+      const allSongsData = await Song.list('-release_date', null);
+      logger.debug('📊 Toutes les musiques chargées:', allSongsData);
       
+      // Stocker toutes les chansons pour la navigation
+      setAllSongs(allSongsData);
+      
+      // Filtrer pour le mois en cours (pour l'affichage de la liste)
       const currentMonth = new Date();
       const monthStart = startOfMonth(currentMonth);
       const monthEnd = endOfMonth(currentMonth);
       
-      const monthSongs = allSongs.filter(song => {
+      const monthSongs = allSongsData.filter(song => {
         const songDate = parseISO(song.release_date);
         return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
       });
@@ -222,7 +235,45 @@ export default function Home() {
     
     logger.debug('🎵 handleReplaceVideo appelé avec:', song.title);
     setDisplayedSong(song);
+    setBackgroundImageLoaded(false); // Réinitialiser l'état de chargement de l'image
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Navigation rapide entre les vidéos
+  // Note: allSongs est trié du plus récent (index 0) au plus ancien
+  const getCurrentSongIndex = () => {
+    if (!displayedSong || allSongs.length === 0) return -1;
+    return allSongs.findIndex(song => song.id === displayedSong.id);
+  };
+
+  // Flèche GAUCHE (<) : Chanson PRÉCÉDENTE (plus ancienne, index + 1)
+  const handlePreviousSong = () => {
+    const currentIndex = getCurrentSongIndex();
+    if (currentIndex >= 0 && currentIndex < allSongs.length - 1) {
+      const previousSong = allSongs[currentIndex + 1]; // Plus ancienne
+      handleReplaceVideo(previousSong, null);
+    }
+  };
+
+  // Flèche DROITE (>) : Chanson SUIVANTE (plus récente, index - 1)
+  const handleNextSong = () => {
+    const currentIndex = getCurrentSongIndex();
+    if (currentIndex > 0) {
+      const nextSong = allSongs[currentIndex - 1]; // Plus récente
+      handleReplaceVideo(nextSong, null);
+    }
+  };
+
+  // Cache la flèche GAUCHE si on est sur la plus vieille chanson (dernier index)
+  const canNavigatePrevious = () => {
+    const currentIndex = getCurrentSongIndex();
+    return currentIndex >= 0 && currentIndex < allSongs.length - 1;
+  };
+
+  // Cache la flèche DROITE si on est sur la toute dernière chanson sortie (index 0, la plus récente)
+  const canNavigateNext = () => {
+    const currentIndex = getCurrentSongIndex();
+    return currentIndex > 0;
   };
 
   const handleShowPlatforms = (song) => {
@@ -232,7 +283,13 @@ export default function Home() {
 
   const handleShowLyrics = (song) => {
     setSelectedSongForDialog(song);
-    setShowLyricsDialog(true);
+    // Sur mobile, utiliser le drawer ; sur desktop, utiliser le dialog
+    const isMobile = window.innerWidth < 1024;
+    if (isMobile) {
+      setShowLyricsDrawer(true);
+    } else {
+      setShowLyricsDialog(true);
+    }
   };
 
   const handleShowDescription = (song) => {
@@ -270,6 +327,35 @@ export default function Home() {
   const handleNavigateToPreviousMonth = () => {
     const previousMonth = getPreviousMonth();
     navigate(`/calendar?month=${previousMonth}`);
+  };
+
+  // Fonction pour extraire l'ID YouTube depuis une URL
+  const extractYouTubeId = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    
+    const patterns = [
+      /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/,
+      /^([A-Za-z0-9_-]{11})$/,
+      /music\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  };
+
+  // Obtenir l'URL de la miniature YouTube
+  const getYouTubeThumbnail = (song) => {
+    if (!song) return null;
+    const videoId = extractYouTubeId(song.youtube_music_url || song.youtube_url);
+    if (!videoId) return null;
+    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
   };
 
   useSEO({
@@ -375,9 +461,37 @@ export default function Home() {
       {/* ===== LAYOUT DESKTOP: VIDÉO YOUTUBE + MÚSICAS DO MÊS ===== */}
       <div className="hidden lg:grid lg:grid-cols-2 lg:gap-8 lg:mt-8">
         {/* ===== COLONNE GAUCHE: VIDÉO YOUTUBE ===== */}
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
           {displayedSong ? (
-            <div className="bg-white rounded-3xl p-6 shadow-lg">
+            <div className="bg-white rounded-3xl p-6 shadow-lg relative">
+              {/* Bouton Navigation Gauche - Desktop */}
+              {canNavigatePrevious() && (
+                <button
+                  onClick={handlePreviousSong}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90"
+                  aria-label="Música anterior"
+                  title="Música anterior"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Bouton Navigation Droite - Desktop */}
+              {canNavigateNext() && (
+                <button
+                  onClick={handleNextSong}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90"
+                  aria-label="Próxima música"
+                  title="Próxima música"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Date discrète - Desktop */}
+              <p className="text-xs font-medium uppercase tracking-widest text-gray-500 mb-2 text-center">
+                {displayedSong.release_date && format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()}
+              </p>
               <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
                 <button
                   onClick={() => handleShowDescription(displayedSong)}
@@ -388,9 +502,6 @@ export default function Home() {
                   <span>{displayedSong.title}</span>
                 </button>
               </h3>
-              <p className="text-gray-600 text-center mb-4">
-                {format(parseISO(displayedSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}
-              </p>
               <YouTubeEmbed
                 youtube_music_url={displayedSong.youtube_music_url}
                 youtube_url={displayedSong.youtube_url}
@@ -513,140 +624,159 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== LAYOUT MOBILE: DISPOSITION VERTICALE TRADITIONNELLE ===== */}
-      <div className="lg:hidden">
+      {/* ===== LAYOUT MOBILE IMMERSIF: VUE ÉCRAN FIXE ===== */}
+      <div className="lg:hidden fixed inset-0 overflow-hidden">
         {displayedSong ? (
-          <div className="mb-6">
-            {/* Version YouTube pour mobile */}
-            <div className="space-y-4">
-              {/* Header - mobile friendly, title + date */}
-              <div className="bg-white rounded-2xl shadow-lg p-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold text-gray-800 leading-tight line-clamp-2">{displayedSong.title}</h2>
-                    <p className="text-sm text-blue-700 mt-1">{format(parseISO(displayedSong.release_date), 'dd/MM/yyyy', { locale: ptBR })}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* YouTube Video Block - mobile */}
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                <YouTubeEmbed
-                  youtube_music_url={displayedSong.youtube_music_url}
-                  youtube_url={displayedSong.youtube_url}
-                  title={displayedSong.title}
+          <>
+            {/* Background: Miniature vidéo avec blur et overlay */}
+            {getYouTubeThumbnail(displayedSong) && (
+              <div className="absolute inset-0 z-0">
+                {/* Placeholder pendant le chargement */}
+                {!backgroundImageLoaded && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black"></div>
+                )}
+                <img
+                  src={getYouTubeThumbnail(displayedSong)}
+                  alt={displayedSong.title}
+                  className={`absolute inset-0 w-full h-full object-cover blur-3xl scale-110 transition-opacity duration-500 ${
+                    backgroundImageLoaded ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  onLoad={() => setBackgroundImageLoaded(true)}
+                  onError={() => setBackgroundImageLoaded(true)}
                 />
-              </div>
-
-              {/* Action Buttons */}
-              <div className="bg-white rounded-2xl shadow-lg p-4">
-                <div className="space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors"
-                    onClick={() => handleShowPlatforms(displayedSong)}
-                  >
-                    <Music className="w-5 h-5 inline mr-2" />
-                    Plataformas
-                  </Button>
-                  
-                  {displayedSong.lyrics && displayedSong.lyrics.trim() && (
-                    <Button
-                      variant="outline"
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors"
-                      onClick={() => handleShowLyrics(displayedSong)}
-                    >
-                      <FileText className="w-5 h-5 inline mr-2" />
-                      Letras
-                    </Button>
-                  )}
-                  
-                  <Button
-                    variant="outline"
-                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors"
-                    onClick={() => handleShareSong(displayedSong)}
-                  >
-                    <Play className="w-5 h-5 inline mr-2" />
-                    Compartilhar
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white/20 rounded-3xl p-8 text-center">
-            <Music className="w-16 h-16 text-white/60 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">Nenhuma música disponível</h3>
-            <p className="text-white/80">
-              A música da semana será publicada em breve. Volte na segunda-feira!
-            </p>
-          </div>
-        )}
-        
-        <CountdownTimer />
-
-        {/* ===== BLOC MÚSICAS DO MÊS (MOBILE) ===== */}
-        <div className="mt-8">
-          <div className="bg-white rounded-3xl p-6 shadow-lg">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                <Calendar className="w-6 h-6 text-blue-600" />
-                Músicas do Mês
-              </h2>
-            </div>
-
-            {recentSongs.length > 0 ? (
-              <div className="space-y-4">
-                {recentSongs.map((song) => (
-                  <div key={song.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100">
-                    <div className="flex items-center gap-4">
-                      <div 
-                        className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-                        onClick={(e) => handleReplaceVideo(song, e)}
-                        title="Clique para ver esta música na coluna de vídeo"
-                      >
-                        <Play className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 
-                          className="font-bold text-gray-800 text-lg truncate cursor-pointer hover:underline"
-                          onClick={(e) => handleReplaceVideo(song, e)}
-                          title="Clique para ver esta música na coluna de vídeo"
-                        >
-                          {song.title}
-                        </h3>
-                        <p className="text-gray-600 text-base font-medium mt-1">
-                          {song.artist}
-                        </p>
-                        <p className="text-gray-500 text-sm font-medium mt-1">
-                          {format(parseISO(song.release_date), 'dd/MM/yyyy', { locale: ptBR })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">
-                  Nenhuma música publicada este mês ainda
-                </p>
+                <div className="absolute inset-0 bg-black/50"></div>
               </div>
             )}
 
-            {/* Lien discret vers le mois précédent */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <button
-                onClick={handleNavigateToPreviousMonth}
-                className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors group cursor-pointer"
+            {/* Conteneur central: Flexbox pour centrer verticalement */}
+            <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 py-20">
+              {/* Bouton Navigation Gauche */}
+              {canNavigatePrevious() && (
+                <button
+                  onClick={handlePreviousSong}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90 touch-manipulation"
+                  aria-label="Música anterior"
+                  title="Música anterior"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Bouton Navigation Droite */}
+              {canNavigateNext() && (
+                <button
+                  onClick={handleNextSong}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90 touch-manipulation"
+                  aria-label="Próxima música"
+                  title="Próxima música"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              )}
+
+              {/* Vidéo: Card au centre avec coins arrondis et shadow */}
+              <div className="w-full max-w-md mb-4">
+                <div className="bg-black/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10">
+                  <YouTubeEmbed
+                    youtube_music_url={displayedSong.youtube_music_url}
+                    youtube_url={displayedSong.youtube_url}
+                    title={displayedSong.title}
+                  />
+                </div>
+              </div>
+
+              {/* Date et Titre - Mobile */}
+              <div className="w-full max-w-md mb-4 text-center">
+                {/* Date discrète */}
+                <p className="text-xs font-medium uppercase tracking-widest text-white/60 mb-2">
+                  {displayedSong.release_date && format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()}
+                </p>
+                {/* Titre */}
+                <h2 className="text-xl font-bold text-white drop-shadow-lg">
+                  {displayedSong.title}
+                </h2>
+              </div>
+
+              {/* Bouton principal: Écouter */}
+              <Button
+                size="lg"
+                onClick={() => setShowPlatformsDrawer(true)}
+                className="w-full max-w-md mb-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 touch-manipulation"
               >
-                <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                Ver músicas de {format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'MMMM yyyy', { locale: ptBR })}
-              </button>
+                <span className="text-2xl">🎧</span>
+                <span>Écouter</span>
+              </Button>
+
+              {/* Contrôles flottants: Paroles, Partager et Historique */}
+              <div className="absolute right-4 bottom-24 flex flex-col gap-3 z-20">
+                {/* Bouton Paroles */}
+                {displayedSong.lyrics && displayedSong.lyrics.trim() && (
+                  <button
+                    onClick={() => handleShowLyrics(displayedSong)}
+                    className="w-14 h-14 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
+                    aria-label="Ver letras"
+                    title="Ver letras"
+                  >
+                    <FileText className="w-6 h-6 text-white drop-shadow-lg" />
+                  </button>
+                )}
+
+                {/* Bouton Partager */}
+                <button
+                  onClick={() => handleShareSong(displayedSong)}
+                  className="w-14 h-14 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
+                  aria-label="Compartilhar"
+                  title="Compartilhar"
+                >
+                  <Share2 className="w-6 h-6 text-white drop-shadow-lg" />
+                </button>
+
+                {/* Bouton Historique */}
+                <button
+                  onClick={() => setShowHistoryDrawer(true)}
+                  className="w-14 h-14 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
+                  aria-label="Historique"
+                  title="Historique"
+                >
+                  <Clock className="w-6 h-6 text-white drop-shadow-lg" />
+                </button>
+              </div>
+            </div>
+
+            {/* Lyrics Drawer pour mobile */}
+            <LyricsDrawer
+              open={showLyricsDrawer}
+              onOpenChange={setShowLyricsDrawer}
+              lyrics={displayedSong?.lyrics}
+              songTitle={displayedSong?.title}
+            />
+
+            {/* Platforms Drawer pour mobile */}
+            <PlatformsDrawer
+              open={showPlatformsDrawer}
+              onOpenChange={setShowPlatformsDrawer}
+              song={displayedSong}
+            />
+
+            {/* History Drawer pour mobile */}
+            <HistoryDrawer
+              open={showHistoryDrawer}
+              onOpenChange={setShowHistoryDrawer}
+              songs={allSongs}
+              onSelectSong={(song) => handleReplaceVideo(song, null)}
+            />
+          </>
+        ) : (
+          <div className="relative z-10 h-full flex items-center justify-center px-4">
+            <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-8 text-center border border-white/20 shadow-2xl">
+              <Music className="w-16 h-16 text-white/80 mx-auto mb-4 drop-shadow-lg" />
+              <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-lg">Nenhuma música disponível</h3>
+              <p className="text-white/90 drop-shadow-md">
+                A música da semana será publicada em breve. Volte na segunda-feira!
+              </p>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* ===== DIALOG PLATAFORMAS ===== */}

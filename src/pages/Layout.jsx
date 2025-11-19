@@ -4,6 +4,7 @@ import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
 import OptimizedImage from '@/components/OptimizedImage';
+import BottomNavigation from '@/components/BottomNavigation';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 
@@ -36,17 +37,17 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-200 to-rose-200">
+    <>
       {/* Skip link pour accessibilité */}
       <a href="#main" className="skip-link">Ir para o conteúdo</a>
 
-      {/* Header Desktop avec Navigation */}
-      <header className="hidden lg:block bg-white/90 backdrop-blur-lg border-b border-white/50 shadow-lg sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo + Titre */}
-            <div className="flex items-center gap-4">
-              <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
+      {/* Layout Mobile Immersif - 3 zones Flexbox */}
+      <div className="lg:hidden flex flex-col h-[100dvh] overflow-hidden bg-black text-white">
+        {/* Header Mobile - Fixe en haut */}
+        <header className="flex-shrink-0 bg-black/90 backdrop-blur-lg border-b border-white/10 z-40">
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Link to="/" className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0">
                 <OptimizedImage
                   src="images/Musica da segunda.jpg"
                   alt="Logo Música da Segunda"
@@ -54,62 +55,75 @@ export default function Layout({ children }) {
                   loading="lazy"
                 />
               </Link>
-              <div>
-                <div className="text-2xl font-black text-gray-800 leading-tight">A Música da Segunda</div>
-                <p className="text-xs text-gray-600 mt-0.5">Site oficial de paródias musicais inteligentes e divertidas</p>
+              <div className="flex-1 min-w-0">
+                <div className="text-lg font-black text-white leading-tight truncate drop-shadow-sm">A Música da Segunda</div>
+                <p className="text-xs text-gray-300 mt-0.5 truncate drop-shadow-sm">Nova música toda segunda-feira</p>
               </div>
             </div>
-
-            {/* Navigation Desktop */}
-            <nav className="flex items-center gap-1" aria-label="Navigation principale">
-              {pages.map((page) => (
-                <Link
-                  key={page.name}
-                  to={page.url}
-                  aria-current={isActive(page) ? 'page' : undefined}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 font-medium ${isActive(page)
-                      ? 'bg-[#32a2dc] text-white shadow-md'
-                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
-                    }`}
-                >
-                  <page.icon className="w-4 h-4" aria-hidden="true" />
-                  <span>{page.name}</span>
-                </Link>
-              ))}
-
-
-            </nav>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main id="main" className="lg:pb-0 pb-28 relative z-10">
-        {children}
-      </main>
+        {/* Main Content - Zone flexible avec scroll interne */}
+        <main id="main" className="flex-1 overflow-hidden relative">
+          <div className="h-full overflow-y-auto overscroll-behavior-contain pb-20">
+            {children}
+          </div>
+        </main>
 
-      {/* Navegação Inferior - Mobile uniquement */}
-      <nav className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-2xl bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-white/50 z-50" aria-label="Navigation mobile">
-        <div className="flex gap-1 p-1">
-          {pages.map((page) => (
-            <Link
-              key={page.name}
-              to={page.url}
-              aria-current={isActive(page) ? 'page' : undefined}
-              className={`flex flex-col items-center justify-center py-3 px-2 rounded-3xl transition-all duration-300 flex-1 min-w-0 ${isActive(page)
-                  ? 'bg-[#32a2dc] text-white shadow-lg transform scale-105'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
-                }`}
-            >
-              <page.icon className="w-5 h-5 mb-1 flex-shrink-0" aria-hidden="true" />
-              <span className="text-xs font-bold text-center leading-tight truncate">{page.name}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+        {/* Bottom Navigation - Glassmorphism */}
+        <BottomNavigation />
+      </div>
 
+      {/* Layout Desktop - Inchangé */}
+      <div className="hidden lg:block min-h-screen bg-gradient-to-b from-teal-200 to-rose-200">
+        {/* Header Desktop avec Navigation */}
+        <header className="bg-white/90 backdrop-blur-lg border-b border-white/50 shadow-lg sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              {/* Logo + Titre */}
+              <div className="flex items-center gap-4">
+                <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
+                  <OptimizedImage
+                    src="images/Musica da segunda.jpg"
+                    alt="Logo Música da Segunda"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </Link>
+                <div>
+                  <div className="text-2xl font-black text-gray-800 leading-tight">A Música da Segunda</div>
+                  <p className="text-xs text-gray-600 mt-0.5">Site oficial de paródias musicais inteligentes e divertidas</p>
+                </div>
+              </div>
+
+              {/* Navigation Desktop */}
+              <nav className="flex items-center gap-1" aria-label="Navigation principale">
+                {pages.map((page) => (
+                  <Link
+                    key={page.name}
+                    to={page.url}
+                    aria-current={isActive(page) ? 'page' : undefined}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 font-medium ${isActive(page)
+                        ? 'bg-[#32a2dc] text-white shadow-md'
+                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                      }`}
+                  >
+                    <page.icon className="w-4 h-4" aria-hidden="true" />
+                    <span>{page.name}</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+          </div>
+        </header>
+
+        <main id="main" className="relative z-10">
+          {children}
+        </main>
+      </div>
 
       {/* Gestionnaire de tutoriel intégré */}
       <TutorialManager />
-    </div>
+    </>
   );
 }

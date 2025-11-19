@@ -88,6 +88,21 @@ export default function Calendar() {
     });
   };
 
+  // Fonction pour trouver la dernière musique publiée
+  const getLatestPublishedSong = () => {
+    const publishedSongs = songs.filter(song => song.status === 'published');
+    if (publishedSongs.length === 0) return null;
+    
+    // Trier par date de publication (la plus récente en premier)
+    const sorted = [...publishedSongs].sort((a, b) => {
+      const dateA = parseISO(a.release_date);
+      const dateB = parseISO(b.release_date);
+      return dateB - dateA; // Ordre décroissant
+    });
+    
+    return sorted[0]; // La plus récente
+  };
+
   const navigateMonth = (direction) => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
@@ -105,13 +120,22 @@ export default function Calendar() {
     const song = getSongForDate(day);
     const isCurrentDay = isSameDay(day, new Date());
     const isMondayDay = isDateMonday(day);
+    const latestPublishedSong = getLatestPublishedSong();
+    const isLatestPublished = latestPublishedSong && song && 
+                              isSameDay(parseISO(latestPublishedSong.release_date), day) &&
+                              song.status === 'published';
     
     let classes = "aspect-square flex flex-col items-center justify-center rounded-2xl text-sm font-bold transition-all duration-300 ";
     
     if (song) {
       // Différencier les chansons selon leur statut
       if (song.status === 'published') {
-        classes += "bg-[#32a2dc] text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
+        // Si c'est la dernière musique publiée, utiliser orange
+        if (isLatestPublished) {
+          classes += "bg-orange-500 text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
+        } else {
+          classes += "bg-[#32a2dc] text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
+        }
       } else if (song.status === 'draft') {
         classes += "bg-orange-500 text-white shadow-lg cursor-pointer hover:shadow-xl transform hover:scale-105 ";
       } else {
@@ -186,9 +210,10 @@ export default function Calendar() {
 
   return (
     <>
-      <div className="p-5 max-w-md mx-auto">
+      {/* Layout Desktop - Inchangé */}
+      <div className="hidden lg:block p-5 max-w-md mx-auto">
         {/* Header Mobile uniquement */}
-        <div className="lg:hidden text-center mb-8">
+        <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-4">
             <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
               <img 
@@ -354,6 +379,164 @@ export default function Calendar() {
               </div>
             ));
           })()}
+        </div>
+      </div>
+
+      {/* Layout Mobile - Version originale avec scroll interne */}
+      <div className="lg:hidden h-full overflow-y-auto pb-24">
+        <div className="p-5 max-w-md mx-auto">
+          {/* Header Mobile - Compact */}
+          <div className="text-center mb-4">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
+                <img 
+                  src="images/Musica da segunda.jpg" 
+                  alt="Logo Música da Segunda"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              <div className="text-left">
+                <h1 className="text-xl font-black text-white drop-shadow-lg">
+                  Agenda Musical
+                </h1>
+              </div>
+            </div>
+          </div>
+
+          {/* Calendar Header - Compact */}
+          <div className="bg-[#f8f5f2] rounded-2xl p-4 shadow-xl mb-4">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateMonth(-1)}
+                className="text-gray-600 hover:text-gray-800 hover:bg-white/60 h-8 w-8"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              
+              <h2 className="text-lg font-black text-gray-800 capitalize">
+                {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+              </h2>
+              
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigateMonth(1)}
+                className="text-gray-600 hover:text-gray-800 hover:bg-white/60 h-8 w-8"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1.5 mb-3">
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                <div key={day} className="text-center text-xs font-bold text-gray-500 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1.5">
+              {allDaysToShow.map(day => {
+                const song = getSongForDate(day);
+                const isMondayDay = isDateMonday(day);
+                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+                
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={`${getDayClass(day)} ${!isCurrentMonth ? 'opacity-40' : ''}`}
+                    onClick={() => song && handleSongClick(song)}
+                  >
+                    <span className="text-xs">{format(day, 'd')}</span>
+                    {song && (
+                      <div className="flex flex-col items-center mt-0.5">
+                        <Music className="w-2.5 h-2.5" />
+                        {song.status === 'draft' && (
+                          <div className="w-0.5 h-0.5 bg-white rounded-full mt-0.5 opacity-80"></div>
+                        )}
+                      </div>
+                    )}
+                    {isMondayDay && !song && isCurrentMonth && (
+                      <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-0.5 opacity-60"></div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legend - Compact */}
+            <div className="mt-4 space-y-1.5 text-xs">
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-[#32a2dc] rounded-lg"></div>
+                <span className="text-gray-600 font-medium">Música publicada</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-white/40 border-2 border-dashed border-gray-400 rounded-lg"></div>
+                <span className="text-gray-600 font-medium">Segunda-feira (aguardando)</span>
+              </div>
+              {selectedSong && (
+                <div className="text-xs text-gray-500 mt-2 p-2 bg-white/40 rounded-lg">
+                  <p className="font-semibold">
+                    {format(parseISO(selectedSong.release_date), "dd 'de' MMMM 'de' yyyy - EEEE", { locale: ptBR })}
+                  </p>
+                  <p>{selectedSong.title} - {selectedSong.artist}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Status: {selectedSong.status === 'published' ? 'Publicada' : 
+                             selectedSong.status === 'draft' ? 'Rascunho' : 'Arquivada'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Músicas do Mês - Version compacte */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-white/90 drop-shadow-sm mb-2">Músicas do Mês</h3>
+            {(() => {
+              // Filtrer les musiques du mois actuel
+              const monthSongs = songs.filter(song => {
+                const songDate = parseISO(song.release_date);
+                return songDate.getMonth() === currentDate.getMonth() && 
+                       songDate.getFullYear() === currentDate.getFullYear();
+              });
+              
+              if (monthSongs.length === 0) {
+                return (
+                  <div className="bg-[#f8f5f2] rounded-xl p-4 text-center shadow-lg">
+                    <Music className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-gray-600 text-sm font-medium">
+                      Nenhuma música publicada em {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                );
+              }
+              
+              return monthSongs.map(song => (
+                <button
+                  key={song.id}
+                  onClick={() => handleSongClick(song)}
+                  className="w-full bg-[#f8f5f2] rounded-xl p-3 shadow-md flex items-center gap-3 cursor-pointer hover:shadow-lg transition-all duration-200 active:scale-95 touch-manipulation text-left"
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    song.status === 'published' ? 'bg-[#32a2dc]' :
+                    song.status === 'draft' ? 'bg-orange-500' : 'bg-gray-500'
+                  }`}>
+                    <Play className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-grow min-w-0">
+                    <p className="font-semibold text-gray-800 text-sm truncate mb-0.5">{song.title}</p>
+                    <p className="text-xs text-gray-500">
+                      {format(parseISO(song.release_date), "dd/MM/yyyy")}
+                    </p>
+                  </div>
+                </button>
+              ));
+            })()}
+          </div>
         </div>
       </div>
 
