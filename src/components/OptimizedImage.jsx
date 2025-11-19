@@ -10,25 +10,25 @@ import { useState } from 'react';
  * @param {string} decoding - Décodage asynchrone ('async' ou 'sync')
  * @param {Object} props - Autres props HTML img
  */
-export default function OptimizedImage({ 
-  src, 
-  alt, 
-  className = '', 
+export default function OptimizedImage({
+  src,
+  alt,
+  className = '',
   loading = 'lazy',
   decoding = 'async',
-  ...props 
+  ...props
 }) {
   const [imageError, setImageError] = useState(false);
 
   // Générer le chemin WebP
   const getWebpPath = (imagePath) => {
     if (!imagePath) return null;
-    
+
     // Si c'est déjà une URL externe, ne pas convertir
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return null;
     }
-    
+
     // Convertir l'extension en .webp
     const webpPath = imagePath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
     return webpPath !== imagePath ? webpPath : null;
@@ -44,7 +44,7 @@ export default function OptimizedImage({
   // Si erreur totale, afficher une image placeholder
   if (imageError) {
     return (
-      <div 
+      <div
         className={`bg-gray-200 flex items-center justify-center ${className}`}
         role="img"
         aria-label={alt}
@@ -71,12 +71,12 @@ export default function OptimizedImage({
 
   return (
     <picture>
-      {/* Source WebP - srcSet doit avoir un descripteur valide */}
-      <source 
-        srcSet={`${webpSrc} 1x`} 
+      {/* Source WebP - using width descriptor for proper srcset */}
+      <source
+        srcSet={webpSrc}
         type="image/webp"
       />
-      
+
       {/* Image de fallback */}
       <img
         src={fallbackSrc}

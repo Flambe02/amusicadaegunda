@@ -12,11 +12,11 @@ import { Volume2, Play, RotateCcw } from 'lucide-react';
  * - PostMessage API pour contrôler la lecture
  * - Fallback robuste en cas de blocage
  */
-export default function TikTokPlayer({ 
-  postId, 
-  controls = 0, 
-  autoPlay = true, 
-  className = "" 
+export default function TikTokPlayer({
+  postId,
+  controls = 0,
+  autoPlay = true,
+  className = ""
 }) {
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
@@ -36,20 +36,20 @@ export default function TikTokPlayer({
 
     try {
       const data = event.data;
-      
+
       // Validation des données reçues
       if (!data || typeof data !== 'object' || !data.event) {
         console.warn('TikTok player: données de message invalides:', data);
         return;
       }
-      
+
       switch (data.event) {
         case 'onPlayerReady':
           console.log('TikTok player ready');
           setPlayerReady(true);
           setIsLoading(false);
           break;
-          
+
         case 'onStateChange':
           // État 0 = fin de vidéo, relancer en boucle
           if (data.info === 0) {
@@ -61,16 +61,16 @@ export default function TikTokPlayer({
             }
           }
           break;
-          
+
         case 'onMute':
           setIsMuted(data.info === 1);
           break;
-          
+
         case 'onError':
           console.error('TikTok player error:', data.info);
           setError('Erro no player TikTok');
           break;
-          
+
         default:
           console.debug('TikTok player: événement non géré:', data.event);
       }
@@ -83,12 +83,18 @@ export default function TikTokPlayer({
   const sendMessageToPlayer = useCallback((command, value) => {
     if (iframeRef.current && playerReady) {
       try {
-        iframeRef.current.contentWindow?.postMessage({
-          method: command,
-          value: value
-        }, 'https://www.tiktok.com'); // Origine restreinte pour la sécurité
+        // Vérifier que l'iframe est accessible avant d'envoyer le message
+        if (iframeRef.current.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({
+            method: command,
+            value: value
+          }, 'https://www.tiktok.com'); // Origine restreinte pour la sécurité
+        }
       } catch (error) {
-        console.error('TikTok player: erreur lors de l\'envoi du message:', error);
+        // Suppression silencieuse des erreurs cross-origin (attendues)
+        if (error.name !== 'SecurityError') {
+          console.error('TikTok player: erreur lors de l\'envoi du message:', error);
+        }
       }
     }
   }, [playerReady]);
@@ -100,22 +106,27 @@ export default function TikTokPlayer({
     sendMessageToPlayer('unMute');
     sendMessageToPlayer('seekTo', 0);
     sendMessageToPlayer('play');
-    
+
     // Forcer aussi la lecture de l'iframe
     if (iframeRef.current) {
       try {
         // Essayer de forcer la lecture avec son
-        iframeRef.current.contentWindow?.postMessage({
-          method: 'unMute',
-          value: 0
-        }, 'https://www.tiktok.com');
-        
-        iframeRef.current.contentWindow?.postMessage({
-          method: 'play',
-          value: 0
-        }, 'https://www.tiktok.com');
+        if (iframeRef.current.contentWindow) {
+          iframeRef.current.contentWindow.postMessage({
+            method: 'unMute',
+            value: 0
+          }, 'https://www.tiktok.com');
+
+          iframeRef.current.contentWindow.postMessage({
+            method: 'play',
+            value: 0
+          }, 'https://www.tiktok.com');
+        }
       } catch (error) {
-        console.log('Impossible de forcer la lecture avec son:', error);
+        // Suppression silencieuse des erreurs cross-origin (attendues)
+        if (error.name !== 'SecurityError') {
+          console.log('Impossible de forcer la lecture avec son:', error);
+        }
       }
     }
   }, [sendMessageToPlayer]);
@@ -177,7 +188,7 @@ export default function TikTokPlayer({
     iframe.title = 'TikTok Video Player';
     iframe.allowFullscreen = true;
     iframe.allow = 'autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; gyroscope';
-    
+
     // Styling de l'iframe avec format 9:16 et suppression de l'écran blanc
     iframe.style.cssText = `
       width: 100%;
@@ -247,7 +258,7 @@ export default function TikTokPlayer({
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={`tiktok-player-container ${className} ${isFullscreen ? 'fullscreen' : ''}`}
     >
@@ -260,7 +271,7 @@ export default function TikTokPlayer({
           <p className="loading-text">Carregando TikTok...</p>
         </div>
       )}
-      
+
       {/* Error state */}
       {error && (
         <div className="tiktok-player-error">
@@ -269,7 +280,7 @@ export default function TikTokPlayer({
             <h3 className="error-title">Erro ao carregar</h3>
             <p className="error-message">{error}</p>
             <div className="error-actions">
-              <button 
+              <button
                 onClick={() => window.open(`https://www.tiktok.com/@user/video/${postId}`, '_blank')}
                 className="fallback-link"
               >
@@ -279,7 +290,7 @@ export default function TikTokPlayer({
           </div>
         </div>
       )}
-      
+
       {/* Overlay "Activer le son" */}
       {!isLoading && !error && isMuted && (
         <div className="tiktok-player-overlay">
@@ -294,7 +305,7 @@ export default function TikTokPlayer({
           </button>
         </div>
       )}
-      
+
       {/* Bouton plein écran */}
       {!isLoading && !error && (
         <button
