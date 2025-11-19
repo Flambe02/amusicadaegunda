@@ -5,13 +5,55 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
   if (!endpoint || !p256dh || !auth) {
     throw new Error('Missing subscription fields: endpoint, p256dh, auth')
   }
+  
+  console.warn('📡 upsertPushSubscription - Début');
+  console.warn('📡 Endpoint:', endpoint?.substring(0, 50) + '...');
+  console.warn('📡 Topic:', topic, 'Locale:', locale, 'VAPID version:', vapidKeyVersion);
+  
+  const payload = {
+    endpoint,
+    p256dh,
+    auth,
+    topics: [topic],
+    locale,
+    vapid_key_version: vapidKeyVersion,
+    last_seen_at: new Date().toISOString()
+  };
+  
+  console.warn('📡 Payload (sans clés):', { endpoint, topics: payload.topics, locale, vapid_key_version: payload.vapid_key_version });
+  
   const { data, error } = await supabase
     .from('push_subscriptions')
-    .upsert({ endpoint, p256dh, auth, topics: [topic], locale, vapid_key_version: vapidKeyVersion }, { onConflict: 'endpoint' })
-    .select('endpoint')
-    .single()
-  if (error) throw error
-  return data
+    .upsert(payload, { onConflict: 'endpoint' })
+    .select('endpoint, id, created_at')
+    .maybeSingle() // Utiliser maybeSingle() au lieu de single() pour éviter les erreurs PGRST116
+  
+  if (error) {
+    console.error('❌ Erreur upsertPushSubscription:', error);
+    console.error('❌ Code:', error.code);
+    console.error('❌ Message:', error.message);
+    console.error('❌ Details:', error.details);
+    console.error('❌ Hint:', error.hint);
+    
+    // Gérer spécifiquement les erreurs RLS
+    if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
+      const rlsError = new Error('Erreur de permission RLS : Les politiques de sécurité ne permettent pas l\'insertion. Vérifiez que les RLS policies sont correctement configurées sur la table push_subscriptions.');
+      rlsError.code = 'RLS_ERROR';
+      rlsError.originalError = error;
+      throw rlsError;
+    }
+    
+    throw error;
+  }
+  
+  if (!data) {
+    console.warn('⚠️ upsertPushSubscription: Aucune donnée retournée (mais pas d\'erreur)');
+    // Retourner quand même un objet minimal pour indiquer le succès
+    return { endpoint, success: true };
+  }
+  
+  console.warn('✅ Subscription sauvegardée avec succès:', data);
+  return data;
 }
 
 // src/lib/push.js - FORCE INCLUSION
@@ -173,6 +215,18 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     
     console.warn('✅ Subscription saved to Supabase');
   } catch (supabaseError) {
+    console.error('❌ Supabase save failed:', supabaseError);
+    console.error('❌ Error type:', supabaseError?.constructor?.name);
+    console.error('❌ Error code:', supabaseError?.code);
+    console.error('❌ Error message:', supabaseError?.message);
+    
+    // Si c'est une erreur RLS, ne pas essayer le fallback API
+    if (supabaseError?.code === 'RLS_ERROR' || supabaseError?.code === '42501') {
+      console.error('❌ Erreur RLS détectée - pas de fallback API');
+      await sub.unsubscribe(); // Nettoyer l'abonnement échoué
+      throw new Error('Erreur de permission : Impossible de sauvegarder l\'abonnement. Vérifiez que les politiques RLS sont correctement configurées sur la table push_subscriptions.');
+    }
+    
     console.error('❌ Supabase save failed, trying API fallback:', supabaseError);
     
     // Fallback vers l'API externe si Supabase échoue
@@ -185,24 +239,32 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
       }
     };
     
-    const res = await fetch(`${API_BASE}/push/subscribe`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        subscription: subscriptionData,
-        topic: 'new-song',
-        locale,
-        vapidKeyVersion: VAPID_KEY_VERSION
-      })
-    });
-    
-    console.warn('📊 API fallback response:', res.status, res.statusText);
-    
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('❌ Both Supabase and API failed:', errorText);
+    try {
+      const res = await fetch(`${API_BASE}/push/subscribe`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          subscription: subscriptionData,
+          topic: 'new-song',
+          locale,
+          vapidKeyVersion: VAPID_KEY_VERSION
+        })
+      });
+      
+      console.warn('📊 API fallback response:', res.status, res.statusText);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('❌ Both Supabase and API failed:', errorText);
+        await sub.unsubscribe(); // Nettoyer l'abonnement échoué
+        throw new Error(`Subscribe failed: ${res.status} ${res.statusText}. Détails: ${errorText}`);
+      }
+      
+      console.warn('✅ Subscription saved via API fallback');
+    } catch (apiError) {
+      console.error('❌ API fallback also failed:', apiError);
       await sub.unsubscribe(); // Nettoyer l'abonnement échoué
-      throw new Error(`Subscribe failed: ${res.status} ${res.statusText}`);
+      throw new Error(`Échec de l'activation : Impossible de sauvegarder l'abonnement. Erreur Supabase: ${supabaseError?.message || supabaseError}. Erreur API: ${apiError?.message || apiError}`);
     }
   }
   

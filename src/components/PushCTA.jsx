@@ -42,12 +42,30 @@ export default function PushCTA() {
       // Optionnel : afficher un toast de succès
     } catch (err) {
       console.error("Échec de l'abonnement push :", err);
+      console.error("Détails de l'erreur:", {
+        message: err?.message,
+        code: err?.code,
+        name: err?.name,
+        stack: err?.stack
+      });
+      
+      // Afficher un message d'erreur plus détaillé
+      let errorMessage = 'Activation échouée. Veuillez réessayer.';
       
       if (Notification.permission === 'denied') {
-        setError('Notifications bloquées. Veuillez les autoriser dans les paramètres de votre navigateur.');
-      } else {
-        setError('Activation échouée. Veuillez réessayer.');
+        errorMessage = 'Notifications bloquées. Veuillez les autoriser dans les paramètres de votre navigateur.';
+      } else if (err?.message) {
+        // Afficher le message d'erreur spécifique si disponible
+        errorMessage = err.message;
+      } else if (err?.code === 'RLS_ERROR' || err?.code === '42501') {
+        errorMessage = 'Erreur de permission : Impossible de sauvegarder l\'abonnement. Contactez le support.';
+      } else if (err?.message?.includes('VAPID')) {
+        errorMessage = 'Erreur de configuration : Clé VAPID invalide. Contactez le support.';
+      } else if (err?.message?.includes('Service Worker')) {
+        errorMessage = 'Erreur : Service Worker non disponible. Vérifiez que vous utilisez HTTPS ou localhost.';
       }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
