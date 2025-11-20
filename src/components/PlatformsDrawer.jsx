@@ -49,7 +49,7 @@ export default function PlatformsDrawer({
         <DrawerHeader className="px-6 pt-4 pb-2">
           <DrawerTitle className="text-xl font-bold text-white flex items-center gap-3">
             <Music className="w-6 h-6 text-white" />
-            Écouter
+            Ouvir
           </DrawerTitle>
           {song.title && (
             <p className="text-white/80 text-sm mt-2 drop-shadow-sm">
@@ -75,7 +75,7 @@ export default function PlatformsDrawer({
                     className={`w-full ${platform.color} text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-3 touch-manipulation`}
                   >
                     <span className="text-2xl">{platform.icon}</span>
-                    <span>Ouvrir dans {platform.name}</span>
+                    <span>Abrir no {platform.name}</span>
                     <ExternalLink className="w-5 h-5" />
                   </Button>
                 </a>
@@ -85,10 +85,10 @@ export default function PlatformsDrawer({
             <div className="text-center py-12">
               <Music className="w-16 h-16 text-white/40 mx-auto mb-4" />
               <p className="text-white/90 font-medium text-lg mb-2 drop-shadow-sm">
-                Aucune plateforme disponible
+                Nenhuma plataforma disponível
               </p>
               <p className="text-white/70 text-sm drop-shadow-sm">
-                Les liens de streaming seront ajoutés prochainement.
+                Os links de streaming serão adicionados em breve.
               </p>
             </div>
           )}

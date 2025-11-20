@@ -756,7 +756,7 @@ export default function Home() {
                 className="w-full max-w-md bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 touch-manipulation"
               >
                 <span className="text-2xl">🎧</span>
-                <span>Écouter</span>
+                <span>Ouvir</span>
               </Button>
             </div>
 
