@@ -23,8 +23,10 @@ export default defineConfig(({ command, mode }) => ({
     sourcemap: false,
     cssCodeSplit: true, // Code splitting CSS pour réduire les blocs
     esbuild: {
-      // ❌ NE PAS drop console/debugger (casse React Scheduler)
-      legalComments: 'none',
+      // ✅ legalComments: 'none' supprime uniquement les commentaires de licence
+      // ✅ Cela NE supprime PAS console/debugger (ce serait 'drop: ["console"]')
+      // ✅ Configuration optimale confirmée dans FIX_REACT_SCHEDULER_FINAL.md
+      legalComments: 'none', // Réduit la taille du bundle en supprimant les commentaires de licence
     },
     rollupOptions: {
       output: {
