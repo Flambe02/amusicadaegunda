@@ -437,7 +437,7 @@ export default function Home() {
             />
           </div>
           
-          <div className="text-left">
+          <div className="text-left flex-1">
             <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
               A Música da Segunda
             </h1>
@@ -445,6 +445,16 @@ export default function Home() {
               Descubra música nova toda segunda-feira
             </p>
           </div>
+
+          {/* Bouton Historique dans le header */}
+          <button
+            onClick={() => setShowHistoryDrawer(true)}
+            className="w-12 h-12 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation flex-shrink-0"
+            aria-label="Historique"
+            title="Historique"
+          >
+            <Clock className="w-5 h-5 text-white drop-shadow-lg" />
+          </button>
         </div>
       </div>
     
@@ -624,32 +634,32 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== LAYOUT MOBILE IMMERSIF: VUE ÉCRAN FIXE ===== */}
-      <div className="lg:hidden fixed inset-0 overflow-hidden">
+      {/* ===== LAYOUT MOBILE IMMERSIF: STYLE TIKTOK ===== */}
+      <div className="lg:hidden fixed inset-0 flex flex-col overflow-hidden">
         {displayedSong ? (
           <>
-            {/* Background: Miniature vidéo avec blur et overlay */}
-            {getYouTubeThumbnail(displayedSong) && (
-              <div className="absolute inset-0 z-0">
-                {/* Placeholder pendant le chargement */}
-                {!backgroundImageLoaded && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black"></div>
-                )}
-                <img
-                  src={getYouTubeThumbnail(displayedSong)}
-                  alt={displayedSong.title}
-                  className={`absolute inset-0 w-full h-full object-cover blur-3xl scale-110 transition-opacity duration-500 ${
-                    backgroundImageLoaded ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  onLoad={() => setBackgroundImageLoaded(true)}
-                  onError={() => setBackgroundImageLoaded(true)}
-                />
-                <div className="absolute inset-0 bg-black/50"></div>
-              </div>
-            )}
+            {/* Conteneur Vidéo: Prend presque toute la hauteur (flex-1), garde place pour Navbar */}
+            <div className="relative flex-1 overflow-hidden">
+              {/* Background: Miniature vidéo avec blur et overlay */}
+              {getYouTubeThumbnail(displayedSong) && (
+                <div className="absolute inset-0 z-0">
+                  {/* Placeholder pendant le chargement */}
+                  {!backgroundImageLoaded && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black"></div>
+                  )}
+                  <img
+                    src={getYouTubeThumbnail(displayedSong)}
+                    alt={displayedSong.title}
+                    className={`absolute inset-0 w-full h-full object-cover blur-3xl scale-110 transition-opacity duration-500 ${
+                      backgroundImageLoaded ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    onLoad={() => setBackgroundImageLoaded(true)}
+                    onError={() => setBackgroundImageLoaded(true)}
+                  />
+                  <div className="absolute inset-0 bg-black/50"></div>
+                </div>
+              )}
 
-            {/* Conteneur central: Flexbox pour centrer verticalement */}
-            <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 py-20">
               {/* Bouton Navigation Gauche */}
               {canNavigatePrevious() && (
                 <button
@@ -674,41 +684,36 @@ export default function Home() {
                 </button>
               )}
 
-              {/* Vidéo: Card au centre avec coins arrondis et shadow */}
-              <div className="w-full max-w-md mb-4">
-                <div className="bg-black/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10">
-                  <YouTubeEmbed
-                    youtube_music_url={displayedSong.youtube_music_url}
-                    youtube_url={displayedSong.youtube_url}
-                    title={displayedSong.title}
-                  />
+              {/* Vidéo: Prend toute la hauteur disponible */}
+              <div className="relative z-10 h-full flex items-center justify-center px-4">
+                <div className="w-full max-w-md">
+                  <div className="bg-black/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10">
+                    <YouTubeEmbed
+                      youtube_music_url={displayedSong.youtube_music_url}
+                      youtube_url={displayedSong.youtube_url}
+                      title={displayedSong.title}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Date et Titre - Mobile */}
-              <div className="w-full max-w-md mb-4 text-center">
-                {/* Date discrète */}
-                <p className="text-xs font-medium uppercase tracking-widest text-white/60 mb-2">
+              {/* Dégradé sombre en bas pour la lisibilité du texte */}
+              <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/90 to-transparent z-10 pointer-events-none"></div>
+
+              {/* Texte en Overlay: Date et Titre en bas à gauche */}
+              <div className="absolute bottom-4 left-4 z-20 text-white">
+                {/* Date en petit (xs uppercase) */}
+                <p className="text-xs font-medium uppercase tracking-widest text-white/80 mb-1 drop-shadow-lg">
                   {displayedSong.release_date && format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()}
                 </p>
-                {/* Titre */}
+                {/* Titre en gros (xl bold) */}
                 <h2 className="text-xl font-bold text-white drop-shadow-lg">
                   {displayedSong.title}
                 </h2>
               </div>
 
-              {/* Bouton principal: Écouter */}
-              <Button
-                size="lg"
-                onClick={() => setShowPlatformsDrawer(true)}
-                className="w-full max-w-md mb-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 touch-manipulation"
-              >
-                <span className="text-2xl">🎧</span>
-                <span>Écouter</span>
-              </Button>
-
-              {/* Contrôles flottants: Paroles, Partager et Historique */}
-              <div className="absolute right-4 bottom-24 flex flex-col gap-3 z-20">
+              {/* Actions Latérales: Paroles et Partage alignés verticalement à droite */}
+              <div className="absolute right-2 bottom-20 flex flex-col gap-3 z-20">
                 {/* Bouton Paroles */}
                 {displayedSong.lyrics && displayedSong.lyrics.trim() && (
                   <button
@@ -730,17 +735,19 @@ export default function Home() {
                 >
                   <Share2 className="w-6 h-6 text-white drop-shadow-lg" />
                 </button>
-
-                {/* Bouton Historique */}
-                <button
-                  onClick={() => setShowHistoryDrawer(true)}
-                  className="w-14 h-14 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
-                  aria-label="Historique"
-                  title="Historique"
-                >
-                  <Clock className="w-6 h-6 text-white drop-shadow-lg" />
-                </button>
               </div>
+            </div>
+
+            {/* Bouton Écouter: Sticky en bas au centre, par-dessus le dégradé */}
+            <div className="relative z-30 pb-4 px-4 flex justify-center">
+              <Button
+                size="lg"
+                onClick={() => setShowPlatformsDrawer(true)}
+                className="w-full max-w-md bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 touch-manipulation"
+              >
+                <span className="text-2xl">🎧</span>
+                <span>Écouter</span>
+              </Button>
             </div>
 
             {/* Lyrics Drawer pour mobile */}

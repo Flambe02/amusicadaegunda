@@ -22,7 +22,9 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
   
   console.warn('📡 Payload (sans clés):', { endpoint, topics: payload.topics, locale, vapid_key_version: payload.vapid_key_version });
   
-  const { data, error } = await supabase
+  // Essayer d'abord avec onConflict sur la colonne
+  // PostgREST devrait reconnaître soit la contrainte UNIQUE soit l'index UNIQUE
+  let { data, error } = await supabase
     .from('push_subscriptions')
     .upsert(payload, { onConflict: 'endpoint' })
     .select('endpoint, id, created_at')
@@ -34,6 +36,60 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
     console.error('❌ Message:', error.message);
     console.error('❌ Details:', error.details);
     console.error('❌ Hint:', error.hint);
+    
+    // Gérer spécifiquement les erreurs de contrainte UNIQUE manquante
+    if (error.message?.includes('no unique or exclusion constraint matching the ON CONFLICT specification') || 
+        error.message?.includes('ON CONFLICT')) {
+      console.error('❌ Contrainte UNIQUE manquante sur endpoint - tentative de fallback INSERT/UPDATE');
+      
+      // Fallback: essayer d'abord un SELECT, puis INSERT ou UPDATE
+      try {
+        const { data: existing } = await supabase
+          .from('push_subscriptions')
+          .select('endpoint, id')
+          .eq('endpoint', endpoint)
+          .maybeSingle();
+        
+        if (existing) {
+          // Mise à jour de l'enregistrement existant
+          const { data: updated, error: updateError } = await supabase
+            .from('push_subscriptions')
+            .update({
+              p256dh,
+              auth,
+              topics: [topic],
+              locale,
+              vapid_key_version: vapidKeyVersion,
+              last_seen_at: new Date().toISOString()
+            })
+            .eq('endpoint', endpoint)
+            .select('endpoint, id, created_at')
+            .maybeSingle();
+          
+          if (updateError) throw updateError;
+          console.warn('✅ Subscription mise à jour via fallback UPDATE');
+          return updated || { endpoint, success: true };
+        } else {
+          // Insertion d'un nouvel enregistrement
+          const { data: inserted, error: insertError } = await supabase
+            .from('push_subscriptions')
+            .insert(payload)
+            .select('endpoint, id, created_at')
+            .maybeSingle();
+          
+          if (insertError) throw insertError;
+          console.warn('✅ Subscription créée via fallback INSERT');
+          return inserted || { endpoint, success: true };
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback INSERT/UPDATE a échoué:', fallbackError);
+        const constraintError = new Error('Erreur de contrainte : La contrainte UNIQUE sur endpoint est manquante dans la base de données. Exécutez la migration 20250110000000_fix_push_subscriptions_unique_constraint.sql');
+        constraintError.code = 'CONSTRAINT_ERROR';
+        constraintError.originalError = error;
+        constraintError.fallbackError = fallbackError;
+        throw constraintError;
+      }
+    }
     
     // Gérer spécifiquement les erreurs RLS
     if (error.code === '42501' || error.message?.includes('permission denied') || error.message?.includes('row-level security')) {
@@ -219,6 +275,13 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     console.error('❌ Error type:', supabaseError?.constructor?.name);
     console.error('❌ Error code:', supabaseError?.code);
     console.error('❌ Error message:', supabaseError?.message);
+    
+    // Si c'est une erreur de contrainte UNIQUE, ne pas essayer le fallback API
+    if (supabaseError?.code === 'CONSTRAINT_ERROR') {
+      console.error('❌ Erreur de contrainte UNIQUE détectée - pas de fallback API');
+      await sub.unsubscribe(); // Nettoyer l'abonnement échoué
+      throw new Error('Erreur de base de données : La contrainte UNIQUE sur endpoint est manquante. Veuillez contacter le support technique.');
+    }
     
     // Si c'est une erreur RLS, ne pas essayer le fallback API
     if (supabaseError?.code === 'RLS_ERROR' || supabaseError?.code === '42501') {
