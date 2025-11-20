@@ -712,8 +712,18 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* Actions Latérales: Paroles et Partage alignés verticalement à droite */}
+              {/* Actions Latérales: Plateformes, Paroles et Partage alignés verticalement à droite */}
               <div className="absolute right-2 bottom-20 flex flex-col gap-3 z-20">
+                {/* Bouton Plateformes (vert avec note de musique) */}
+                <button
+                  onClick={() => setShowPlatformsDrawer(true)}
+                  className="w-14 h-14 bg-green-500/90 hover:bg-green-600 backdrop-blur-xl rounded-full flex items-center justify-center shadow-xl border border-green-400/30 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
+                  aria-label="Ouvir em outras plataformas"
+                  title="Ouvir em outras plataformas"
+                >
+                  <Music className="w-6 h-6 text-white drop-shadow-lg" />
+                </button>
+
                 {/* Bouton Paroles */}
                 {displayedSong.lyrics && displayedSong.lyrics.trim() && (
                   <button
