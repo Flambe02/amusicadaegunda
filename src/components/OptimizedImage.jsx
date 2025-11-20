@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 /**
  * OptimizedImage - Composant d'image optimisé avec support WebP et fallback
+ * 
+ * Amélioration: Vérifie si le WebP existe avant de l'utiliser pour éviter les 404
  * 
  * @param {string} src - Source de l'image (chemin vers l'image)
  * @param {string} alt - Texte alternatif
@@ -19,6 +21,7 @@ export default function OptimizedImage({
   ...props
 }) {
   const [imageError, setImageError] = useState(false);
+  const [webpAvailable, setWebpAvailable] = useState(null); // null = vérification en cours, true = disponible, false = indisponible
 
   // Générer le chemin WebP
   const getWebpPath = (imagePath) => {
@@ -37,11 +40,31 @@ export default function OptimizedImage({
   const webpSrc = getWebpPath(src);
   const fallbackSrc = src;
 
+  // Vérifier si le WebP existe (seulement si WebP est disponible)
+  useEffect(() => {
+    if (!webpSrc) {
+      setWebpAvailable(false);
+      return;
+    }
+
+    // Vérifier si le fichier WebP existe en essayant de le charger
+    const img = new Image();
+    img.onload = () => {
+      setWebpAvailable(true);
+    };
+    img.onerror = () => {
+      // WebP n'existe pas, utiliser l'image originale
+      setWebpAvailable(false);
+    };
+    img.src = webpSrc;
+  }, [webpSrc]);
+
+  // Gérer l'erreur de l'image de fallback (image originale)
   const handleImageError = () => {
     setImageError(true);
   };
 
-  // Si erreur totale, afficher une image placeholder
+  // Si erreur totale (même l'image originale a échoué), afficher placeholder
   if (imageError) {
     return (
       <div
@@ -54,8 +77,9 @@ export default function OptimizedImage({
     );
   }
 
-  // Si WebP n'est pas disponible, utiliser directement l'image
-  if (!webpSrc) {
+  // Si WebP n'est pas disponible ou n'existe pas, utiliser directement l'image originale
+  // On attend aussi que la vérification soit terminée (webpAvailable !== null)
+  if (!webpSrc || webpAvailable === false) {
     return (
       <img
         src={fallbackSrc}
@@ -69,15 +93,20 @@ export default function OptimizedImage({
     );
   }
 
+  // Si WebP est disponible (webpAvailable === true) ou vérification en cours (webpAvailable === null)
+  // Utiliser <picture> avec WebP et fallback
+  // Le navigateur essaiera WebP d'abord, puis basculera automatiquement sur l'image originale si nécessaire
   return (
     <picture>
-      {/* Source WebP - using width descriptor for proper srcset */}
-      <source
-        srcSet={webpSrc}
-        type="image/webp"
-      />
+      {/* Source WebP - utilisée si disponible et supportée par le navigateur */}
+      {webpAvailable === true && (
+        <source
+          srcSet={webpSrc}
+          type="image/webp"
+        />
+      )}
 
-      {/* Image de fallback */}
+      {/* Image de fallback - utilisée si WebP n'est pas supporté, n'existe pas, ou vérification en cours */}
       <img
         src={fallbackSrc}
         alt={alt}

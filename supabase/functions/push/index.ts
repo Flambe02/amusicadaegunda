@@ -1,5 +1,6 @@
 // Supabase Edge Function - Web Push backend
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+// Utilise deno.json import map pour stabiliser les versions
+import { createClient } from "@supabase/supabase-js";
 
 // Import web-push pour l'envoi des notifications
 // Note: Import dynamique avec gestion d'erreur pour compatibilité Deno
@@ -16,33 +17,45 @@ async function initWebPush() {
   // Si pas encore initialisé, essayer de charger
   if (webpush === null) {
     try {
-      // Import dynamique pour gérer les erreurs de compatibilité
-      // Tentative 1: esm.sh avec target=deno
-      console.log("🔄 Loading web-push from esm.sh...");
-      const webpushModule = await import("https://esm.sh/web-push@3.6.7?target=deno");
+      // Import dynamique via deno.json import map (version pinée)
+      // Tentative 1: Import map (esm.sh avec version fixe)
+      console.log("🔄 Loading web-push from import map (esm.sh)...");
+      const webpushModule = await import("web-push");
       webpush = webpushModule.default || webpushModule;
-      console.log("✅ web-push library loaded from esm.sh");
+      console.log("✅ web-push library loaded from import map");
       webpushInitialized = true;
       return webpush;
     } catch (e1) {
-      console.warn("⚠️ web-push import from esm.sh failed:", e1);
+      console.warn("⚠️ web-push import from import map failed:", e1);
       
       try {
-        // Tentative 2: unpkg (souvent plus stable pour certains modules)
-        console.log("🔄 Loading web-push from unpkg...");
-        const webpushModule = await import("https://unpkg.com/web-push@3.6.7/index.js");
+        // Tentative 2: Fallback direct esm.sh (même version)
+        console.log("🔄 Loading web-push from esm.sh (fallback)...");
+        const webpushModule = await import("https://esm.sh/web-push@3.6.7?target=deno");
         webpush = webpushModule.default || webpushModule;
-        console.log("✅ web-push library loaded from unpkg");
+        console.log("✅ web-push library loaded from esm.sh fallback");
         webpushInitialized = true;
         return webpush;
       } catch (e2) {
-        console.warn("⚠️ web-push import from unpkg failed:", e2);
+        console.warn("⚠️ web-push import from esm.sh fallback failed:", e2);
         
-        // Échec total
-        console.error("❌ All web-push import attempts failed. Notifications disabled.");
-        webpush = false; // Marquer comme échec pour éviter de réessayer
-        webpushInitialized = true;
-        return null;
+        try {
+          // Tentative 3: unpkg (dernier recours)
+          console.log("🔄 Loading web-push from unpkg (last resort)...");
+          const webpushModule = await import("https://unpkg.com/web-push@3.6.7/index.js");
+          webpush = webpushModule.default || webpushModule;
+          console.log("✅ web-push library loaded from unpkg");
+          webpushInitialized = true;
+          return webpush;
+        } catch (e3) {
+          console.warn("⚠️ web-push import from unpkg failed:", e3);
+          
+          // Échec total
+          console.error("❌ All web-push import attempts failed. Notifications disabled.");
+          webpush = false; // Marquer comme échec pour éviter de réessayer
+          webpushInitialized = true;
+          return null;
+        }
       }
     }
   }
