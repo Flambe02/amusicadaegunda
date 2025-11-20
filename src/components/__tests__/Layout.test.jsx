@@ -61,7 +61,11 @@ describe('Layout', () => {
       </BrowserRouter>
     );
 
-    expect(screen.getByText('Test Content')).toBeInTheDocument();
+    // Le Layout rend le contenu deux fois (mobile et desktop), même si l'un est caché
+    // Utiliser getAllByText pour accepter les deux instances
+    const contentElements = screen.getAllByText('Test Content');
+    expect(contentElements.length).toBeGreaterThan(0);
+    expect(contentElements[0]).toBeInTheDocument();
   });
 });
 
