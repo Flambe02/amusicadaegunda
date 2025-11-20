@@ -253,9 +253,11 @@
    - Versions pinées pour stabilité
    - Fallback multi-niveaux conservé
 
-3. ⏳ Phase 2.2 (vite.config.js) - À faire
-   - Tester si `legalComments` peut être modifié
-   - Vérifier que React Scheduler fonctionne toujours
+3. ✅ Phase 2.2 (vite.config.js) - **COMPLÉTÉE**
+   - Clarification du commentaire trompeur
+   - Configuration déjà optimale (legalComments: 'none' est correct)
+   - Tous les tests passent (17/17)
+   - Build réussi
 
 4. ⏳ Phase 3.2 (SEO Unification) - À faire
    - Migrer progressivement vers Helmet uniquement
