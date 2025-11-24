@@ -25,7 +25,7 @@ export default function LyricsDrawer({
         <DrawerHeader className="px-6 pt-4 pb-2">
           <DrawerTitle className="text-xl font-bold text-white flex items-center gap-3">
             <FileText className="w-6 h-6 text-white" />
-            Paroles
+            Letras
           </DrawerTitle>
           {songTitle && (
             <DrawerDescription className="text-white/80 text-sm mt-2 drop-shadow-sm">
@@ -47,9 +47,9 @@ export default function LyricsDrawer({
           ) : (
             <div className="text-center py-12">
               <FileText className="w-16 h-16 text-white/40 mx-auto mb-4" />
-              <p className="text-white/90 font-medium text-lg mb-2 drop-shadow-sm">Paroles non disponibles</p>
+              <p className="text-white/90 font-medium text-lg mb-2 drop-shadow-sm">Letras não disponíveis</p>
               <p className="text-white/70 text-sm drop-shadow-sm">
-                Les paroles de cette chanson seront ajoutées prochainement.
+                As letras desta música serão adicionadas em breve.
               </p>
             </div>
           )}
