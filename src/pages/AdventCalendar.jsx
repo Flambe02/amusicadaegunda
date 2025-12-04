@@ -8,8 +8,9 @@ import { useSEO } from '@/hooks/useSEO';
 
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
-  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
-  const targetUrl = youtube_music_url || youtube_url || '';
+  // Nettoyer les URLs pour éviter les chaînes vides ou espaces
+  const primaryUrl = youtube_music_url && youtube_music_url.trim() ? youtube_music_url.trim() : null;
+  const fallbackUrl = youtube_url && youtube_url.trim() ? youtube_url.trim() : null;
 
   const getYouTubeEmbedInfo = (url) => {
     if (!url || typeof url !== 'string') return null;
@@ -41,7 +42,15 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
     }
   };
 
-  const info = getYouTubeEmbedInfo(targetUrl);
+  // 1️⃣ Essayer d'abord youtube_music_url
+  let info = primaryUrl ? getYouTubeEmbedInfo(primaryUrl) : null;
+  let targetUrl = primaryUrl || '';
+
+  // 2️⃣ Si échec ou URL invalide, retomber sur youtube_url
+  if (!info && fallbackUrl) {
+    info = getYouTubeEmbedInfo(fallbackUrl);
+    targetUrl = fallbackUrl || '';
+  }
   
   if (!info) {
     return (

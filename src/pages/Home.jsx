@@ -27,9 +27,11 @@ import { useToast } from '@/components/ui/use-toast';
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   logger.debug('🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
   
-  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
-  const targetUrl = youtube_music_url || youtube_url || '';
-  logger.debug('🎬 YouTubeEmbed targetUrl:', targetUrl);
+  // Nettoyer les URLs pour éviter les chaînes vides ou espaces
+  const primaryUrl = youtube_music_url && youtube_music_url.trim() ? youtube_music_url.trim() : null;
+  const fallbackUrl = youtube_url && youtube_url.trim() ? youtube_url.trim() : null;
+  
+  logger.debug('🎬 YouTubeEmbed URLs nettoyées:', { primaryUrl, fallbackUrl });
 
   // Analyse l'URL et retourne { id, type }
   const getYouTubeEmbedInfo = (url) => {
@@ -67,7 +69,17 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
     }
   };
 
-  const info = getYouTubeEmbedInfo(targetUrl);
+  // 1️⃣ Essayer d'abord youtube_music_url
+  let info = primaryUrl ? getYouTubeEmbedInfo(primaryUrl) : null;
+  let targetUrl = primaryUrl || '';
+
+  // 2️⃣ Si échec ou URL invalide, retomber sur youtube_url
+  if (!info && fallbackUrl) {
+    logger.debug('🎬 YouTubeEmbed: youtube_music_url invalide, fallback vers youtube_url');
+    info = getYouTubeEmbedInfo(fallbackUrl);
+    targetUrl = fallbackUrl || '';
+  }
+
   logger.debug('🎬 YouTubeEmbed info extraite:', info);
   
   if (!info) {
