@@ -67,10 +67,12 @@ COMMENT ON COLUMN public.push_subscriptions.locale IS 'User locale preference (p
 COMMENT ON COLUMN public.push_subscriptions.vapid_key_version IS 'VAPID key version for rotation support';
 
 -- 10. Créer une fonction pour nettoyer les subscriptions expirées (optionnel)
+-- IMPORTANT: SET search_path = '' pour éviter l'alerte Security Advisor
 CREATE OR REPLACE FUNCTION public.cleanup_expired_push_subscriptions()
 RETURNS INTEGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
   deleted_count INTEGER;
@@ -87,7 +89,9 @@ $$;
 COMMENT ON FUNCTION public.cleanup_expired_push_subscriptions IS 'Supprime les subscriptions push expirées (non mises à jour depuis 90 jours)';
 
 -- 11. Créer une vue pour les statistiques (optionnel, utile pour le monitoring)
-CREATE OR REPLACE VIEW public.push_subscriptions_stats AS
+-- IMPORTANT: Utiliser WITH (security_invoker = true) pour éviter l'alerte Security Advisor
+CREATE OR REPLACE VIEW public.push_subscriptions_stats
+WITH (security_invoker = true) AS
 SELECT 
   COUNT(*) as total_subscriptions,
   COUNT(DISTINCT locale) as locales_count,
@@ -99,6 +103,7 @@ FROM public.push_subscriptions;
 COMMENT ON VIEW public.push_subscriptions_stats IS 'Statistiques sur les subscriptions push';
 
 -- 12. Créer une fonction pour obtenir les subscriptions par topic (pour la fonction Edge)
+-- IMPORTANT: SET search_path = '' pour éviter l'alerte Security Advisor
 CREATE OR REPLACE FUNCTION public.get_push_subscriptions_by_topic(topic_name TEXT)
 RETURNS TABLE (
   endpoint TEXT,
@@ -108,6 +113,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = ''
 AS $$
 BEGIN
   RETURN QUERY
