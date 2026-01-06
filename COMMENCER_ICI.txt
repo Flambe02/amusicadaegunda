@@ -1,0 +1,55 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║  🚀 DÉPLOIEMENT CORRECTIONS SEO - COMMENCE ICI                   ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+⚠️  NODE.JS N'EST PAS INSTALLÉ SUR TON SYSTÈME
+
+📋 ACTION À FAIRE MAINTENANT (5 minutes) :
+
+   1️⃣  Ouvre PowerShell
+
+   2️⃣  Va dans le dossier du projet :
+       cd C:\Users\flore\OneDrive\POIVRON_ROUGE\PIM\MusicaDa2nda
+
+   3️⃣  Lance le script automatique :
+       .\check-and-deploy.ps1
+
+   4️⃣  Suis les instructions du script :
+       - Si Node.js n'est pas installé, il t'ouvrira nodejs.org
+       - Télécharge et installe Node.js version LTS
+       - Relance le script
+
+   5️⃣  Le script s'occupe du reste !
+
+
+📖 GUIDES DISPONIBLES :
+
+   • README_DEPLOIEMENT_SEO.md ............. Guide rapide (2 étapes)
+   • INSTALLER_NODEJS.md ................... Installation Node.js détaillée
+   • GUIDE_REINDEXATION_GOOGLE.md .......... Après déploiement (Search Console)
+   • CORRECTIONS_SEO_APPLIQUEES.md ......... Détails techniques
+
+
+✅ CORRECTIONS SEO PRÊTES À DÉPLOYER :
+
+   ✔ Domaine corrigé : www.amusicadasegunda.com
+   ✔ Double SEO Home supprimé
+   ✔ Description unifiée
+
+
+🎯 RÉSULTATS ATTENDUS :
+
+   • 0-7 jours   : Description unifiée dans Google
+   • 7-30 jours  : URLs sans www disparaissent
+   • 30+ jours   : Meilleur positionnement
+
+
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║  💡 COMMENCE PAR :  .\check-and-deploy.ps1                       ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+

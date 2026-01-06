@@ -15,8 +15,8 @@ export default function SEO({
   tags = []
 }) {
   const siteName = 'Música da Segunda';
-  const siteUrl = 'https://amusicadaegunda.com';
-  const defaultImage = `${siteUrl}/images/Logo.png`;
+  const siteUrl = 'https://www.amusicadasegunda.com';
+  const defaultImage = `${siteUrl}/icons/icon-512x512.png`;
   
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
   const fullDescription = description || 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.';

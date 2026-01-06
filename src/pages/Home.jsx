@@ -371,10 +371,10 @@ export default function Home() {
   };
 
   useSEO({
-    title: 'A Música da Segunda: Paródias das Notícias do Brasil',
-    description: 'A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas.',
-    keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda',
-    image: currentSong?.cover_image,
+    title: 'A Música da Segunda',
+    description: 'Paródias musicais inteligentes sobre as notícias do Brasil. Uma nova música toda segunda-feira. Acessar página completa.',
+    keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes',
+    image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/icons/icon-512x512.png',
     url: '/',
     type: 'website'
   });

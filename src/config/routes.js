@@ -36,21 +36,13 @@ export const ROUTES = [
     path: '/',
     component: Home,
     name: 'Home',
-    seo: {
-      title: 'A Música da Segunda - Nova música toda segunda-feira',
-      description: 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.',
-      keywords: 'música, segunda-feira, descobertas musicais, nova música, playlist semanal'
-    }
+    seo: null // SEO géré directement dans Home.jsx pour éviter les doublons
   },
   {
     path: '/home',
     component: Home,
     name: 'Home',
-    seo: {
-      title: 'A Música da Segunda - Nova música toda segunda-feira',
-      description: 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.',
-      keywords: 'música, segunda-feira, descobertas musicais, nova música, playlist semanal'
-    }
+    seo: null // SEO géré directement dans Home.jsx pour éviter les doublons
   },
   {
     path: '/calendar',

@@ -30,15 +30,16 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
 } else {
 // ✅ PRODUCTION: Code normal du Service Worker
 
-const CACHE_NAME = 'musica-da-segunda-v5.2.1';
-const STATIC_CACHE = 'static-v5.2.1';
-const DYNAMIC_CACHE = 'dynamic-v5.2.1';
-const API_CACHE = 'api-v5.2.1';
+const CACHE_NAME = 'musica-da-segunda-v5.2.8';
+const STATIC_CACHE = 'static-v5.2.8';
+const DYNAMIC_CACHE = 'dynamic-v5.2.8';
+const API_CACHE = 'api-v5.2.8';
 
 // Assets statiques critiques (cache-first)
+// Note: index.html est maintenant géré avec network-first pour éviter les problèmes de cache
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
+  // '/', // Retiré - géré avec network-first
+  // '/index.html', // Retiré - géré avec network-first
   '/manifest.json',
   '/favicon.ico',
   '/pwa-install.js',
@@ -169,6 +170,10 @@ self.addEventListener('fetch', (event) => {
     // Ne pas intercepter les JS - laisser passer directement
     // Cela évite les problèmes de page blanche lors du lazy loading
     return; // Laisser le navigateur gérer directement
+  } else if (isHtmlFile(request)) {
+    // HTML : network-first pour toujours avoir la dernière version
+    // Évite les problèmes de cache avec les nouveaux hash d'assets
+    event.respondWith(handleNetworkFirst(request));
   } else if (isStaticAsset(request)) {
     event.respondWith(handleStaticAsset(request));
   } else if (isApiRequest(request)) {
@@ -538,6 +543,15 @@ function isJavaScriptFile(request) {
   const url = request.url;
   // Détecter les fichiers JavaScript (assets JS du build Vite)
   return url.endsWith('.js') || (url.includes('/assets/') && url.endsWith('.js'));
+}
+
+function isHtmlFile(request) {
+  const url = new URL(request.url);
+  // Détecter les fichiers HTML (index.html, routes, etc.)
+  return url.pathname.endsWith('.html') || 
+         url.pathname === '/' || 
+         url.pathname.endsWith('/') ||
+         (url.pathname.includes('/') && !url.pathname.includes('.'));
 }
 
 function isDynamicAsset(request) {
