@@ -30,10 +30,10 @@ if (self.location.hostname === 'localhost' || self.location.hostname === '127.0.
 } else {
 // ✅ PRODUCTION: Code normal du Service Worker
 
-const CACHE_NAME = 'musica-da-segunda-v5.2.8';
-const STATIC_CACHE = 'static-v5.2.8';
-const DYNAMIC_CACHE = 'dynamic-v5.2.8';
-const API_CACHE = 'api-v5.2.8';
+const CACHE_NAME = 'musica-da-segunda-v5.2.9';
+const STATIC_CACHE = 'static-v5.2.9';
+const DYNAMIC_CACHE = 'dynamic-v5.2.9';
+const API_CACHE = 'api-v5.2.9';
 
 // Assets statiques critiques (cache-first)
 // Note: index.html est maintenant géré avec network-first pour éviter les problèmes de cache
@@ -46,10 +46,9 @@ const STATIC_ASSETS = [
   // Icônes PWA
   '/icons/pwa/icon-192x192.png',
   '/icons/pwa/icon-512x512.png',
-  '/icons/apple/apple-touch-icon-180x180.png',
-  // Images principales
-  '/images/Logo.png',
-  '/images/LogoMusica.png'
+  '/icons/apple/apple-touch-icon-180x180.png'
+  // ✅ Images principales retirées du pré-cache (chargées à la demande)
+  // '/images/Logo.png', '/images/LogoMusica.png' peuvent ne pas exister
 ];
 
 // ✅ PERFORMANCE: Assets dynamiques corrigés - chemins après build uniquement
