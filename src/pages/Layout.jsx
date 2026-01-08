@@ -50,7 +50,7 @@ export default function Layout({ children }) {
               <Link to="/" className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0">
                 <OptimizedImage
                   src="images/Musica da segunda.jpg"
-                  alt="Logo Música da Segunda"
+                  alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
@@ -85,7 +85,7 @@ export default function Layout({ children }) {
                 <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
                   <OptimizedImage
                     src="images/Musica da segunda.jpg"
-                    alt="Logo Música da Segunda"
+                    alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />

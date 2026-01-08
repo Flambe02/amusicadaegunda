@@ -128,7 +128,7 @@ export default function Sobre() {
               <div className="w-16 h-16 mx-auto rounded-full overflow-hidden shadow-2xl ring-4 ring-white/20">
                 <OptimizedImage 
                   src="images/Musica da segunda.jpg" 
-                  alt="Logo Música da Segunda" 
+                  alt="Logo A Música da Segunda - Paródias Musicais do Brasil" 
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />

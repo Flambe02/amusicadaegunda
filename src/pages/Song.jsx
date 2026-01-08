@@ -364,6 +364,20 @@ export default function SongPage() {
             )}
           </div>
         </div>
+
+        {/* ✅ SEO: Paroles dans le DOM de manière sémantique pour indexation Google */}
+        {song.lyrics && song.lyrics.trim() && (
+          <article className="mt-8 bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Letras da Música
+            </h2>
+            <section className="lyrics-content">
+              <pre className="whitespace-pre-wrap text-gray-700 font-sans text-base leading-relaxed">
+                {song.lyrics}
+              </pre>
+            </section>
+          </article>
+        )}
       </div>
     </div>
   );

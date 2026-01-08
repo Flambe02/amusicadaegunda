@@ -13,12 +13,15 @@ export function useSEO({
   type = 'website',
   enabled = true
 }) {
-  const siteName = 'Música da Segunda';
+  const siteName = 'A Música da Segunda';
   const siteUrl = 'https://www.amusicadasegunda.com';
   // Harmonisé avec index.html pour cohérence SEO
   const defaultImage = `${siteUrl}/icons/icon-512x512.png`;
 
-  const fullTitle = title ? `${title} | ${siteName}` : siteName;
+  // ✅ SEO: Si le title contient déjà un pipe, ne pas ajouter le siteName (évite répétition)
+  const fullTitle = title 
+    ? (title.includes('|') ? title : `${title} | ${siteName}`)
+    : siteName;
   const fullDescription = description || 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.';
   const fullKeywords = keywords || 'música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music';
   const fullImage = image || defaultImage;

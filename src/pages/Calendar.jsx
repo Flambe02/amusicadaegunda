@@ -218,7 +218,7 @@ export default function Calendar() {
             <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
               <img 
                 src="images/Musica da segunda.jpg" 
-                alt="Logo Música da Segunda"
+                alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -391,7 +391,7 @@ export default function Calendar() {
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
                 <img 
                   src="images/Musica da segunda.jpg" 
-                  alt="Logo Música da Segunda"
+                  alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                   className="w-full h-full object-cover"
                 />
               </div>

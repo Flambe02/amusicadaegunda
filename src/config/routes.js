@@ -39,12 +39,6 @@ export const ROUTES = [
     seo: null // SEO géré directement dans Home.jsx pour éviter les doublons
   },
   {
-    path: '/home',
-    component: Home,
-    name: 'Home',
-    seo: null // SEO géré directement dans Home.jsx pour éviter les doublons
-  },
-  {
     path: '/calendar',
     component: Calendar,
     name: 'Calendar',

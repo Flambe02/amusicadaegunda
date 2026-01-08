@@ -1,5 +1,5 @@
 import Layout from "./Layout.jsx";
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate } from 'react-router-dom';
 import { Suspense } from 'react';
 import { ROUTES, getCurrentPage } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -17,6 +17,8 @@ function PagesContent() {
             {/* ✅ PERFORMANCE: Suspense pour gérer le lazy loading des routes */}
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
+                    {/* ✅ SEO: Redirection 301 pour /home → / (évite duplication de contenu) */}
+                    <Route path="/home" element={<Navigate to="/" replace />} />
                     {ROUTES.map((route) => (
                         <Route 
                             key={route.path} 

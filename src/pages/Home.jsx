@@ -371,8 +371,8 @@ export default function Home() {
   };
 
   useSEO({
-    title: 'A Música da Segunda',
-    description: 'Paródias musicais inteligentes sobre as notícias do Brasil. A Música da Segunda publica uma nova música toda segunda-feira.',
+    title: 'A Música da Segunda | Paródias Musicais e Humor Inteligente',
+    description: 'Nova música toda segunda-feira! Paródias musicais inteligentes sobre as notícias do Brasil. A Música da Segunda traz humor e música para sua semana.',
     keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes',
     image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/icons/icon-512x512.png',
     url: '/',
@@ -387,9 +387,10 @@ export default function Home() {
           <meta name="description" content="A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas." />
         </Helmet>
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
+          {/* ✅ SEO: Div stylisé au lieu de H1 pour éviter H1 multiples (H1 principal dans le contenu) */}
+          <div className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
             A Música da Segunda
-          </h1>
+          </div>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
             Descubra música nova toda segunda-feira
           </p>
@@ -443,7 +444,7 @@ export default function Home() {
           <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
             <OptimizedImage 
               src="images/Musica da segunda.jpg" 
-              alt="Logo Música da Segunda"
+              alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
               className="w-full h-full object-cover"
               loading="lazy"
             />
