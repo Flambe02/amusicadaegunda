@@ -124,7 +124,7 @@ export default function SongPage() {
   // Rediriger si l'URL a un trailing slash pour éviter les doublons
   useEffect(() => {
     if (rawSlug && rawSlug.endsWith('/')) {
-      navigate(`/chansons/${slug}`, { replace: true });
+      navigate(`/musica/${slug}`, { replace: true });
     }
   }, [rawSlug, slug, navigate]);
 
@@ -164,7 +164,7 @@ export default function SongPage() {
   // SEO optimization for the song page
   // useSEO ajoute automatiquement "| Música da Segunda" au titre, donc on ne le met pas ici
   // Normaliser l'URL (sans trailing slash) pour éviter les doublons
-  const normalizedUrl = slug ? `/chansons/${slug.replace(/\/$/, '')}` : '/chansons';
+  const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}` : '/musica';
   useSEO({
     title: song ? song.title : (slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda'),
     description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : `Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.`,

@@ -44,10 +44,10 @@ ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script
 // Les bots doivent voir le contenu HTML avec meta tags pour l'indexation
 if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
   const isBot = /bot|crawler|spider|crawling|Googlebot|bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|ia_archiver/i.test(navigator.userAgent);
-  if (!isBot && window.location.pathname.startsWith('/chansons/')) {
+  if (!isBot && window.location.pathname.startsWith('/musica/')) {
     // Rediriger vers la SPA avec hash routing (uniquement pour les navigateurs)
-    const songSlug = window.location.pathname.split('/chansons/')[1].replace(/\/$/, '');
-    window.location.replace('/#/chansons/' + songSlug);
+    const songSlug = window.location.pathname.split('/musica/')[1].replace(/\/$/, '');
+    window.location.replace('/#/musica/' + songSlug);
   }
 }
 </script>

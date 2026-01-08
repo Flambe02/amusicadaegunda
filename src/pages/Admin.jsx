@@ -1452,7 +1452,7 @@ export default function AdminPage() {
           title: 'Nouvelle Chanson ! 🎶',
           body: `"${clean.title || 'Nova música'}" est maintenant disponible !`,
           icon: clean.cover_image || '/icons/pwa/icon-192x192.png',
-          url: clean.slug ? `/chansons/${clean.slug}` : '/'
+          url: clean.slug ? `/musica/${clean.slug}` : '/'
         }).then(res => {
           if (res.success && res.sent > 0) {
             toast({ title: "Notifications envoyées", description: `📢 ${res.sent} envoyées !` });

@@ -24,7 +24,7 @@ export function musicRecordingJsonLd({
   byArtist = 'A Música da Segunda',
   streamingUrls = []
 }) {
-  const url = `${CANONICAL_HOST}/chansons/${slug}`;
+  const url = `${CANONICAL_HOST}/musica/${slug}`;
   
   const schema = {
     "@context": "https://schema.org",
@@ -72,13 +72,13 @@ export function breadcrumbsJsonLd({ title, slug }) {
         "@type": "ListItem", 
         "position": 2, 
         "name": "Canções", 
-        "item": `${CANONICAL_HOST}/chansons` 
+        "item": `${CANONICAL_HOST}/musica` 
       },
       { 
         "@type": "ListItem", 
         "position": 3, 
         "name": title || slug, 
-        "item": `${CANONICAL_HOST}/chansons/${slug}` 
+        "item": `${CANONICAL_HOST}/musica/${slug}` 
       }
     ]
   };

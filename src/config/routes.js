@@ -107,7 +107,7 @@ export const ROUTES = [
     }
   },
   {
-    path: '/chansons',
+    path: '/musica',
     component: Playlist,
     name: 'Playlist',
     seo: {
@@ -117,7 +117,7 @@ export const ROUTES = [
     }
   },
   {
-    path: '/chansons/:slug',
+    path: '/musica/:slug',
     component: Song,
     name: 'Song',
     seo: null // SEO dynamique basé sur la chanson
@@ -192,8 +192,8 @@ export function getCurrentPage(url) {
     return 'TikTokDemo';
   }
 
-  // Gérer les routes chansons avec slug (ex: /chansons/nobel-prize)
-  if (url.startsWith('/chansons/') && urlLastPart !== 'chansons') {
+  // Gérer les routes musica avec slug (ex: /musica/nobel-prize)
+  if (url.startsWith('/musica/') && urlLastPart !== 'musica') {
     return 'Song';
   }
 

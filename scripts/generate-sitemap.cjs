@@ -22,7 +22,7 @@ const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, '
 
   // Add songs explicitly
   for (const s of songs) {
-    urlSet.add(`/chansons/${s.slug}/`);
+    urlSet.add(`/musica/${s.slug}/`);
   }
 
   const now = formatISO(new Date());
@@ -37,7 +37,7 @@ const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, '
     let url = u === '/' ? '/' : u.endsWith('/') ? u : u + '/';
     
     // Ajouter le # pour les routes SPA avec HashRouter
-    if (u.startsWith('/chansons/')) {
+    if (u.startsWith('/musica/')) {
       url = `#${url}`;
       const slug = u.split('/').pop();
       const s = songs.find(x => x.slug === slug);
@@ -58,7 +58,7 @@ const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, '
     let url = u === '/' ? '/' : u.endsWith('/') ? u : u + '/';
     
     // SANS # pour Google SEO
-    if (u.startsWith('/chansons/')) {
+    if (u.startsWith('/musica/')) {
       const slug = u.split('/').pop();
       const s = songs.find(x => x.slug === slug);
       if (s?.datePublished) lastmod = formatISO(new Date(s.datePublished));

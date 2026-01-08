@@ -26,8 +26,8 @@ const siteUrl = cfg.siteUrl;
 
   // Song pages
   for (const s of songs) {
-    const route = `/chansons/${s.slug}`;
-    const dir = path.join(OUT, 'chansons', s.slug);
+    const route = `/musica/${s.slug}`;
+    const dir = path.join(OUT, 'musica', s.slug);
     const file = path.join(dir, 'index.html');
     await fs.ensureDir(dir);
     const url = `${siteUrl}${route}/`;
@@ -60,7 +60,7 @@ const siteUrl = cfg.siteUrl;
     await fs.writeFile(file, htmlWithVersion, { encoding: 'utf8' });
 
     // Créer aussi un fichier pour l'URL sans trailing slash (redirection)
-    const fileNoSlash = path.join(OUT, 'chansons', s.slug + '.html');
+    const fileNoSlash = path.join(OUT, 'musica', s.slug + '.html');
     const htmlNoSlash = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
