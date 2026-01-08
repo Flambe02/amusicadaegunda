@@ -190,6 +190,7 @@ export default function SongPage() {
         datePublished: song.release_date,
         image: song.cover_image,
         byArtist: song.artist || 'A Música da Segunda',
+        description: song.description || `Paródia musical de ${song.title} por A Música da Segunda. Nova música toda segunda-feira.`,
         streamingUrls: streamingUrls
       });
       injectJsonLd(musicSchema, 'song-music-schema');

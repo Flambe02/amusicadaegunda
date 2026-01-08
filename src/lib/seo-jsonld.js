@@ -13,6 +13,7 @@ const CANONICAL_HOST = 'https://www.amusicadasegunda.com';
  * @param {string} [params.datePublished] - Publication date (ISO format)
  * @param {string} [params.image] - Song image URL
  * @param {string} [params.byArtist] - Artist name
+ * @param {string} [params.description] - Song description
  * @param {string[]} [params.streamingUrls] - Array of URLs for streaming platforms
  * @returns {Object} JSON-LD schema object
  */
@@ -22,6 +23,7 @@ export function musicRecordingJsonLd({
   datePublished, 
   image, 
   byArtist = 'A Música da Segunda',
+  description,
   streamingUrls = []
 }) {
   const url = `${CANONICAL_HOST}/musica/${slug}`;
@@ -37,14 +39,37 @@ export function musicRecordingJsonLd({
     "datePublished": datePublished || new Date().toISOString().slice(0, 10),
     "inLanguage": "pt-BR",
     "url": url,
-    "genre": ["Indie", "Música Brasileira", "Pop"],
-    ...(image ? { "image": image } : {})
+    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
+    ...(image ? { "image": image } : {}),
+    ...(description ? { "description": description } : {})
   };
 
   // Ajoute les liens sameAs s'ils existent
   const validUrls = streamingUrls.filter(u => u && typeof u === 'string');
   if (validUrls.length > 0) {
     schema.sameAs = validUrls;
+  }
+
+  // ✅ Ajoute potentialAction avec ListenAction pour chaque plateforme de streaming
+  if (validUrls.length > 0) {
+    schema.potentialAction = validUrls.map(streamUrl => ({
+      "@type": "ListenAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": streamUrl,
+        "actionPlatform": [
+          "http://schema.org/DesktopWebPlatform",
+          "http://schema.org/MobileWebPlatform",
+          "http://schema.org/IOSPlatform",
+          "http://schema.org/AndroidPlatform"
+        ]
+      },
+      "expectsAcceptanceOf": {
+        "@type": "Offer",
+        "category": "free",
+        "availabilityStarts": datePublished || new Date().toISOString().slice(0, 10)
+      }
+    }));
   }
 
   return schema;
@@ -71,7 +96,7 @@ export function breadcrumbsJsonLd({ title, slug }) {
       { 
         "@type": "ListItem", 
         "position": 2, 
-        "name": "Canções", 
+        "name": "Músicas", 
         "item": `${CANONICAL_HOST}/musica` 
       },
       { 
@@ -81,6 +106,49 @@ export function breadcrumbsJsonLd({ title, slug }) {
         "item": `${CANONICAL_HOST}/musica/${slug}` 
       }
     ]
+  };
+}
+
+/**
+ * Generate MusicPlaylist JSON-LD schema for playlist pages
+ * @param {Object} params
+ * @param {Array} params.tracks - Array of track objects {title, slug, artist, datePublished}
+ * @param {string} [params.playlistName] - Name of the playlist
+ * @param {string} [params.description] - Playlist description
+ * @returns {Object} JSON-LD schema object
+ */
+export function musicPlaylistJsonLd({ 
+  tracks = [],
+  playlistName = 'A Música da Segunda - Todas as Músicas',
+  description = 'Playlist completa com todas as paródias musicais de A Música da Segunda. Nova música toda segunda-feira.'
+}) {
+  const url = `${CANONICAL_HOST}/musica`;
+  
+  return {
+    "@context": "https://schema.org",
+    "@type": "MusicPlaylist",
+    "name": playlistName,
+    "description": description,
+    "url": url,
+    "author": {
+      "@type": "MusicGroup",
+      "name": "A Música da Segunda",
+      "url": CANONICAL_HOST
+    },
+    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
+    "inLanguage": "pt-BR",
+    "numTracks": tracks.length,
+    "track": tracks.map((track, index) => ({
+      "@type": "MusicRecording",
+      "position": index + 1,
+      "name": track.title,
+      "url": `${CANONICAL_HOST}/musica/${track.slug}`,
+      "byArtist": {
+        "@type": "MusicGroup",
+        "name": track.artist || "A Música da Segunda"
+      },
+      ...(track.datePublished ? { "datePublished": track.datePublished } : {})
+    }))
   };
 }
 

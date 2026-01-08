@@ -1,7 +1,45 @@
+import { useState, useEffect } from 'react';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
+import { Song } from '@/api/entities';
+import { musicPlaylistJsonLd, injectJsonLd, removeJsonLd } from '../lib/seo-jsonld';
 
 export default function Playlist() {
+  const [songs, setSongs] = useState([]);
+
+  // Charger toutes les chansons pour le JSON-LD
+  useEffect(() => {
+    const loadSongs = async () => {
+      try {
+        const allSongs = await Song.list('-release_date', 'published');
+        setSongs(allSongs || []);
+      } catch (error) {
+        console.error('Error loading songs for playlist:', error);
+        setSongs([]);
+      }
+    };
+    loadSongs();
+  }, []);
+
+  // Inject JSON-LD MusicPlaylist
+  useEffect(() => {
+    if (songs.length > 0) {
+      const tracks = songs.map(song => ({
+        title: song.title,
+        slug: song.slug,
+        artist: song.artist || 'A Música da Segunda',
+        datePublished: song.release_date
+      }));
+
+      const playlistSchema = musicPlaylistJsonLd({ tracks });
+      injectJsonLd(playlistSchema, 'playlist-music-schema');
+
+      return () => {
+        removeJsonLd('playlist-music-schema');
+      };
+    }
+  }, [songs]);
+
   // SEO pour la playlist
   useSEO({
     title: 'Playlist Completa - Todas as Descobertas Musicais',
@@ -16,11 +54,6 @@ export default function Playlist() {
       <Helmet>
         <html lang="pt-BR" />
         <meta name="robots" content="index,follow" />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          "name": "Playlist A Música da Segunda"
-        })}</script>
       </Helmet>
 
       {/* Layout Desktop - Inchangé */}
