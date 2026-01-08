@@ -372,7 +372,7 @@ export default function Home() {
 
   useSEO({
     title: 'A Música da Segunda',
-    description: 'Paródias musicais inteligentes sobre as notícias do Brasil. Uma nova música toda segunda-feira. Acessar página completa.',
+    description: 'Paródias musicais inteligentes sobre as notícias do Brasil. A Música da Segunda publica uma nova música toda segunda-feira.',
     keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes',
     image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/icons/icon-512x512.png',
     url: '/',

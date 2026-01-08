@@ -189,7 +189,7 @@ export function getCurrentPage(url) {
   }
 
   // Si on est sur la racine ou une URL vide, retourner Home
-  if (!urlLastPart || urlLastPart === 'amusicadaegunda') {
+  if (!urlLastPart || urlLastPart === 'amusicadasegunda') {
     return 'Home';
   }
 
