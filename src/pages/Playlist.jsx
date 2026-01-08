@@ -45,7 +45,7 @@ export default function Playlist() {
     title: 'Playlist Completa - Todas as Descobertas Musicais',
     description: 'Playlist completa com todas as descobertas musicais do Música da Segunda. Ouça no Spotify, Apple Music e YouTube Music.',
     keywords: 'playlist música da segunda, descobertas musicais, spotify playlist, apple music, youtube music, todas as músicas',
-    url: '/playlist',
+    url: '/musica',
     type: 'website'
   });
 
