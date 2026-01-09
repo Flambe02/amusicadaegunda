@@ -14,8 +14,9 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ ERREUR: Variables VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY requises dans .env');
-  process.exit(1);
+  console.warn('⚠️ AVERTISSEMENT: Variables VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquantes');
+  console.warn('ℹ️  Les stubs SEO seront générés avec les données existantes de content/songs.json');
+  process.exit(0); // Exit sans erreur pour ne pas bloquer le build
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -104,7 +105,18 @@ async function exportSongs() {
     
   } catch (error) {
     console.error('❌ Erreur lors de l\'export:', error.message);
-    process.exit(1);
+    console.warn('⚠️  Le build continuera avec les données existantes de content/songs.json');
+    
+    // Vérifier si content/songs.json existe
+    const outputPath = path.join(path.resolve('content'), 'songs.json');
+    if (fs.existsSync(outputPath)) {
+      console.log('ℹ️  Fichier content/songs.json existant trouvé, le build peut continuer');
+      process.exit(0); // Exit sans erreur pour ne pas bloquer le build
+    } else {
+      console.error('❌ CRITIQUE: Aucun fichier content/songs.json existant trouvé');
+      console.error('💡 Solution: Corrige la connexion Supabase et relance npm run export:songs');
+      process.exit(1); // Exit avec erreur car on ne peut pas générer les stubs
+    }
   }
 }
 
