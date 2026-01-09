@@ -106,15 +106,76 @@ function playlistJsonLd({ name, url, image, tracks = [] }) {
   return schema;
 }
 
-function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, duration, inLanguage, byArtist }) {
-  const obj = { "@context": "https://schema.org", "@type": "MusicRecording", "name": name, "url": url };
+function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, duration, inLanguage, byArtist, description }) {
+  const obj = {
+    "@context": "https://schema.org",
+    "@type": "MusicRecording",
+    "name": name,
+    "url": url,
+    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
+    "inLanguage": inLanguage || "pt-BR"
+  };
+  
   if (datePublished) obj.datePublished = datePublished;
-  if (audioUrl) obj.audio = audioUrl;
+  if (description) obj.description = description;
   if (image) obj.image = image;
   if (duration) obj.duration = duration;
-  if (inLanguage) obj.inLanguage = inLanguage;
-  if (byArtist) obj.byArtist = { "@type": "MusicGroup", "name": byArtist.name, "url": byArtist.url };
+  
+  if (byArtist) {
+    obj.byArtist = { "@type": "MusicGroup", "name": byArtist.name, "url": byArtist.url };
+  }
+  
+  // ✅ potentialAction avec ListenAction pour Spotify/YouTube
+  if (audioUrl) {
+    obj.audio = audioUrl;
+    obj.potentialAction = {
+      "@type": "ListenAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": audioUrl,
+        "actionPlatform": [
+          "http://schema.org/DesktopWebPlatform",
+          "http://schema.org/MobileWebPlatform",
+          "http://schema.org/IOSPlatform",
+          "http://schema.org/AndroidPlatform"
+        ]
+      },
+      "expectsAcceptanceOf": {
+        "@type": "Offer",
+        "category": "free",
+        "availabilityStarts": datePublished || new Date().toISOString().slice(0, 10)
+      }
+    };
+  }
+  
   return obj;
 }
 
-module.exports = { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd };
+function breadcrumbsJsonLd({ songName, songUrl }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Início",
+        "item": "https://www.amusicadasegunda.com/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Músicas",
+        "item": "https://www.amusicadasegunda.com/musica/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": songName,
+        "item": songUrl
+      }
+    ]
+  };
+}
+
+module.exports = { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd };

@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
-const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd } = require('./seo-templates.cjs');
+const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd } = require('./seo-templates.cjs');
 
 const cfg = require('./seo.config.json');
 const songsPath = path.resolve('content', 'songs.json');
@@ -77,7 +77,12 @@ const siteUrl = cfg.siteUrl;
           image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
           duration: s.duration,
           inLanguage: s.inLanguage,
-          byArtist: s.byArtist
+          byArtist: s.byArtist,
+          description: desc
+        }),
+        breadcrumbsJsonLd({
+          songName: s.name,
+          songUrl: url
         })
       ]
     });
@@ -104,7 +109,12 @@ const siteUrl = cfg.siteUrl;
           image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
           duration: s.duration,
           inLanguage: s.inLanguage,
-          byArtist: s.byArtist
+          byArtist: s.byArtist,
+          description: desc
+        }),
+        breadcrumbsJsonLd({
+          songName: s.name,
+          songUrl: `${siteUrl}${route}/`
         })
       ]
     });
