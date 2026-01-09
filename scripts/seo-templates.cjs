@@ -39,21 +39,7 @@ ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script
 <body>
 <div id="app"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
-<script>
-// Redirection seulement pour les navigateurs (pas pour les bots de recherche)
-// Les bots doivent voir le contenu HTML avec meta tags pour l'indexation
-if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-  const isBot = /bot|crawler|spider|crawling|Googlebot|bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|ia_archiver/i.test(navigator.userAgent);
-  if (!isBot && window.location.pathname.startsWith('/musica/')) {
-    // Extraire le slug de la chanson (ex: /musica/nobel-prize/ -> nobel-prize)
-    const songSlug = window.location.pathname.split('/musica/')[1].replace(/\\/$/, '');
-    // ✅ Rediriger UNIQUEMENT si c'est une chanson individuelle (pas la page playlist)
-    if (songSlug && songSlug.length > 0) {
-      window.location.replace('/#/musica/' + songSlug);
-    }
-  }
-}
-</script>
+<!-- Stub HTML pour SEO - Pas de redirection JavaScript pour permettre le crawl -->
 </body>
 </html>`;
 }
