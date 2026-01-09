@@ -46,7 +46,7 @@ if (window.location.hostname !== 'localhost' && window.location.hostname !== '12
   const isBot = /bot|crawler|spider|crawling|Googlebot|bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Exabot|facebot|ia_archiver/i.test(navigator.userAgent);
   if (!isBot && window.location.pathname.startsWith('/musica/')) {
     // Extraire le slug de la chanson (ex: /musica/nobel-prize/ -> nobel-prize)
-    const songSlug = window.location.pathname.split('/musica/')[1].replace(/\/$/, '');
+    const songSlug = window.location.pathname.split('/musica/')[1].replace(/\\/$/, '');
     // ✅ Rediriger UNIQUEMENT si c'est une chanson individuelle (pas la page playlist)
     if (songSlug && songSlug.length > 0) {
       window.location.replace('/#/musica/' + songSlug);
