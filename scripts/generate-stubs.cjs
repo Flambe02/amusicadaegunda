@@ -40,7 +40,7 @@ const siteUrl = cfg.siteUrl;
         tracks: songs.map(s => ({
           name: s.name,
           url: `${siteUrl}/musica/${s.slug}/`,
-          byArtist: s.byArtist || 'A Música da Segunda'
+          byArtist: s.byArtist?.name || s.byArtist || 'A Música da Segunda'
         }))
       })
     ]
