@@ -16,13 +16,39 @@ const siteUrl = cfg.siteUrl;
   const org = orgJsonLd({ name: cfg.brand.name, url: siteUrl, logo: `${siteUrl}${IMAGE}` });
   const website = websiteJsonLd({ url: siteUrl, search: cfg.search });
 
-  // Static pages - DÉSACTIVÉ pour SPA
-  // Les pages SPA (sobre, playlist, blog, etc.) utilisent le 404.html pour le routing
-  // Seules les pages chansons ont besoin de stubs SEO
-  // for (const r of cfg.routes.static) {
-  //   if (r.path === '/') continue;
-  //   ...
-  // }
+  // ✅ STUB pour /musica (Playlist principale)
+  const playlistDir = path.join(OUT, 'musica');
+  const playlistFile = path.join(playlistDir, 'index.html');
+  await fs.ensureDir(playlistDir);
+  
+  const playlistUrl = `${siteUrl}/musica/`;
+  const playlistTitle = 'Playlist Completa - Todas as Músicas | A Música da Segunda';
+  const playlistDesc = 'Playlist completa com todas as paródias musicais inteligentes sobre as notícias do Brasil. Ouça no Spotify, Apple Music e YouTube Music.';
+  
+  const playlistHtml = baseHtml({
+    lang: cfg.defaultLocale,
+    title: playlistTitle,
+    desc: playlistDesc,
+    url: playlistUrl,
+    image: `${siteUrl}${IMAGE}`,
+    jsonld: [
+      org,
+      website,
+      playlistJsonLd({
+        name: 'A Música da Segunda - Todas as Músicas',
+        url: playlistUrl,
+        tracks: songs.map(s => ({
+          name: s.name,
+          url: `${siteUrl}/musica/${s.slug}/`,
+          byArtist: s.byArtist || 'A Música da Segunda'
+        }))
+      })
+    ]
+  });
+  
+  const playlistVersionComment = `<!-- build:${new Date().toISOString()} -->\n`;
+  await fs.writeFile(playlistFile, playlistVersionComment + playlistHtml, { encoding: 'utf8' });
+  console.log(`✅ Stub /musica créé avec MusicPlaylist JSON-LD (${songs.length} tracks)`);
 
   // Song pages
   for (const s of songs) {

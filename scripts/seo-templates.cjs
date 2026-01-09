@@ -72,8 +72,38 @@ function websiteJsonLd({ url, search }) {
   return obj;
 }
 
-function playlistJsonLd({ name, url, image }) {
-  return { "@context": "https://schema.org", "@type": "MusicPlaylist", "name": name, "url": url, "image": image };
+function playlistJsonLd({ name, url, image, tracks = [] }) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "MusicPlaylist",
+    "name": name,
+    "url": url,
+    "description": "Playlist completa com todas as paródias musicais inteligentes sobre as notícias do Brasil.",
+    "author": {
+      "@type": "MusicGroup",
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    },
+    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
+    "inLanguage": "pt-BR",
+    "numTracks": tracks.length
+  };
+  
+  if (image) schema.image = image;
+  
+  if (tracks.length > 0) {
+    schema.track = tracks.map(track => ({
+      "@type": "MusicRecording",
+      "name": track.name,
+      "url": track.url,
+      "byArtist": {
+        "@type": "MusicGroup",
+        "name": track.byArtist || "A Música da Segunda"
+      }
+    }));
+  }
+  
+  return schema;
 }
 
 function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, duration, inLanguage, byArtist }) {
