@@ -1,59 +1,87 @@
 /**
  * Service Worker - Música da Segunda
- * VERSION URGENCE : Désinstallation complète du Service Worker
+ * VERSION 6.0.0 : Service Worker minimal et stable
  * 
- * Ce SW se désinstalle lui-même pour permettre à Google de crawler le site
- * et aux utilisateurs d'accéder au site sans blocage.
- * 
- * Une fois le cache des utilisateurs effacé, nous pourrons réactiver
- * un Service Worker corrigé.
+ * Ce SW est volontairement minimal pour éviter les problèmes de cache
+ * tout en permettant l'installation PWA.
  */
 
-const CACHE_VERSION = 'v5.3.0-emergency';
+const CACHE_VERSION = 'v6.0.0';
+const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
 
-console.log(`🚨 Service Worker ${CACHE_VERSION}: Mode d'urgence - Désinstallation en cours`);
+console.log(`✅ Service Worker ${CACHE_VERSION}: Mode minimal stable`);
 
-// Installation immédiate
+// Installation - Ne pré-cache RIEN pour éviter les erreurs
 self.addEventListener('install', (event) => {
-  console.log('🚨 SW Emergency: Installation - skipWaiting immédiat');
+  console.log(`📦 SW ${CACHE_VERSION}: Installation`);
+  // Skip waiting pour activation immédiate
   self.skipWaiting();
 });
 
-// Activation et nettoyage de TOUS les caches
+// Activation - Nettoyer les anciens caches
 self.addEventListener('activate', (event) => {
-  console.log('🚨 SW Emergency: Activation - Suppression de tous les caches');
+  console.log(`✅ SW ${CACHE_VERSION}: Activation`);
+  
   event.waitUntil(
     Promise.all([
-      // Supprimer TOUS les caches existants
+      // Supprimer tous les anciens caches
       caches.keys().then(cacheNames => {
         return Promise.all(
-          cacheNames.map(cacheName => {
-            console.log(`🗑️ Suppression du cache: ${cacheName}`);
-            return caches.delete(cacheName);
-          })
+          cacheNames
+            .filter(cacheName => cacheName !== CACHE_NAME)
+            .map(cacheName => {
+              console.log(`🗑️ Suppression cache obsolète: ${cacheName}`);
+              return caches.delete(cacheName);
+            })
         );
       }),
       // Prendre le contrôle immédiatement
-      self.clients.claim(),
-      // Se désinscrire après un court délai
-      self.registration.unregister().then(() => {
-        console.log('✅ Service Worker désinstallé avec succès');
-        // Recharger tous les clients pour qu'ils fonctionnent sans SW
-        return self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            console.log('🔄 Rechargement du client:', client.url);
-            client.navigate(client.url);
-          });
-        });
-      })
+      self.clients.claim()
     ])
   );
 });
 
-// Ne pas intercepter les requêtes fetch - laisser passer tout le trafic
+// Fetch - Stratégie Network-First (toujours essayer le réseau en premier)
 self.addEventListener('fetch', (event) => {
-  // Ne rien faire - laisser les requêtes passer normalement
-  return;
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Ignorer les requêtes non-GET et les requêtes vers d'autres domaines
+  if (request.method !== 'GET' || url.origin !== self.location.origin) {
+    return;
+  }
+  
+  event.respondWith(
+    fetch(request)
+      .then(response => {
+        // Si la réponse réseau est OK, la retourner directement
+        if (response && response.status === 200) {
+          // Optionnel : mettre en cache pour utilisation offline future
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(request, responseToCache);
+          });
+        }
+        return response;
+      })
+      .catch(() => {
+        // En cas d'échec réseau, essayer le cache
+        return caches.match(request).then(cachedResponse => {
+          if (cachedResponse) {
+            console.log(`📦 Serving from cache: ${url.pathname}`);
+            return cachedResponse;
+          }
+          // Si pas de cache, retourner une réponse d'erreur basique
+          return new Response('Offline - Page not available', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: new Headers({
+              'Content-Type': 'text/plain'
+            })
+          });
+        });
+      })
+  );
 });
 
-console.log('✅ Service Worker en mode urgence - Aucune requête ne sera interceptée');
+console.log('✅ Service Worker minimal chargé - Network-First strategy');
