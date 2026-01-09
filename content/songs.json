@@ -1,0 +1,379 @@
+[
+  {
+    "slug": "2025-retro",
+    "name": "2025 Retro",
+    "datePublished": "2026-01-05",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7B9ALdXCaTFQV3kHkUYKl1?si=596246abc03d42b5",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "ja-e-natal",
+    "name": " Já é Natal ",
+    "datePublished": "2025-12-29",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/5ukCncONRuNQ1kaelzUYzx?si=d8823bd9b82c4c92",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "ta-na-hora-do-acordo-chegar",
+    "name": "Tá na hora do acordo chegar ",
+    "datePublished": "2025-12-22",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/1Xn6uMsvImhBfxTZq6yV4w?si=32417e681b5c44a3",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "apagao-nao-e-refrao",
+    "name": "Apagão não e refrão",
+    "datePublished": "2025-12-15",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/1pRYMaMofCwBZ8y0LwDvYj?si=8cdcc5b916984599",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "sorteio-da-copa",
+    "name": "Sorteio da Copa",
+    "datePublished": "2025-12-08",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/6E5JZuYeJIU1EUDVfdyH6v?si=9506a893259246a3",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "biografia-de-uma-tornozeleira",
+    "name": "Biografia de uma tornozeleira",
+    "datePublished": "2025-11-30",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/1uvA9GafwENMk0PZoMUri8?si=b6e599958cb74853",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "banco-master",
+    "name": "Banco Master",
+    "datePublished": "2025-11-24",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/3Jobl1lDrAyHGZGveioZj4?si=ce475fa7a50d4a1f",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "vr-a-carta-gira",
+    "name": "VR a carta gira",
+    "datePublished": "2025-11-17",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7jzYt9ETFBOJ9SWTONm2tr?si=e4a1196266a74c5e",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "william-oh-william",
+    "name": "William, oh William",
+    "datePublished": "2025-11-10",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7dJYgWGIo1y2ryaZyMXsmd?si=e94381efa3944a58",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "rio-continua-lindo-so-que-nao",
+    "name": "Rio continua lindo (só que não)",
+    "datePublished": "2025-11-03",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/4DRghwQ6x15cK9xumrUmdE?si=12f0e450743b4cd7",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "voler-la-couronne",
+    "name": "Voler la couronne",
+    "datePublished": "2025-10-27",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/track/675jWhMufju94vMd4eM2AQ",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "debaixo-da-pia",
+    "name": "Debaixo da pia",
+    "datePublished": "2025-10-20",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7rtwkYTASofzKfkHJCcKio?si=c9c4e806e0b14bd5",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "nobel-prize",
+    "name": "Nobel prize",
+    "datePublished": "2025-10-13",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7podaQID8vbwpj9L57EDGs?si=58b45369d7944f23",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "gin-de-caminhao",
+    "name": "Gin de caminhão",
+    "datePublished": "2025-10-06",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7wqa95gO0o89uetGTQAwjL?si=5be38008678943ab",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "escada-travada",
+    "name": "Escada travada",
+    "datePublished": "2025-09-29",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/385AMbd2T97JchkMXn164j?si=7968874cebeb4657",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "prisao-domiciliar",
+    "name": "Prisão domiciliar",
+    "datePublished": "2025-09-22",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/43FVjp2AYJcXHslNoumTkV?si=b57ec3d28c9f4a36",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "itau",
+    "name": "Itau",
+    "datePublished": "2025-09-15",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/0RUnipa94v3CsYzD3ut2lr?si=0131ade8affb4b9e",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "bonner-sai",
+    "name": "Bonner sai",
+    "datePublished": "2025-09-08",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/track/3yCXU6m1XBNAqBtS5znNmX",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "pcc-posto-coxinha-e-conveniencia",
+    "name": "PCC : Posto, Coxinha e Conveniência",
+    "datePublished": "2025-09-01",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7xTmbWpf2T45B4NxKXHuwM?si=c72b15536f5c410c",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "confissoes-bancarias",
+    "name": "Confissões bancárias",
+    "datePublished": "2025-08-25",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/5rkaR0UoGTWBLCcLvMcUvp?si=48cfd608b3c24c04",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "uber",
+    "name": "UBER",
+    "datePublished": "2025-08-18",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/4krUw2BsjVqfq7PwC9zFcP?si=972ddc278b674a31",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "check-in-da-cop",
+    "name": "Check in da COP",
+    "datePublished": "2025-08-11",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/3iOCy8j3XH8WzepeRqD5a5?si=c372be2246ee40a7",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "cafe-tarifa-caos",
+    "name": "Café tarifa caos",
+    "datePublished": "2025-08-04",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/4l69r1A6Q5m8R7ObryZXrg?si=557a8985ee1345ae",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "o-casal-da-traicao-no-show-de-coldplay",
+    "name": "O casal da traição no show de Coldplay",
+    "datePublished": "2025-07-28",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/29M7WXGALj5Pdvf8agUloD?si=221f1200d7234bda",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "os-3-porquinhos",
+    "name": "Os 3 porquinhos",
+    "datePublished": "2025-07-21",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/4KJlQllUGzTyHgLdvwy2f1?si=a6a81e034bef44fc",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "50-por-cento",
+    "name": "50 por cento",
+    "datePublished": "2025-07-14",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/2BrQBMxGWyFbcsxk2TFFOC?si=37c10874b1784cb4",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "o-cara-do-golpe",
+    "name": "O cara do Golpe",
+    "datePublished": "2025-07-07",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/1ZRqBkSW3xREjuFARizXLj?si=62cdc4c30cd54de7",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "as-festas-juninas",
+    "name": "As festas juninas",
+    "datePublished": "2025-06-30",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/0nj5PKgkNGYz3Wd0O3lNZB?si=5742bfd373fb4dcb",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
+    "slug": "o-croissant",
+    "name": "O Croissant",
+    "datePublished": "2025-02-03",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/5KoHgd0J25W9EB5MnuMuBu?si=40f9e97440ba4f1b",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  }
+]

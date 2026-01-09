@@ -1,122 +1,112 @@
 /**
- * Exporte les chansons depuis Supabase vers content/songs.json
- * - Lit .env (SUPABASE_URL + SUPABASE_ANON_KEY ou SUPABASE_SERVICE_KEY)
- * - Mappe les colonnes de la table "songs" (adapte les noms en bas)
- * - Normalise la durée en ISO8601 (PT#M#S)
- * - Valide slug/title et dédoublonne
- * - Sortie: content/songs.json (utilisé par generate-stubs/sitemap)
+ * Export songs from Supabase to content/songs.json for SEO stub generation
+ * Usage: node scripts/export-songs-from-supabase.cjs
  */
 
-require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs-extra');
+const path = require('path');
 
-// ========== CONFIG À ADAPTER SI BESOIN ==========
-const TABLE = process.env.SONGS_TABLE || 'songs';
-// colonnes réelles dans la base actuelle (voir 02-create-tables.sql)
-const COLS = {
-  id: 'id',
-  title: 'title',
-  release_date: 'release_date',
-  cover_image: 'cover_image',
-  youtube_url: 'youtube_url',
-  spotify_url: 'spotify_url',
-  status: 'status'
-};
-const DEFAULT_IMAGE = '/images/og-default.jpg';
-const SITE_URL = process.env.SITE_URL || 'https://www.amusicadasegunda.com';
-const ARTIST_NAME = process.env.ARTIST_NAME || 'A Música da Segunda';
-const ARTIST_URL  = process.env.ARTIST_URL  || SITE_URL;
-// ================================================
+// Charger les variables d'environnement depuis .env
+require('dotenv').config();
 
-function isoDuration(sec) {
-  const n = Number(sec || 0);
-  if (!n || n <= 0) return undefined;
-  const m = Math.floor(n / 60), s = n % 60;
-  return `PT${m}M${s}S`;
-}
-function yyyy_mm_dd(d) {
-  if (!d) return undefined;
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return undefined;
-  return dt.toISOString().slice(0, 10);
-}
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-function slugify(input) {
-  return String(input || '')
-    .normalize('NFD').replace(/\p{Diacritic}+/gu, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
-}
-
-// Support Vite-style env var names as fallbacks
-const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-if (!url || !key) {
-  console.error('❌ Manque SUPABASE_URL ou SUPABASE_*KEY dans .env');
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ ERREUR: Variables VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY requises dans .env');
   process.exit(1);
 }
-const supabase = createClient(url, key, { auth: { persistSession: false } });
 
-(async () => {
-  // Sélection des colonnes
-  const sel = [
-    COLS.id, COLS.title, COLS.release_date,
-    COLS.cover_image, COLS.youtube_url, COLS.spotify_url,
-    COLS.status
-  ].join(', ');
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select(sel)
-    .eq(COLS.status, 'published')
-    .order(COLS.release_date, { ascending: false });
+async function exportSongs() {
+  try {
+    console.log('🔄 Récupération des chansons depuis Supabase...');
+    
+    // Récupérer toutes les chansons publiées, triées par date de sortie
+    const { data: songs, error } = await supabase
+      .from('songs')
+      .select('*')
+      .eq('status', 'published')
+      .order('release_date', { ascending: false });
 
-  if (error) {
-    console.error('❌ Supabase error:', error);
+    if (error) {
+      throw error;
+    }
+
+    if (!songs || songs.length === 0) {
+      console.warn('⚠️ Aucune chanson trouvée dans Supabase');
+      return;
+    }
+
+    console.log(`✅ ${songs.length} chansons récupérées depuis Supabase`);
+
+    // Fonction pour générer un slug depuis un titre
+    function generateSlug(title) {
+      if (!title) return '';
+      return title
+        .toLowerCase()
+        .trim()
+        // Remplacer les caractères accentués
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        // Remplacer les espaces et caractères spéciaux par des tirets
+        .replace(/[^a-z0-9]+/g, '-')
+        // Supprimer les tirets multiples
+        .replace(/-+/g, '-')
+        // Supprimer les tirets en début/fin
+        .replace(/^-|-$/g, '');
+    }
+    
+    // Transformer les données Supabase vers le format attendu par generate-stubs
+    const songsFormatted = songs
+      .map(song => {
+        // Utiliser le slug de la BDD OU générer un slug depuis le titre
+        const slug = (song.slug && song.slug.trim()) ? song.slug : generateSlug(song.title);
+        
+        if (!slug) {
+          console.warn(`⚠️  Chanson "${song.title}" ignorée (impossible de générer un slug)`);
+          return null;
+        }
+        
+        return {
+          slug: slug,
+          name: song.title,
+          datePublished: song.release_date,
+          image: song.cover_image || '/icons/icon-512x512.png',
+          audioUrl: song.spotify_url || song.youtube_url || '',
+          duration: song.duration || 'PT3M',
+          inLanguage: 'pt-BR',
+          byArtist: {
+            name: song.artist || 'A Música da Segunda',
+            url: 'https://www.amusicadasegunda.com'
+          }
+        };
+      })
+      .filter(song => song !== null); // Retirer les chansons sans slug
+    
+    console.log(`ℹ️  ${songs.length - songsFormatted.length} chansons ignorées (sans slug générable)`);
+
+    // Créer le dossier content/ s'il n'existe pas
+    const contentDir = path.resolve('content');
+    await fs.ensureDir(contentDir);
+
+    // Écrire le fichier JSON
+    const outputPath = path.join(contentDir, 'songs.json');
+    await fs.writeFile(
+      outputPath,
+      JSON.stringify(songsFormatted, null, 2),
+      'utf8'
+    );
+
+    console.log(`✅ ${songsFormatted.length} chansons exportées vers: ${outputPath}`);
+    console.log('📋 Slugs exportés:', songsFormatted.map(s => s.slug).slice(0, 5).join(', '), '...');
+    
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'export:', error.message);
     process.exit(1);
   }
+}
 
-  const rows = Array.isArray(data) ? data : [];
-  // Validation + mapping
-  const seen = new Set();
-  const mapped = [];
-  for (const r of rows) {
-    const title = (r[COLS.title] || '').trim();
-    if (!title) continue;
-    let slug = slugify(title);
-    if (!slug) continue;
-    if (seen.has(slug)) slug = `${slug}-${r[COLS.id]}`; // assure unicité
-    seen.add(slug);
-
-    const datePublished = yyyy_mm_dd(r[COLS.release_date]);
-    const audioUrl = r[COLS.youtube_url] || r[COLS.spotify_url] || undefined;
-    const image = r[COLS.cover_image] ? r[COLS.cover_image] : DEFAULT_IMAGE;
-    const duration = undefined; // non présent dans le schéma actuel
-
-    mapped.push({
-      slug,
-      name: title,
-      datePublished,
-      audioUrl,
-      image,
-      duration,
-      inLanguage: 'pt-BR',
-      byArtist: { name: ARTIST_NAME, url: ARTIST_URL }
-    });
-  }
-
-  // Sortie
-  const outDir = path.resolve('content');
-  if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-  const outFile = path.join(outDir, 'songs.json');
-  fs.writeFileSync(outFile, JSON.stringify(mapped, null, 2), 'utf8');
-
-  console.log(`✅ Export OK: ${mapped.length} chansons → ${outFile}`);
-  console.log('   Exemple première entrée:', mapped[0] || '(vide)');
-})();
-
-
+// Exécuter l'export
+exportSongs();
