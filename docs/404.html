@@ -4,17 +4,24 @@
   <meta charset="utf-8">
   <title>A Música da Segunda</title>
   <script>
-    // Redirection immédiate vers l'index pour les SPAs
-    // GitHub Pages sert ce fichier pour toutes les 404
-    // On redirige vers / et laisse React Router gérer la route
-    sessionStorage.redirect = location.href;
+    // Redirection 301 pour anciennes URLs /chansons/ → /musica/
+    const path = window.location.pathname;
+    
+    if (path.startsWith('/chansons/')) {
+      // Remplacer /chansons/ par /musica/
+      const newPath = path.replace('/chansons/', '/musica/');
+      window.location.replace(newPath);
+    } else if (path === '/chansons') {
+      // /chansons → /musica
+      window.location.replace('/musica');
+    } else {
+      // Autres 404 : redirection vers la SPA
+      sessionStorage.redirect = location.href;
+      window.location.replace('/');
+    }
   </script>
-  <meta http-equiv="refresh" content="0;URL='/'">
 </head>
 <body>
-  <!-- GitHub Pages SPA Redirect -->
-  <script>
-    window.location.replace('/');
-  </script>
+  <p>Redirection en cours...</p>
 </body>
 </html>
