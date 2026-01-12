@@ -268,32 +268,49 @@ export default function SongPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-teal-400 via-blue-500 to-rose-500">
       <Helmet>
         <html lang="pt-BR" />
         {/* Canonical et og:url gérés par useSEO, pas besoin de les redéfinir ici */}
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
-      <div className="max-w-6xl mx-auto">
-        {/* Navigation */}
-        <div className="mb-6">
-          <Button 
-            onClick={() => navigate('/')} 
-            variant="outline"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar ao Início
-          </Button>
-        </div>
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Navigation */}
+          <div className="mb-6">
+            <Button 
+              onClick={() => navigate('/')} 
+              variant="outline"
+              className="bg-white/90 hover:bg-white border-white/20 backdrop-blur-sm"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar ao Início
+            </Button>
+          </div>
 
-        {/* Song Title */}
-        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">
-          {song.title}
-        </h1>
+          {/* Video Card - Style Home Page */}
+          <div className="bg-white rounded-3xl p-6 shadow-2xl mb-6">
+            {/* Song Title Inside Card */}
+            <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+              {song.title}
+            </h1>
 
-        {/* Video Section - PRIORITAIRE ET GRANDE */}
-        <div className="mb-8">
-          <div className="w-full">
+            {/* Info compacte */}
+            <div className="flex items-center gap-4 text-gray-600 mb-6 flex-wrap">
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span className="font-medium">{song.artist || 'A Música da Segunda'}</span>
+              </div>
+              {song.release_date && (
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm">{format(parseISO(song.release_date), 'dd MMMM yyyy', { locale: ptBR })}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Video */}
             {(song.youtube_music_url || song.youtube_url) ? (
               <YouTubeEmbed
                 youtube_music_url={song.youtube_music_url}
@@ -309,46 +326,32 @@ export default function SongPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Info compacte sous la vidéo */}
-        <div className="flex items-center justify-center gap-6 text-gray-600 mb-8">
-          <div className="flex items-center gap-2">
-            <User className="w-5 h-5" />
-            <span className="font-medium">{song.artist || 'A Música da Segunda'}</span>
+            {/* Description si présente */}
+            {song.description && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <p className="text-gray-700 leading-relaxed">
+                  {song.description}
+                </p>
+              </div>
+            )}
           </div>
-          {song.release_date && (
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              <span>{format(parseISO(song.release_date), 'dd MMMM yyyy', { locale: ptBR })}</span>
-            </div>
+
+          {/* ✅ SEO: Paroles dans le DOM de manière sémantique pour indexation Google */}
+          {song.lyrics && song.lyrics.trim() && (
+            <article className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl">
+              <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                <Music className="w-7 h-7 text-rose-500" />
+                Letras da Música
+              </h2>
+              <section className="lyrics-content">
+                <pre className="whitespace-pre-wrap text-gray-800 font-sans text-base md:text-lg leading-relaxed">
+                  {song.lyrics}
+                </pre>
+              </section>
+            </article>
           )}
         </div>
-
-        {/* Description si présente */}
-        {song.description && (
-          <div className="max-w-4xl mx-auto mb-8">
-            <p className="text-gray-700 text-lg leading-relaxed text-center">
-              {song.description}
-            </p>
-          </div>
-        )}
-
-        {/* ✅ SEO: Paroles dans le DOM de manière sémantique pour indexation Google */}
-        {song.lyrics && song.lyrics.trim() && (
-          <article className="max-w-4xl mx-auto mt-8 bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-100">
-            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center gap-3">
-              <Music className="w-8 h-8 text-rose-500" />
-              Letras da Música
-            </h2>
-            <section className="lyrics-content">
-              <pre className="whitespace-pre-wrap text-gray-800 font-sans text-lg leading-relaxed text-center max-w-2xl mx-auto">
-                {song.lyrics}
-              </pre>
-            </section>
-          </article>
-        )}
       </div>
     </div>
   );
