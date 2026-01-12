@@ -18,8 +18,11 @@ import { ptBR } from 'date-fns/locale';
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   // Logs de debug supprimés pour production
   
-  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
-  const targetUrl = youtube_music_url || youtube_url || '';
+  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming) par défaut
+  // Gère les valeurs null/undefined/empty string
+  const targetUrl = (youtube_music_url && typeof youtube_music_url === 'string' && youtube_music_url.trim()) 
+    || (youtube_url && typeof youtube_url === 'string' && youtube_url.trim()) 
+    || '';
 
   // Analyse l'URL et retourne { id, type }
   const getYouTubeEmbedInfo = (url) => {
@@ -345,7 +348,9 @@ export default function SongPage() {
             </div>
 
             {/* Video */}
-            {(song.youtube_music_url || song.youtube_url) ? (
+            {/* Affiche la vidéo si youtube_music_url existe, sinon utilise youtube_url par défaut */}
+            {((song.youtube_music_url && typeof song.youtube_music_url === 'string' && song.youtube_music_url.trim()) 
+              || (song.youtube_url && typeof song.youtube_url === 'string' && song.youtube_url.trim())) ? (
               <YouTubeEmbed
                 youtube_music_url={song.youtube_music_url}
                 youtube_url={song.youtube_url}
