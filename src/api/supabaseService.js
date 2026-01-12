@@ -65,33 +65,27 @@ export const supabaseSongService = {
   // Récupérer une chanson par slug (optimisé - requête directe)
   async getBySlug(slug) {
     try {
-      // Essayer d'abord avec la colonne slug si elle existe
-      let { data, error } = await supabase
+      // IMPORTANT : La colonne 'slug' n'existe pas dans Supabase
+      // On récupère toutes les chansons et on filtre par titre transformé
+      const { data: allSongs, error } = await supabase
         .from(TABLES.SONGS)
         .select('*')
-        .eq('slug', slug)
-        .maybeSingle()
-
-      // Si pas trouvé par slug, essayer par titre transformé
-      // (fallback pour compatibilité avec anciens slugs calculés)
-      if (!data && !error) {
-        // Récupérer toutes les chansons et filtrer côté client pour le fallback
-        // Note: Ce cas devrait être rare une fois que tous les slugs sont en BDD
-        const { data: allSongs, error: listError } = await supabase
-          .from(TABLES.SONGS)
-          .select('*')
-        
-        if (listError) throw listError
-        
-        // Chercher par slug calculé depuis le titre
-        data = allSongs?.find(s => {
-          const titleSlug = s.title?.toLowerCase().replace(/\s+/g, '-')
-          return s.slug === slug || titleSlug === slug
-        }) || null
-      }
-
+        .eq('status', 'published') // Filtrer au niveau SQL pour optimiser
+      
       if (error) throw error
-      return data || null
+      
+      // Chercher la chanson dont le titre transformé correspond au slug
+      const song = allSongs?.find(s => {
+        const titleSlug = s.title?.toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Supprimer les accents
+          .replace(/[^\w\s-]/g, '') // Supprimer caractères spéciaux
+          .replace(/\s+/g, '-') // Remplacer espaces par -
+          .replace(/-+/g, '-') // Fusionner tirets multiples
+          .trim()
+        return titleSlug === slug
+      })
+      
+      return song || null
     } catch (error) {
       handleSupabaseError(error, `Récupération chanson slug ${slug}`)
       return null

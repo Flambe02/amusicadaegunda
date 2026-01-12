@@ -1,5 +1,18 @@
 [
   {
+    "slug": "maduro",
+    "name": "Maduro",
+    "datePublished": "2026-01-12",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/2tTtXh94bzoi7w7huYJXVc?si=69831b4768c248af",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
     "slug": "2025-retro",
     "name": "2025 Retro",
     "datePublished": "2026-01-05",
