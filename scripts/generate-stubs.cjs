@@ -10,8 +10,38 @@ const OUT = path.resolve('dist');
 const IMAGE = cfg.brand.logo || '/images/og-default.jpg';
 const siteUrl = cfg.siteUrl;
 
+// 🔧 Extraire les scripts React depuis dist/index.html
+function extractScriptsFromIndex() {
+  const indexPath = path.resolve('dist', 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    console.warn('⚠️ dist/index.html non trouvé, stubs sans scripts React');
+    return { js: '', css: '' };
+  }
+  
+  const indexHtml = fs.readFileSync(indexPath, 'utf8');
+  
+  // Extraire le script JS principal
+  const jsMatch = indexHtml.match(/<script type="module" crossorigin src="([^"]+)"><\/script>/);
+  const jsScript = jsMatch ? `<script type="module" crossorigin src="${jsMatch[1]}"></script>` : '';
+  
+  // Extraire le CSS principal
+  const cssMatch = indexHtml.match(/<link rel="stylesheet" crossorigin href="([^"]+)">/);
+  const cssLink = cssMatch ? `<link rel="stylesheet" crossorigin href="${cssMatch[1]}">` : '';
+  
+  // Extraire pwa-install.js
+  const pwaScript = '<script src="/pwa-install.js"></script>';
+  
+  return { 
+    js: jsScript,
+    css: cssLink,
+    pwa: pwaScript
+  };
+}
+
 (async () => {
   await fs.ensureDir(OUT);
+  
+  const scripts = extractScriptsFromIndex();
 
   const org = orgJsonLd({ name: cfg.brand.name, url: siteUrl, logo: `${siteUrl}${IMAGE}` });
   const website = websiteJsonLd({ url: siteUrl, search: cfg.search });
@@ -43,7 +73,8 @@ const siteUrl = cfg.siteUrl;
           byArtist: s.byArtist?.name || s.byArtist || 'A Música da Segunda'
         }))
       })
-    ]
+    ],
+    scripts
   });
   
   const playlistVersionComment = `<!-- build:${new Date().toISOString()} -->\n`;
@@ -84,7 +115,8 @@ const siteUrl = cfg.siteUrl;
           songName: s.name,
           songUrl: url
         })
-      ]
+      ],
+      scripts
     });
     const versionComment = `<!-- build:${new Date().toISOString()} -->\n`;
     const htmlWithVersion = versionComment + html;
@@ -116,7 +148,8 @@ const siteUrl = cfg.siteUrl;
           songName: s.name,
           songUrl: `${siteUrl}${route}/`
         })
-      ]
+      ],
+      scripts
     });
     const versionCommentNoSlash = `<!-- build:${new Date().toISOString()} -->\n`;
     const htmlWithVersionNoSlash = versionCommentNoSlash + htmlNoSlash;
