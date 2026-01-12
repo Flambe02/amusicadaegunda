@@ -37,9 +37,21 @@ ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script
 
 </head>
 <body>
-<div id="app"></div>
+<div id="root"></div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
-<!-- Stub HTML pour SEO - Pas de redirection JavaScript pour permettre le crawl -->
+<script>
+// Redirection vers la SPA SEULEMENT pour les utilisateurs (pas les bots)
+(function() {
+  const ua = navigator.userAgent.toLowerCase();
+  const isBot = /bot|crawler|spider|crawling|google|baidu|bing|msn|duckduckbot|teoma|slurp|yandex/i.test(ua);
+  
+  if (!isBot) {
+    // Utilisateur humain : charger la SPA avec le bon routing
+    const currentPath = window.location.pathname;
+    window.location.replace('/#' + currentPath);
+  }
+})();
+</script>
 </body>
 </html>`;
 }
