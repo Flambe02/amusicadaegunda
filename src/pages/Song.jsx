@@ -9,7 +9,7 @@ import {
 } from '../lib/seo-jsonld';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Music, Calendar, User } from 'lucide-react';
+import { ArrowLeft, Music, Calendar, User, ExternalLink } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -295,6 +295,40 @@ export default function SongPage() {
             <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 leading-tight">
               {song.title}
             </h1>
+
+            {/* Streaming Links */}
+            {(song.youtube_music_url || song.spotify_url) && (
+              <div className="flex items-center gap-3 mb-6 flex-wrap">
+                {song.youtube_music_url && (
+                  <a
+                    href={song.youtube_music_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors shadow-md"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    YouTube Music
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+                {song.spotify_url && (
+                  <a
+                    href={song.spotify_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors shadow-md"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.66 0-.419.34-.78.78-.66 4.56.96 7.8 1.44 10.98 2.34.42.12.66.54.54.96zm1.44-3.3c-.3.42-.84.6-1.32.42-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14 4.2-1.26 9.6-.66 13.2 1.62.42.18.6.78.42 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.54-1.02.72-1.56.42z"/>
+                    </svg>
+                    Spotify
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Info compacte */}
             <div className="flex items-center gap-4 text-gray-700 mb-6 flex-wrap text-base md:text-lg">
