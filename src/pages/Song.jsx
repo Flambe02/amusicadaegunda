@@ -268,7 +268,7 @@ export default function SongPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-400 via-blue-500 to-rose-500">
+    <>
       <Helmet>
         <html lang="pt-BR" />
         {/* Canonical et og:url gérés par useSEO, pas besoin de les redéfinir ici */}
@@ -282,7 +282,7 @@ export default function SongPage() {
             <Button 
               onClick={() => navigate('/')} 
               variant="outline"
-              className="bg-white/90 hover:bg-white border-white/20 backdrop-blur-sm"
+              className="bg-white/90 hover:bg-white border-white/20 backdrop-blur-sm shadow-md"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar ao Início
@@ -353,6 +353,6 @@ export default function SongPage() {
           )}
         </div>
       </div>
-    </div>
+    </>
   );
 }
