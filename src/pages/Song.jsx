@@ -274,7 +274,7 @@ export default function SongPage() {
         {/* Canonical et og:url gérés par useSEO, pas besoin de les redéfinir ici */}
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Navigation */}
         <div className="mb-6">
           <Button 
@@ -286,37 +286,14 @@ export default function SongPage() {
           </Button>
         </div>
 
-        {/* Song Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {song.title}
-          </h1>
-          <div className="flex items-center gap-4 text-gray-600 mb-4">
-            <div className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              <span>{song.artist || 'A Música da Segunda'}</span>
-            </div>
-            {song.release_date && (
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                <span>{format(parseISO(song.release_date), 'dd MMMM yyyy', { locale: ptBR })}</span>
-              </div>
-            )}
-          </div>
-          {song.description && (
-            <p className="text-gray-700 leading-relaxed">
-              {song.description}
-            </p>
-          )}
-        </div>
+        {/* Song Title */}
+        <h1 className="text-4xl font-bold text-gray-900 mb-6 text-center">
+          {song.title}
+        </h1>
 
-        {/* Video Section - YouTube */}
+        {/* Video Section - PRIORITAIRE ET GRANDE */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Music className="w-5 h-5" />
-            Vídeo
-          </h2>
-          <div className="w-full max-w-2xl mx-auto">
+          <div className="w-full">
             {(song.youtube_music_url || song.youtube_url) ? (
               <YouTubeEmbed
                 youtube_music_url={song.youtube_music_url}
@@ -327,53 +304,46 @@ export default function SongPage() {
               <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
                 <div className="text-center text-gray-500">
                   <Music className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">Vidéo non disponible</p>
-                  <p className="text-sm">Cette musique n&apos;a pas encore de vidéo</p>
+                  <p className="font-medium">Vídeo não disponível</p>
+                  <p className="text-sm">Esta música ainda não tem vídeo</p>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Song Details */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Detalhes da Música
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <span className="font-medium text-gray-700">Título:</span>
-              <span className="ml-2 text-gray-900">{song.title}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Artista:</span>
-              <span className="ml-2 text-gray-900">{song.artist || 'A Música da Segunda'}</span>
-            </div>
-            {song.release_date && (
-              <div>
-                <span className="font-medium text-gray-700">Data de Lançamento:</span>
-                <span className="ml-2 text-gray-900">
-                  {format(parseISO(song.release_date), 'dd/MM/yyyy')}
-                </span>
-              </div>
-            )}
-            {song.status && (
-              <div>
-                <span className="font-medium text-gray-700">Status:</span>
-                <span className="ml-2 text-gray-900">{song.status}</span>
-              </div>
-            )}
+        {/* Info compacte sous la vidéo */}
+        <div className="flex items-center justify-center gap-6 text-gray-600 mb-8">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            <span className="font-medium">{song.artist || 'A Música da Segunda'}</span>
           </div>
+          {song.release_date && (
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              <span>{format(parseISO(song.release_date), 'dd MMMM yyyy', { locale: ptBR })}</span>
+            </div>
+          )}
         </div>
+
+        {/* Description si présente */}
+        {song.description && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <p className="text-gray-700 text-lg leading-relaxed text-center">
+              {song.description}
+            </p>
+          </div>
+        )}
 
         {/* ✅ SEO: Paroles dans le DOM de manière sémantique pour indexation Google */}
         {song.lyrics && song.lyrics.trim() && (
-          <article className="mt-8 bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <article className="max-w-4xl mx-auto mt-8 bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-lg border border-gray-100">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center flex items-center justify-center gap-3">
+              <Music className="w-8 h-8 text-rose-500" />
               Letras da Música
             </h2>
             <section className="lyrics-content">
-              <pre className="whitespace-pre-wrap text-gray-700 font-sans text-base leading-relaxed">
+              <pre className="whitespace-pre-wrap text-gray-800 font-sans text-lg leading-relaxed text-center max-w-2xl mx-auto">
                 {song.lyrics}
               </pre>
             </section>
