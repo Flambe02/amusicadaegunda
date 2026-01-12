@@ -297,11 +297,11 @@ export default function SongPage() {
             </h1>
 
             {/* Streaming Links */}
-            {(song.youtube_music_url || song.spotify_url) && (
+            {(song.youtube_url || song.spotify_url) && (
               <div className="flex items-center gap-3 mb-6 flex-wrap">
-                {song.youtube_music_url && (
+                {song.youtube_url && (
                   <a
-                    href={song.youtube_music_url}
+                    href={song.youtube_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors shadow-md"
