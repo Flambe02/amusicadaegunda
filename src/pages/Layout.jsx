@@ -47,9 +47,9 @@ export default function Layout({ children }) {
         <header className="flex-shrink-0 bg-black/90 backdrop-blur-lg border-b border-white/10 z-40">
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
-              <Link to="/" className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0">
-                <OptimizedImage
-                  src="images/Musica da segunda.jpg"
+              <Link to="/" className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0 bg-white">
+                <img
+                  src="/images/2026 logo.png"
                   alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -82,9 +82,9 @@ export default function Layout({ children }) {
             <div className="flex items-center justify-between">
               {/* Logo + Titre */}
               <div className="flex items-center gap-4">
-                <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0">
-                  <OptimizedImage
-                    src="images/Musica da segunda.jpg"
+                <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0 bg-white">
+                  <img
+                    src="/images/2026 logo.png"
                     alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                     className="w-full h-full object-cover"
                     loading="lazy"

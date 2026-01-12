@@ -281,8 +281,8 @@ export default function SongPage() {
           <div className="mb-6">
             <Button 
               onClick={() => navigate('/')} 
-              variant="outline"
-              className="bg-white/90 hover:bg-white border-white/20 backdrop-blur-sm shadow-md"
+              variant="ghost"
+              className="text-white hover:bg-white/10 border-0"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar ao Início
