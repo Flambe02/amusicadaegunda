@@ -290,22 +290,22 @@ export default function SongPage() {
           </div>
 
           {/* Video Card - Style Home Page */}
-          <div className="bg-white rounded-3xl p-6 shadow-2xl mb-6">
+          <div className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl mb-6">
             {/* Song Title Inside Card */}
-            <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
+            <h1 className="text-3xl md:text-5xl font-black text-gray-900 mb-4 leading-tight">
               {song.title}
             </h1>
 
             {/* Info compacte */}
-            <div className="flex items-center gap-4 text-gray-600 mb-6 flex-wrap">
+            <div className="flex items-center gap-4 text-gray-700 mb-6 flex-wrap text-base md:text-lg">
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                <span className="font-medium">{song.artist || 'A Música da Segunda'}</span>
+                <User className="w-5 h-5 text-blue-600" />
+                <span className="font-semibold">{song.artist || 'A Música da Segunda'}</span>
               </div>
               {song.release_date && (
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span className="text-sm">{format(parseISO(song.release_date), 'dd MMMM yyyy', { locale: ptBR })}</span>
+                  <Calendar className="w-5 h-5 text-rose-500" />
+                  <span className="font-medium">{format(parseISO(song.release_date), 'dd MMMM yyyy', { locale: ptBR })}</span>
                 </div>
               )}
             </div>
@@ -329,8 +329,8 @@ export default function SongPage() {
 
             {/* Description si présente */}
             {song.description && (
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <p className="text-gray-700 leading-relaxed">
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-gray-800 text-base md:text-lg leading-relaxed font-normal">
                   {song.description}
                 </p>
               </div>
@@ -341,11 +341,11 @@ export default function SongPage() {
           {song.lyrics && song.lyrics.trim() && (
             <article className="bg-white rounded-3xl p-6 md:p-8 shadow-2xl">
               <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-6 flex items-center gap-3">
-                <Music className="w-7 h-7 text-rose-500" />
+                <Music className="w-7 h-7 md:w-8 md:h-8 text-rose-500" />
                 Letras da Música
               </h2>
               <section className="lyrics-content">
-                <pre className="whitespace-pre-wrap text-gray-800 font-sans text-base md:text-lg leading-relaxed">
+                <pre className="whitespace-pre-wrap text-gray-800 font-sans text-base md:text-lg leading-relaxed font-normal">
                   {song.lyrics}
                 </pre>
               </section>
