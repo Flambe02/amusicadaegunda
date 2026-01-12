@@ -91,12 +91,23 @@ function extractScriptsFromIndex() {
     const title = `${s.name} — A Música da Segunda`;
     const desc = `Letra, áudio e história de "${s.name}" — nova música da segunda.`;
 
+    // Contenu HTML statique visible avant le chargement React
+    const staticBody = `
+<div class="container mx-auto px-4 py-8" style="max-width: 1200px;">
+  <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">${s.name}</h1>
+  <p style="font-size: 1.125rem; color: #666; margin-bottom: 2rem;">${desc}</p>
+  <div style="text-align: center; padding: 2rem;">
+    <p style="color: #888;">Carregando conteúdo...</p>
+  </div>
+</div>`;
+
     const html = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
       desc,
       url,
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+      body: staticBody,
       jsonld: [
         org,
         website,
@@ -130,6 +141,7 @@ function extractScriptsFromIndex() {
       desc,
       url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+      body: staticBody,
       jsonld: [
         org,
         website,

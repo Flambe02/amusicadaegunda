@@ -19,6 +19,7 @@ function baseHtml({ lang = 'pt-BR', title, desc, url, image, body = '', jsonld =
 <title>${escape(title)}</title>
 <meta name="description" content="${escape(desc)}"/>
 <link rel="canonical" href="${url}"/>
+<meta name="robots" content="index, follow" />
 
 <!-- Open Graph -->
 <meta property="og:title" content="${escape(title)}"/>
@@ -39,7 +40,7 @@ ${scripts.css ? scripts.css : ''}
 ${scripts.js ? scripts.js : ''}
 </head>
 <body>
-<div id="root"></div>
+<div id="root">${body ? body : ''}</div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
 ${scripts.pwa ? scripts.pwa : ''}
 </body>
