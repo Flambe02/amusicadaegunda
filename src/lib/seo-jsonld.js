@@ -78,11 +78,24 @@ export function musicRecordingJsonLd({
 /**
  * Generate BreadcrumbList JSON-LD schema for song pages
  * @param {Object} params
- * @param {string} params.title - Song title
- * @param {string} params.slug - Song slug
+ * @param {string} [params.title] - Song title (optional, will use slug normalization if missing)
+ * @param {string} params.slug - Song slug (required)
  * @returns {Object} JSON-LD schema object
  */
 export function breadcrumbsJsonLd({ title, slug }) {
+  // ✅ Normaliser le slug en nom lisible (ex: "mon-slug-test" → "Mon Slug Test")
+  const normalizeSlugToName = (slug) => {
+    if (!slug || typeof slug !== 'string') return 'Música';
+    return slug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // ✅ Fallback robuste : title → slug normalisé → "Música" par défaut
+  // Garantit que "name" n'est JAMAIS vide ou undefined
+  const itemName = title || normalizeSlugToName(slug) || 'Música';
+
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -102,7 +115,7 @@ export function breadcrumbsJsonLd({ title, slug }) {
       { 
         "@type": "ListItem", 
         "position": 3, 
-        "name": title || slug, 
+        "name": itemName, 
         "item": `${CANONICAL_HOST}/musica/${slug}` 
       }
     ]

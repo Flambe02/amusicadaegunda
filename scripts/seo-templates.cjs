@@ -144,6 +144,25 @@ function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, durat
 }
 
 function breadcrumbsJsonLd({ songName, songUrl }) {
+  // ✅ Normaliser le slug en nom lisible si songName est manquant
+  // Extrait le slug depuis l'URL si nécessaire
+  const normalizeSlugToName = (url) => {
+    if (!url) return 'Música';
+    const slugMatch = url.match(/\/musica\/([^\/]+)/);
+    if (slugMatch) {
+      const slug = slugMatch[1].replace(/\/$/, ''); // Enlever trailing slash
+      return slug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+    return 'Música';
+  };
+
+  // ✅ Fallback robuste : songName → slug normalisé depuis URL → "Música" par défaut
+  // Garantit que "name" n'est JAMAIS vide ou undefined
+  const itemName = songName || normalizeSlugToName(songUrl) || 'Música';
+
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -163,7 +182,7 @@ function breadcrumbsJsonLd({ songName, songUrl }) {
       {
         "@type": "ListItem",
         "position": 3,
-        "name": songName,
+        "name": itemName,
         "item": songUrl
       }
     ]

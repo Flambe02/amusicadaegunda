@@ -182,7 +182,18 @@ export default function SongPage() {
 
   // Inject JSON-LD schemas
   useEffect(() => {
-    if (song) {
+    // ✅ ÉTAPE A : Injecter immédiatement un breadcrumb minimal dès que slug est disponible
+    // Cela garantit que Google voit toujours un breadcrumb valide, même avant le chargement de song
+    if (slug) {
+      const minimalBreadcrumb = breadcrumbsJsonLd({
+        title: null, // Sera remplacé par le slug normalisé
+        slug: slug
+      });
+      injectJsonLd(minimalBreadcrumb, 'song-breadcrumb-schema');
+    }
+
+    // ✅ ÉTAPE B : Mettre à jour avec les données complètes une fois song chargé
+    if (song && slug) {
       const streamingUrls = [
         song.spotify_url,
         song.apple_music_url,
@@ -201,11 +212,12 @@ export default function SongPage() {
       });
       injectJsonLd(musicSchema, 'song-music-schema');
 
-      const breadcrumbSchema = breadcrumbsJsonLd({
+      // ✅ Mettre à jour le breadcrumb avec le titre complet (écrase le minimal)
+      const fullBreadcrumb = breadcrumbsJsonLd({
         title: song.title,
         slug: slug
       });
-      injectJsonLd(breadcrumbSchema, 'song-breadcrumb-schema');
+      injectJsonLd(fullBreadcrumb, 'song-breadcrumb-schema');
 
       // ✅ VideoObject JSON-LD pour l'indexation vidéo Google
       const youtubeUrl = song.youtube_music_url || song.youtube_url;
@@ -248,16 +260,16 @@ export default function SongPage() {
           }
         }
       }
-
-      return () => {
-        const musicScript = document.getElementById('song-music-schema');
-        const breadcrumbScript = document.getElementById('song-breadcrumb-schema');
-        const videoScript = document.getElementById('song-video-schema');
-        if (musicScript) musicScript.remove();
-        if (breadcrumbScript) breadcrumbScript.remove();
-        if (videoScript) videoScript.remove();
-      };
     }
+
+    return () => {
+      const musicScript = document.getElementById('song-music-schema');
+      const breadcrumbScript = document.getElementById('song-breadcrumb-schema');
+      const videoScript = document.getElementById('song-video-schema');
+      if (musicScript) musicScript.remove();
+      if (breadcrumbScript) breadcrumbScript.remove();
+      if (videoScript) videoScript.remove();
+    };
   }, [song, slug]);
 
   // Note: canonical géré par useSEO (sans hash), pas besoin de le définir ici
