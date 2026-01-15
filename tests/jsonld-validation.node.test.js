@@ -169,12 +169,22 @@ describe('JSON-LD Schema Validation', () => {
       });
     });
 
-    it('utilise le slug si le titre est absent', () => {
+    it('normalise le slug en nom lisible si le titre est absent', () => {
       const schema = breadcrumbsJsonLd({
         slug: 'test-song'
       });
 
-      expect(schema.itemListElement[2].name).toBe('test-song');
+      // Le slug "test-song" est normalisé en "Test Song" pour éviter "N/A" dans Google Search Console
+      expect(schema.itemListElement[2].name).toBe('Test Song');
+    });
+
+    it('utilise le fallback "Música" si le slug est invalide', () => {
+      const schema = breadcrumbsJsonLd({
+        slug: null
+      });
+
+      // Garantit que "name" n'est jamais vide ou undefined
+      expect(schema.itemListElement[2].name).toBe('Música');
     });
   });
 
