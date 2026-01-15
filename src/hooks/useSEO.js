@@ -109,6 +109,14 @@ export function useSEO({
         }
       };
 
+      // ✅ Ajouter l'auteur pour les articles (requis par Google)
+      if (type === 'article') {
+        structuredData.author = {
+          "@type": "Person",
+          "name": "Pimentão rouge"
+        };
+      }
+
       // ✅ SEO: Gérer intelligemment le JSON-LD avec un ID unique
       // Ne pas supprimer les scripts statiques (WebSite, Organization)
       // Remplacer uniquement le script dynamique de la page courante

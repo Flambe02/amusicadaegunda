@@ -215,13 +215,34 @@ export default function SongPage() {
           const youtubeUrls = buildYouTubeUrls(videoId);
           if (youtubeUrls) {
             const videoDescription = song.description || `Paródia musical de ${song.title} por A Música da Segunda. Nova música toda segunda-feira.`;
+            
+            // ✅ Formater uploadDate avec timezone (format ISO 8601 complet)
+            let uploadDate = new Date().toISOString(); // Fallback par défaut
+            if (song.release_date) {
+              // Si la date est au format YYYY-MM-DD, ajouter le timezone
+              const dateStr = song.release_date;
+              if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                uploadDate = `${dateStr}T00:00:00-03:00`; // Timezone BR (UTC-3)
+              } else {
+                // Si déjà au format ISO, utiliser tel quel
+                uploadDate = dateStr;
+              }
+            } else if (song.tiktok_publication_date) {
+              const dateStr = song.tiktok_publication_date;
+              if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                uploadDate = `${dateStr}T00:00:00-03:00`;
+              } else {
+                uploadDate = dateStr;
+              }
+            }
+            
             const videoSchema = videoObjectJsonLd({
               title: song.title,
               description: videoDescription,
               thumbnailUrl: youtubeUrls.thumbnailUrl,
               embedUrl: youtubeUrls.embedUrl,
               contentUrl: youtubeUrls.contentUrl,
-              uploadDate: song.release_date || song.tiktok_publication_date || new Date().toISOString()
+              uploadDate: uploadDate
             });
             injectJsonLd(videoSchema, 'song-video-schema');
           }
