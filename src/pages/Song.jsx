@@ -5,6 +5,9 @@ import { useSEO } from '../hooks/useSEO';
 import { 
   musicRecordingJsonLd, 
   breadcrumbsJsonLd, 
+  videoObjectJsonLd,
+  extractYouTubeId,
+  buildYouTubeUrls,
   injectJsonLd 
 } from '../lib/seo-jsonld';
 import { Helmet } from 'react-helmet-async';
@@ -204,11 +207,34 @@ export default function SongPage() {
       });
       injectJsonLd(breadcrumbSchema, 'song-breadcrumb-schema');
 
+      // ✅ VideoObject JSON-LD pour l'indexation vidéo Google
+      const youtubeUrl = song.youtube_music_url || song.youtube_url;
+      if (youtubeUrl) {
+        const videoId = extractYouTubeId(youtubeUrl);
+        if (videoId) {
+          const youtubeUrls = buildYouTubeUrls(videoId);
+          if (youtubeUrls) {
+            const videoDescription = song.description || `Paródia musical de ${song.title} por A Música da Segunda. Nova música toda segunda-feira.`;
+            const videoSchema = videoObjectJsonLd({
+              title: song.title,
+              description: videoDescription,
+              thumbnailUrl: youtubeUrls.thumbnailUrl,
+              embedUrl: youtubeUrls.embedUrl,
+              contentUrl: youtubeUrls.contentUrl,
+              uploadDate: song.release_date || song.tiktok_publication_date || new Date().toISOString()
+            });
+            injectJsonLd(videoSchema, 'song-video-schema');
+          }
+        }
+      }
+
       return () => {
         const musicScript = document.getElementById('song-music-schema');
         const breadcrumbScript = document.getElementById('song-breadcrumb-schema');
+        const videoScript = document.getElementById('song-video-schema');
         if (musicScript) musicScript.remove();
         if (breadcrumbScript) breadcrumbScript.remove();
+        if (videoScript) videoScript.remove();
       };
     }
   }, [song, slug]);
