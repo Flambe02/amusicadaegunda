@@ -269,6 +269,22 @@ export function injectJsonLd(schema, id = null) {
       if (existing) existing.remove();
     }
     
+    // ✅ Si on injecte un BreadcrumbList, supprimer aussi les breadcrumbs statiques sans ID
+    // Cela évite que Google détecte plusieurs breadcrumbs (statique + React)
+    if (schema['@type'] === 'BreadcrumbList') {
+      const allScripts = document.head.querySelectorAll('script[type="application/ld+json"]');
+      allScripts.forEach(script => {
+        try {
+          const content = script.textContent;
+          if (content && content.includes('"@type":"BreadcrumbList"') && !script.id) {
+            script.remove();
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
+      });
+    }
+    
     const script = document.createElement('script');
     script.type = 'application/ld+json';
     script.textContent = JSON.stringify(schema, null, 2);
