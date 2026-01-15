@@ -113,7 +113,8 @@ export function useSEO({
       if (type === 'article') {
         structuredData.author = {
           "@type": "Person",
-          "name": "Pimentão rouge"
+          "name": "Pimentão rouge",
+          "url": siteUrl // URL de l'auteur
         };
       }
 
