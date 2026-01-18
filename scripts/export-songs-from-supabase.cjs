@@ -81,7 +81,11 @@ async function exportSongs() {
           byArtist: {
             name: song.artist || 'A Música da Segunda',
             url: 'https://www.amusicadasegunda.com'
-          }
+          },
+          // ✅ URLs YouTube pour VideoObject JSON-LD dans les stubs
+          youtube_music_url: song.youtube_music_url || null,
+          youtube_url: song.youtube_url || null,
+          description: song.description || null
         };
       })
       .filter(song => song !== null); // Retirer les chansons sans slug
