@@ -81,6 +81,81 @@ function extractScriptsFromIndex() {
   await fs.writeFile(playlistFile, playlistVersionComment + playlistHtml, { encoding: 'utf8' });
   console.log(`✅ Stub /musica créé avec MusicPlaylist JSON-LD (${songs.length} tracks)`);
 
+  // ✅ SEO: Stub pour /home avec redirection 301 vers /
+  const homeDir = path.join(OUT, 'home');
+  const homeFile = path.join(homeDir, 'index.html');
+  await fs.ensureDir(homeDir);
+  const homeRedirectHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${siteUrl}/">
+  <link rel="canonical" href="${siteUrl}/">
+  <title>Redirection - A Música da Segunda</title>
+  <script>
+    // Redirection JavaScript pour GitHub Pages (fallback)
+    window.location.replace('${siteUrl}/');
+  </script>
+</head>
+<body>
+  <p>Redirection en cours vers <a href="${siteUrl}/">la page d'accueil</a>...</p>
+</body>
+</html>`;
+  await fs.writeFile(homeFile, homeRedirectHtml, { encoding: 'utf8' });
+  console.log(`✅ Stub /home créé avec redirection 301 vers /`);
+
+  // ✅ SEO: Stubs pour les anciennes URLs /chansons/ avec redirection 301 vers /musica/
+  const chansonsDir = path.join(OUT, 'chansons');
+  await fs.ensureDir(chansonsDir);
+  
+  // Stub pour /chansons (liste)
+  const chansonsListFile = path.join(chansonsDir, 'index.html');
+  const chansonsListRedirectHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${siteUrl}/musica/">
+  <link rel="canonical" href="${siteUrl}/musica/">
+  <title>Redirection - A Música da Segunda</title>
+  <script>
+    // Redirection JavaScript pour GitHub Pages (fallback)
+    window.location.replace('${siteUrl}/musica/');
+  </script>
+</head>
+<body>
+  <p>Redirection en cours vers <a href="${siteUrl}/musica/">la playlist</a>...</p>
+</body>
+</html>`;
+  await fs.writeFile(chansonsListFile, chansonsListRedirectHtml, { encoding: 'utf8' });
+  console.log(`✅ Stub /chansons créé avec redirection 301 vers /musica/`);
+
+  // Stubs pour chaque chanson /chansons/[slug] avec redirection vers /musica/[slug]
+  for (const s of songs) {
+    const legacyRoute = `/chansons/${s.slug}`;
+    const legacyDir = path.join(OUT, 'chansons', s.slug);
+    const legacyFile = path.join(legacyDir, 'index.html');
+    await fs.ensureDir(legacyDir);
+    const targetUrl = `${siteUrl}/musica/${s.slug}/`;
+    const legacyRedirectHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${targetUrl}">
+  <link rel="canonical" href="${targetUrl}">
+  <title>Redirection - ${s.name} | A Música da Segunda</title>
+  <script>
+    // Redirection JavaScript pour GitHub Pages (fallback)
+    window.location.replace('${targetUrl}');
+  </script>
+</head>
+<body>
+  <p>Redirection en cours vers <a href="${targetUrl}">${s.name}</a>...</p>
+</body>
+</html>`;
+    await fs.writeFile(legacyFile, legacyRedirectHtml, { encoding: 'utf8' });
+  }
+  console.log(`✅ Stubs /chansons/[slug] créés avec redirection 301 vers /musica/[slug] (${songs.length} chansons)`);
+
   // Song pages
   for (const s of songs) {
     const route = `/musica/${s.slug}`;
