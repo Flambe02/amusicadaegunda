@@ -21,6 +21,12 @@ import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
 import { useToast } from '@/components/ui/use-toast';
+import { 
+  videoObjectJsonLd,
+  extractYouTubeId,
+  buildYouTubeUrls,
+  injectJsonLd 
+} from '../lib/seo-jsonld';
 
 // Composant d'intégration YouTube générique (remplace l'embed TikTok)
 // Props attendues: youtube_music_url, youtube_url, title
@@ -378,6 +384,57 @@ export default function Home() {
     url: '/',
     type: 'website'
   });
+
+  // ✅ VideoObject JSON-LD pour l'indexation vidéo Google sur la page d'accueil
+  useEffect(() => {
+    if (currentSong) {
+      const youtubeUrl = currentSong.youtube_music_url || currentSong.youtube_url;
+      if (youtubeUrl) {
+        const videoId = extractYouTubeId(youtubeUrl);
+        if (videoId) {
+          const youtubeUrls = buildYouTubeUrls(videoId);
+          if (youtubeUrls) {
+            const videoDescription = currentSong.description || `Paródia musical de ${currentSong.title} por A Música da Segunda. Nova música toda segunda-feira.`;
+            
+            // ✅ Formater uploadDate avec timezone (format ISO 8601 complet)
+            let uploadDate = new Date().toISOString(); // Fallback par défaut
+            if (currentSong.release_date) {
+              // Si la date est au format YYYY-MM-DD, ajouter le timezone
+              const dateStr = currentSong.release_date;
+              if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                uploadDate = `${dateStr}T00:00:00-03:00`; // Timezone BR (UTC-3)
+              } else {
+                // Si déjà au format ISO, utiliser tel quel
+                uploadDate = dateStr;
+              }
+            } else if (currentSong.tiktok_publication_date) {
+              const dateStr = currentSong.tiktok_publication_date;
+              if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                uploadDate = `${dateStr}T00:00:00-03:00`;
+              } else {
+                uploadDate = dateStr;
+              }
+            }
+            
+            const videoSchema = videoObjectJsonLd({
+              title: currentSong.title,
+              description: videoDescription,
+              thumbnailUrl: youtubeUrls.thumbnailUrl,
+              embedUrl: youtubeUrls.embedUrl,
+              contentUrl: youtubeUrls.contentUrl,
+              uploadDate: uploadDate
+            });
+            injectJsonLd(videoSchema, 'home-video-schema');
+          }
+        }
+      }
+    }
+
+    return () => {
+      const videoScript = document.getElementById('home-video-schema');
+      if (videoScript) videoScript.remove();
+    };
+  }, [currentSong]);
 
   if (isLoading) {
     return (

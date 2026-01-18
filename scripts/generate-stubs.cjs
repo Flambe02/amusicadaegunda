@@ -1,6 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
-const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd } = require('./seo-templates.cjs');
+const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd, videoObjectJsonLd, extractYouTubeId, buildYouTubeUrls } = require('./seo-templates.cjs');
 
 const cfg = require('./seo.config.json');
 const songsPath = path.resolve('content', 'songs.json');
@@ -176,6 +176,58 @@ function extractScriptsFromIndex() {
   </div>
 </div>`;
 
+    // ✅ VideoObject JSON-LD si YouTube URL disponible
+    const jsonldSchemas = [
+      org,
+      website,
+      musicRecordingJsonLd({
+        name: s.name,
+        url,
+        datePublished: s.datePublished,
+        audioUrl: s.audioUrl,
+        image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+        duration: s.duration,
+        inLanguage: s.inLanguage,
+        byArtist: s.byArtist,
+        description: desc
+      }),
+      breadcrumbsJsonLd({
+        songName: s.name,
+        songUrl: url
+      })
+    ];
+
+    // Ajouter VideoObject si YouTube URL disponible (youtube_music_url ou youtube_url)
+    const youtubeUrl = s.youtube_music_url || s.youtube_url;
+    if (youtubeUrl) {
+      const videoId = extractYouTubeId(youtubeUrl);
+      if (videoId) {
+        const youtubeUrls = buildYouTubeUrls(videoId);
+        if (youtubeUrls) {
+          // Formater uploadDate avec timezone (format ISO 8601 complet)
+          let uploadDate = new Date().toISOString();
+          if (s.datePublished) {
+            const dateStr = s.datePublished;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+              uploadDate = `${dateStr}T00:00:00-03:00`; // Timezone BR (UTC-3)
+            } else {
+              uploadDate = dateStr;
+            }
+          }
+          
+          const videoSchema = videoObjectJsonLd({
+            title: s.name,
+            description: desc,
+            thumbnailUrl: youtubeUrls.thumbnailUrl,
+            embedUrl: youtubeUrls.embedUrl,
+            contentUrl: youtubeUrls.contentUrl,
+            uploadDate: uploadDate
+          });
+          jsonldSchemas.push(videoSchema);
+        }
+      }
+    }
+
     const html = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
@@ -183,25 +235,7 @@ function extractScriptsFromIndex() {
       url,
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
-      jsonld: [
-        org,
-        website,
-        musicRecordingJsonLd({
-          name: s.name,
-          url,
-          datePublished: s.datePublished,
-          audioUrl: s.audioUrl,
-          image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
-          duration: s.duration,
-          inLanguage: s.inLanguage,
-          byArtist: s.byArtist,
-          description: desc
-        }),
-        breadcrumbsJsonLd({
-          songName: s.name,
-          songUrl: url
-        })
-      ],
+      jsonld: jsonldSchemas,
       scripts
     });
     const versionComment = `<!-- build:${new Date().toISOString()} -->\n`;
@@ -210,6 +244,55 @@ function extractScriptsFromIndex() {
 
     // Créer aussi un fichier pour l'URL sans trailing slash (redirection)
     const fileNoSlash = path.join(OUT, 'musica', s.slug + '.html');
+    const jsonldSchemasNoSlash = [
+      org,
+      website,
+      musicRecordingJsonLd({
+        name: s.name,
+        url: `${siteUrl}${route}/`,
+        datePublished: s.datePublished,
+        audioUrl: s.audioUrl,
+        image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+        duration: s.duration,
+        inLanguage: s.inLanguage,
+        byArtist: s.byArtist,
+        description: desc
+      }),
+      breadcrumbsJsonLd({
+        songName: s.name,
+        songUrl: `${siteUrl}${route}/`
+      })
+    ];
+
+    // Ajouter VideoObject si YouTube URL disponible (même logique que ci-dessus)
+    if (youtubeUrl) {
+      const videoId = extractYouTubeId(youtubeUrl);
+      if (videoId) {
+        const youtubeUrls = buildYouTubeUrls(videoId);
+        if (youtubeUrls) {
+          let uploadDate = new Date().toISOString();
+          if (s.datePublished) {
+            const dateStr = s.datePublished;
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+              uploadDate = `${dateStr}T00:00:00-03:00`;
+            } else {
+              uploadDate = dateStr;
+            }
+          }
+          
+          const videoSchema = videoObjectJsonLd({
+            title: s.name,
+            description: desc,
+            thumbnailUrl: youtubeUrls.thumbnailUrl,
+            embedUrl: youtubeUrls.embedUrl,
+            contentUrl: youtubeUrls.contentUrl,
+            uploadDate: uploadDate
+          });
+          jsonldSchemasNoSlash.push(videoSchema);
+        }
+      }
+    }
+
     const htmlNoSlash = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
@@ -217,25 +300,7 @@ function extractScriptsFromIndex() {
       url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
-      jsonld: [
-        org,
-        website,
-        musicRecordingJsonLd({
-          name: s.name,
-          url: `${siteUrl}${route}/`,
-          datePublished: s.datePublished,
-          audioUrl: s.audioUrl,
-          image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
-          duration: s.duration,
-          inLanguage: s.inLanguage,
-          byArtist: s.byArtist,
-          description: desc
-        }),
-        breadcrumbsJsonLd({
-          songName: s.name,
-          songUrl: `${siteUrl}${route}/`
-        })
-      ],
+      jsonld: jsonldSchemasNoSlash,
       scripts
     });
     const versionCommentNoSlash = `<!-- build:${new Date().toISOString()} -->\n`;
