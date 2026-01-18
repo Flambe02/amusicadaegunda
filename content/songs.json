@@ -1,5 +1,18 @@
 [
   {
+    "slug": "groenlandia",
+    "name": "Groenlândia",
+    "datePublished": "2026-01-19",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/4Rq2f92QybhMVuLmKw9aIf?si=6ebfb8f8650046e2",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    }
+  },
+  {
     "slug": "maduro",
     "name": "Maduro",
     "datePublished": "2026-01-12",

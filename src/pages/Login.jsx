@@ -174,7 +174,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Helmet>
         <meta name="robots" content="noindex,nofollow" />
-        <link rel="canonical" href="https://www.amusicadasegunda.com/#/login" />
+        {/* Canonical removed - login page is not indexable */}
       </Helmet>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
