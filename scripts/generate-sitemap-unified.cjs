@@ -34,11 +34,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Static pages configuration
+// ✅ /playlist removed - redirects to /musica (single source of truth)
 const staticPages = [
   { path: '/', priority: 1.0, changefreq: 'daily' },
   { path: '/musica', priority: 0.9, changefreq: 'weekly' },
   { path: '/calendar', priority: 0.8, changefreq: 'weekly' },
-  { path: '/playlist', priority: 0.9, changefreq: 'weekly' },
   { path: '/blog', priority: 0.8, changefreq: 'weekly' },
   { path: '/sobre', priority: 0.7, changefreq: 'monthly' },
   { path: '/adventcalendar', priority: 0.8, changefreq: 'weekly' },

@@ -6,6 +6,8 @@
  * - No duplicate <loc> entries
  * - sitemap-index references existing sitemaps
  * - All <loc> are absolute URLs starting with https://www.amusicadasegunda.com/
+ * - /playlist must not appear in sitemaps (redirects to /musica)
+ * - robots.txt must not allow /playlist
  */
 
 const fs = require('fs-extra');
@@ -179,6 +181,37 @@ function verify() {
     }
   }
   
+  // Check for /playlist in sitemaps (should not be indexable)
+  console.log('\n🔍 Vérification de /playlist (doit rediriger vers /musica)...');
+  const playlistUrl = `${SITE_URL}/playlist`;
+  for (const sitemap of EXPECTED_SITEMAPS) {
+    const publicSitemap = path.join(publicDir, sitemap);
+    const docsSitemap = path.join(docsDir, sitemap);
+    
+    for (const sitemapPath of [publicSitemap, docsSitemap]) {
+      if (fs.existsSync(sitemapPath)) {
+        const xml = fs.readFileSync(sitemapPath, 'utf8');
+        if (xml.includes(playlistUrl)) {
+          allErrors.push(`❌ ${sitemapPath} contient /playlist (doit rediriger vers /musica)`);
+        }
+      }
+    }
+  }
+  
+  // Check robots.txt for "Allow: /playlist"
+  console.log('🔍 Vérification de robots.txt...');
+  const robotsPublic = path.join(publicDir, 'robots.txt');
+  const robotsDocs = path.join(docsDir, 'robots.txt');
+  
+  for (const robotsPath of [robotsPublic, robotsDocs]) {
+    if (fs.existsSync(robotsPath)) {
+      const robotsContent = fs.readFileSync(robotsPath, 'utf8');
+      if (robotsContent.includes('Allow: /playlist')) {
+        allErrors.push(`❌ ${robotsPath} contient "Allow: /playlist" (doit être supprimé)`);
+      }
+    }
+  }
+  
   // Report results
   console.log('\n📊 Résultats de la vérification:\n');
   
@@ -188,6 +221,8 @@ function verify() {
     console.log('   - Aucun doublon');
     console.log('   - Toutes les URLs sont absolues');
     console.log('   - sitemap-index.xml référence tous les sitemaps');
+    console.log('   - /playlist n\'apparaît pas dans les sitemaps');
+    console.log('   - robots.txt ne permet pas /playlist');
     return 0;
   }
   

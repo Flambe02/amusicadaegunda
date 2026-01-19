@@ -104,6 +104,30 @@ function extractScriptsFromIndex() {
   await fs.writeFile(homeFile, homeRedirectHtml, { encoding: 'utf8' });
   console.log(`✅ Stub /home créé avec redirection 301 vers /`);
 
+  // ✅ SEO: Stub pour /playlist avec redirection 301 vers /musica (single source of truth)
+  const playlistRedirectDir = path.join(OUT, 'playlist');
+  const playlistRedirectFile = path.join(playlistRedirectDir, 'index.html');
+  await fs.ensureDir(playlistRedirectDir);
+  const playlistRedirectHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${siteUrl}/musica/">
+  <link rel="canonical" href="${siteUrl}/musica/">
+  <meta name="robots" content="noindex, follow">
+  <title>Redirection - A Música da Segunda</title>
+  <script>
+    // Redirection JavaScript pour GitHub Pages (fallback)
+    window.location.replace('${siteUrl}/musica/');
+  </script>
+</head>
+<body>
+  <p>Redirection en cours vers <a href="${siteUrl}/musica/">la playlist</a>...</p>
+</body>
+</html>`;
+  await fs.writeFile(playlistRedirectFile, playlistRedirectHtml, { encoding: 'utf8' });
+  console.log(`✅ Stub /playlist créé avec redirection 301 vers /musica/`);
+
   // ✅ SEO: Stubs pour les anciennes URLs /chansons/ avec redirection 301 vers /musica/
   const chansonsDir = path.join(OUT, 'chansons');
   await fs.ensureDir(chansonsDir);
@@ -166,14 +190,42 @@ function extractScriptsFromIndex() {
     const title = `${s.name} — A Música da Segunda`;
     const desc = `Letra, áudio e história de "${s.name}" — nova música da segunda.`;
 
+    // ✅ Extraire videoId pour iframe YouTube statique (requis pour "watch page" Google)
+    const youtubeUrl = s.youtube_music_url || s.youtube_url;
+    let videoId = null;
+    let embedSrc = null;
+    if (youtubeUrl) {
+      videoId = extractYouTubeId(youtubeUrl);
+      if (videoId) {
+        embedSrc = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&controls=1`;
+      }
+    }
+
     // Contenu HTML statique visible avant le chargement React
+    // ✅ Inclure iframe YouTube si disponible (requis pour Google "watch page")
+    const videoEmbedHtml = embedSrc ? `
+  <div style="margin: 2rem 0;">
+    <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+      <iframe
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+        src="${embedSrc}"
+        title="${s.name} - A Música da Segunda"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>` : `
+  <div style="text-align: center; padding: 2rem;">
+    <p style="color: #888;">Carregando conteúdo...</p>
+  </div>`;
+
     const staticBody = `
 <div class="container mx-auto px-4 py-8" style="max-width: 1200px;">
   <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">${s.name}</h1>
   <p style="font-size: 1.125rem; color: #666; margin-bottom: 2rem;">${desc}</p>
-  <div style="text-align: center; padding: 2rem;">
-    <p style="color: #888;">Carregando conteúdo...</p>
-  </div>
+  ${videoEmbedHtml}
 </div>`;
 
     // ✅ VideoObject JSON-LD si YouTube URL disponible
@@ -198,33 +250,30 @@ function extractScriptsFromIndex() {
     ];
 
     // Ajouter VideoObject si YouTube URL disponible (youtube_music_url ou youtube_url)
-    const youtubeUrl = s.youtube_music_url || s.youtube_url;
-    if (youtubeUrl) {
-      const videoId = extractYouTubeId(youtubeUrl);
-      if (videoId) {
-        const youtubeUrls = buildYouTubeUrls(videoId);
-        if (youtubeUrls) {
-          // Formater uploadDate avec timezone (format ISO 8601 complet)
-          let uploadDate = new Date().toISOString();
-          if (s.datePublished) {
-            const dateStr = s.datePublished;
-            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-              uploadDate = `${dateStr}T00:00:00-03:00`; // Timezone BR (UTC-3)
-            } else {
-              uploadDate = dateStr;
-            }
+    // ✅ Réutiliser videoId déjà extrait pour l'iframe
+    if (youtubeUrl && videoId) {
+      const youtubeUrls = buildYouTubeUrls(videoId);
+      if (youtubeUrls) {
+        // Formater uploadDate avec timezone (format ISO 8601 complet)
+        let uploadDate = new Date().toISOString();
+        if (s.datePublished) {
+          const dateStr = s.datePublished;
+          if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+            uploadDate = `${dateStr}T00:00:00-03:00`; // Timezone BR (UTC-3)
+          } else {
+            uploadDate = dateStr;
           }
-          
-          const videoSchema = videoObjectJsonLd({
-            title: s.name,
-            description: desc,
-            thumbnailUrl: youtubeUrls.thumbnailUrl,
-            embedUrl: youtubeUrls.embedUrl,
-            contentUrl: youtubeUrls.contentUrl,
-            uploadDate: uploadDate
-          });
-          jsonldSchemas.push(videoSchema);
         }
+        
+        const videoSchema = videoObjectJsonLd({
+          title: s.name,
+          description: desc,
+          thumbnailUrl: youtubeUrls.thumbnailUrl,
+          embedUrl: youtubeUrls.embedUrl,
+          contentUrl: youtubeUrls.contentUrl,
+          uploadDate: uploadDate
+        });
+        jsonldSchemas.push(videoSchema);
       }
     }
 
