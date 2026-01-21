@@ -120,6 +120,15 @@ export default function Layout({ children }) {
         <main id="main" className="relative z-10">
           {children}
         </main>
+
+        {/* Footer Desktop discret pour crédit de production */}
+        <footer className="border-t border-white/60 bg-white/80 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 py-2">
+            <p className="text-[11px] md:text-xs text-gray-500 text-center">
+              © 2026 A Música da Segunda. Uma produção The Pimentão Rouge Project.
+            </p>
+          </div>
+        </footer>
       </div>
 
       {/* Gestionnaire de tutoriel intégré */}

@@ -527,6 +527,9 @@ export default function Sobre() {
             <p className="text-white/90 mb-6 text-lg max-w-2xl mx-auto">
               Tem sugestões, críticas ou quer participar do projeto? Adoraríamos ouvir de você!
             </p>
+          <p className="text-white/70 mb-6 text-sm md:text-base max-w-2xl mx-auto">
+            Bastidores: A Música da Segunda é um projeto criativo idealizado e produzido por The Pimentão Rouge Project.
+          </p>
             <a 
               href="mailto:contact@amusicadasegunda.com"
               className="inline-flex items-center gap-2 md:gap-3 bg-white/20 backdrop-blur-sm px-4 md:px-6 py-3 rounded-2xl border border-white/30 hover:bg-white/30 transition-all duration-200 hover:scale-105 active:scale-95"
