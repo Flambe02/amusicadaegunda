@@ -378,7 +378,11 @@ export default function Home() {
     keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes',
     image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/icons/icon-512x512.png',
     url: '/',
-    type: 'website'
+    type: 'website',
+    // ✅ SEO FIX: Désactiver l'indexation vidéo sur la homepage
+    // La homepage n'est pas une "watch page" dédiée à une seule vidéo
+    // Google ne doit pas indexer la vidéo changeante de la homepage
+    robots: 'index, follow, max-video-preview:0'
   });
 
   // ❌ VideoObject JSON-LD SUPPRIMÉ de la homepage

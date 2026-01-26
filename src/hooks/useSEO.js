@@ -11,6 +11,7 @@ export function useSEO({
   image,
   url,
   type = 'website',
+  robots = 'index, follow', // ✅ SEO: Support robots directives (e.g., 'max-video-preview:0')
   enabled = true
 }) {
   const siteName = 'A Música da Segunda';
@@ -60,6 +61,9 @@ export function useSEO({
       // Mise à jour des métadonnées de base
       updateMetaTag('name', 'description', fullDescription);
       updateMetaTag('name', 'keywords', fullKeywords);
+      
+      // ✅ SEO: Directive robots (permet max-video-preview:0 pour désactiver l'indexation vidéo)
+      updateMetaTag('name', 'robots', robots);
 
       // Mise à jour des métadonnées Open Graph
       updateMetaTag('property', 'og:title', fullTitle);
@@ -138,5 +142,5 @@ export function useSEO({
     } catch (error) {
       console.error('Erro ao atualizar SEO:', error);
     }
-  }, [fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type, defaultImage]);
+  }, [fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type, robots, defaultImage]);
 }
