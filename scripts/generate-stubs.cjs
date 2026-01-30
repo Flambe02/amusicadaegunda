@@ -91,6 +91,7 @@ function extractScriptsFromIndex() {
   <meta charset="utf-8">
   <meta http-equiv="refresh" content="0; url=${siteUrl}/">
   <link rel="canonical" href="${siteUrl}/">
+  <meta name="robots" content="noindex, follow">
   <title>Redirection - A Música da Segunda</title>
   <script>
     // Redirection JavaScript pour GitHub Pages (fallback)
@@ -140,6 +141,7 @@ function extractScriptsFromIndex() {
   <meta charset="utf-8">
   <meta http-equiv="refresh" content="0; url=${siteUrl}/musica/">
   <link rel="canonical" href="${siteUrl}/musica/">
+  <meta name="robots" content="noindex, follow">
   <title>Redirection - A Música da Segunda</title>
   <script>
     // Redirection JavaScript pour GitHub Pages (fallback)
@@ -166,6 +168,7 @@ function extractScriptsFromIndex() {
   <meta charset="utf-8">
   <meta http-equiv="refresh" content="0; url=${targetUrl}">
   <link rel="canonical" href="${targetUrl}">
+  <meta name="robots" content="noindex, follow">
   <title>Redirection - ${s.name} | A Música da Segunda</title>
   <script>
     // Redirection JavaScript pour GitHub Pages (fallback)
