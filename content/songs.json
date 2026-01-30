@@ -1,5 +1,21 @@
 [
   {
+    "slug": "o-nome-dele-e-pedro",
+    "name": "O nome dele é Pedro",
+    "datePublished": "2026-01-26",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/0rzlEkdGMpc4kRHighg5cy?si=9291d824f49046ca",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    },
+    "youtube_music_url": "https://youtube.com/shorts/t1VLn2mJi24",
+    "youtube_url": "https://music.youtube.com/playlist?list=OLAK5uy_ljUxyk441hRHDJYCi3XAFG1u5pj-LI464&si=OCzyX8C0vS6n8-7s",
+    "description": "Nesta semana, o BBB 26 ganhou um capítulo daqueles que viram manchete e meme ao mesmo tempo: o participante Pedro apertou o botão de desistência e saiu do programa no domingo, 18 de janeiro de 2026.\n\nA saída aconteceu em meio a uma denúncia de assédio envolvendo Jordana, após imagens de uma tentativa de beijo sem consentimento repercutirem dentro e fora da casa. Segundo a imprensa, Tadeu Schmidt se posicionou de forma dura e a situação teve desdobramentos que chegaram a inquérito policial.\n\nE aí entra a nossa sátira: quando o reality vira crise, a edição vira “borracha”, o telão vira silêncio e o Brasil vira comentarista profissional. A letra brinca com o surreal de um participante que some da vinheta, perde o “milhão” antes do paredão e vira “confusão”, cutucando a cultura do recorte, do viral e do apagamento rápido.\n\nImportante: aqui o humor aponta para o circo midiático e para a máquina do meme, sem normalizar o tema do consentimento, que é coisa séria."
+  },
+  {
     "slug": "groenlandia",
     "name": "Groenlândia",
     "datePublished": "2026-01-19",

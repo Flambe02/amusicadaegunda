@@ -51,7 +51,11 @@ function deduplicateUrls(urls) {
   const urlMap = new Map();
   
   for (const url of urls) {
-    const canonical = url.loc.replace(/\/$/, ''); // Remove trailing slash for comparison
+    // ✅ SEO FIX: Normalize URL for comparison (add trailing slash if missing)
+    let canonical = url.loc;
+    if (!canonical.endsWith('/')) {
+      canonical = canonical + '/';
+    }
     const existing = urlMap.get(canonical);
     
     if (!existing) {
@@ -91,9 +95,10 @@ function generateSitemapXML(urls) {
     if (!loc.startsWith('http')) {
       loc = loc.startsWith('/') ? `${cfg.siteUrl}${loc}` : `${cfg.siteUrl}/${loc}`;
     }
-    // Remove trailing slash for consistency (except root)
-    if (loc !== `${cfg.siteUrl}/` && loc.endsWith('/')) {
-      loc = loc.slice(0, -1);
+    // ✅ SEO FIX: ADD trailing slash for consistency with canonicals (except root which already has one)
+    // URLs should match the canonical URLs in stubs (which have trailing slashes)
+    if (loc !== `${cfg.siteUrl}/` && !loc.endsWith('/')) {
+      loc = loc + '/';
     }
     
     xml += '  <url>\n';
