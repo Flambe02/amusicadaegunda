@@ -115,26 +115,28 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
           title={title || 'YouTube Short'}
           frameBorder="0"
           referrerPolicy="strict-origin-when-cross-origin"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-      <iframe
-        className="w-full h-full"
-        src={embedSrc}
-        title={title || 'YouTube'}
-        frameBorder="0"
-        referrerPolicy="strict-origin-when-cross-origin"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        loading="lazy"
+        loading="eager"
+        fetchpriority="high"
       />
+    </div>
+  );
+}
+
+return (
+  <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+    <iframe
+      className="w-full h-full"
+      src={embedSrc}
+      title={title || 'YouTube'}
+      frameBorder="0"
+      referrerPolicy="strict-origin-when-cross-origin"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowFullScreen
+      loading="eager"
+      fetchpriority="high"
+    />
     </div>
   );
 }
@@ -457,7 +459,8 @@ export default function Home() {
               src="images/Musica da segunda.jpg" 
               alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
               className="w-full h-full object-cover"
-              loading="lazy"
+              loading="eager"
+              fetchpriority="high"
             />
           </div>
           

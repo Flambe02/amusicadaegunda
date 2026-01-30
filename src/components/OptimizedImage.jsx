@@ -18,6 +18,7 @@ export default function OptimizedImage({
   className = '',
   loading = 'lazy',
   decoding = 'async',
+  fetchpriority, // ✅ LCP FIX: Support fetchpriority pour les images critiques
   ...props
 }) {
   const [imageError, setImageError] = useState(false);
@@ -87,6 +88,7 @@ export default function OptimizedImage({
         className={className}
         loading={loading}
         decoding={decoding}
+        fetchpriority={fetchpriority}
         onError={handleImageError}
         {...props}
       />
@@ -113,6 +115,7 @@ export default function OptimizedImage({
         className={className}
         loading={loading}
         decoding={decoding}
+        fetchpriority={fetchpriority}
         onError={handleImageError}
         {...props}
       />

@@ -206,6 +206,7 @@ function extractScriptsFromIndex() {
 
     // Contenu HTML statique visible avant le chargement React
     // ✅ Inclure iframe YouTube si disponible (requis pour Google "watch page")
+    // ✅ LCP FIX: loading="eager" et fetchpriority="high" car c'est l'élément LCP principal
     const videoEmbedHtml = embedSrc ? `
   <div style="margin: 2rem 0;">
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -216,7 +217,8 @@ function extractScriptsFromIndex() {
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowfullscreen
-        loading="lazy"
+        loading="eager"
+        fetchpriority="high"
       ></iframe>
     </div>
   </div>` : `

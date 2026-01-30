@@ -60,7 +60,8 @@
     <meta name="description" content="A Música da Segunda - Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira com humor e criatividade." />
     <meta name="keywords" content="música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes" />
     <meta name="author" content="Música da Segunda" />
-    <meta name="robots" content="index, follow" />
+    <!-- ✅ SEO FIX: max-video-preview:0 empêche Google d'indexer la vidéo sur la homepage -->
+    <meta name="robots" content="index, follow, max-video-preview:0" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -85,6 +86,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- TikTok, Spotify, Apple Music, YouTube : préconnexions différées (chargées lazy) -->
+    
+    <!-- ✅ LCP FIX: Preload de l'image critique (logo) pour améliorer Core Web Vitals -->
+    <link rel="preload" href="/images/Musica da segunda.jpg" as="image" fetchpriority="high">
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
     
     <!-- Security Headers -->
     <!-- Note: X-Frame-Options doit être défini via en-tête HTTP (_headers), pas via meta -->
@@ -162,7 +167,7 @@
       ]
     }
     </script>
-    <script type="module" crossorigin src="/assets/index-D-0jHTo2.js"></script>
+    <script type="module" crossorigin src="/assets/index-Dn5Q9LmQ.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-D5WEy15Z.css">
   </head>
   <body>
