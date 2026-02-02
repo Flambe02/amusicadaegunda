@@ -21,6 +21,13 @@ Disallow: /login
 # Bloquer les URLs avec hash (non indexables par Google)
 Disallow: /#/
 
+# ✅ SEO FIX: Bloquer le template SearchAction (Google crawle littéralement {search_term_string})
+Disallow: /*?q=*
+Disallow: /?q=
+
+# ✅ SEO FIX: Bloquer les anciennes URLs /chansons/ (migrées vers /musica/)
+Disallow: /chansons/
+
 # Bloquer l'accès aux fichiers de développement
 Disallow: /src/
 Disallow: /node_modules/

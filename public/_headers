@@ -1,6 +1,23 @@
 # Headers optimaux pour GitHub Pages + Cloudflare
 # Améliore performance et sécurité
 
+# ===== REDIRECTIONS SEO - ANCIENNES URLS =====
+# Indiquer à Google que ces pages sont des redirections et ne doivent pas être indexées
+/chansons/*
+  X-Robots-Tag: noindex, follow
+  Link: </musica/>; rel="canonical"
+  Cache-Control: public, max-age=86400
+
+/home/*
+  X-Robots-Tag: noindex, follow
+  Link: </>; rel="canonical"
+  Cache-Control: public, max-age=86400
+
+/playlist/*
+  X-Robots-Tag: noindex, follow
+  Link: </musica/>; rel="canonical"
+  Cache-Control: public, max-age=86400
+
 # ===== ASSETS STATIQUES (Cache 1 an) =====
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
