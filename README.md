@@ -292,4 +292,98 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 
 ---
 
+## 📋 Journal de Développement
+
+> Historique des développements et corrections pour maintenir une mémoire exacte du projet.
+
+### 2026-02-02 - Corrections SEO Google Search Console
+
+#### Problèmes identifiés
+1. **"Page with redirect"** (4 pages)
+   - `http://amusicadasegunda.com/` → Redirection HTTP normale
+   - `https://amusicadasegunda.com/` → Redirection sans-www normale
+   - `http://www.amusicadasegunda.com/` → Redirection HTTP normale
+   - `/chansons/debaixo-da-pia` → Ancienne URL migrée vers `/musica/`
+
+2. **"Alternate page with proper canonical tag"** (3 pages)
+   - `/?q=%7Bsearch_term_string%7D` → Template SearchAction crawlé littéralement
+   - `/musica/apagao-nao-e-refrao/` → Version avec/sans trailing slash (informatif)
+   - `/chansons/check-in-da-cop/` → Redirection vers `/musica/` (normal)
+
+#### Corrections appliquées
+
+**Fichiers modifiés :**
+- `docs/_headers` et `public/_headers`
+  - Ajout `X-Robots-Tag: noindex, follow` pour `/chansons/*`, `/home/*`, `/playlist/*`
+  - Ajout `Link: </musica/>; rel="canonical"` pour les redirections
+
+- `docs/robots.txt` et `public/robots.txt`
+  - Ajout `Disallow: /*?q=*` pour bloquer le template SearchAction
+  - Ajout `Disallow: /chansons/` pour bloquer les anciennes URLs
+
+**Actions manuelles GSC :**
+- Demande de suppression de `/?q=%7Bsearch_term_string%7D` ✅
+- Demande de suppression de `/chansons/debaixo-da-pia` ✅
+
+**Documentation :**
+- Création de `CORRECTION_REDIRECTIONS_GSC.md` avec guide complet
+
+#### Commits
+```
+97ee677 fix(seo): correct GSC redirect and canonical errors
+f1c4dbd SEO FIX: Uniformize trailing slash in sitemaps
+bff3636 perf(lcp): optimisations Core Web Vitals
+b6f41e6 fix(seo): ajouter noindex aux stubs de redirection
+```
+
+---
+
+### Architecture SEO actuelle
+
+#### Structure des URLs
+```
+✅ Canonique : https://www.amusicadasegunda.com/musica/{slug}/
+❌ Obsolète  : https://www.amusicadasegunda.com/chansons/{slug} → redirige vers /musica/
+```
+
+#### Fichiers SEO critiques
+| Fichier | Rôle |
+|---------|------|
+| `docs/robots.txt` | Règles de crawl pour les bots |
+| `docs/_headers` | Headers HTTP (Cloudflare) |
+| `docs/sitemap-index.xml` | Index des sitemaps |
+| `docs/sitemap-songs.xml` | URLs des chansons |
+| `docs/sitemap-pages.xml` | URLs des pages statiques |
+| `scripts/generate-stubs.cjs` | Génère les pages HTML statiques avec JSON-LD |
+| `scripts/seo-templates.cjs` | Templates SEO (meta tags, JSON-LD) |
+
+#### JSON-LD Schemas utilisés
+- `Organization` - Identité de la marque
+- `WebSite` + `SearchAction` - Recherche sur le site
+- `MusicRecording` - Pages de chansons
+- `MusicPlaylist` - Page /musica/
+- `VideoObject` - Vidéos YouTube intégrées
+- `BreadcrumbList` - Fil d'Ariane
+
+---
+
+### Commandes de développement SEO
+
+```bash
+# Générer les stubs HTML statiques
+npm run build
+node scripts/generate-stubs.cjs
+
+# Vérifier les sitemaps
+curl https://www.amusicadasegunda.com/sitemap-index.xml
+
+# Tester les headers (via Cloudflare)
+curl -I https://www.amusicadasegunda.com/chansons/debaixo-da-pia/
+
+# Valider le JSON-LD
+# → https://search.google.com/test/rich-results
+```
+
+---
+
 **🎵 Música da Segunda - Descubra música nova toda segunda-feira! 🎵**
