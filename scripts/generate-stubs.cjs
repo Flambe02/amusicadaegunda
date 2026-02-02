@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
-const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd, videoObjectJsonLd, extractYouTubeId, buildYouTubeUrls } = require('./seo-templates.cjs');
+const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd, extractYouTubeId, buildYouTubeUrls } = require('./seo-templates.cjs');
+// Note: videoObjectJsonLd removed - Google error "Video isn't on a watch page"
 
 const cfg = require('./seo.config.json');
 const songsPath = path.resolve('content', 'songs.json');
@@ -254,33 +255,11 @@ function extractScriptsFromIndex() {
       })
     ];
 
-    // Ajouter VideoObject si YouTube URL disponible (youtube_music_url ou youtube_url)
-    // ✅ Réutiliser videoId déjà extrait pour l'iframe
-    if (youtubeUrl && videoId) {
-      const youtubeUrls = buildYouTubeUrls(videoId);
-      if (youtubeUrls) {
-        // Formater uploadDate avec timezone (format ISO 8601 complet)
-        let uploadDate = new Date().toISOString();
-        if (s.datePublished) {
-          const dateStr = s.datePublished;
-          if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-            uploadDate = `${dateStr}T00:00:00-03:00`; // Timezone BR (UTC-3)
-          } else {
-            uploadDate = dateStr;
-          }
-        }
-        
-        const videoSchema = videoObjectJsonLd({
-          title: s.name,
-          description: desc,
-          thumbnailUrl: youtubeUrls.thumbnailUrl,
-          embedUrl: youtubeUrls.embedUrl,
-          contentUrl: youtubeUrls.contentUrl,
-          uploadDate: uploadDate
-        });
-        jsonldSchemas.push(videoSchema);
-      }
-    }
+    // ❌ VideoObject REMOVED - Google error "Video isn't on a watch page"
+    // Ces pages sont des MusicRecording, pas des pages dédiées aux vidéos.
+    // Google refuse d'indexer les VideoObject sur des pages mixtes (musique + vidéo + texte).
+    // Le MusicRecording est suffisant pour le SEO. Les vidéos YouTube sont découvertes via les iframes.
+    // Voir: https://developers.google.com/search/docs/appearance/video
 
     const html = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
@@ -318,34 +297,7 @@ function extractScriptsFromIndex() {
       })
     ];
 
-    // Ajouter VideoObject si YouTube URL disponible (même logique que ci-dessus)
-    if (youtubeUrl) {
-      const videoId = extractYouTubeId(youtubeUrl);
-      if (videoId) {
-        const youtubeUrls = buildYouTubeUrls(videoId);
-        if (youtubeUrls) {
-          let uploadDate = new Date().toISOString();
-          if (s.datePublished) {
-            const dateStr = s.datePublished;
-            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-              uploadDate = `${dateStr}T00:00:00-03:00`;
-            } else {
-              uploadDate = dateStr;
-            }
-          }
-          
-          const videoSchema = videoObjectJsonLd({
-            title: s.name,
-            description: desc,
-            thumbnailUrl: youtubeUrls.thumbnailUrl,
-            embedUrl: youtubeUrls.embedUrl,
-            contentUrl: youtubeUrls.contentUrl,
-            uploadDate: uploadDate
-          });
-          jsonldSchemasNoSlash.push(videoSchema);
-        }
-      }
-    }
+    // ❌ VideoObject REMOVED - Same reason as above (not a watch page)
 
     const htmlNoSlash = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,

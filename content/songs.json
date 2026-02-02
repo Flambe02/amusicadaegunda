@@ -1,5 +1,21 @@
 [
   {
+    "slug": "papudinha",
+    "name": "Papudinha",
+    "datePublished": "2026-02-02",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/2mIepoEHFVSulwieZXXDwD?si=847add4428184b77",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    },
+    "youtube_music_url": "https://youtube.com/shorts/FqlsxZlf-hQ",
+    "youtube_url": "https://music.youtube.com/watch?v=k7tXaefNaJ0&si=RmNdjFZclc7a5VVL",
+    "description": "A semana entregou um roteiro pronto: depois de decisão do STF, Jair Bolsonaro foi transferido para a chamada Papudinha, dentro do Complexo da Papuda. A transferência foi determinada pelo ministro Alexandre de Moraes, com a justificativa de adequação do local e suporte, inclusive médico, além de regras de visita.\n\nE aí nasce “Papudinha”: uma crônica cantada da rotina registrada em relatórios e despachos que circularam na imprensa, descrevendo caminhada, horários, acompanhamento de saúde, visitas e o dia a dia bem mais “organizado” do que o personagem gostaria de admitir. O mito vira monge, o capitão vira silencioso profissional e a cela vira palco de um teatro involuntário.\n\nNa sátira, a piada é simples: quando a política vira liturgia, até bolacha vira “ração patriótica”. A letra cutuca a mistura de moralismo, disciplina performática e paranoia cotidiana, tudo dentro de um quadrado onde a ordem mais repetida é “silêncio”. O humor é leve, mas o recado é direto: o Brasil não aguenta mais live imaginária, artigo divino inventado e continência para a própria culpa."
+  },
+  {
     "slug": "o-nome-dele-e-pedro",
     "name": "O nome dele é Pedro",
     "datePublished": "2026-01-26",

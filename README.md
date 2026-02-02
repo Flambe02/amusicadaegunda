@@ -338,6 +338,45 @@ b6f41e6 fix(seo): ajouter noindex aux stubs de redirection
 
 ---
 
+### 2026-02-02 - Correction "Video isn't on a watch page"
+
+#### Problème identifié
+Google Search Console signale 15 vidéos avec l'erreur "Video isn't on a watch page" :
+- `/musica/nobel-prize` - VideoObject sur page musicale
+- `/musica/o-croissant` - VideoObject + duplication avec/sans trailing slash
+- Homepage `/` - Embed YouTube détecté
+
+#### Cause
+Les pages `/musica/` sont des pages de **MusicRecording** (musique), pas des pages de **vidéo** dédiées.
+Google refuse d'indexer le `VideoObject` JSON-LD car la vidéo n'est pas le contenu principal unique de la page.
+
+Critères Google pour une "watch page" :
+- La vidéo doit être le contenu principal unique
+- La vidéo doit être visible dans la viewport sans scroll
+- La page doit être dédiée exclusivement à la vidéo
+
+#### Correction appliquée
+**Fichier modifié : `scripts/generate-stubs.cjs`**
+- Suppression du `VideoObject` JSON-LD des pages de chansons
+- Le `MusicRecording` est conservé (suffisant pour le SEO audio)
+- Les iframes YouTube restent pour l'UX (les vidéos sont toujours visibles)
+
+```javascript
+// ❌ VideoObject REMOVED - Google error "Video isn't on a watch page"
+// Ces pages sont des MusicRecording, pas des pages dédiées aux vidéos.
+```
+
+#### Impact
+- Les pages `/musica/` ne seront plus signalées comme erreurs vidéo
+- Les vidéos YouTube restent intégrées via iframe
+- Le SEO audio via `MusicRecording` continue de fonctionner
+
+#### Actions GSC
+- Valider la correction dans Video indexing → "Video isn't on a watch page"
+- Délai estimé : 2-4 semaines
+
+---
+
 ### Architecture SEO actuelle
 
 #### Structure des URLs
@@ -362,8 +401,8 @@ b6f41e6 fix(seo): ajouter noindex aux stubs de redirection
 - `WebSite` + `SearchAction` - Recherche sur le site
 - `MusicRecording` - Pages de chansons
 - `MusicPlaylist` - Page /musica/
-- `VideoObject` - Vidéos YouTube intégrées
 - `BreadcrumbList` - Fil d'Ariane
+- ~~`VideoObject`~~ - Retiré (erreur "Video isn't on a watch page")
 
 ---
 
