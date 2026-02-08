@@ -168,14 +168,16 @@ export default function SongPage() {
   // useSEO ajoute automatiquement "| Música da Segunda" au titre, donc on ne le met pas ici
   // Normaliser l'URL (sans trailing slash) pour éviter les doublons
   const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}` : '/musica';
-  // ✅ SEO: max-video-preview:0 empêche Google d'indexer la vidéo embarquée (pas une "watch page")
+  // ✅ SEO: type='music.song' pour og:type, max-video-preview:0 (pas une "watch page")
+  // NOTE: Ne PAS utiliser type='article' — la page est un MusicRecording, pas un Article.
+  // Le JSON-LD MusicRecording est injecté séparément par seo-jsonld.js (plus précis).
   useSEO({
     title: song ? song.title : (slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda'),
     description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : `Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.`,
     keywords: song ? `${song.title}, música da segunda, paródias musicais` : `música da segunda, paródias musicais`,
     image: song?.cover_image,
     url: normalizedUrl,
-    type: 'article',
+    type: 'music.song',
     robots: 'index, follow, max-video-preview:0'
   });
 

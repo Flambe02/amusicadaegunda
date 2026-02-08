@@ -167,14 +167,28 @@
       ]
     }
     </script>
-    <script type="module" crossorigin src="/assets/index-BrZh7KVw.js"></script>
+    <script type="module" crossorigin src="/assets/index-F4Aby7z0.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-D5WEy15Z.css">
   </head>
   <body>
     <!-- Skip link pour accessibilité -->
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
     
-    <div id="root"></div>
+    <div id="root">
+      <!-- ✅ SEO: Contenu statique visible pour les crawlers avant le chargement React -->
+      <!-- React remplace ce contenu à l'hydratation -->
+      <main id="main" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
+        <h1 style="font-size: 2.5rem; font-weight: bold; color: #111; margin-bottom: 1rem;">A Música da Segunda</h1>
+        <p style="font-size: 1.25rem; color: #555; margin-bottom: 2rem;">Nova música toda segunda-feira! Paródias musicais inteligentes sobre as notícias do Brasil.</p>
+        <nav aria-label="Navegação principal">
+          <ul style="list-style: none; padding: 0; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+            <li><a href="/musica/" style="color: #2563eb; font-weight: 600;">Todas as Músicas</a></li>
+            <li><a href="/sobre/" style="color: #2563eb; font-weight: 600;">Sobre</a></li>
+            <li><a href="/calendar/" style="color: #2563eb; font-weight: 600;">Calendário</a></li>
+          </ul>
+        </nav>
+      </main>
+    </div>
     <script src="/pwa-install.js"></script>
     
   </body>

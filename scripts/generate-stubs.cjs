@@ -56,12 +56,30 @@ function extractScriptsFromIndex() {
   const playlistTitle = 'Playlist Completa - Todas as Músicas | A Música da Segunda';
   const playlistDesc = 'Playlist completa com todas as paródias musicais inteligentes sobre as notícias do Brasil. Ouça no Spotify, Apple Music e YouTube Music.';
   
+  // ✅ SEO: Contenu statique visible pour les crawlers sans JavaScript
+  const songListHtml = songs.map(s =>
+    `    <li style="margin-bottom: 0.5rem;"><a href="${siteUrl}/musica/${s.slug}/" style="color: #2563eb; text-decoration: none;">${s.name}</a>${s.byArtist?.name ? ` — ${s.byArtist.name}` : ''}</li>`
+  ).join('\n');
+
+  const playlistBody = `
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 2rem;">
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111;">Todas as Músicas</h1>
+  <p style="font-size: 1.125rem; color: #666; margin-bottom: 1.5rem;">${playlistDesc}</p>
+  <nav aria-label="Lista de músicas">
+    <ol style="list-style: decimal; padding-left: 1.5rem;">
+${songListHtml}
+    </ol>
+  </nav>
+  <p style="margin-top: 1.5rem;"><a href="${siteUrl}/" style="color: #2563eb;">← Voltar ao início</a></p>
+</div>`;
+
   const playlistHtml = baseHtml({
     lang: cfg.defaultLocale,
     title: playlistTitle,
     desc: playlistDesc,
     url: playlistUrl,
     image: `${siteUrl}${IMAGE}`,
+    body: playlistBody,
     jsonld: [
       org,
       website,

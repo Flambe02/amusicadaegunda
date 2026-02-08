@@ -464,4 +464,137 @@ curl -I https://www.amusicadasegunda.com/chansons/debaixo-da-pia/
 
 ---
 
+## SEO
+
+### Audit complet (2026-02-08)
+
+**Score global : 8.7/10** — Bonne base SEO, avec corrections P0 appliquées.
+
+#### Architecture SEO du site
+
+| Composant | Technologie | Rôle |
+|-----------|-------------|------|
+| Framework | React (Vite) SPA | Rendu client-side |
+| Stubs statiques | `scripts/generate-stubs.cjs` | HTML pré-rendu pour crawlers |
+| Templates HTML | `scripts/seo-templates.cjs` | Génération des meta + JSON-LD |
+| Meta dynamiques | `src/hooks/useSEO.js` | Met à jour title/description/canonical/robots au runtime |
+| JSON-LD dynamique | `src/lib/seo-jsonld.js` | MusicRecording, BreadcrumbList, MusicPlaylist |
+| Sitemaps | `scripts/generate-sitemap-unified.cjs` | sitemap-index.xml, sitemap-pages.xml, sitemap-songs.xml |
+| Déploiement | `docs/` (GitHub Pages) | Fichiers statiques servis |
+
+#### Points forts
+
+- **Dual-layer SEO** : Stubs HTML statiques + composants React — Google voit du contenu avec ET sans JS
+- **Structured data complet** : WebSite + SearchAction, Organization, MusicRecording, BreadcrumbList, MusicPlaylist
+- **Pas de doublons** : Redirections /chansons/ → /musica/, /home → /, /playlist → /musica/
+- **Canonicals cohérents** : Tous en `https://www.amusicadasegunda.com/` (www, https, trailing slash unifié)
+- **Sitemaps automatiques** : 40 URLs (6 pages + 34 chansons), générées à chaque build
+- **robots.txt propre** : Bloque /admin, /login, hash routes, anciens URLs
+- **Service Worker SEO-safe** : Network-first, pas de contenu périmé pour les crawlers
+
+#### Backlog SEO (P0 / P1 / P2)
+
+##### P0 — Appliqué (2026-02-08)
+
+| Fix | Problème | Fichier(s) | Rollback |
+|-----|----------|------------|----------|
+| H1 statique sur homepage | `<div id="root"></div>` vide — crawlers sans JS ne voyaient aucun contenu | `index.html` (racine Vite) | Supprimer le contenu dans `<div id="root">` |
+| H1 + liste de liens sur /musica/ | Stub playlist sans body — aucun contenu indexable | `scripts/generate-stubs.cjs` | Retirer le paramètre `body` de `baseHtml()` pour playlist |
+| Fix JSON-LD type Article vs MusicRecording | `useSEO` avec `type: 'article'` générait un `Article` JSON-LD en conflit avec `MusicRecording` | `src/pages/Song.jsx` | Changer `type: 'music.song'` → `type: 'article'` |
+| VideoObject supprimé du React (commit précédent) | Song.jsx injectait VideoObject JSON-LD au runtime → erreur GSC | `src/pages/Song.jsx`, `src/lib/seo-jsonld.js` | Restaurer la fonction `videoObjectJsonLd` |
+| max-video-preview:0 sur toutes les pages | Google détectait les iframes YouTube comme vidéos | `seo-templates.cjs`, `Song.jsx`, `index.html` | Retirer `max-video-preview:0` du meta robots |
+
+##### P1 — À faire prochainement
+
+| Item | Pourquoi | Fichier(s) |
+|------|----------|------------|
+| OG images spécifiques par chanson | Toutes les chansons utilisent l'icône PWA générique pour og:image → mauvais CTR sur réseaux sociaux | Uploader des `cover_image` dans Supabase, vérifier `export-songs-from-supabase.cjs` |
+| Breadcrumbs en HTML statique | Les breadcrumbs n'existent qu'en JSON-LD, pas en HTML visible | `generate-stubs.cjs` — ajouter un `<nav>` avec breadcrumbs |
+| Lyrics dans les stubs statiques | Les paroles ne sont pas dans le HTML pré-rendu (seulement après chargement React) | `generate-stubs.cjs` — exporter `lyrics` dans songs.json puis l'inclure dans le body |
+
+##### P2 — Plus tard
+
+| Item | Pourquoi |
+|------|----------|
+| FAQPage schema sur la homepage | Eligible pour les rich snippets FAQ dans Google |
+| Bundle splitting avancé | Le bundle principal fait 634 KB (minifié), au-dessus du seuil de 500 KB |
+| hreflang si traductions | Pas nécessaire tant que le site est PT-BR uniquement |
+| Video sitemap | Uniquement si on veut que Google indexe les vidéos YouTube (actuellement bloqué volontairement) |
+
+#### Règle CRITIQUE : Dual-layer
+
+> **TOUJOURS corriger les deux couches quand on touche au SEO :**
+> 1. **Stubs statiques** (`scripts/generate-stubs.cjs` + `scripts/seo-templates.cjs`)
+> 2. **Composants React** (`src/pages/*.jsx` + `src/lib/seo-jsonld.js` + `src/hooks/useSEO.js`)
+>
+> Google exécute JavaScript ! Un fix uniquement côté statique est insuffisant.
+> Le hook `useSEO` ÉCRASE les meta tags statiques lors de l'hydratation React.
+
+#### Directives meta robots par page
+
+| Page | Robots | Raison |
+|------|--------|--------|
+| Homepage `/` | `index, follow, max-video-preview:0` | Empêche indexation vidéo iframe YouTube |
+| Pages `/musica/{slug}` | `index, follow, max-video-preview:0` | Idem — pas des "watch pages" |
+| Playlist `/musica/` | `index, follow, max-video-preview:0` | Template global |
+| Redirections (/chansons/, /home, /playlist) | `noindex, follow` | Ne pas indexer les doublons |
+| Page 404 | `noindex, follow` | Ne pas indexer les erreurs |
+
+#### JSON-LD schemas
+
+| Schema | Page(s) | Fichier |
+|--------|---------|---------|
+| WebSite + SearchAction | Homepage, toutes les pages (stubs) | `seo-templates.cjs`, `index.html` |
+| Organization | Homepage, toutes les pages (stubs) | `seo-templates.cjs`, `index.html` |
+| MusicRecording + ListenAction | Pages `/musica/{slug}` | `seo-templates.cjs` (stubs), `seo-jsonld.js` (React) |
+| BreadcrumbList | Pages `/musica/{slug}` | `seo-templates.cjs` (stubs), `seo-jsonld.js` (React) |
+| MusicPlaylist | Page `/musica/` | `seo-templates.cjs` |
+| ~~VideoObject~~ | **SUPPRIMÉ** | Erreur GSC "Video isn't on a watch page" |
+
+#### Vérification (commandes locales)
+
+```bash
+# Vérifier H1 sur les 3 pages clés
+grep "<h1" docs/index.html
+grep "<h1" docs/musica/index.html
+grep "<h1" docs/musica/groenlandia/index.html
+
+# Vérifier aucun VideoObject dans le build
+grep -r "VideoObject" docs/
+
+# Vérifier max-video-preview sur toutes les pages
+grep "max-video-preview" docs/index.html
+grep "max-video-preview" docs/musica/index.html
+grep "max-video-preview" docs/musica/groenlandia/index.html
+
+# Vérifier les sitemaps
+curl https://www.amusicadasegunda.com/sitemap-index.xml
+
+# Valider le JSON-LD
+# → https://search.google.com/test/rich-results
+# → https://validator.schema.org/
+```
+
+#### Vérification Google Search Console
+
+1. **Indexation** : Coverage → vérifier que toutes les 40 URLs sont indexées
+2. **Vidéo** : Video indexing → "Video isn't on a watch page" → relancer validation
+3. **Rich results** : Enhancements → vérifier MusicRecording, BreadcrumbList
+4. **Sitemaps** : Sitemaps → vérifier que sitemap-index.xml est soumis et sans erreurs
+5. **Core Web Vitals** : Experience → vérifier LCP, CLS, INP
+
+#### Routine SEO (hebdomadaire/mensuelle)
+
+**Chaque semaine :**
+- Vérifier GSC Coverage pour nouvelles erreurs
+- Vérifier que les nouvelles chansons apparaissent dans le sitemap après build
+
+**Chaque mois :**
+- Vérifier les performances (Core Web Vitals) dans GSC
+- Vérifier les rich results (MusicRecording) dans GSC
+- Rechercher "A Música da Segunda" dans Google pour vérifier le positionnement
+- Vérifier le rapport "Links" dans GSC pour les backlinks
+
+---
+
 **🎵 Música da Segunda - Descubra música nova toda segunda-feira! 🎵**
