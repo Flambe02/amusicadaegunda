@@ -408,6 +408,38 @@ Validation GSC échouée le 2/5/26 — 15 vidéos toujours en erreur (2 failed, 
 
 ---
 
+### 2026-02-08 - Fix canonical trailing slash + robots.txt /chansons/
+
+#### Problèmes identifiés (GSC)
+
+1. **"Alternate page with proper canonical tag"** — Mismatch canonical trailing slash
+   - Stubs statiques et sitemaps utilisent `/musica/{slug}/` (avec trailing slash)
+   - Mais `Song.jsx` via `useSEO` générait un canonical **sans** trailing slash : `/musica/{slug}`
+   - Google voyait deux canonicals différents → signalement comme page alternative
+
+2. **"Excluded by noindex" pour /home et /home/**
+   - Comportement CORRECT — ces pages sont des stubs de redirection avec `noindex`
+   - Aucune action requise
+
+3. **robots.txt bloquait /chansons/ avec Disallow**
+   - Les pages `/chansons/` ont `noindex` + `canonical → /musica/` dans leur HTML
+   - Mais `Disallow: /chansons/` empêchait Google de crawler ces pages
+   - Résultat : Google ne pouvait pas lire le `noindex` ni le `canonical` → signaux conflictuels
+
+#### Corrections appliquées
+
+| Fichier | Modification |
+|---------|-------------|
+| `src/pages/Song.jsx` | URL canonique avec trailing slash : `/musica/${slug}/` au lieu de `/musica/${slug}` |
+| `public/robots.txt` | Suppression de `Disallow: /chansons/` — laisser Google lire le noindex+canonical HTML |
+
+#### Leçon apprise
+> **robots.txt Disallow vs HTML noindex** : Si robots.txt bloque une URL, Google ne peut PAS lire le HTML de cette page.
+> Donc les directives `noindex` et `canonical` dans le HTML sont invisibles.
+> Pour les pages avec redirection/canonical, préférer laisser Google crawler et lire le HTML noindex+canonical.
+
+---
+
 ### Architecture SEO actuelle
 
 #### Structure des URLs
@@ -503,6 +535,8 @@ curl -I https://www.amusicadasegunda.com/chansons/debaixo-da-pia/
 | Fix JSON-LD type Article vs MusicRecording | `useSEO` avec `type: 'article'` générait un `Article` JSON-LD en conflit avec `MusicRecording` | `src/pages/Song.jsx` | Changer `type: 'music.song'` → `type: 'article'` |
 | VideoObject supprimé du React (commit précédent) | Song.jsx injectait VideoObject JSON-LD au runtime → erreur GSC | `src/pages/Song.jsx`, `src/lib/seo-jsonld.js` | Restaurer la fonction `videoObjectJsonLd` |
 | max-video-preview:0 sur toutes les pages | Google détectait les iframes YouTube comme vidéos | `seo-templates.cjs`, `Song.jsx`, `index.html` | Retirer `max-video-preview:0` du meta robots |
+| Canonical trailing slash cohérent | `useSEO` générait `/musica/{slug}` sans slash, stubs/sitemaps avec slash → mismatch | `src/pages/Song.jsx` | Retirer le `/` final dans normalizedUrl |
+| robots.txt ne bloque plus /chansons/ | Disallow empêchait Google de lire noindex+canonical HTML | `public/robots.txt` | Ré-ajouter `Disallow: /chansons/` |
 
 ##### P1 — À faire prochainement
 

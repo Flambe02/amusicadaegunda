@@ -166,8 +166,9 @@ export default function SongPage() {
 
   // SEO optimization for the song page
   // useSEO ajoute automatiquement "| Música da Segunda" au titre, donc on ne le met pas ici
-  // Normaliser l'URL (sans trailing slash) pour éviter les doublons
-  const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}` : '/musica';
+  // ✅ SEO FIX: URL canonique AVEC trailing slash — cohérent avec sitemap et stubs statiques
+  // Sans ça, React écrasait le canonical statique (/musica/slug/) par un sans slash (/musica/slug)
+  const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}/` : '/musica/';
   // ✅ SEO: type='music.song' pour og:type, max-video-preview:0 (pas une "watch page")
   // NOTE: Ne PAS utiliser type='article' — la page est un MusicRecording, pas un Article.
   // Le JSON-LD MusicRecording est injecté séparément par seo-jsonld.js (plus précis).

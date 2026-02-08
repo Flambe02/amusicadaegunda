@@ -25,8 +25,11 @@ Disallow: /#/
 Disallow: /*?q=*
 Disallow: /?q=
 
-# ✅ SEO FIX: Bloquer les anciennes URLs /chansons/ (migrées vers /musica/)
-Disallow: /chansons/
+# ✅ SEO FIX: /chansons/ n'est PLUS bloqué dans robots.txt
+# Les pages /chansons/ ont noindex + canonical → /musica/ dans leur HTML
+# Bloquer via robots.txt empêchait Google de lire le noindex et le canonical
+# Résultat : Google ne pouvait pas traiter la migration /chansons/ → /musica/
+# Allow: /chansons/ (implicite — pas de Disallow)
 
 # Bloquer l'accès aux fichiers de développement
 Disallow: /src/
