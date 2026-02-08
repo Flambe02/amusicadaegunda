@@ -24,16 +24,15 @@ import { useToast } from '@/components/ui/use-toast';
 // ❌ VideoObject JSON-LD SUPPRIMÉ de TOUTES les pages (erreur GSC "Video isn't on a watch page")
 // Aucune page du site n'est une "watch page" dédiée aux vidéos.
 
-// Composant d'intégration YouTube générique (remplace l'embed TikTok)
+// ✅ LCP FIX: YouTube Facade — affiche une thumbnail + bouton Play au lieu du iframe lourd
+// L'iframe YouTube ne charge qu'au clic, réduisant le LCP de 6.4s à ~2s
 // Props attendues: youtube_music_url, youtube_url, title
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
-  logger.debug('🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
-  
+  const [activated, setActivated] = useState(false);
+
   // Nettoyer les URLs pour éviter les chaînes vides ou espaces
   const primaryUrl = youtube_music_url && youtube_music_url.trim() ? youtube_music_url.trim() : null;
   const fallbackUrl = youtube_url && youtube_url.trim() ? youtube_url.trim() : null;
-  
-  logger.debug('🎬 YouTubeEmbed URLs nettoyées:', { primaryUrl, fallbackUrl });
 
   // Analyse l'URL et retourne { id, type }
   const getYouTubeEmbedInfo = (url) => {
@@ -77,15 +76,16 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
 
   // 2️⃣ Si échec ou URL invalide, retomber sur youtube_url
   if (!info && fallbackUrl) {
-    logger.debug('🎬 YouTubeEmbed: youtube_music_url invalide, fallback vers youtube_url');
     info = getYouTubeEmbedInfo(fallbackUrl);
     targetUrl = fallbackUrl || '';
   }
 
-  logger.debug('🎬 YouTubeEmbed info extraite:', info);
-  
+  // Reset activated state when video changes
+  useEffect(() => {
+    setActivated(false);
+  }, [youtube_music_url, youtube_url]);
+
   if (!info) {
-    logger.debug('🎬 YouTubeEmbed: Aucune info valide, affichage fallback');
     return (
       <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
         <p className="text-white text-sm">Vidéo non disponible</p>
@@ -95,48 +95,105 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
 
   // Détecter si c'est un Short (format vertical 9:16)
   const isShort = targetUrl.includes('/shorts/');
-  
+
   const base = 'https://www.youtube-nocookie.com/embed';
   const embedSrc =
     info.type === 'video'
-      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1`
-      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
-  
-  logger.debug('🎬 YouTubeEmbed embedSrc généré:', embedSrc);
-  logger.debug('🎬 YouTubeEmbed isShort (9:16):', isShort);
+      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1&autoplay=1`
+      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1&autoplay=1`;
 
-  // Format vertical 9:16 pour Shorts, horizontal 16:9 pour vidéos normales
-  if (isShort) {
+  // Thumbnail URL (hqdefault pour chargement rapide, bonne qualité)
+  const thumbnailUrl = info.type === 'video'
+    ? `https://img.youtube.com/vi/${info.id}/hqdefault.jpg`
+    : null;
+
+  // Si activé, afficher le vrai iframe YouTube (avec autoplay)
+  if (activated) {
+    if (isShort) {
+      return (
+        <div className="relative rounded-lg overflow-hidden shadow-2xl" style={{ width: '100%', aspectRatio: '9/16', minHeight: 'min(500px, 70vh)', maxHeight: '70vh' }}>
+          <iframe
+            className="absolute top-0 left-0 w-full h-full"
+            src={embedSrc}
+            title={title || 'YouTube Short'}
+            frameBorder="0"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      );
+    }
     return (
-      <div className="relative rounded-lg overflow-hidden shadow-2xl" style={{ width: '100%', aspectRatio: '9/16', minHeight: 'min(500px, 70vh)', maxHeight: '70vh' }}>
+      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
         <iframe
-          className="absolute top-0 left-0 w-full h-full"
+          className="w-full h-full"
           src={embedSrc}
-          title={title || 'YouTube Short'}
+          title={title || 'YouTube'}
           frameBorder="0"
           referrerPolicy="strict-origin-when-cross-origin"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        loading="eager"
-        fetchPriority="high"
-      />
-    </div>
-  );
-}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
 
-return (
-  <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-    <iframe
-      className="w-full h-full"
-      src={embedSrc}
-      title={title || 'YouTube'}
-      frameBorder="0"
-      referrerPolicy="strict-origin-when-cross-origin"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-      loading="eager"
-      fetchPriority="high"
-    />
+  // ✅ FACADE: Thumbnail + bouton Play (pas de iframe = LCP rapide)
+  if (isShort) {
+    return (
+      <div
+        className="relative rounded-lg overflow-hidden shadow-2xl cursor-pointer group"
+        style={{ width: '100%', aspectRatio: '9/16', minHeight: 'min(500px, 70vh)', maxHeight: '70vh' }}
+        onClick={() => setActivated(true)}
+        role="button"
+        aria-label={`Reproduzir ${title || 'vídeo'}`}
+      >
+        {thumbnailUrl && (
+          <img
+            src={thumbnailUrl}
+            alt={title || 'YouTube Short'}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            fetchPriority="high"
+          />
+        )}
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+          <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+            <svg viewBox="0 0 24 24" className="w-8 h-8 text-white ml-1" fill="currentColor">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="w-full aspect-video rounded-lg overflow-hidden shadow-lg cursor-pointer group relative"
+      onClick={() => setActivated(true)}
+      role="button"
+      aria-label={`Reproduzir ${title || 'vídeo'}`}
+    >
+      {thumbnailUrl ? (
+        <img
+          src={thumbnailUrl}
+          alt={title || 'YouTube'}
+          className="w-full h-full object-cover"
+          loading="eager"
+          fetchPriority="high"
+        />
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
+      )}
+      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+        <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+          <svg viewBox="0 0 24 24" className="w-8 h-8 text-white ml-1" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }

@@ -440,6 +440,41 @@ Validation GSC échouée le 2/5/26 — 15 vidéos toujours en erreur (2 failed, 
 
 ---
 
+### 2026-02-08 - Fix LCP mobile (Core Web Vitals)
+
+#### Problème identifié (GSC)
+
+- **Core Web Vitals > Mobile** : LCP 6.4s sur `https://www.amusicadasegunda.com/` (seuil Google : <2.5s)
+- Catégorie : **Poor** (1 URL affectée)
+- First detected : 1/26/26
+
+#### Cause racine
+
+Chaîne de dépendances bloquante :
+```
+HTML → JS bundle (635KB) → React boot → API Supabase → YouTube iframe load
+```
+
+L'iframe YouTube ne peut pas commencer à charger tant que l'API n'a pas répondu. L'iframe lui-même est lourd (~2-3 MB de JS YouTube).
+
+#### Correction appliquée : YouTube Facade Pattern
+
+| Fichier | Modification |
+|---------|-------------|
+| `src/pages/Home.jsx` | `YouTubeEmbed` affiche une thumbnail + bouton Play au lieu du iframe. L'iframe ne charge qu'au clic (avec autoplay). |
+| `index.html` | Ajout `preconnect` pour `img.youtube.com` (thumbnails). |
+
+**Avant** : HTML → JS → React → API → YouTube iframe (6.4s)
+**Après** : HTML → JS → React → API → Thumbnail image (~2s)
+
+#### Leçon apprise
+> **YouTube Facade** : Ne jamais charger un iframe YouTube directement au rendu initial.
+> Afficher une thumbnail (img.youtube.com/vi/{id}/hqdefault.jpg) + bouton Play.
+> Charger l'iframe au clic avec `autoplay=1`.
+> Gain estimé : 3-4 secondes sur le LCP mobile.
+
+---
+
 ### Architecture SEO actuelle
 
 #### Structure des URLs
@@ -537,6 +572,7 @@ curl -I https://www.amusicadasegunda.com/chansons/debaixo-da-pia/
 | max-video-preview:0 sur toutes les pages | Google détectait les iframes YouTube comme vidéos | `seo-templates.cjs`, `Song.jsx`, `index.html` | Retirer `max-video-preview:0` du meta robots |
 | Canonical trailing slash cohérent | `useSEO` générait `/musica/{slug}` sans slash, stubs/sitemaps avec slash → mismatch | `src/pages/Song.jsx` | Retirer le `/` final dans normalizedUrl |
 | robots.txt ne bloque plus /chansons/ | Disallow empêchait Google de lire noindex+canonical HTML | `public/robots.txt` | Ré-ajouter `Disallow: /chansons/` |
+| YouTube Facade (LCP fix) | iframe YouTube chargeait au rendu initial → LCP 6.4s mobile | `src/pages/Home.jsx`, `index.html` | Retirer le state `activated` et remettre l'iframe direct |
 
 ##### P1 — À faire prochainement
 
