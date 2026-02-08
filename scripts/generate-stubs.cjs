@@ -332,6 +332,44 @@ ${songListHtml}
     await fs.writeFile(fileNoSlash, htmlWithVersionNoSlash, { encoding: 'utf8' });
   }
 
+  // ✅ LCP FIX: Injecter le preload de la thumbnail YouTube dans dist/index.html
+  // La homepage dépend de JS→React→API pour connaître l'URL de la thumbnail.
+  // En injectant le preload au build-time, le navigateur commence à télécharger
+  // la thumbnail dès le parsing HTML, sans attendre JavaScript.
+  const indexHtmlPath = path.resolve('dist', 'index.html');
+  if (songs.length > 0 && fs.existsSync(indexHtmlPath)) {
+    // Trouver la chanson la plus récente (triée par datePublished desc)
+    const sortedSongs = [...songs].sort((a, b) =>
+      new Date(b.datePublished) - new Date(a.datePublished)
+    );
+    const currentSong = sortedSongs[0];
+    const youtubeUrl = currentSong.youtube_music_url || currentSong.youtube_url;
+    const videoId = youtubeUrl ? extractYouTubeId(youtubeUrl) : null;
+
+    if (videoId) {
+      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+
+      // Injecter le preload de la thumbnail YouTube après le preload du logo
+      const preloadTag = `\n    <!-- ✅ LCP FIX: Preload de la thumbnail YouTube de la chanson actuelle (build-time) -->\n    <link rel="preload" href="${thumbnailUrl}" as="image" fetchpriority="high" crossorigin>`;
+      indexHtml = indexHtml.replace(
+        /(<link rel="preconnect" href="https:\/\/img\.youtube\.com">)/,
+        `$1${preloadTag}`
+      );
+
+      // Injecter la thumbnail dans le contenu statique du <div id="root">
+      // pour que le navigateur la rende immédiatement sans attendre JS
+      const staticThumbnail = `\n        <div style="margin: 1rem auto; max-width: 480px; aspect-ratio: 16/9; border-radius: 0.5rem; overflow: hidden; position: relative;">\n          <img src="${thumbnailUrl}" alt="${currentSong.name} - A Música da Segunda" style="width: 100%; height: 100%; object-fit: cover;" fetchpriority="high" crossorigin>\n          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">\n            <div style="width: 64px; height: 64px; background: rgba(220,38,38,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center;">\n              <svg viewBox="0 0 24 24" width="32" height="32" fill="white"><path d="M8 5v14l11-7z"/></svg>\n            </div>\n          </div>\n        </div>`;
+      indexHtml = indexHtml.replace(
+        /(<nav aria-label="Navegação principal">)/,
+        `${staticThumbnail}\n        $1`
+      );
+
+      fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
+      console.log(`✅ Preload thumbnail YouTube injecté dans index.html (${currentSong.name}, video: ${videoId})`);
+    }
+  }
+
   console.log(`✅ Stubs enriquecidos em ${OUT} (static + songs JSON-LD).`);
 })();
 

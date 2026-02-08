@@ -30,9 +30,27 @@ export default defineConfig(({ command, mode }) => ({
     },
     rollupOptions: {
       output: {
-        // ✅ CHUNK SPLITTING AUTOMATIQUE (Vite gère les dépendances)
-        // On laisse Vite décider comment splitter pour éviter de casser les dépendances
-        manualChunks: undefined,
+        // ✅ PERFORMANCE: Vendor chunk splitting pour chargement parallèle + cache long-terme
+        // Avec HTTP/2, les chunks se téléchargent en parallèle au lieu de séquentiellement
+        // Résultat: 620KB monolithique → ~5 chunks parallèles (le plus gros ~200KB)
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // React core: react, react-dom, scheduler, react-router, helmet
+            if (id.includes('react-dom') || id.includes('/react/') || id.includes('react-router') || id.includes('react-helmet') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+            // Supabase client (~100KB, rarement mis à jour)
+            if (id.includes('@supabase') || id.includes('supabase')) {
+              return 'vendor-supabase';
+            }
+            // date-fns (~30KB, utilisé seulement sur certaines pages)
+            if (id.includes('date-fns')) {
+              return 'vendor-date';
+            }
+            // Tout le reste des node_modules (radix-ui, lucide, etc.)
+            return 'vendor-ui';
+          }
+        },
         // Optimisation des noms de fichiers
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
