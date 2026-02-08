@@ -165,41 +165,9 @@ export function musicPlaylistJsonLd({
   };
 }
 
-/**
- * Generate VideoObject JSON-LD schema for song videos
- * @param {Object} params
- * @param {string} params.title - Video title
- * @param {string} params.description - Video description (obligatoire avec fallback)
- * @param {string} params.thumbnailUrl - Video thumbnail URL
- * @param {string} params.embedUrl - Video embed URL
- * @param {string} params.contentUrl - Direct YouTube URL (required by Google)
- * @param {string} [params.uploadDate] - Upload date (ISO format)
- * @param {number} [params.duration] - Video duration in seconds (optional)
- * @returns {Object} JSON-LD schema object
- */
-export function videoObjectJsonLd({ 
-  title, 
-  description,
-  thumbnailUrl, 
-  embedUrl,
-  contentUrl,
-  uploadDate,
-  duration
-}) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "VideoObject",
-    "name": title,
-    "description": description || `Assista ao vídeo de ${title} - A Música da Segunda`,
-    "thumbnailUrl": thumbnailUrl,
-    "embedUrl": embedUrl,
-    "contentUrl": contentUrl,
-    "uploadDate": uploadDate || new Date().toISOString(),
-    "inLanguage": "pt-BR",
-    "familyFriendly": true,
-    ...(duration ? { "duration": `PT${duration}S` } : {})
-  };
-}
+// ❌ videoObjectJsonLd SUPPRIMÉ — erreur GSC "Video isn't on a watch page"
+// Les pages du site ne sont pas des "watch pages" dédiées aux vidéos.
+// Google refuse d'indexer VideoObject sur des pages mixtes (musique + vidéo + texte).
 
 /**
  * Extract YouTube video ID from various URL formats

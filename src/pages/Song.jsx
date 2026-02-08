@@ -2,13 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { useSEO } from '../hooks/useSEO';
-import { 
-  musicRecordingJsonLd, 
-  breadcrumbsJsonLd, 
-  videoObjectJsonLd,
-  extractYouTubeId,
-  buildYouTubeUrls,
-  injectJsonLd 
+import {
+  musicRecordingJsonLd,
+  breadcrumbsJsonLd,
+  injectJsonLd
 } from '../lib/seo-jsonld';
 import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
@@ -171,13 +168,15 @@ export default function SongPage() {
   // useSEO ajoute automatiquement "| Música da Segunda" au titre, donc on ne le met pas ici
   // Normaliser l'URL (sans trailing slash) pour éviter les doublons
   const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}` : '/musica';
+  // ✅ SEO: max-video-preview:0 empêche Google d'indexer la vidéo embarquée (pas une "watch page")
   useSEO({
     title: song ? song.title : (slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda'),
     description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : `Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.`,
     keywords: song ? `${song.title}, música da segunda, paródias musicais` : `música da segunda, paródias musicais`,
-    image: song?.cover_image, // Image de couverture pour OG
+    image: song?.cover_image,
     url: normalizedUrl,
-    type: 'article'
+    type: 'article',
+    robots: 'index, follow, max-video-preview:0'
   });
 
   // Inject JSON-LD schemas
@@ -219,56 +218,16 @@ export default function SongPage() {
       });
       injectJsonLd(fullBreadcrumb, 'song-breadcrumb-schema');
 
-      // ✅ VideoObject JSON-LD pour l'indexation vidéo Google
-      const youtubeUrl = song.youtube_music_url || song.youtube_url;
-      if (youtubeUrl) {
-        const videoId = extractYouTubeId(youtubeUrl);
-        if (videoId) {
-          const youtubeUrls = buildYouTubeUrls(videoId);
-          if (youtubeUrls) {
-            const videoDescription = song.description || `Paródia musical de ${song.title} por A Música da Segunda. Nova música toda segunda-feira.`;
-            
-            // ✅ Formater uploadDate avec timezone (format ISO 8601 complet)
-            let uploadDate = new Date().toISOString(); // Fallback par défaut
-            if (song.release_date) {
-              // Si la date est au format YYYY-MM-DD, ajouter le timezone
-              const dateStr = song.release_date;
-              if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                uploadDate = `${dateStr}T00:00:00-03:00`; // Timezone BR (UTC-3)
-              } else {
-                // Si déjà au format ISO, utiliser tel quel
-                uploadDate = dateStr;
-              }
-            } else if (song.tiktok_publication_date) {
-              const dateStr = song.tiktok_publication_date;
-              if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                uploadDate = `${dateStr}T00:00:00-03:00`;
-              } else {
-                uploadDate = dateStr;
-              }
-            }
-            
-            const videoSchema = videoObjectJsonLd({
-              title: song.title,
-              description: videoDescription,
-              thumbnailUrl: youtubeUrls.thumbnailUrl,
-              embedUrl: youtubeUrls.embedUrl,
-              contentUrl: youtubeUrls.contentUrl,
-              uploadDate: uploadDate
-            });
-            injectJsonLd(videoSchema, 'song-video-schema');
-          }
-        }
-      }
+      // ❌ VideoObject JSON-LD SUPPRIMÉ — erreur GSC "Video isn't on a watch page"
+      // Ces pages sont des MusicRecording, pas des "watch pages" dédiées aux vidéos.
+      // max-video-preview:0 dans le meta robots empêche aussi la détection automatique.
     }
 
     return () => {
       const musicScript = document.getElementById('song-music-schema');
       const breadcrumbScript = document.getElementById('song-breadcrumb-schema');
-      const videoScript = document.getElementById('song-video-schema');
       if (musicScript) musicScript.remove();
       if (breadcrumbScript) breadcrumbScript.remove();
-      if (videoScript) videoScript.remove();
     };
   }, [song, slug]);
 

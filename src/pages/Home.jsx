@@ -21,8 +21,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
 import { useToast } from '@/components/ui/use-toast';
-// VideoObject JSON-LD supprimé de la homepage (pas une "watch page")
-// Les pages /musica/{slug} contiennent le VideoObject approprié
+// ❌ VideoObject JSON-LD SUPPRIMÉ de TOUTES les pages (erreur GSC "Video isn't on a watch page")
+// Aucune page du site n'est une "watch page" dédiée aux vidéos.
 
 // Composant d'intégration YouTube générique (remplace l'embed TikTok)
 // Props attendues: youtube_music_url, youtube_url, title
@@ -118,7 +118,7 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         loading="eager"
-        fetchpriority="high"
+        fetchPriority="high"
       />
     </div>
   );
@@ -135,7 +135,7 @@ return (
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen
       loading="eager"
-      fetchpriority="high"
+      fetchPriority="high"
     />
     </div>
   );

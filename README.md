@@ -338,7 +338,7 @@ b6f41e6 fix(seo): ajouter noindex aux stubs de redirection
 
 ---
 
-### 2026-02-02 - Correction "Video isn't on a watch page"
+### 2026-02-02 - Correction "Video isn't on a watch page" (tentative 1 - INCOMPLÈTE)
 
 #### Problème identifié
 Google Search Console signale 15 vidéos avec l'erreur "Video isn't on a watch page" :
@@ -346,34 +346,65 @@ Google Search Console signale 15 vidéos avec l'erreur "Video isn't on a watch p
 - `/musica/o-croissant` - VideoObject + duplication avec/sans trailing slash
 - Homepage `/` - Embed YouTube détecté
 
-#### Cause
-Les pages `/musica/` sont des pages de **MusicRecording** (musique), pas des pages de **vidéo** dédiées.
-Google refuse d'indexer le `VideoObject` JSON-LD car la vidéo n'est pas le contenu principal unique de la page.
+#### Correction partielle appliquée
+- `scripts/generate-stubs.cjs` : VideoObject supprimé des stubs HTML statiques
+- **ERREUR** : Le composant React `Song.jsx` continuait d'injecter VideoObject dynamiquement au runtime
+- **ERREUR** : Pas de `max-video-preview:0` sur les pages `/musica/` (ni statique ni React)
 
-Critères Google pour une "watch page" :
-- La vidéo doit être le contenu principal unique
+---
+
+### 2026-02-08 - Correction DÉFINITIVE "Video isn't on a watch page"
+
+#### Problème persistant
+Validation GSC échouée le 2/5/26 — 15 vidéos toujours en erreur (2 failed, 13 pending).
+
+#### Causes racines identifiées (3 problèmes)
+
+1. **`Song.jsx` injectait encore VideoObject JSON-LD au runtime** (lignes 222-262)
+   - Le commit précédent avait seulement corrigé les stubs statiques (`generate-stubs.cjs`)
+   - Mais le composant React continuait d'injecter `videoObjectJsonLd()` dynamiquement dans le DOM
+   - Quand Google rend la page avec JavaScript, il voit le VideoObject → erreur
+
+2. **Pas de `max-video-preview:0` sur les pages `/musica/`**
+   - Même sans JSON-LD, Google peut auto-détecter les vidéos via les iframes YouTube
+   - La directive `max-video-preview:0` dans le meta robots empêche cette détection
+   - La homepage l'avait déjà, mais PAS les pages de chansons
+
+3. **Stubs statiques sans `max-video-preview:0`**
+   - Le template HTML dans `seo-templates.cjs` avait `robots: "index, follow"` sans `max-video-preview:0`
+   - Avant que React s'hydrate, Google voit le stub statique → détecte l'iframe YouTube
+
+#### Critères Google pour une "watch page"
+- La vidéo doit être le contenu **principal unique** de la page
 - La vidéo doit être visible dans la viewport sans scroll
-- La page doit être dédiée exclusivement à la vidéo
+- La page doit être **dédiée exclusivement** à la vidéo
+- Les pages `/musica/` sont des **MusicRecording** → PAS des watch pages
 
-#### Correction appliquée
-**Fichier modifié : `scripts/generate-stubs.cjs`**
-- Suppression du `VideoObject` JSON-LD des pages de chansons
-- Le `MusicRecording` est conservé (suffisant pour le SEO audio)
-- Les iframes YouTube restent pour l'UX (les vidéos sont toujours visibles)
+#### Corrections appliquées
 
-```javascript
-// ❌ VideoObject REMOVED - Google error "Video isn't on a watch page"
-// Ces pages sont des MusicRecording, pas des pages dédiées aux vidéos.
-```
+**Fichiers modifiés :**
 
-#### Impact
-- Les pages `/musica/` ne seront plus signalées comme erreurs vidéo
-- Les vidéos YouTube restent intégrées via iframe
-- Le SEO audio via `MusicRecording` continue de fonctionner
+| Fichier | Modification |
+|---------|-------------|
+| `src/pages/Song.jsx` | Suppression de l'injection `videoObjectJsonLd()` + ajout `robots: 'index, follow, max-video-preview:0'` dans useSEO |
+| `src/lib/seo-jsonld.js` | Suppression de la fonction `videoObjectJsonLd()` |
+| `scripts/seo-templates.cjs` | Suppression de `videoObjectJsonLd()` + ajout `max-video-preview:0` dans le meta robots du template HTML |
+
+**Approche défensive triple :**
+1. **Pas de VideoObject JSON-LD** → Google ne voit pas de données structurées vidéo
+2. **`max-video-preview:0` dans meta robots** → Google ne peut pas indexer la vidéo auto-détectée depuis l'iframe
+3. **Suppression dans stubs ET React** → Cohérence entre rendu statique et rendu client
+
+#### Leçon apprise
+> **IMPORTANT** : Sur un site SPA (Single Page Application) avec SSR/stubs statiques, les corrections SEO doivent être appliquées aux **DEUX** niveaux :
+> 1. Les stubs HTML statiques (ce que Google voit au premier rendu)
+> 2. Le code React/client (ce que Google voit après exécution JavaScript)
+>
+> Google exécute JavaScript ! Un correctif uniquement côté statique est insuffisant.
 
 #### Actions GSC
-- Valider la correction dans Video indexing → "Video isn't on a watch page"
-- Délai estimé : 2-4 semaines
+- Relancer la validation dans Video indexing → "Video isn't on a watch page"
+- Délai estimé : 2-4 semaines pour revalidation complète
 
 ---
 
@@ -399,10 +430,18 @@ Critères Google pour une "watch page" :
 #### JSON-LD Schemas utilisés
 - `Organization` - Identité de la marque
 - `WebSite` + `SearchAction` - Recherche sur le site
-- `MusicRecording` - Pages de chansons
+- `MusicRecording` - Pages de chansons (avec `ListenAction` pour streaming)
 - `MusicPlaylist` - Page /musica/
 - `BreadcrumbList` - Fil d'Ariane
-- ~~`VideoObject`~~ - Retiré (erreur "Video isn't on a watch page")
+- ~~`VideoObject`~~ - **SUPPRIMÉ** définitivement (erreur "Video isn't on a watch page")
+  - Supprimé des stubs statiques ET du composant React Song.jsx
+  - Fonction supprimée de `seo-jsonld.js` et `seo-templates.cjs`
+
+#### Directives meta robots
+- **Homepage** : `index, follow, max-video-preview:0` (index.html + useSEO)
+- **Pages /musica/{slug}** : `index, follow, max-video-preview:0` (stubs + useSEO)
+- **Pages erreur** : `noindex, follow`
+- `max-video-preview:0` empêche Google d'indexer les vidéos auto-détectées via iframe YouTube
 
 ---
 
