@@ -94,7 +94,28 @@
     <link rel="preconnect" href="https://img.youtube.com">
     <!-- YouTube iframe: dns-prefetch uniquement (chargé au clic via facade) -->
     <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
-    
+
+    <!-- Cookiebot - Consent Management Platform (LGPD/GDPR) - DOIT être avant tout tracking -->
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="96940f81-6ebc-412b-bfc5-a91502f7dd7e" type="text/javascript" async></script>
+
+    <!-- Google tag (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-SKRKX4N8XS', { send_page_view: false });
+    </script>
+
+    <!-- Google Tag Manager -->
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PQTFJ3C3');</script>
+    <!-- End Google Tag Manager -->
+
     <!-- Security Headers -->
     <!-- Note: X-Frame-Options doit être défini via en-tête HTTP (_headers), pas via meta -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
@@ -107,7 +128,7 @@
     <meta http-equiv="Content-Security-Policy"
           content="
             default-src 'self' data: blob:;
-            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com;
+            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com https://www.googletagmanager.com https://consent.cookiebot.com;
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
             img-src 'self' data: https:;
             font-src 'self' https://fonts.gstatic.com;
@@ -116,7 +137,9 @@
               https://efnzmpzkzeuktqkghwfa.supabase.co
               https://www.tiktok.com https://*.tiktokcdn.com
               https://open.spotify.com https://api.spotify.com
-              https://music.apple.com https://*.apple.com;
+              https://music.apple.com https://*.apple.com
+              https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com
+              https://consent.cookiebot.com https://*.cookiebot.com;
             frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
             media-src https: data:;
           ">
@@ -173,6 +196,10 @@
     </script>
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PQTFJ3C3"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <!-- Skip link pour accessibilité -->
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
     

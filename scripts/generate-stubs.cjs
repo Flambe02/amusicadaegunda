@@ -1,3 +1,4 @@
+require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
 const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd, extractYouTubeId, buildYouTubeUrls } = require('./seo-templates.cjs');

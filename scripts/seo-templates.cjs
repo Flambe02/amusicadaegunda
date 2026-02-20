@@ -11,6 +11,26 @@ const escape = (s = '') => {
 const json = (obj) => JSON.stringify(obj, null, 2);
 
 function baseHtml({ lang = 'pt-BR', title, desc, url, image, body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' } }) {
+  const ga4Block = `
+<!-- Cookiebot - Consent Management Platform (LGPD/GDPR) - DOIT être avant tout tracking -->
+<script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="96940f81-6ebc-412b-bfc5-a91502f7dd7e" type="text/javascript" async></script>
+<!-- Google tag (GA4) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-SKRKX4N8XS', { send_page_view: false });
+</script>
+<!-- Google Tag Manager -->
+<link rel="preconnect" href="https://www.googletagmanager.com">
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PQTFJ3C3');</script>
+<!-- End Google Tag Manager -->`;
+
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -20,7 +40,7 @@ function baseHtml({ lang = 'pt-BR', title, desc, url, image, body = '', jsonld =
 <meta name="description" content="${escape(desc)}"/>
 <link rel="canonical" href="${url}"/>
 <meta name="robots" content="index, follow, max-video-preview:0" />
-
+${ga4Block}
 <!-- Open Graph -->
 <meta property="og:title" content="${escape(title)}"/>
 <meta property="og:description" content="${escape(desc)}"/>
@@ -40,6 +60,10 @@ ${scripts.css ? scripts.css : ''}
 ${scripts.js ? scripts.js : ''}
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PQTFJ3C3"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
 <div id="root">${body ? body : ''}</div>
 <noscript>Este site requer JavaScript para interação total.</noscript>
 ${scripts.pwa ? scripts.pwa : ''}

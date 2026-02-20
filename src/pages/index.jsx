@@ -1,6 +1,6 @@
 import Layout from "./Layout.jsx";
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParams } from 'react-router-dom';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { ROUTES, getCurrentPage } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -18,7 +18,15 @@ function LegacyChansonRedirect() {
 function PagesContent() {
     const location = useLocation();
     const currentPage = getCurrentPage(location.pathname);
-    
+
+    useEffect(() => {
+        if (typeof window.gtag !== 'function') return;
+        window.gtag('event', 'page_view', {
+            page_path: location.pathname + location.search,
+            page_title: document.title,
+        });
+    }, [location]);
+
     return (
         <Layout currentPageName={currentPage}>
             {/* ✅ PERFORMANCE: Suspense pour gérer le lazy loading des routes */}
