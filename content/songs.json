@@ -1,5 +1,21 @@
 [
   {
+    "slug": "carnaval-26",
+    "name": "Carnaval 26",
+    "datePublished": "2026-02-16",
+    "image": "/icons/icon-512x512.png",
+    "audioUrl": "https://open.spotify.com/intl-fr/track/7k5ibmgnEdbiKGm9y7m49p?si=bbe67a2350104118",
+    "duration": "PT3M",
+    "inLanguage": "pt-BR",
+    "byArtist": {
+      "name": "A Música da Segunda",
+      "url": "https://www.amusicadasegunda.com"
+    },
+    "youtube_music_url": "https://youtube.com/shorts/qHSlv5sXD1c",
+    "youtube_url": "https://music.youtube.com/watch?v=QfwsogR7thI&si=5jPnYGwRp8nUkrBq",
+    "description": "Nesta faixa a gente desfila pela hipocrisia e incoerência que viram samba na avenida nacional. Do batuque das escolas de samba às promessas de políticos em época de eleição tudo é fantasia com purpurina e marketing institucional. A letra mistura blocos de riso e marchinhas de crítica: a hipocrisia que “fala de emenda” enquanto falta estrutura real, a gestão emocional que vira hit, a cobertura jornalística que não desgruda do glitter mesmo depois da quarta-feira de cinzas, e a rotina tropical onde se samba no caos geral. É carnaval, é país tropical e é teatro político disfarçado de folia.\n\nA letra brinca com figuras reais do calendário político e cultural brasileiro e coloca na avenida os absurdos das promessas de gestão versus a realidade estrutural. O resultado é um samba-enredo satírico que aponta como, no Brasil, até a crise vira festival."
+  },
+  {
     "slug": "brasil-nos-jogos",
     "name": "Brasil nos Jogos",
     "datePublished": "2026-02-09",

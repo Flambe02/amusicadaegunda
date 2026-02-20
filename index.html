@@ -95,9 +95,6 @@
     <!-- YouTube iframe: dns-prefetch uniquement (chargé au clic via facade) -->
     <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
 
-    <!-- Cookiebot - Consent Management Platform (LGPD/GDPR) - DOIT être avant tout tracking -->
-    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="96940f81-6ebc-412b-bfc5-a91502f7dd7e" type="text/javascript" async></script>
-
     <!-- Google tag (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
     <script>
@@ -128,7 +125,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta http-equiv="Content-Security-Policy"
           content="
             default-src 'self' data: blob:;
-            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com https://www.googletagmanager.com https://consent.cookiebot.com;
+            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com https://www.googletagmanager.com;
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
             img-src 'self' data: https:;
             font-src 'self' https://fonts.gstatic.com;
@@ -138,8 +135,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               https://www.tiktok.com https://*.tiktokcdn.com
               https://open.spotify.com https://api.spotify.com
               https://music.apple.com https://*.apple.com
-              https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com
-              https://consent.cookiebot.com https://*.cookiebot.com;
+              https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com;
             frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
             media-src https: data:;
           ">

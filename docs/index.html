@@ -92,13 +92,8 @@
     <link rel="preload" href="/images/Musica da segunda.webp" as="image" type="image/webp" fetchpriority="high">
     <!-- ✅ LCP FIX: Preconnect pour les thumbnails YouTube (élément LCP via facade) -->
     <link rel="preconnect" href="https://img.youtube.com">
-    <!-- ✅ LCP FIX: Preload de la thumbnail YouTube de la chanson actuelle (build-time) -->
-    <link rel="preload" href="https://img.youtube.com/vi/qHSlv5sXD1c/hqdefault.jpg" as="image" fetchpriority="high" crossorigin>
     <!-- YouTube iframe: dns-prefetch uniquement (chargé au clic via facade) -->
     <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
-
-    <!-- Cookiebot - Consent Management Platform (LGPD/GDPR) - DOIT être avant tout tracking -->
-    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="96940f81-6ebc-412b-bfc5-a91502f7dd7e" type="text/javascript" async></script>
 
     <!-- Google tag (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
@@ -130,7 +125,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta http-equiv="Content-Security-Policy"
           content="
             default-src 'self' data: blob:;
-            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com https://www.googletagmanager.com https://consent.cookiebot.com;
+            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com https://www.googletagmanager.com;
             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
             img-src 'self' data: https:;
             font-src 'self' https://fonts.gstatic.com;
@@ -140,8 +135,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               https://www.tiktok.com https://*.tiktokcdn.com
               https://open.spotify.com https://api.spotify.com
               https://music.apple.com https://*.apple.com
-              https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com
-              https://consent.cookiebot.com https://*.cookiebot.com;
+              https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com;
             frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
             media-src https: data:;
           ">
@@ -196,12 +190,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       ]
     }
     </script>
-    <script type="module" crossorigin src="/assets/index-B5gWyB1H.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/vendor-react-O4jD9kp-.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-Dw0r2pzf.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-BrD1AlhB.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-date-BfA9-vu0.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-DTXuQJJZ.css">
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
@@ -217,15 +205,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       <main id="main" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
         <h1 style="font-size: 2.5rem; font-weight: bold; color: #111; margin-bottom: 1rem;">A Música da Segunda</h1>
         <p style="font-size: 1.25rem; color: #555; margin-bottom: 2rem;">Nova música toda segunda-feira! Paródias musicais inteligentes sobre as notícias do Brasil.</p>
-        
-        <div style="margin: 1rem auto; max-width: 480px; aspect-ratio: 16/9; border-radius: 0.5rem; overflow: hidden; position: relative;">
-          <img src="https://img.youtube.com/vi/qHSlv5sXD1c/hqdefault.jpg" alt="Carnaval 26 - A Música da Segunda" style="width: 100%; height: 100%; object-fit: cover;" fetchpriority="high" crossorigin>
-          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
-            <div style="width: 64px; height: 64px; background: rgba(220,38,38,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-              <svg viewBox="0 0 24 24" width="32" height="32" fill="white"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>
-        </div>
         <nav aria-label="Navegação principal">
           <ul style="list-style: none; padding: 0; display: flex; gap: 1.5rem; flex-wrap: wrap;">
             <li><a href="/musica/" style="color: #2563eb; font-weight: 600;">Todas as Músicas</a></li>
@@ -235,7 +214,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </nav>
       </main>
     </div>
-    <script src="/pwa-install.js"></script>
+    <script src="/pwa-install.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
     
   </body>
 </html>

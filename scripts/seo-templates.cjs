@@ -12,8 +12,6 @@ const json = (obj) => JSON.stringify(obj, null, 2);
 
 function baseHtml({ lang = 'pt-BR', title, desc, url, image, body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' } }) {
   const ga4Block = `
-<!-- Cookiebot - Consent Management Platform (LGPD/GDPR) - DOIT être avant tout tracking -->
-<script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="96940f81-6ebc-412b-bfc5-a91502f7dd7e" type="text/javascript" async></script>
 <!-- Google tag (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
 <script>
