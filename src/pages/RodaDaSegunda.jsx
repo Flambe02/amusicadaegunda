@@ -23,6 +23,16 @@ const MONTH_COLORS = [
   '#F43F5E', // Dez — rose rouge fêtes
 ];
 
+function titleToSlug(title) {
+  if (!title) return null;
+  return title.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
 function extractYouTubeId(url) {
   if (!url) return null;
   const m = url.match(
@@ -183,6 +193,7 @@ export default function RodaDaSegunda() {
   };
 
   const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
+  const songSlug = winner?.song ? titleToSlug(winner.song.title) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50">
@@ -261,14 +272,14 @@ export default function RodaDaSegunda() {
                     <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Música sorteada</p>
                     <div className="flex items-center gap-2">
                       <h3 className="text-xl font-black text-gray-800 truncate">{winner.song?.title}</h3>
-                      {winner.song?.slug && (
+                      {songSlug && (
                         <a
-                          href={`/musica/${winner.song.slug}/`}
+                          href={`/musica/${songSlug}/`}
                           title="Ver página da música"
-                          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                          style={{ backgroundColor: winner.monthColor + '22', color: winner.monthColor }}
+                          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 border-2"
+                          style={{ borderColor: winner.monthColor, color: winner.monthColor, backgroundColor: '#fff' }}
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-4 h-4" />
                         </a>
                       )}
                     </div>
