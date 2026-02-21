@@ -311,6 +311,14 @@ export default function RodaDaSegunda() {
                   </div>
                 </div>
 
+                {/* ── Avertissement si URL playlist (pas de player dispo) ── */}
+                {!youtubeId && winner.song?.youtube_url && (
+                  <div className="flex items-center gap-2 rounded-2xl px-4 py-3 mb-4 text-sm text-gray-500" style={{ backgroundColor: '#f3f4f6' }}>
+                    <span>⚠️</span>
+                    <span>Player indisponível para esta música — usa o botão YouTube abaixo.</span>
+                  </div>
+                )}
+
                 {/* ── Mini-player audio ── */}
                 {youtubeId && (
                   <>
