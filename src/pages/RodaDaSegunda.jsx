@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Song } from '@/api/entities';
 import { Button } from '@/components/ui/button';
-import { Music, RotateCcw } from 'lucide-react';
+import { Music, RotateCcw, ExternalLink } from 'lucide-react';
 
 const MONTHS_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -257,9 +257,21 @@ export default function RodaDaSegunda() {
                   >
                     <Music className="w-6 h-6" style={{ color: winner.monthColor }} />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Música sorteada</p>
-                    <h3 className="text-xl font-black text-gray-800 truncate">{winner.song?.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xl font-black text-gray-800 truncate">{winner.song?.title}</h3>
+                      {winner.song?.slug && (
+                        <a
+                          href={`/musica/${winner.song.slug}/`}
+                          title="Ver página da música"
+                          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                          style={{ backgroundColor: winner.monthColor + '22', color: winner.monthColor }}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
                     {winner.song?.artist && (
                       <p className="text-gray-500 text-sm">{winner.song.artist}</p>
                     )}
