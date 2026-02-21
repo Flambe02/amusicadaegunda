@@ -251,7 +251,8 @@ rm -rf android/ ios/
   tiktok_url: "https://www.tiktok.com/@...",
   spotify_url: "https://open.spotify.com/...",
   apple_music_url: "https://music.apple.com/...",
-  youtube_url: "https://youtube.com/...",
+  youtube_url: "https://music.youtube.com/watch?v=...",  // ⚠️ Lien YouTube Music (music.youtube.com) — utilisé pour l'embed et le bouton "Ouvir no YouTube"
+  youtube_music_url: "https://youtube.com/shorts/...",   // ⚠️ Lien YouTube Shorts — utilisé pour le bouton Short uniquement, PAS pour l'embed
   cover_image: "url_da_imagem",
   hashtags: ["humor", "musica", "trending"],
   created_at: "2025-01-27T10:00:00.000Z",
@@ -528,6 +529,24 @@ curl -I https://www.amusicadasegunda.com/chansons/debaixo-da-pia/
 # Valider le JSON-LD
 # → https://search.google.com/test/rich-results
 ```
+
+---
+
+## Colonnes Supabase — table `songs`
+
+### ⚠️ Colonnes YouTube (noms trompeurs)
+
+| Colonne | Contenu réel | Utilisation |
+|---------|-------------|-------------|
+| `youtube_url` | Lien **YouTube Music** (`music.youtube.com/watch?v=...` ou `music.youtube.com/playlist?...`) | Embed dans la Roda + bouton "Ouvir no YouTube" |
+| `youtube_music_url` | Lien **YouTube Shorts** (`youtube.com/shorts/...`) | Bouton Short uniquement — **ne pas utiliser pour l'embed** |
+
+> Le nom `youtube_music_url` est trompeur : il contient les Shorts YouTube, pas les liens YouTube Music.
+> Le nom `youtube_url` contient les liens YouTube Music (music.youtube.com).
+
+### Embed dans la Roda de Segunda
+
+L'embed utilise **uniquement `youtube_url`**. Si la valeur est une playlist (`music.youtube.com/playlist?...`), aucun ID vidéo ne peut être extrait → pas d'embed. Dans ce cas, il faut mettre à jour la colonne `youtube_url` avec un lien direct `music.youtube.com/watch?v=ID`.
 
 ---
 

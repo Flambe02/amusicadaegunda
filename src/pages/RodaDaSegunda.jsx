@@ -197,9 +197,7 @@ export default function RodaDaSegunda() {
     animRef.current = requestAnimationFrame(animate);
   };
 
-  const youtubeId = winner?.song
-    ? (extractYouTubeId(winner.song.youtube_url) || extractYouTubeId(winner.song.youtube_music_url))
-    : null;
+  const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
   const songSlug = winner?.song ? titleToSlug(winner.song.title) : null;
 
   return (
