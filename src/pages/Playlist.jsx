@@ -102,31 +102,22 @@ export default function Playlist() {
         </div>
       </div>
 
-      {/* Layout Mobile - Intégré dans le Layout principal */}
-      <div className="lg:hidden h-full flex flex-col">
-        {/* Spotify Playlist Container - Prend tout l'espace disponible */}
-        <div className="flex-1 min-h-0 px-4 py-4">
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-white/20 h-full flex flex-col">
-            <div className="w-full flex-1 min-h-0">
-              <iframe 
-                data-testid="embed-iframe" 
-                style={{
-                  borderRadius: '12px',
-                  width: '100%',
-                  height: '100%',
-                  minHeight: '500px'
-                }} 
-                src="https://open.spotify.com/embed/playlist/5z7Jan9yS1KRzwWEPYs4sH?utm_source=generator" 
-                frameBorder="0" 
-                allowFullScreen="" 
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                loading="lazy"
-                title="Playlist Spotify - Música da Segunda"
-                className="shadow-lg"
-              ></iframe>
-            </div>
-          </div>
-        </div>
+      {/* Layout Mobile */}
+      <div className="lg:hidden px-4 py-4">
+        <iframe
+          data-testid="embed-iframe"
+          src="https://open.spotify.com/embed/playlist/5z7Jan9yS1KRzwWEPYs4sH?utm_source=generator"
+          style={{
+            borderRadius: '16px',
+            width: '100%',
+            height: 'calc(100dvh - 160px)',
+          }}
+          frameBorder="0"
+          allowFullScreen=""
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          title="Playlist Spotify - Música da Segunda"
+        />
       </div>
     </>
   );
