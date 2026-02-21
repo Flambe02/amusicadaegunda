@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Gift, Info, Mail } from 'lucide-react';
+import { FileText, Gift, Info, Mail, Search } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -14,6 +14,12 @@ export default function MenuDrawer({
   onOpenChange 
 }) {
   const menuItems = [
+    {
+      name: 'Pesquisar',
+      url: createPageUrl('Search'),
+      icon: Search,
+      description: 'Encontre uma música'
+    },
     {
       name: 'Blog Musical',
       url: createPageUrl('Blog'),

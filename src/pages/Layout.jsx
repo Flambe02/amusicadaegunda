@@ -1,7 +1,7 @@
 
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
-import { Home, Calendar, Gift, Info, FileText, ListMusic } from 'lucide-react';
+import { Home, Calendar, Gift, Info, FileText, ListMusic, Search } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
 import OptimizedImage from '@/components/OptimizedImage';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -29,6 +29,7 @@ export default function Layout({ children }) {
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'A Roda', url: createPageUrl('Roda'), icon: Gift },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
+    { name: 'Pesquisar', url: createPageUrl('Search'), icon: Search },
   ];
 
   const isActive = (page) => {

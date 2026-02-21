@@ -27,6 +27,7 @@ const Youtube = lazy(() => import('../pages/Youtube'));
 const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
 const TikTokDemo = lazy(() => import('../pages/TikTokDemo'));
+const SearchPage = lazy(() => import('../pages/Search'));
 
 /**
  * Configuration des routes avec métadonnées SEO
@@ -151,6 +152,12 @@ export const ROUTES = [
     component: TikTokDemo,
     name: 'TikTokDemo',
     seo: null // Pages de démo
+  },
+  {
+    path: '/search',
+    component: SearchPage,
+    name: 'Search',
+    seo: null // noindex géré dans le composant
   }
 ];
 
