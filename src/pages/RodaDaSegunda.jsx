@@ -35,10 +35,15 @@ function titleToSlug(title) {
 
 function extractYouTubeId(url) {
   if (!url) return null;
-  const m = url.match(
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/|music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/
-  );
-  return m ? m[1] : null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/|music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const re of patterns) {
+    const m = url.match(re);
+    if (m) return m[1];
+  }
+  return null;
 }
 
 function drawWheel(canvas, segments, rotation) {
@@ -192,7 +197,9 @@ export default function RodaDaSegunda() {
     animRef.current = requestAnimationFrame(animate);
   };
 
-  const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
+  const youtubeId = winner?.song
+    ? (extractYouTubeId(winner.song.youtube_url) || extractYouTubeId(winner.song.youtube_music_url))
+    : null;
   const songSlug = winner?.song ? titleToSlug(winner.song.title) : null;
 
   return (
