@@ -8,20 +8,19 @@ const MONTHS_PT = [
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
-// Couleurs saisonnières pour les 12 mois
 const MONTH_COLORS = [
-  '#4a90d9', // Jan — bleu hivernal
-  '#6baed6', // Fev — bleu clair
-  '#74c476', // Mar — vert printemps
-  '#fd8d3c', // Abr — orange doux
-  '#41ab5d', // Mai — vert vif
-  '#ffc107', // Jun — jaune été
-  '#ff9800', // Jul — orange chaud
-  '#e53935', // Ago — rouge feu
-  '#ab47bc', // Set — violet automne
-  '#8d6e63', // Out — brun octobre
-  '#5c6bc0', // Nov — indigo
-  '#26c6da', // Dez — turquoise fêtes
+  '#3B82F6', // Jan — bleu électrique
+  '#6366F1', // Fev — indigo vif
+  '#EC4899', // Mar — rose fuchsia
+  '#F97316', // Abr — orange vif
+  '#10B981', // Mai — vert émeraude
+  '#EAB308', // Jun — jaune soleil
+  '#F59E0B', // Jul — ambre
+  '#EF4444', // Ago — rouge cerise
+  '#8B5CF6', // Set — violet
+  '#14B8A6', // Out — teal
+  '#06B6D4', // Nov — cyan
+  '#F43F5E', // Dez — rose rouge fêtes
 ];
 
 function extractYouTubeId(url) {
@@ -52,38 +51,34 @@ function drawWheel(canvas, segments, rotation) {
   ctx.fill();
   ctx.restore();
 
-  segments.forEach(({ label, color, count }, i) => {
+  segments.forEach(({ label, color }, i) => {
     const startAngle = rotation + i * arc;
     const endAngle = startAngle + arc;
 
-    // Segment
+    // Segment avec dégradé radial
+    const grad = ctx.createRadialGradient(cx, cx, radius * 0.25, cx, cx, radius);
+    grad.addColorStop(0, color + 'dd');
+    grad.addColorStop(1, color);
     ctx.beginPath();
     ctx.moveTo(cx, cx);
     ctx.arc(cx, cx, radius, startAngle, endAngle);
     ctx.closePath();
-    ctx.fillStyle = count === 0 ? '#e0e0e0' : color;
+    ctx.fillStyle = grad;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Label (mois abrégé)
+    // Label (mois abrégé uniquement)
     ctx.save();
     ctx.translate(cx, cx);
     ctx.rotate(startAngle + arc / 2);
     ctx.textAlign = 'center';
-    ctx.fillStyle = count === 0 ? '#999' : '#fff';
+    ctx.fillStyle = '#fff';
     ctx.font = 'bold 13px system-ui, sans-serif';
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 3;
-    ctx.fillText(label, radius * 0.65, -4);
-    // Nb de chansons
-    if (count > 0) {
-      ctx.font = '10px system-ui, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.shadowBlur = 2;
-      ctx.fillText(`${count}`, radius * 0.65, 9);
-    }
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(label, radius * 0.65, 5);
     ctx.restore();
   });
 
