@@ -4,6 +4,7 @@ import { FileText, Gift, Info, Mail, Search } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from './ui/drawer';
@@ -58,6 +59,9 @@ export default function MenuDrawer({
           <DrawerTitle className="text-xl font-bold text-white flex items-center gap-3">
             <span>Menu</span>
           </DrawerTitle>
+          <DrawerDescription className="sr-only">
+            Menu principal de navigation mobile.
+          </DrawerDescription>
         </DrawerHeader>
         
         {/* Liste des liens */}

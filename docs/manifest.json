@@ -96,7 +96,7 @@
       "name": "Playlist",
       "short_name": "Playlist",
       "description": "Acessar playlists do Spotify",
-      "url": "/playlist",
+      "url": "/musica",
       "icons": [
         {
           "src": "/icons/pwa/icon-96x96.png",
@@ -119,15 +119,15 @@
   ],
   "screenshots": [
     {
-      "src": "/images/LogoMusica.png",
+      "src": "/images/LogoMusica.webp",
       "sizes": "1280x720",
-      "type": "image/png",
+      "type": "image/webp",
       "form_factor": "wide"
     },
     {
-      "src": "/images/LogoMusica.png",
+      "src": "/images/LogoMusica.webp",
       "sizes": "750x1334",
-      "type": "image/png",
+      "type": "image/webp",
       "form_factor": "narrow"
     }
   ],

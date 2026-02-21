@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfix\\(seo\\): improve 404.html redirect handling for Google Search Console\n\n- Add meta robots noindex to prevent redirect pages from being indexed\n- Add dynamic canonical link pointing to target URL\n- Add meta refresh as SEO fallback for JavaScript redirects\n- Handle /home and /playlist redirects in addition to /chansons/\n- Add noscript fallback for users without JavaScript\n\nFixes GSC \"Page with redirect\" validation errors.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git status:*)",
+      "Bash(git commit:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:pagespeed.web.dev)",
+      "Bash(powershell -Command:*)",
+      "Bash(wsl ls:*)",
+      "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem ''c:\\\\Users\\\\flore\\\\OneDrive\\\\POIVRON_ROUGE\\\\PIM\\\\MusicaDa2nda\\\\docs\\\\assets\\\\*.js'' | Sort-Object Length -Desc | ForEach-Object { Write-Host \\(''{0} : {1} KB'' -f $_Name, [math]::Round\\($_Length/1024,1\\)\\) }\")",
+      "Bash(npx vitest run:*)",
+      "WebFetch(domain:www.googleapis.com)"
+    ]
+  }
+}

@@ -1,6 +1,12 @@
 import { supabaseSongService } from './supabaseService';
 import { checkConnection } from '@/lib/supabase';
 
+const devLog = (...args) => {
+  if (import.meta.env?.DEV && import.meta.env?.VITE_VERBOSE_LOGS === 'true') {
+    console.warn(...args);
+  }
+};
+
 // Logs de debug supprimés
 
 let currentStorageMode = 'supabase';
@@ -10,24 +16,24 @@ let useSupabase = true; // Forcer Supabase
 
 const detectStorageMode = async () => {
   try {
-    console.warn('🔄 Test de connexion Supabase...');
+    devLog('🔄 Test de connexion Supabase...');
     
     // Vérifier la connexion
     const isConnected = await checkConnection();
     
     if (isConnected) {
-      console.warn('✅ Mode de stockage: Supabase ☁️ (connecté)');
+      devLog('✅ Mode de stockage: Supabase ☁️ (connecté)');
       useSupabase = true;
       currentStorageMode = 'supabase';
       return true;
     } else {
-      console.warn('⚠️ Connexion Supabase échouée, mais on force quand même Supabase');
+      devLog('⚠️ Connexion Supabase échouée, mais on force quand même Supabase');
       useSupabase = true; // FORCER SUPABASE même si la connexion échoue
       currentStorageMode = 'supabase';
       return true;
     }
   } catch (error) {
-    console.warn('⚠️ Erreur détection mode stockage, mais on force Supabase:', error);
+    devLog('⚠️ Erreur détection mode stockage, mais on force Supabase:', error);
     useSupabase = true; // FORCER SUPABASE même en cas d'erreur
     currentStorageMode = 'supabase';
     return true;
@@ -36,7 +42,7 @@ const detectStorageMode = async () => {
 
 // Forcer la détection immédiate
 detectStorageMode().then(() => {
-        console.warn(`🎯 Mode de stockage final: ${currentStorageMode === 'supabase' ? 'Supabase ☁️' : 'localStorage 💾'}`);
+        devLog(`🎯 Mode de stockage final: ${currentStorageMode === 'supabase' ? 'Supabase ☁️' : 'localStorage 💾'}`);
 });
 
 // ===== ENTITÉS AVEC FALLBACK AUTOMATIQUE =====
@@ -44,13 +50,13 @@ export const Song = {
   list: async (orderBy = '-release_date', limit = null) => {
     try {
       // Forcer l'utilisation de Supabase
-      console.warn('☁️ Chargement depuis Supabase...');
+      devLog('☁️ Chargement depuis Supabase...');
       const songs = await supabaseSongService.list(orderBy, limit);
       if (songs && songs.length > 0) {
-        console.warn('✅ Chansons chargées depuis Supabase:', songs.length);
+        devLog('✅ Chansons chargées depuis Supabase:', songs.length);
         return songs;
       } else {
-        console.warn('⚠️ Aucune chanson trouvée dans Supabase');
+        devLog('⚠️ Aucune chanson trouvée dans Supabase');
         return [];
       }
     } catch (error) {
@@ -83,7 +89,7 @@ export const Song = {
       }
       
       // Supabase-only: pas de fallback local
-      console.warn('⚠️ Supabase indisponible ou sans données');
+      devLog('⚠️ Supabase indisponible ou sans données');
       return null;
       
     } catch (error) {
@@ -113,9 +119,9 @@ export const Song = {
   create: async (songData) => {
     try {
       // Forcer l'utilisation de Supabase
-      console.warn('☁️ Création via Supabase...');
+      devLog('☁️ Création via Supabase...');
       const result = await supabaseSongService.create(songData);
-      console.warn('✅ Création Supabase réussie:', result);
+      devLog('✅ Création Supabase réussie:', result);
       return result;
     } catch (error) {
       console.error('❌ ERREUR CRÉATION SUPABASE:', error);
@@ -133,19 +139,19 @@ export const Song = {
   update: async (id, updates) => {
     try {
       // Forcer l'utilisation de Supabase
-      console.warn('☁️ Mise à jour via Supabase...');
-      console.warn('📋 Données à mettre à jour:', { id, updates });
-      console.warn('🔍 Type de l\'ID:', typeof id);
-      console.warn('🔍 Valeur de l\'ID:', id);
+      devLog('☁️ Mise à jour via Supabase...');
+      devLog('📋 Données à mettre à jour:', { id, updates });
+      devLog('🔍 Type de l\'ID:', typeof id);
+      devLog('🔍 Valeur de l\'ID:', id);
       
-      console.warn('🔄 Appel de supabaseSongService.update...');
+      devLog('🔄 Appel de supabaseSongService.update...');
       
       // Pas de fallback : si Supabase renvoie une erreur, on la laisse remonter
       const result = await supabaseSongService.update(id, updates);
-      console.warn('✅ Résultat de la mise à jour Supabase:', result);
+      devLog('✅ Résultat de la mise à jour Supabase:', result);
       
       // Synchronisation localStorage supprimée - on utilise uniquement Supabase
-      console.warn('✅ Mise à jour Supabase réussie - pas de synchronisation localStorage nécessaire');
+      devLog('✅ Mise à jour Supabase réussie - pas de synchronisation localStorage nécessaire');
       
       return result;
     } catch (error) {
@@ -166,9 +172,9 @@ export const Song = {
   delete: async (id) => {
     try {
       // Forcer l'utilisation de Supabase - PAS DE FALLBACK
-      console.warn('☁️ Suppression via Supabase...');
+      devLog('☁️ Suppression via Supabase...');
       const result = await supabaseSongService.delete(id);
-      console.warn('✅ Suppression Supabase réussie:', result);
+      devLog('✅ Suppression Supabase réussie:', result);
       return result;
     } catch (error) {
       console.error('❌ ERREUR SUPPRESSION SUPABASE:', error);
@@ -272,16 +278,16 @@ export const User = null;
 export const switchToSupabase = async () => {
   const success = await detectStorageMode();
   if (success) {
-    console.warn('✅ Passage en mode Supabase activé');
+    devLog('✅ Passage en mode Supabase activé');
   } else {
-          console.warn('❌ Impossible de passer en mode Supabase');
+          devLog('❌ Impossible de passer en mode Supabase');
   }
   return success;
 };
 
 export const switchToLocalStorage = () => {
   useSupabase = false;
-      console.warn('📱 Passage en mode localStorage activé');
+      devLog('📱 Passage en mode localStorage activé');
   return true;
 };
 

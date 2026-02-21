@@ -192,6 +192,12 @@ export default function RodaDaSegunda() {
         currentRotRef.current = finalRot;
         const monthSongs = songsByMonth[target.monthIndex] || [];
         const song = monthSongs[Math.floor(Math.random() * monthSongs.length)];
+        // Guard: avoid rendering crashes if no song is resolved for the target month.
+        if (!song) {
+          setWinner(null);
+          setSpinning(false);
+          return;
+        }
         setWinner({ monthName: target.fullName, monthColor: target.color, song });
         setSpinning(false);
       }
@@ -200,7 +206,7 @@ export default function RodaDaSegunda() {
   };
 
   const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
-  const songSlug = winner?.song ? titleToSlug(winner.song.title) : null;
+  const songSlug = winner?.song?.title ? titleToSlug(winner.song.title) : null;
 
   // Reset player state on each new result
   useEffect(() => {
@@ -305,10 +311,10 @@ export default function RodaDaSegunda() {
                         </a>
                       )}
                     </div>
-                    {winner.song?.artist && (
+                    {winner?.song?.artist && (
                       <p className="text-gray-500 text-sm">{winner.song.artist}</p>
                     )}
-                    {winner.song?.release_date && (
+                    {winner?.song?.release_date && (
                       <p className="text-xs font-medium mt-0.5" style={{ color: winner.monthColor + 'bb' }}>
                         📅 {new Date(winner.song.release_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
                       </p>
@@ -317,7 +323,7 @@ export default function RodaDaSegunda() {
                 </div>
 
                 {/* ── Avertissement si URL playlist (pas de player dispo) ── */}
-                {!youtubeId && winner.song?.youtube_url && (
+                {!youtubeId && winner?.song?.youtube_url && (
                   <div className="flex items-center gap-2 rounded-2xl px-4 py-3 mb-4 text-sm text-gray-500" style={{ backgroundColor: '#f3f4f6' }}>
                     <span>⚠️</span>
                     <span>Player indisponível para esta música — usa o botão YouTube abaixo.</span>

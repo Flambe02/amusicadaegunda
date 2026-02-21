@@ -3,6 +3,7 @@ class PWAInstaller {
   constructor() {
     this.deferredPrompt = null;
     this.installButton = null;
+    this.isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     this.init();
   }
 
@@ -10,13 +11,15 @@ class PWAInstaller {
     // Enregistrer le service worker
     this.registerServiceWorker();
     // En DEV, s'assurer qu'aucun SW existant ne contrôle la page
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (this.isLocalDev) {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(regs => {
           regs.forEach(r => r.unregister());
           console.log('🧹 DEV: Service Worker désinstallé pour éviter tout cache.');
         }).catch(() => {});
       }
+      // En local, désactiver le flux d'installation PWA (évite les warnings beforeinstallprompt)
+      return;
     }
     
     // Écouter l'événement d'installation
@@ -29,7 +32,7 @@ class PWAInstaller {
   // Enregistrer le service worker
   async registerServiceWorker() {
     // En dev, pas de SW pour éviter les conflits HMR
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (this.isLocalDev) {
       console.log('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
       return;
     }
