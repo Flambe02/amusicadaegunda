@@ -931,10 +931,10 @@ export default function Home() {
                   </a>
                 )}
                 
-                {(selectedSongForDialog.youtube_music_url || selectedSongForDialog.youtube_url) && (
-                  <a 
-                    href={selectedSongForDialog.youtube_music_url || selectedSongForDialog.youtube_url} 
-                    target="_blank" 
+                {selectedSongForDialog.youtube_url && (
+                  <a
+                    href={selectedSongForDialog.youtube_url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="block"
                   >
@@ -944,7 +944,7 @@ export default function Home() {
                   </a>
                 )}
 
-                {!selectedSongForDialog.spotify_url && !selectedSongForDialog.apple_music_url && !selectedSongForDialog.youtube_music_url && !selectedSongForDialog.youtube_url && (
+                {!selectedSongForDialog.spotify_url && !selectedSongForDialog.apple_music_url && !selectedSongForDialog.youtube_url && (
                   <div className="text-center py-6">
                     <Music className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-600 font-medium">Links de streaming em breve...</p>
