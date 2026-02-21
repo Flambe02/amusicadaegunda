@@ -308,6 +308,11 @@ export default function RodaDaSegunda() {
                     {winner.song?.artist && (
                       <p className="text-gray-500 text-sm">{winner.song.artist}</p>
                     )}
+                    {winner.song?.release_date && (
+                      <p className="text-xs font-medium mt-0.5" style={{ color: winner.monthColor + 'bb' }}>
+                        📅 {new Date(winner.song.release_date + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
                   </div>
                 </div>
 
