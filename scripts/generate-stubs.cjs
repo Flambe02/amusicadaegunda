@@ -214,7 +214,7 @@ ${songListHtml}
     const desc = `Letra, áudio e história de "${s.name}" — nova música da segunda.`;
 
     // ✅ Extraire videoId pour iframe YouTube statique (requis pour "watch page" Google)
-    const youtubeUrl = s.youtube_music_url || s.youtube_url;
+    const youtubeUrl = s.youtube_url || s.youtube_music_url;
     let videoId = null;
     let embedSrc = null;
     if (youtubeUrl) {
