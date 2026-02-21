@@ -43,7 +43,7 @@ try {
 }
 
 // Gating du Service Worker pour éviter les conflits en natif
-if ('serviceWorker' in navigator) {
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   // Vérifier si on est en mode natif Capacitor
   const isNative = async () => {
     try {

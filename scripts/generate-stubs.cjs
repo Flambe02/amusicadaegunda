@@ -101,6 +101,65 @@ ${songListHtml}
   await fs.writeFile(playlistFile, playlistVersionComment + playlistHtml, { encoding: 'utf8' });
   console.log(`✅ Stub /musica créé avec MusicPlaylist JSON-LD (${songs.length} tracks)`);
 
+  // ✅ SEO: Stubs statiques pour pages éditoriales (crawlers sans JS)
+  const staticPages = [
+    {
+      path: '/sobre',
+      title: 'Sobre - A Música da Segunda',
+      description: 'Conheça a história e a missão do projeto A Música da Segunda.'
+    },
+    {
+      path: '/calendar',
+      title: 'Calendário Musical - A Música da Segunda',
+      description: 'Calendário completo com as músicas publicadas por mês.'
+    },
+    {
+      path: '/blog',
+      title: 'Blog - A Música da Segunda',
+      description: 'Artigos e notícias sobre música, cultura e atualidades.'
+    },
+    {
+      path: '/roda',
+      title: 'A Roda de Segunda - Descubra uma Música',
+      description: 'Gire a roda e descubra uma música aleatória do projeto.'
+    },
+    {
+      path: '/adventcalendar',
+      title: 'Calendário do Advento - A Música da Segunda',
+      description: 'Uma surpresa musical por dia no calendário do advento.'
+    }
+  ];
+
+  for (const page of staticPages) {
+    const slug = page.path.replace(/^\//, '');
+    const pageDir = path.join(OUT, slug);
+    const pageFile = path.join(pageDir, 'index.html');
+    await fs.ensureDir(pageDir);
+
+    const pageUrl = `${siteUrl}${page.path}/`;
+    const pageBody = `
+<div style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 2rem;">
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111;">${page.title}</h1>
+  <p style="font-size: 1.125rem; color: #666; margin-bottom: 1.5rem;">${page.description}</p>
+  <p><a href="${siteUrl}/" style="color: #2563eb;">← Voltar ao início</a></p>
+</div>`;
+
+    const pageHtml = baseHtml({
+      lang: cfg.defaultLocale,
+      title: page.title,
+      desc: page.description,
+      url: pageUrl,
+      image: `${siteUrl}${IMAGE}`,
+      body: pageBody,
+      jsonld: [org, website],
+      scripts
+    });
+
+    const pageVersionComment = `<!-- build:${new Date().toISOString()} -->\n`;
+    await fs.writeFile(pageFile, pageVersionComment + pageHtml, { encoding: 'utf8' });
+  }
+  console.log(`✅ Stubs statiques créés pour pages éditoriales (${staticPages.length})`);
+
   // ✅ SEO: Stub pour /home avec redirection 301 vers /
   const homeDir = path.join(OUT, 'home');
   const homeFile = path.join(homeDir, 'index.html');
@@ -346,7 +405,7 @@ ${songListHtml}
       new Date(b.datePublished) - new Date(a.datePublished)
     );
     const currentSong = sortedSongs[0];
-    const youtubeUrl = currentSong.youtube_music_url || currentSong.youtube_url;
+    const youtubeUrl = currentSong.youtube_url || currentSong.youtube_music_url;
     const videoId = youtubeUrl ? extractYouTubeId(youtubeUrl) : null;
 
     if (videoId) {
