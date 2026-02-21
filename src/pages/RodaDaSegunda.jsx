@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Song } from '@/api/entities';
 import { Button } from '@/components/ui/button';
-import { Music, RotateCcw, ExternalLink } from 'lucide-react';
+import { Music, RotateCcw, ExternalLink, Play, Pause, Square } from 'lucide-react';
 
 const MONTHS_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -117,9 +117,11 @@ export default function RodaDaSegunda() {
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState(null); // { monthName, monthColor, song }
+  const [playerState, setPlayerState] = useState('stopped'); // 'stopped' | 'playing' | 'paused'
   const canvasRef = useRef(null);
   const currentRotRef = useRef(0);
   const animRef = useRef(null);
+  const iframeRef = useRef(null);
   const CANVAS_SIZE = 360;
 
   // Grouper les chansons par mois (indépendamment de l'année)
@@ -199,6 +201,21 @@ export default function RodaDaSegunda() {
 
   const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
   const songSlug = winner?.song ? titleToSlug(winner.song.title) : null;
+
+  // Reset player state on each new result
+  useEffect(() => {
+    if (youtubeId) setPlayerState('playing');
+    else setPlayerState('stopped');
+  }, [youtubeId]);
+
+  const sendYTCommand = (func) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func, args: [] }), '*'
+    );
+  };
+  const handlePlay  = () => { sendYTCommand('playVideo');  setPlayerState('playing'); };
+  const handlePause = () => { sendYTCommand('pauseVideo'); setPlayerState('paused');  };
+  const handleStop  = () => { sendYTCommand('stopVideo');  setPlayerState('stopped'); };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-blue-50">
@@ -294,18 +311,48 @@ export default function RodaDaSegunda() {
                   </div>
                 </div>
 
-                {/* ── Lecteur YouTube embarqué ── */}
+                {/* ── Mini-player audio ── */}
                 {youtubeId && (
-                  <div className="rounded-2xl overflow-hidden mb-4 shadow-md" style={{ aspectRatio: '16/9' }}>
+                  <>
+                    {/* Iframe cachée — contrôlée via postMessage */}
                     <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                      ref={iframeRef}
+                      src={`https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&rel=0`}
                       title={winner.song?.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full h-full"
-                      style={{ border: 'none', display: 'block', height: '100%', width: '100%' }}
+                      style={{ position: 'fixed', top: '-9999px', left: '-9999px', width: '1px', height: '1px', opacity: 0, pointerEvents: 'none' }}
                     />
-                  </div>
+                    {/* Barre de contrôle */}
+                    <div
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 mb-4"
+                      style={{ backgroundColor: winner.monthColor + '15' }}
+                    >
+                      {/* Play / Pause */}
+                      <button
+                        onClick={playerState === 'playing' ? handlePause : handlePlay}
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md flex-shrink-0 transition-all hover:scale-110"
+                        style={{ backgroundColor: winner.monthColor }}
+                        aria-label={playerState === 'playing' ? 'Pausar' : 'Tocar'}
+                      >
+                        {playerState === 'playing'
+                          ? <Pause className="w-4 h-4" />
+                          : <Play  className="w-4 h-4 ml-0.5" />}
+                      </button>
+                      {/* Stop */}
+                      <button
+                        onClick={handleStop}
+                        className="w-8 h-8 rounded-full flex items-center justify-center border-2 flex-shrink-0 transition-all hover:scale-110"
+                        style={{ borderColor: winner.monthColor, color: winner.monthColor, backgroundColor: '#fff' }}
+                        aria-label="Parar"
+                      >
+                        <Square className="w-3 h-3" />
+                      </button>
+                      {/* Statut */}
+                      <span className="text-sm font-semibold flex-1 truncate" style={{ color: winner.monthColor }}>
+                        {playerState === 'playing' ? '▶ A tocar...' : playerState === 'paused' ? '⏸ Pausado' : '⏹ Parado'}
+                      </span>
+                    </div>
+                  </>
                 )}
 
                 {/* Boutons streaming */}
