@@ -10,7 +10,7 @@ const escape = (s = '') => {
 
 const json = (obj) => JSON.stringify(obj, null, 2);
 
-function baseHtml({ lang = 'pt-BR', title, desc, url, image, body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' } }) {
+function baseHtml({ lang = 'pt-BR', title, desc, url, image, ogType = 'website', body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' } }) {
   const ga4Block = `
 <!-- Google tag (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
@@ -44,7 +44,7 @@ ${ga4Block}
 <!-- Open Graph -->
 <meta property="og:title" content="${escape(title)}"/>
 <meta property="og:description" content="${escape(desc)}"/>
-<meta property="og:type" content="website"/>
+<meta property="og:type" content="${ogType}"/>
 <meta property="og:url" content="${url}"/>
 ${image ? `<meta property="og:image" content="${image}"/>` : ''}
 

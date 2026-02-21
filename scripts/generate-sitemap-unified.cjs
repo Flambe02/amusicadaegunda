@@ -38,6 +38,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const staticPages = [
   { path: '/', priority: 1.0, changefreq: 'daily' },
   { path: '/musica', priority: 0.9, changefreq: 'weekly' },
+  { path: '/roda', priority: 0.8, changefreq: 'weekly' },
   { path: '/calendar', priority: 0.8, changefreq: 'weekly' },
   { path: '/blog', priority: 0.8, changefreq: 'weekly' },
   { path: '/sobre', priority: 0.7, changefreq: 'monthly' },

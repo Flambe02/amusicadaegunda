@@ -285,6 +285,7 @@ ${songListHtml}
       title,
       desc,
       url,
+      ogType: 'music.song',
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
       jsonld: jsonldSchemas,
@@ -323,6 +324,7 @@ ${songListHtml}
       title,
       desc,
       url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
+      ogType: 'music.song',
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
       jsonld: jsonldSchemasNoSlash,

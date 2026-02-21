@@ -29,6 +29,13 @@ import { useToast } from '@/components/ui/use-toast';
 // Props attendues: youtube_music_url, youtube_url, title
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   const [activated, setActivated] = useState(false);
+  const activateVideo = () => setActivated(true);
+  const handleKeyActivate = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      activateVideo();
+    }
+  };
 
   // Nettoyer les URLs pour éviter les chaînes vides ou espaces
   const primaryUrl = youtube_music_url && youtube_music_url.trim() ? youtube_music_url.trim() : null;
@@ -145,8 +152,10 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
       <div
         className="relative rounded-lg overflow-hidden shadow-2xl cursor-pointer group"
         style={{ width: '100%', aspectRatio: '9/16', minHeight: 'min(500px, 70vh)', maxHeight: '70vh' }}
-        onClick={() => setActivated(true)}
+        onClick={activateVideo}
+        onKeyDown={handleKeyActivate}
         role="button"
+        tabIndex={0}
         aria-label={`Reproduzir ${title || 'vídeo'}`}
       >
         {thumbnailUrl && (
@@ -172,8 +181,10 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   return (
     <div
       className="w-full aspect-video rounded-lg overflow-hidden shadow-lg cursor-pointer group relative"
-      onClick={() => setActivated(true)}
+      onClick={activateVideo}
+      onKeyDown={handleKeyActivate}
       role="button"
+      tabIndex={0}
       aria-label={`Reproduzir ${title || 'vídeo'}`}
     >
       {thumbnailUrl ? (

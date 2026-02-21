@@ -1,9 +1,7 @@
-
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic, Search } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
-import OptimizedImage from '@/components/OptimizedImage';
 import BottomNavigation from '@/components/BottomNavigation';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
@@ -11,12 +9,9 @@ import { getRouteSEO, getCurrentPage } from '@/config/routes';
 export default function Layout({ children }) {
   const location = useLocation();
 
-  // ✅ SEO: Application automatique des métadonnées globales
   const pageName = getCurrentPage(location.pathname);
   const seoData = getRouteSEO(pageName);
 
-  // N'applique le SEO que si des données sont définies dans routes.js
-  // Les pages dynamiques (comme Song) ont seo: null et gèrent leur propre SEO
   useSEO({
     ...seoData,
     enabled: !!seoData
@@ -39,12 +34,9 @@ export default function Layout({ children }) {
 
   return (
     <>
-      {/* Skip link pour accessibilité */}
-      <a href="#main" className="skip-link">Ir para o conteúdo</a>
-
-      {/* Layout Mobile Immersif - 3 zones Flexbox */}
       <div className="lg:hidden flex flex-col h-[100dvh] overflow-hidden bg-black text-white">
-        {/* Header Mobile - Fixe en haut */}
+        <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
+
         <header className="flex-shrink-0 bg-black/90 backdrop-blur-lg border-b border-white/10 z-40">
           <div className="px-4 py-3">
             <div className="flex items-center gap-3">
@@ -53,7 +45,7 @@ export default function Layout({ children }) {
                   src="/images/2026 logo.png"
                   alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                   className="w-full h-full object-cover"
-                  loading="lazy"
+                  loading="eager"
                 />
               </Link>
               <div className="flex-1 min-w-0">
@@ -64,31 +56,28 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        {/* Main Content - Zone flexible avec scroll interne */}
-        <main id="main" className="flex-1 overflow-hidden relative">
+        <main id="main-mobile" className="flex-1 overflow-hidden relative">
           <div className="h-full overflow-y-auto overscroll-behavior-contain pb-20">
             {children}
           </div>
         </main>
 
-        {/* Bottom Navigation - Glassmorphism */}
         <BottomNavigation />
       </div>
 
-      {/* Layout Desktop - Inchangé */}
       <div className="hidden lg:block min-h-screen bg-gradient-to-b from-teal-200 to-rose-200">
-        {/* Header Desktop avec Navigation */}
+        <a href="#main-desktop" className="skip-link">Ir para o conteúdo</a>
+
         <header className="bg-white/90 backdrop-blur-lg border-b border-white/50 shadow-lg sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              {/* Logo + Titre */}
               <div className="flex items-center gap-4">
                 <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0 bg-white">
                   <img
                     src="/images/2026 logo.png"
                     alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                     className="w-full h-full object-cover"
-                    loading="lazy"
+                    loading="eager"
                   />
                 </Link>
                 <div>
@@ -97,7 +86,6 @@ export default function Layout({ children }) {
                 </div>
               </div>
 
-              {/* Navigation Desktop */}
               <nav className="flex items-center gap-1" aria-label="Navigation principale">
                 {pages.map((page) => (
                   <Link
@@ -118,21 +106,19 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        <main id="main" className="relative z-10">
+        <main id="main-desktop" className="relative z-10">
           {children}
         </main>
 
-        {/* Footer Desktop discret pour crédit de production */}
         <footer className="border-t border-white/60 bg-white/80 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 py-2">
             <p className="text-[11px] md:text-xs text-gray-500 text-center">
-              © 2026 A Música da Segunda. Uma produção The Pimentão Rouge Project.
+              (c) 2026 A Música da Segunda. Uma produção The Pimentão Rouge Project.
             </p>
           </div>
         </footer>
       </div>
 
-      {/* Gestionnaire de tutoriel intégré */}
       <TutorialManager />
     </>
   );
