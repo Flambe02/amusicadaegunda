@@ -21,10 +21,10 @@ export default function MenuDrawer({
       description: 'Artigos e notícias sobre música'
     },
     {
-      name: 'Calendário do Advento (2025)',
-      url: createPageUrl('AdventCalendar'),
+      name: 'A Roda de Segunda',
+      url: createPageUrl('Roda'),
       icon: Gift,
-      description: 'Todas as músicas de 2025'
+      description: 'Gire a roda e descubra uma música!'
     },
     {
       name: 'Sobre / Nossa Missão',
