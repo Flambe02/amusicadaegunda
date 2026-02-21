@@ -830,7 +830,7 @@ export default function Youtube() {
                     className="block"
                   >
                     <Button className="w-full bg-[#FF0000] hover:bg-[#cc0000] text-white font-bold py-3 rounded-2xl text-sm transition-all duration-200 hover:scale-105">
-                      📺 Assistir no YouTube
+                      📺 Ouvir no YouTube
                     </Button>
                   </a>
                 )}
