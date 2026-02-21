@@ -27,7 +27,7 @@ export default function Layout({ children }) {
     { name: 'Calendário', url: createPageUrl('Calendar'), icon: Calendar },
     { name: 'Playlist', url: createPageUrl('Playlist'), icon: ListMusic },
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
-    { name: 'Ano 2025', url: createPageUrl('AdventCalendar'), icon: Gift },
+    { name: 'A Roda', url: createPageUrl('Roda'), icon: Gift },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
   ];
 

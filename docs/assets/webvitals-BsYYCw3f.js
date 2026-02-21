@@ -1,0 +1,1 @@
+import{a2 as n,a3 as t,a4 as o,a5 as i,a6 as d}from"./vendor-ui-COCjBdg-.js";import"./vendor-react-Ck48mHws.js";const e=a=>{typeof window!="undefined"&&typeof window.gtag=="function"&&window.gtag("event",a.name,{event_category:"Web Vitals",event_label:a.id,value:Math.round(a.name==="CLS"?a.value*1e3:a.value),non_interaction:!0})};n(e);t(e);o(e);i(e);d(e);

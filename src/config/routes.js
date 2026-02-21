@@ -15,7 +15,7 @@ import Home from '../pages/Home';
 
 // Toutes les autres routes sont lazy-loaded
 const Calendar = lazy(() => import('../pages/Calendar'));
-const AdventCalendar = lazy(() => import('../pages/AdventCalendar'));
+const RodaDaSegunda = lazy(() => import('../pages/RodaDaSegunda'));
 const ProtectedAdmin = lazy(() => import('../components/ProtectedAdmin'));
 const Sobre = lazy(() => import('../pages/Sobre'));
 const ContentForAI = lazy(() => import('../pages/ContentForAI'));
@@ -49,13 +49,13 @@ export const ROUTES = [
     }
   },
   {
-    path: '/adventcalendar',
-    component: AdventCalendar,
-    name: 'AdventCalendar',
+    path: '/roda',
+    component: RodaDaSegunda,
+    name: 'Roda',
     seo: {
-      title: 'Ano 2025 - Calendário do Advento Musical',
-      description: 'Calendário do advento musical com todas as músicas de 2025.',
-      keywords: 'calendário advento, música 2025, ano novo'
+      title: 'A Roda de Segunda - Descubra uma Música',
+      description: 'Gire a roda e descubra qual música da Música da Segunda ouvir hoje!',
+      keywords: 'roda da sorte, música aleatória, sorteio musical, música da segunda'
     }
   },
   {
