@@ -9,7 +9,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Variables d\'environnement Supabase manquantes: VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY sont obligatoires')
 }
 
-// Client Supabase avec options pour désactiver le cache et améliorer la persistance de session
+// Client Supabase avec persistance de session.
+// Cache headers globaux retirés pour laisser le CDN/PostgREST gérer la cache policy.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   db: {
     schema: 'public',
@@ -20,13 +21,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true, // Détecter la session dans l'URL (pour les redirections)
     storage: typeof window !== 'undefined' ? window.localStorage : undefined, // Utiliser localStorage en production
     storageKey: 'supabase.auth.token', // Clé de stockage pour la session
-  },
-  global: {
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    }
   }
 })
 

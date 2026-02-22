@@ -12,6 +12,7 @@ import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'da
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
+import { extractYouTubeId } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
@@ -261,55 +262,6 @@ export default function Youtube() {
   const handleNavigateToPreviousMonth = () => {
     const previousMonth = getPreviousMonth();
     navigate(`/calendar?month=${previousMonth}`);
-  };
-
-  // Fonction pour extraire l'ID YouTube depuis une URL (vidéo, Shorts ou playlist)
-  const extractYouTubeId = (url) => {
-    if (!url) {
-      console.warn('🔍 extractYouTubeId: URL vide ou null');
-      return null;
-    }
-    
-    console.warn('🔍 extractYouTubeId: Analyse de l\'URL:', url);
-    
-    // Si c'est une URL YouTube Music (playlist), on ne peut pas extraire un ID de vidéo
-    if (url.includes('music.youtube.com')) {
-      console.warn('⚠️ extractYouTubeId: URL YouTube Music détectée (playlist), pas de vidéo individuelle');
-      return null;
-    }
-    
-    // Supporte différents formats d'URL YouTube:
-    // - https://www.youtube.com/watch?v=VIDEO_ID
-    // - https://youtu.be/VIDEO_ID
-    // - https://www.youtube.com/embed/VIDEO_ID
-    // - https://youtube.com/watch?v=VIDEO_ID
-    // - https://m.youtube.com/watch?v=VIDEO_ID
-    // - https://www.youtube.com/shorts/VIDEO_ID (YouTube Shorts)
-    // - https://youtube.com/shorts/VIDEO_ID (YouTube Shorts)
-    // - youtube.com/watch?v=VIDEO_ID (sans https)
-    
-    // Pattern amélioré pour capturer l'ID YouTube (11 caractères)
-    // Inclut maintenant les YouTube Shorts
-    const patterns = [
-      // YouTube Shorts (priorité car format spécifique)
-      /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
-      // Formats vidéo classiques
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/,
-      // Si c'est juste l'ID directement
-      /^([A-Za-z0-9_-]{11})$/
-    ];
-    
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match) {
-        const videoId = match[1];
-        console.warn('✅ extractYouTubeId: ID trouvé:', videoId, 'depuis URL:', url);
-        return videoId;
-      }
-    }
-    
-    console.warn('❌ extractYouTubeId: Aucun ID YouTube trouvé dans:', url);
-    return null;
   };
 
   // Fonction pour détecter si c'est une playlist YouTube

@@ -23,14 +23,15 @@ import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
 import { useToast } from '@/components/ui/use-toast';
 import { extractYouTubeId } from '@/lib/utils';
-// ❌ VideoObject JSON-LD SUPPRIMÉ de TOUTES les pages (erreur GSC "Video isn't on a watch page")
-// Aucune page du site n'est une "watch page" dédiée aux vidéos.
+// âŒ VideoObject JSON-LD SUPPRIMÃ‰ de TOUTES les pages (erreur GSC "Video isn't on a watch page")
+// Aucune page du site n'est une "watch page" dÃ©diÃ©e aux vidÃ©os.
 
-// ✅ LCP FIX: YouTube Facade — affiche une thumbnail + bouton Play au lieu du iframe lourd
-// L'iframe YouTube ne charge qu'au clic, réduisant le LCP de 6.4s à ~2s
+// âœ… LCP FIX: YouTube Facade â€” affiche une thumbnail + bouton Play au lieu du iframe lourd
+// L'iframe YouTube ne charge qu'au clic, rÃ©duisant le LCP de 6.4s Ã  ~2s
 // Props attendues: youtube_music_url, youtube_url, title
 export default function Home() {
-  logger.debug('🏠 Home component loaded');
+  const HOME_SONGS_LIMIT = 120;
+  logger.debug('ðŸ  Home component loaded');
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentSong, setCurrentSong] = useState(null);
@@ -73,7 +74,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const allSongsData = await Song.list('-release_date', null);
+      const allSongsData = await Song.list('-release_date', HOME_SONGS_LIMIT);
       const publishedSongs = (Array.isArray(allSongsData) ? allSongsData : [])
         .filter((song) => !song?.status || song.status === 'published');
 
@@ -117,20 +118,20 @@ export default function Home() {
       event.stopPropagation();
     }
     
-    logger.debug('🎵 handleReplaceVideo appelé avec:', song.title);
+    logger.debug('ðŸŽµ handleReplaceVideo appelÃ© avec:', song.title);
     setDisplayedSong(song);
-    setBackgroundImageLoaded(false); // Réinitialiser l'état de chargement de l'image
+    setBackgroundImageLoaded(false); // RÃ©initialiser l'Ã©tat de chargement de l'image
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Navigation rapide entre les vidéos
-  // Note: allSongs est trié du plus récent (index 0) au plus ancien
+  // Navigation rapide entre les vidÃ©os
+  // Note: allSongs est triÃ© du plus rÃ©cent (index 0) au plus ancien
   const getCurrentSongIndex = () => {
     if (!displayedSong || allSongs.length === 0) return -1;
     return allSongs.findIndex(song => song.id === displayedSong.id);
   };
 
-  // Flèche GAUCHE (<) : Chanson PRÉCÉDENTE (plus ancienne, index + 1)
+  // FlÃ¨che GAUCHE (<) : Chanson PRÃ‰CÃ‰DENTE (plus ancienne, index + 1)
   const handlePreviousSong = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex >= 0 && currentIndex < allSongs.length - 1) {
@@ -139,22 +140,22 @@ export default function Home() {
     }
   };
 
-  // Flèche DROITE (>) : Chanson SUIVANTE (plus récente, index - 1)
+  // FlÃ¨che DROITE (>) : Chanson SUIVANTE (plus rÃ©cente, index - 1)
   const handleNextSong = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex > 0) {
-      const nextSong = allSongs[currentIndex - 1]; // Plus récente
+      const nextSong = allSongs[currentIndex - 1]; // Plus rÃ©cente
       handleReplaceVideo(nextSong, null);
     }
   };
 
-  // Cache la flèche GAUCHE si on est sur la plus vieille chanson (dernier index)
+  // Cache la flÃ¨che GAUCHE si on est sur la plus vieille chanson (dernier index)
   const canNavigatePrevious = () => {
     const currentIndex = getCurrentSongIndex();
     return currentIndex >= 0 && currentIndex < allSongs.length - 1;
   };
 
-  // Cache la flèche DROITE si on est sur la toute dernière chanson sortie (index 0, la plus récente)
+  // Cache la flÃ¨che DROITE si on est sur la toute derniÃ¨re chanson sortie (index 0, la plus rÃ©cente)
   const canNavigateNext = () => {
     const currentIndex = getCurrentSongIndex();
     return currentIndex > 0;
@@ -186,17 +187,17 @@ export default function Home() {
       try {
         await navigator.share({
           title: `${song.title} - ${song.artist}`,
-          text: `Confira esta música incrível da Música da Segunda!`,
+          text: `Confira esta mÃºsica incrÃ­vel da MÃºsica da Segunda!`,
           url: song.youtube_music_url || song.youtube_url || window.location.href,
         });
       } catch {}
     } else {
-      // ✅ UX: Toast au lieu d'alert() bloquante
-      const shareText = `${song.title} - ${song.artist}\nConfira esta música incrível da Música da Segunda!`;
+      // âœ… UX: Toast au lieu d'alert() bloquante
+      const shareText = `${song.title} - ${song.artist}\nConfira esta mÃºsica incrÃ­vel da MÃºsica da Segunda!`;
       navigator.clipboard.writeText(shareText);
       toast({
-        title: "✅ Copiado!",
-        description: "Link copiado para a área de transferência",
+        title: "âœ… Copiado!",
+        description: "Link copiado para a Ã¡rea de transferÃªncia",
         duration: 3000,
       });
     }
@@ -222,43 +223,43 @@ export default function Home() {
   };
 
   useSEO({
-    title: 'A Música da Segunda | Paródias Musicais e Humor Inteligente',
-    description: 'A Música da Segunda - Nova música toda segunda-feira! Paródias musicais inteligentes sobre as notícias do Brasil. Descubra humor e música para sua semana.',
-    keywords: 'música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes',
+    title: 'A MÃºsica da Segunda | ParÃ³dias Musicais e Humor Inteligente',
+    description: 'A MÃºsica da Segunda - Nova mÃºsica toda segunda-feira! ParÃ³dias musicais inteligentes sobre as notÃ­cias do Brasil. Descubra humor e mÃºsica para sua semana.',
+    keywords: 'mÃºsica da segunda, parÃ³dias musicais, notÃ­cias do brasil, mÃºsica brasileira, descoberta musical, nova mÃºsica toda segunda, parÃ³dias inteligentes',
     image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/icons/icon-512x512.png',
     url: '/',
     type: 'website',
-    // ✅ SEO FIX: Désactiver l'indexation vidéo sur la homepage
-    // La homepage n'est pas une "watch page" dédiée à une seule vidéo
-    // Google ne doit pas indexer la vidéo changeante de la homepage
+    // âœ… SEO FIX: DÃ©sactiver l'indexation vidÃ©o sur la homepage
+    // La homepage n'est pas une "watch page" dÃ©diÃ©e Ã  une seule vidÃ©o
+    // Google ne doit pas indexer la vidÃ©o changeante de la homepage
     robots: 'index, follow, max-video-preview:0'
   });
 
-  // ❌ VideoObject JSON-LD SUPPRIMÉ de la homepage
-  // Raison: La homepage n'est pas une "watch page" dédiée à UNE vidéo.
-  // Google attend une page dédiée à une vidéo spécifique pour indexer le VideoObject.
+  // âŒ VideoObject JSON-LD SUPPRIMÃ‰ de la homepage
+  // Raison: La homepage n'est pas une "watch page" dÃ©diÃ©e Ã  UNE vidÃ©o.
+  // Google attend une page dÃ©diÃ©e Ã  une vidÃ©o spÃ©cifique pour indexer le VideoObject.
   // Les pages /musica/{slug} sont les vraies "watch pages" avec VideoObject.
 
   if (isLoading) {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
         <Helmet>
-          <title>A Música da Segunda: Paródias das Notícias do Brasil</title>
-          <meta name="description" content="A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas." />
+          <title>A MÃºsica da Segunda: ParÃ³dias das NotÃ­cias do Brasil</title>
+          <meta name="description" content="A MÃºsica da Segunda: As NotÃ­cias do Brasil em Forma de ParÃ³dia. Site oficial de parÃ³dias musicais inteligentes e divertidas." />
         </Helmet>
         <div className="text-center mb-8">
-          {/* ✅ SEO: Div stylisé au lieu de H1 pour éviter H1 multiples (H1 principal dans le contenu) */}
+          {/* âœ… SEO: Div stylisÃ© au lieu de H1 pour Ã©viter H1 multiples (H1 principal dans le contenu) */}
           <div className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
-            A Música da Segunda
+            A MÃºsica da Segunda
           </div>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
-            Descubra música nova toda segunda-feira
+            Descubra mÃºsica nova toda segunda-feira
           </p>
         </div>
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-white/80">Carregando música da semana...</p>
+            <p className="text-white/80">Carregando mÃºsica da semana...</p>
           </div>
         </div>
       </div>
@@ -269,15 +270,15 @@ export default function Home() {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
         <Helmet>
-          <title>A Música da Segunda: Paródias das Notícias do Brasil</title>
-          <meta name="description" content="A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas." />
+          <title>A MÃºsica da Segunda: ParÃ³dias das NotÃ­cias do Brasil</title>
+          <meta name="description" content="A MÃºsica da Segunda: As NotÃ­cias do Brasil em Forma de ParÃ³dia. Site oficial de parÃ³dias musicais inteligentes e divertidas." />
         </Helmet>
         <div className="text-center mb-8">
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
-            Música da Segunda
+            MÃºsica da Segunda
           </h2>
           <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
-            Descubra música nova toda segunda-feira
+            Descubra mÃºsica nova toda segunda-feira
           </p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-3xl p-6 text-center">
@@ -304,7 +305,7 @@ export default function Home() {
           <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
             <img
               src="/images/Musica da segunda.webp"
-              alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
+              alt="Logo A MÃºsica da Segunda - ParÃ³dias Musicais do Brasil"
               className="w-full h-full object-cover"
               loading="eager"
               fetchPriority="high"
@@ -315,10 +316,10 @@ export default function Home() {
           
           <div className="text-left flex-1">
             <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
-              A Música da Segunda
+              A MÃºsica da Segunda
             </h1>
             <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
-              Descubra música nova toda segunda-feira
+              Descubra mÃºsica nova toda segunda-feira
             </p>
           </div>
 
@@ -337,16 +338,16 @@ export default function Home() {
       {/* ===== HEADER DESKTOP (H1 persistant pour SEO) ===== */}
       <div className="hidden lg:block text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
-          A Música da Segunda
+          A MÃºsica da Segunda
         </h1>
         <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
-          Descubra música nova toda segunda-feira
+          Descubra mÃºsica nova toda segunda-feira
         </p>
       </div>
     
-      {/* ===== LAYOUT DESKTOP: VIDÉO YOUTUBE + MÚSICAS DO MÊS ===== */}
+      {/* ===== LAYOUT DESKTOP: VIDÃ‰O YOUTUBE + MÃšSICAS DO MÃŠS ===== */}
       <div className="hidden lg:grid lg:grid-cols-2 lg:gap-8 lg:mt-8">
-        {/* ===== COLONNE GAUCHE: VIDÉO YOUTUBE ===== */}
+        {/* ===== COLONNE GAUCHE: VIDÃ‰O YOUTUBE ===== */}
         <div className="space-y-6 relative">
           {displayedSong ? (
             <div className="bg-white rounded-3xl p-6 shadow-lg relative">
@@ -355,8 +356,8 @@ export default function Home() {
                 <button
                   onClick={handlePreviousSong}
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90"
-                  aria-label="Música anterior"
-                  title="Música anterior"
+                  aria-label="MÃºsica anterior"
+                  title="MÃºsica anterior"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
@@ -367,14 +368,14 @@ export default function Home() {
                 <button
                   onClick={handleNextSong}
                   className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90"
-                  aria-label="Próxima música"
-                  title="Próxima música"
+                  aria-label="PrÃ³xima mÃºsica"
+                  title="PrÃ³xima mÃºsica"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>
               )}
 
-              {/* Date discrète - Desktop */}
+              {/* Date discrÃ¨te - Desktop */}
               <p className="text-xs font-medium uppercase tracking-widest text-gray-500 mb-2 text-center">
                 {displayedSong.release_date && format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()}
               </p>
@@ -382,9 +383,9 @@ export default function Home() {
                 <button
                   onClick={() => handleShowDescription(displayedSong)}
                   className="inline-flex items-center gap-2 hover:text-blue-600 transition-colors cursor-pointer"
-                  title="Ver descrição da música"
+                  title="Ver descriÃ§Ã£o da mÃºsica"
                 >
-                  <span className="text-2xl">ℹ️</span>
+                  <span className="text-2xl">â„¹ï¸</span>
                   <span>{displayedSong.title}</span>
                 </button>
               </h3>
@@ -404,7 +405,7 @@ export default function Home() {
                 </p>
               </div>
               
-              {/* 3 Ações Principais - Desktop */}
+              {/* 3 AÃ§Ãµes Principais - Desktop */}
               <div className="mt-6">
                 <div className="grid grid-cols-3 gap-3">
                   <Button
@@ -436,12 +437,12 @@ export default function Home() {
           ) : (
             <div className="bg-white rounded-3xl p-6 shadow-lg">
               <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
-                ℹ️ Nenhuma música disponível
+                â„¹ï¸ Nenhuma mÃºsica disponÃ­vel
               </h3>
               <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center" style={{ height: 'min(70vh, 600px)', aspectRatio: '16/9' }}>
                 <div className="text-center text-gray-500">
                   <Music className="w-16 h-16 mx-auto mb-4" />
-                  <p className="text-lg font-medium">Nenhuma música disponível</p>
+                  <p className="text-lg font-medium">Nenhuma mÃºsica disponÃ­vel</p>
                   <p className="text-sm">Volte na segunda-feira!</p>
                 </div>
               </div>
@@ -451,12 +452,12 @@ export default function Home() {
           <CountdownTimer />
         </div>
 
-        {/* ===== COLONNE DROITE: MÚSICAS DO MÊS ===== */}
+        {/* ===== COLONNE DROITE: MÃšSICAS DO MÃŠS ===== */}
         <div className="bg-white rounded-3xl p-6 shadow-lg">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
               <Calendar className="w-6 h-6 text-blue-600" />
-              Músicas do Mês
+              MÃºsicas do MÃªs
             </h2>
           </div>
 
@@ -468,7 +469,7 @@ export default function Home() {
                     <div 
                       className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
                       onClick={(e) => handleReplaceVideo(song, e)}
-                      title="Clique para ver esta música na coluna de vídeo"
+                      title="Clique para ver esta mÃºsica na coluna de vÃ­deo"
                     >
                       <Play className="w-6 h-6 text-white" />
                     </div>
@@ -476,7 +477,7 @@ export default function Home() {
                       <h3 
                         className="text-xl font-bold text-gray-800 truncate cursor-pointer hover:underline"
                         onClick={(e) => handleReplaceVideo(song, e)}
-                        title="Clique para ver esta música na coluna de vídeo"
+                        title="Clique para ver esta mÃºsica na coluna de vÃ­deo"
                       >
                         {song.title}
                       </h3>
@@ -495,19 +496,19 @@ export default function Home() {
             <div className="text-center py-8">
               <Music className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">
-                Nenhuma música publicada este mês ainda
+                Nenhuma mÃºsica publicada este mÃªs ainda
               </p>
             </div>
           )}
 
-          {/* Lien discret vers le mois précédent */}
+          {/* Lien discret vers le mois prÃ©cÃ©dent */}
           <div className="mt-6 pt-4 border-t border-gray-200">
             <button
               onClick={handleNavigateToPreviousMonth}
               className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 text-sm transition-colors group cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              Ver músicas de {format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'MMMM yyyy', { locale: ptBR })}
+              Ver mÃºsicas de {format(new Date(new Date().setMonth(new Date().getMonth() - 1)), 'MMMM yyyy', { locale: ptBR })}
             </button>
           </div>
         </div>
@@ -517,9 +518,9 @@ export default function Home() {
       <div className="lg:hidden fixed inset-0 flex flex-col overflow-hidden">
         {displayedSong ? (
           <>
-            {/* Conteneur Vidéo: Prend presque toute la hauteur (flex-1), garde place pour Navbar */}
+            {/* Conteneur VidÃ©o: Prend presque toute la hauteur (flex-1), garde place pour Navbar */}
             <div className="relative flex-1 overflow-hidden">
-              {/* Background: Miniature vidéo avec blur et overlay */}
+              {/* Background: Miniature vidÃ©o avec blur et overlay */}
               {getYouTubeThumbnail(displayedSong) && (
                 <div className="absolute inset-0 z-0">
                   {/* Placeholder pendant le chargement */}
@@ -544,8 +545,8 @@ export default function Home() {
                 <button
                   onClick={handlePreviousSong}
                   className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90 touch-manipulation"
-                  aria-label="Música anterior"
-                  title="Música anterior"
+                  aria-label="MÃºsica anterior"
+                  title="MÃºsica anterior"
                 >
                   <ChevronLeft className="w-6 h-6" />
                 </button>
@@ -556,14 +557,14 @@ export default function Home() {
                 <button
                   onClick={handleNextSong}
                   className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90 touch-manipulation"
-                  aria-label="Próxima música"
-                  title="Próxima música"
+                  aria-label="PrÃ³xima mÃºsica"
+                  title="PrÃ³xima mÃºsica"
                 >
                   <ChevronRight className="w-6 h-6" />
                 </button>
               )}
 
-              {/* Vidéo: Prend toute la hauteur disponible */}
+              {/* VidÃ©o: Prend toute la hauteur disponible */}
               <div className="relative z-10 h-full flex items-center justify-center px-4">
                 <div className="w-full max-w-md">
                   <div className="bg-black/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10">
@@ -579,10 +580,10 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Dégradé sombre en bas pour la lisibilité du texte */}
+              {/* DÃ©gradÃ© sombre en bas pour la lisibilitÃ© du texte */}
               <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/90 to-transparent z-10 pointer-events-none"></div>
 
-              {/* Texte en Overlay: Date et Titre en bas à gauche */}
+              {/* Texte en Overlay: Date et Titre en bas Ã  gauche */}
               <div className="absolute bottom-4 left-4 z-20 text-white">
                 {/* Date en petit (xs uppercase) */}
                 <p className="text-xs font-medium uppercase tracking-widest text-white/80 mb-1 drop-shadow-lg">
@@ -594,7 +595,7 @@ export default function Home() {
                 </h2>
               </div>
 
-              {/* Actions Latérales: Plateformes, Paroles et Partage alignés verticalement à droite */}
+              {/* Actions LatÃ©rales: Plateformes, Paroles et Partage alignÃ©s verticalement Ã  droite */}
               <div className="absolute right-2 bottom-20 flex flex-col gap-3 z-20">
                 {/* Bouton Plateformes (vert avec note de musique) */}
                 <button
@@ -630,14 +631,14 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Bouton Écouter: Sticky en bas au centre, par-dessus le dégradé */}
+            {/* Bouton Ã‰couter: Sticky en bas au centre, par-dessus le dÃ©gradÃ© */}
             <div className="relative z-30 pb-4 px-4 flex justify-center">
               <Button
                 size="lg"
                 onClick={() => setShowPlatformsDrawer(true)}
                 className="w-full max-w-md bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 touch-manipulation"
               >
-                <span className="text-2xl">🎧</span>
+                <span className="text-2xl">ðŸŽ§</span>
                 <span>Ouvir</span>
               </Button>
             </div>
@@ -669,9 +670,9 @@ export default function Home() {
           <div className="relative z-10 h-full flex items-center justify-center px-4">
             <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-8 text-center border border-white/20 shadow-2xl">
               <Music className="w-16 h-16 text-white/80 mx-auto mb-4 drop-shadow-lg" />
-              <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-lg">Nenhuma música disponível</h3>
+              <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-lg">Nenhuma mÃºsica disponÃ­vel</h3>
               <p className="text-white/90 drop-shadow-md">
-                A música da semana será publicada em breve. Volte na segunda-feira!
+                A mÃºsica da semana serÃ¡ publicada em breve. Volte na segunda-feira!
               </p>
             </div>
           </div>
@@ -683,7 +684,7 @@ export default function Home() {
         <DialogContent className="bg-[#f8f5f2] max-w-md">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              🎵 Ouvir em outras plataformas
+              ðŸŽµ Ouvir em outras plataformas
             </DialogTitle>
           </DialogHeader>
           
@@ -709,7 +710,7 @@ export default function Home() {
                     className="block"
                   >
                     <Button className="w-full bg-[#1DB954] hover:bg-[#1ed760] text-white font-bold py-3 rounded-2xl text-sm transition-all duration-200 hover:scale-105">
-                      🎧 Ouvir no Spotify
+                      ðŸŽ§ Ouvir no Spotify
                     </Button>
                   </a>
                 )}
@@ -722,7 +723,7 @@ export default function Home() {
                     className="block"
                   >
                     <Button className="w-full bg-gradient-to-r from-[#FA233B] to-[#FB5C74] hover:opacity-90 text-white font-bold py-3 rounded-2xl text-sm transition-all duration-200 hover:scale-105">
-                      🎵 Ouvir no Apple Music
+                      ðŸŽµ Ouvir no Apple Music
                     </Button>
                   </a>
                 )}
@@ -735,7 +736,7 @@ export default function Home() {
                     className="block"
                   >
                     <Button className="w-full bg-[#FF0000] hover:bg-[#cc0000] text-white font-bold py-3 rounded-2xl text-sm transition-all duration-200 hover:scale-105">
-                      📺 Ouvir no YouTube
+                      ðŸ“º Ouvir no YouTube
                     </Button>
                   </a>
                 )}
@@ -744,7 +745,7 @@ export default function Home() {
                   <div className="text-center py-6">
                     <Music className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-600 font-medium">Links de streaming em breve...</p>
-                    <p className="text-gray-500 text-sm">Esta música será disponibilizada em breve nas principais plataformas.</p>
+                    <p className="text-gray-500 text-sm">Esta mÃºsica serÃ¡ disponibilizada em breve nas principais plataformas.</p>
                   </div>
                 )}
               </div>
@@ -758,17 +759,17 @@ export default function Home() {
         open={showLyricsDialog} 
         onOpenChange={setShowLyricsDialog} 
         song={selectedSongForDialog}
-        title="📝 Letras da Música"
+        title="ðŸ“ Letras da MÃºsica"
         maxHeight="h-52"
         showIcon={false}
       />
 
-      {/* ===== DIALOG DESCRIÇÃO ===== */}
+      {/* ===== DIALOG DESCRIÃ‡ÃƒO ===== */}
       <Dialog open={showDescriptionDialog} onOpenChange={setShowDescriptionDialog}>
         <DialogContent className="bg-[#f8f5f2] max-w-2xl max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              ℹ️ Descrição da Música
+              â„¹ï¸ DescriÃ§Ã£o da MÃºsica
             </DialogTitle>
           </DialogHeader>
           
@@ -783,11 +784,11 @@ export default function Home() {
                   {selectedSongForDialog.artist}
                 </p>
                 <p className="text-blue-600 text-sm">
-                  📅 {format(parseISO(selectedSongForDialog.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+                  ðŸ“… {format(parseISO(selectedSongForDialog.release_date), 'dd/MM/yyyy', { locale: ptBR })}
                 </p>
               </div>
 
-              {/* Descrição */}
+              {/* DescriÃ§Ã£o */}
               <div className="bg-white rounded-xl p-4 border border-gray-200">
                 {selectedSongForDialog.description ? (
                   <ScrollArea className="h-60">
@@ -800,8 +801,8 @@ export default function Home() {
                 ) : (
                   <div className="text-center py-8">
                     <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium">Descrição não disponível</p>
-                    <p className="text-gray-500 text-sm">A descrição desta música será adicionada em breve.</p>
+                    <p className="text-gray-600 font-medium">DescriÃ§Ã£o nÃ£o disponÃ­vel</p>
+                    <p className="text-gray-500 text-sm">A descriÃ§Ã£o desta mÃºsica serÃ¡ adicionada em breve.</p>
                   </div>
                 )}
               </div>

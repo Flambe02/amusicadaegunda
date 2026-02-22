@@ -4,63 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- ✅ PHASE 2 #3: Critical CSS inline pour réduire render blocking -->
-    <style>
-      /* Critical CSS - Above the fold styles */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        line-height: 1.5;
-        color: #1f2937;
-        background: linear-gradient(to bottom, #f9fafb, #e5e7eb);
-        min-height: 100vh;
-      }
-      
-      #root {
-        min-height: 100vh;
-      }
-      
-      /* Loading spinner */
-      .spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid #e5e7eb;
-        border-top-color: #3b82f6;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-      
-      /* Skeleton loader */
-      .skeleton {
-        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s ease-in-out infinite;
-      }
-      
-      @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
-      }
-    </style>
-    
-    <!-- ✅ PHASE 2: Preconnect et DNS Prefetch pour domaines externes -->
-    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.supabase.co" crossorigin>
-    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-    
-    <!-- ✅ LCP FIX: Preload de l'image critique (logo) pour améliorer Core Web Vitals -->
-    <link rel="preload" href="/images/Musica da segunda.jpg" as="image" fetchpriority="high">
-    
     <!-- Favicon et Icônes -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/pwa/favicon-16x16.png" />
@@ -106,7 +49,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Música da Segunda" />
     <meta name="application-name" content="Música da Segunda" />
-    <meta name="msapplication-TileColor" content="#32a2dc" />
     <meta name="theme-color" content="#32a2dc" />
     
     <!-- Canonical URL -->
@@ -118,37 +60,61 @@
     <meta name="keywords" content="música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes" />
     <meta name="author" content="Música da Segunda" />
     <!-- ✅ SEO FIX: max-video-preview:0 empêche Google d'indexer la vidéo sur la homepage -->
-    <!-- La homepage n'est pas une "watch page" dédiée, donc pas d'indexation vidéo -->
     <meta name="robots" content="index, follow, max-video-preview:0" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="A Música da Segunda | Paródias Musicais do Brasil" />
+    <meta property="og:title" content="A Música da Segunda" />
     <meta property="og:description" content="A Música da Segunda - Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira com humor e criatividade." />
     <meta property="og:url" content="https://www.amusicadasegunda.com/" />
-    <meta property="og:image" content="https://www.amusicadasegunda.com/icons/icon-512x512.png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image" content="https://www.amusicadasegunda.com/images/og-social-1200x630.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:site_name" content="A Música da Segunda" />
     
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="A Música da Segunda | Paródias Musicais do Brasil" />
+    <meta name="twitter:title" content="A Música da Segunda" />
     <meta name="twitter:description" content="A Música da Segunda - Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira com humor e criatividade." />
-    <meta name="twitter:image" content="https://www.amusicadasegunda.com/icons/icon-512x512.png" />
+    <meta name="twitter:image" content="https://www.amusicadasegunda.com/images/og-social-1200x630.jpg" />
     
-    <!-- ✅ PHASE 2 #5: Resource hints optimisés pour performance -->
-    <!-- Preconnect Supabase (critique - chargé immédiatement) -->
-    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.supabase.co" crossorigin />
+    <!-- Preconnect pour performance - Uniquement ressources critiques -->
     <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
-    <!-- DNS prefetch pour domaines secondaires -->
-    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-    <!-- TikTok, Spotify, Apple Music : chargés lazy -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- TikTok, Spotify, Apple Music, YouTube : préconnexions différées (chargées lazy) -->
     
+    <!-- ✅ LCP FIX: Preload de l'image critique (logo) en WebP pour Core Web Vitals -->
+    <!-- WebP = 181KB vs JPG = 1552KB → économie de 1.3MB par visite -->
+    <link rel="preload" href="/images/Musica da segunda.webp" as="image" type="image/webp" fetchpriority="high">
+    <!-- ✅ LCP FIX: Preconnect pour les thumbnails YouTube (élément LCP via facade) -->
+    <link rel="preconnect" href="https://img.youtube.com">
+    <!-- YouTube iframe: dns-prefetch uniquement (chargé au clic via facade) -->
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
+
+    <!-- Google tag (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-SKRKX4N8XS', { send_page_view: false });
+    </script>
+
+    <!-- Google Tag Manager -->
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-PQTFJ3C3');</script>
+    <!-- End Google Tag Manager -->
+
+    <!-- Metricool -->
+    <script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"986e8ab34d58c474dc4a0a3d51de41d6"})});</script>
+
     <!-- Security Headers -->
     <!-- Note: X-Frame-Options doit être défini via en-tête HTTP (_headers), pas via meta -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
@@ -157,36 +123,13 @@
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
     
-    <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy"
-          content="
-            default-src 'self' data: blob:;
-            script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com;
-            style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-            img-src 'self' data: https:;
-            font-src 'self' https://fonts.gstatic.com;
-            connect-src 'self' ws: wss: http: https:
-              https://efnzmpzkzeuktqkghwfa.functions.supabase.co
-              https://efnzmpzkzeuktqkghwfa.supabase.co
-              https://www.tiktok.com https://*.tiktokcdn.com
-              https://open.spotify.com https://api.spotify.com
-              https://music.apple.com https://*.apple.com;
-            frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com;
-            media-src https: data:;
-          ">
-    
     <!-- Structured Data JSON-LD -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "A Música da Segunda",
-      "url": "https://www.amusicadasegunda.com/",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://www.amusicadasegunda.com/?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "url": "https://www.amusicadasegunda.com/"
     }
     </script>
     <script type="application/ld+json">
@@ -209,42 +152,33 @@
       }
     }
     </script>
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Brand",
-      "name": "A Música da Segunda",
-      "alternateName": ["Música da Segunda", "amusicadasegunda"],
-      "description": "Paródias musicais inteligentes sobre as notícias do Brasil",
-      "url": "https://www.amusicadasegunda.com",
-      "logo": "https://www.amusicadasegunda.com/icons/icon-512x512.png",
-      "sameAs": [
-        "https://www.tiktok.com/@amusicadasegunda",
-        "https://www.youtube.com/@amusicadasegunda",
-        "https://open.spotify.com/user/amusicadasegunda"
-      ]
-    }
-    </script>
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PQTFJ3C3"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <!-- Skip link pour accessibilité -->
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
     
-    <div id="root"></div>
-    
-    <!-- Restore route after 404 redirect (GitHub Pages SPA support) -->
-    <script>
-      (function(){
-        var redirect = sessionStorage.redirect;
-        delete sessionStorage.redirect;
-        if (redirect && redirect != location.href) {
-          history.replaceState(null, null, redirect);
-        }
-      })();
-    </script>
-    
+    <div id="root">
+      <!-- ✅ SEO: Contenu statique visible pour les crawlers avant le chargement React -->
+      <!-- React remplace ce contenu à l'hydratation -->
+      <main id="main" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
+        <h1 style="font-size: 2.5rem; font-weight: bold; color: #111; margin-bottom: 1rem;">A Música da Segunda</h1>
+        <p style="font-size: 1.25rem; color: #555; margin-bottom: 2rem;">Nova música toda segunda-feira! Paródias musicais inteligentes sobre as notícias do Brasil.</p>
+        <nav aria-label="Navegação principal">
+          <ul style="list-style: none; padding: 0; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+            <li><a href="/musica/" style="color: #2563eb; font-weight: 600;">Todas as Músicas</a></li>
+            <li><a href="/sobre/" style="color: #2563eb; font-weight: 600;">Sobre</a></li>
+            <li><a href="/calendar/" style="color: #2563eb; font-weight: 600;">Calendário</a></li>
+          </ul>
+        </nav>
+      </main>
+    </div>
     <script src="/pwa-install.js"></script>
     <script type="module" src="/src/main.jsx"></script>
     
   </body>
 </html>
+

@@ -21,9 +21,9 @@ const parseOrderBy = (orderBy) => {
   return { column, ascending }
 }
 
-// Set to true only when DB migration for songs.slug is applied in the target environment.
-// This avoids noisy 400 GET errors on instances where the column does not exist yet.
-let slugColumnSupported = import.meta.env?.VITE_SUPABASE_HAS_SLUG === 'true'
+// Assume slug column exists by default.
+// Set VITE_SUPABASE_HAS_SLUG=false only for legacy instances before migration.
+let slugColumnSupported = import.meta.env?.VITE_SUPABASE_HAS_SLUG !== 'false'
 
 // ===== SERVICE SUPABASE POUR LES CHANSONS =====
 export const supabaseSongService = {
@@ -88,7 +88,7 @@ export const supabaseSongService = {
 
           if (missingSlugColumn) {
             slugColumnSupported = false
-            logger.warn('Colonne slug absente dans Supabase, fallback title->slug active')
+            logger.debug('Colonne slug absente dans Supabase, fallback title->slug active')
           } else {
             throw slugError
           }
@@ -97,16 +97,20 @@ export const supabaseSongService = {
         }
       }
 
-      // Fallback temporaire: full scan + comparaison slug du titre
-      const { data: allSongs, error } = await supabase
+      // Fallback sans full-table scan: cible des candidats de titre puis match de slug en JS.
+      const titleCandidate = slug.replace(/-/g, ' ').trim()
+      if (!titleCandidate) return null
+
+      const { data: candidateSongs, error } = await supabase
         .from(TABLES.SONGS)
         .select('*')
         .eq('status', 'published')
+        .ilike('title', `%${titleCandidate}%`)
+        .limit(12)
 
       if (error) throw error
 
-      const song = allSongs?.find((s) => titleToSlug(s.title) === slug)
-
+      const song = candidateSongs?.find((s) => titleToSlug(s?.title) === slug)
       return song || null
     } catch (error) {
       handleSupabaseError(error, `Recuperation chanson slug ${slug}`)
@@ -118,8 +122,8 @@ export const supabaseSongService = {
   // Récupérer la chanson actuelle (la plus récente enregistrée dans Supabase)
   async getCurrent() {
     try {
-      logger.warn('🔍 getCurrent() - Début de la fonction');
-      logger.warn('🔍 Timestamp:', new Date().toISOString());
+      logger.debug('🔍 getCurrent() - Début de la fonction');
+      logger.debug('🔍 Timestamp:', new Date().toISOString());
       
       // Forcer une requête fraîche - Supabase n'a pas de cache par défaut mais on s'assure
       // IMPORTANT: Supabase ne supporte qu'un seul .order() à la fois
@@ -137,30 +141,30 @@ export const supabaseSongService = {
       if (error) {
         // Gérer le cas où .single() ne trouve rien sans que ce soit une erreur bloquante
         if (error.code === 'PGRST116') {
-          logger.warn('⚠️ Aucune chanson "published" trouvée, ce n\'est pas une erreur.');
+          logger.debug('⚠️ Aucune chanson "published" trouvée, ce n\'est pas une erreur.');
           return null;
         }
         logger.error('❌ Erreur Supabase getCurrent:', error);
         throw error;
       }
       
-      logger.warn('📊 Chanson actuelle trouvée:', data || null);
+      logger.debug('📊 Chanson actuelle trouvée:', data || null);
 
       if (!data) {
-        logger.warn('⚠️ Aucune chanson published trouvée');
+        logger.debug('⚠️ Aucune chanson published trouvée');
         return null;
       }
 
       const result = data;
-      logger.warn('🎯 Chanson sélectionnée:', result);
+      logger.debug('🎯 Chanson sélectionnée:', result);
       
       // Logs détaillés pour debug production
-      logger.warn('🔍 DEBUG getCurrent - Tri appliqué:');
-      logger.warn('  - Titre:', result?.title);
-      logger.warn('  - created_at:', result?.created_at);
-      logger.warn('  - updated_at:', result?.updated_at);
-      logger.warn('  - release_date:', result?.release_date);
-      logger.warn('  - Status:', result?.status);
+      logger.debug('🔍 DEBUG getCurrent - Tri appliqué:');
+      logger.debug('  - Titre:', result?.title);
+      logger.debug('  - created_at:', result?.created_at);
+      logger.debug('  - updated_at:', result?.updated_at);
+      logger.debug('  - release_date:', result?.release_date);
+      logger.debug('  - Status:', result?.status);
       
       return result;
     } catch (error) {
@@ -239,7 +243,7 @@ export const supabaseSongService = {
       const normalizedUrl = this.normalizeYouTubeUrl(originalUrl);
       const videoId = this.extractYouTubeId(originalUrl);
       
-      logger.warn('🔍 Recherche YouTube URL:', { originalUrl, normalizedUrl, videoId });
+      logger.debug('🔍 Recherche YouTube URL:', { originalUrl, normalizedUrl, videoId });
       
       // Méthode 1: Chercher avec l'URL originale exacte
       let { data, error } = await supabase
@@ -281,7 +285,7 @@ export const supabaseSongService = {
             return songVideoId === videoId;
           });
           if (found) {
-            logger.warn('✅ Chanson trouvée par ID vidéo:', found.title);
+            logger.debug('✅ Chanson trouvée par ID vidéo:', found.title);
             data = found;
           }
         }
@@ -302,7 +306,7 @@ export const supabaseSongService = {
             return songVideoId === videoId;
           });
           if (found) {
-            logger.warn('✅ Chanson trouvée par recherche partielle:', found.title);
+            logger.debug('✅ Chanson trouvée par recherche partielle:', found.title);
             data = found;
           }
         }
@@ -374,7 +378,7 @@ export const supabaseSongService = {
         throw notAdminError;
       }
 
-      logger.warn('✅ Vérification admin OK, vérification des doublons...');
+      logger.debug('✅ Vérification admin OK, vérification des doublons...');
 
       // Vérifier les doublons AVANT l'insertion (en tant qu'admin, on peut voir toutes les chansons)
       // normalizedUrl est déjà déclaré plus haut
@@ -396,7 +400,7 @@ export const supabaseSongService = {
             .maybeSingle();
           
           if (searchError && searchError.code !== 'PGRST116') {
-            logger.warn('⚠️ Erreur lors de la recherche de doublon (normalisée):', searchError);
+            logger.debug('⚠️ Erreur lors de la recherche de doublon (normalisée):', searchError);
           } else if (existingByNormalized) {
             existingSong = existingByNormalized;
           }
@@ -412,7 +416,7 @@ export const supabaseSongService = {
               .not('youtube_url', 'is', null);
             
             if (allSongsError) {
-              logger.warn('⚠️ Erreur lors de la recherche de toutes les chansons:', allSongsError);
+              logger.debug('⚠️ Erreur lors de la recherche de toutes les chansons:', allSongsError);
             } else if (allSongs) {
               existingSong = allSongs.find(song => {
                 if (!song.youtube_url) return false;
@@ -460,7 +464,7 @@ export const supabaseSongService = {
         hashtags: Array.isArray(songData.hashtags) ? songData.hashtags : []
       }
 
-      logger.warn('✅ Vérification des doublons OK, insertion de la chanson...');
+      logger.debug('✅ Vérification des doublons OK, insertion de la chanson...');
 
       const { data, error } = await supabase
         .from(TABLES.SONGS)
@@ -488,11 +492,11 @@ export const supabaseSongService = {
         // Gérer spécifiquement l'erreur de duplicate key (23505)
         // Cette erreur peut se produire si une contrainte UNIQUE dans la base bloque l'insertion
         if (error.code === '23505' || error.message?.includes('duplicate key')) {
-          logger.warn('⚠️ Erreur duplicate key détectée, recherche de la chanson existante...');
+          logger.debug('⚠️ Erreur duplicate key détectée, recherche de la chanson existante...');
           
           // Extraire le champ en conflit depuis le message d'erreur
           const conflictField = error.message?.match(/Key \(([^)]+)\)/)?.[1] || 'unknown';
-          logger.warn('⚠️ Champ en conflit:', conflictField);
+          logger.debug('⚠️ Champ en conflit:', conflictField);
           
           let existingSong = null;
           let errorCode = 'DUPLICATE_KEY';
@@ -534,7 +538,7 @@ export const supabaseSongService = {
         throw error;
       }
 
-      logger.warn('✅ Chanson créée avec succès:', data)
+      logger.debug('✅ Chanson créée avec succès:', data)
       return data
     } catch (error) {
       // Ne pas appeler handleSupabaseError si c'est déjà notre erreur personnalisée
@@ -548,9 +552,9 @@ export const supabaseSongService = {
   // Mettre à jour une chanson
   async update(id, updates) {
     try {
-      logger.warn('🔄 supabaseSongService.update - début');
-      logger.warn('🔄 ID reçu:', id, 'Type:', typeof id);
-      logger.warn('🔄 Updates reçus:', JSON.stringify(updates, null, 2));
+      logger.debug('🔄 supabaseSongService.update - début');
+      logger.debug('🔄 ID reçu:', id, 'Type:', typeof id);
+      logger.debug('🔄 Updates reçus:', JSON.stringify(updates, null, 2));
       
       // Nettoyer les données de mise à jour
       const cleanUpdates = {}
@@ -573,7 +577,7 @@ export const supabaseSongService = {
         }
       })
 
-      logger.warn('🔄 Updates nettoyés:', JSON.stringify(cleanUpdates, null, 2));
+      logger.debug('🔄 Updates nettoyés:', JSON.stringify(cleanUpdates, null, 2));
 
       // Récupérer la chanson actuelle pour comparer les valeurs
       const currentSong = await this.get(id);
@@ -636,8 +640,8 @@ export const supabaseSongService = {
         .select()
         .single()
 
-      logger.warn('[Supabase][UPDATE] id=', id, 'payload=', cleanUpdates);
-      logger.warn('🔄 Réponse Supabase:', JSON.stringify({ data, error }, null, 2));
+      logger.debug('[Supabase][UPDATE] id=', id, 'payload=', cleanUpdates);
+      logger.debug('🔄 Réponse Supabase:', JSON.stringify({ data, error }, null, 2));
 
       if (error) {
         logger.error('[Supabase][UPDATE][ERROR]', error);
@@ -653,11 +657,11 @@ export const supabaseSongService = {
         
         // Gérer spécifiquement l'erreur de duplicate key (23505)
         if (error.code === '23505' || error.message?.includes('duplicate key')) {
-          logger.warn('⚠️ Erreur duplicate key détectée lors de la mise à jour');
+          logger.debug('⚠️ Erreur duplicate key détectée lors de la mise à jour');
           
           // Extraire le champ en conflit depuis le message d'erreur
           const conflictField = error.message?.match(/Key \(([^)]+)\)/)?.[1] || 'unknown';
-          logger.warn('⚠️ Champ en conflit:', conflictField);
+          logger.debug('⚠️ Champ en conflit:', conflictField);
           
           let existingSong = null;
           let errorCode = 'DUPLICATE_KEY';
@@ -697,7 +701,7 @@ export const supabaseSongService = {
         throw new Error(error.message || 'Update failed');
       }
 
-      logger.warn('✅ Chanson mise à jour avec succès:', data)
+      logger.debug('✅ Chanson mise à jour avec succès:', data)
       return data
     } catch (error) {
       logger.error('❌ Erreur dans supabaseSongService.update:', error);
@@ -730,7 +734,7 @@ export const supabaseSongService = {
 
       if (error) throw error
 
-      logger.warn('✅ Chanson supprimée avec succès ID:', id)
+      logger.debug('✅ Chanson supprimée avec succès ID:', id)
       return true
     } catch (error) {
       handleSupabaseError(error, `Suppression chanson ID ${id}`)

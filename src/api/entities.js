@@ -239,13 +239,14 @@ export const AdventSong = {
     try {
       if (useSupabase) {
         // Récupérer les chansons de décembre ou publiées
-        const songs = await supabaseSongService.list(orderBy, limit);
-        const adventSongs = songs.filter(song => {
-          const releaseDate = new Date(song.release_date);
-          const month = releaseDate.getMonth();
-          return month === 11 || song.status === 'published';
-        });
-        return limit ? adventSongs.slice(0, limit) : adventSongs;
+        const currentYear = new Date().getFullYear();
+        let decemberSongs = await supabaseSongService.getByMonth(currentYear, 12);
+        if (!Array.isArray(decemberSongs) || decemberSongs.length === 0) {
+          decemberSongs = await supabaseSongService.getByMonth(currentYear - 1, 12);
+        }
+        const publishedSongs = (decemberSongs || []).filter(song => song?.status === 'published');
+        const sortedSongs = publishedSongs.sort((a, b) => new Date(b.release_date) - new Date(a.release_date));
+        return limit ? sortedSongs.slice(0, limit) : sortedSongs;
       } else {
         // Fallback localStorage
         const songs = localStorageService.songs.getAll();
@@ -259,7 +260,7 @@ export const AdventSong = {
         return limit ? sortedSongs.slice(0, limit) : sortedSongs;
       }
     } catch (error) {
-      logger.error('Erro ao carregar músicas do Ano 2025:', error);
+      logger.error('Erro ao carregar músicas do calendário do advento:', error);
       // Fallback localStorage
       const songs = localStorageService.songs.getAll();
       const adventSongs = songs.filter(song => {

@@ -47,6 +47,13 @@ export default defineConfig(({ command, mode }) => ({
             if (id.includes('date-fns')) {
               return 'vendor-date';
             }
+            // Heavy libs split for better lazy route loading
+            if (id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('framer-motion')) {
+              return 'vendor-motion';
+            }
             // Tout le reste des node_modules (radix-ui, lucide, etc.)
             return 'vendor-ui';
           }

@@ -171,15 +171,7 @@ export function musicPlaylistJsonLd({
 // Les pages du site ne sont pas des "watch pages" dédiées aux vidéos.
 // Google refuse d'indexer VideoObject sur des pages mixtes (musique + vidéo + texte).
 
-/**
- * Extract YouTube video ID from various URL formats
- * Supports: watch?v=, shorts/, embed/, youtu.be/, music.youtube.com, and raw IDs
- * @param {string} url - YouTube URL or video ID
- * @returns {string|null} - YouTube video ID or null if not found
- */
-export function extractYouTubeId(url) {
-  return extractYouTubeIdFromUtils(url);
-}
+export const extractYouTubeId = extractYouTubeIdFromUtils;
 
 /**
  * Build YouTube URLs from video ID

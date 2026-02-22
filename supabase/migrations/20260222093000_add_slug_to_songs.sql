@@ -43,3 +43,4 @@ for each row
 execute function public.set_song_slug();
 
 create index if not exists idx_songs_slug on public.songs(slug);
+create unique index if not exists idx_songs_slug_unique on public.songs(slug) where slug is not null;

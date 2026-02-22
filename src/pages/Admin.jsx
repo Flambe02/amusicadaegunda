@@ -36,60 +36,10 @@ import { ptBR } from 'date-fns/locale';
 import TikTokEmbedOptimized from '@/components/TikTokEmbedOptimized';
 import { songSchema, safeParse } from '@/lib/validation';
 import { sanitizeInput, sanitizeURL } from '@/lib/security';
+import { notifyAllSubscribers } from '@/lib/pushNotifications';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/components/ui/use-toast";
 
-/**
- * Fonction pour envoyer des notifications push à tous les abonnés
- * Utilise Supabase Edge Function
- * @returns {Promise<{success: boolean, sent?: number, error?: string}>}
- */
-async function notifyAllSubscribers({ title, body, icon, url }) {
-  // Utiliser Supabase Edge Functions
-  const API_BASE = import.meta.env?.VITE_PUSH_API_BASE || 'https://efnzmpzkzeuktqkghwfa.functions.supabase.co';
-
-  // Warn if using default/fallback URL in production
-  if (import.meta.env.PROD && !import.meta.env.VITE_PUSH_API_BASE) {
-    console.warn('⚠️ VITE_PUSH_API_BASE not set, using default URL');
-  }
-
-  try {
-    // Envoyer les notifications via Supabase Edge Function
-    const response = await fetch(`${API_BASE}/push/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        title: title || 'Nouvelle Chanson ! 🎶',
-        body: body || 'Une nouvelle chanson est disponível !',
-        icon: icon || '/icons/pwa/icon-192x192.png',
-        url: url || '/',
-        tag: 'nova-musica',
-        topic: 'new-song',
-        locale: 'pt-BR'
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      console.error('Erreur envoi notifications push:', response.status, errorData);
-      return { success: false, error: `HTTP ${response.status}: ${errorData.error || errorData.message || 'Erreur inconnue'}` };
-    }
-
-    const result = await response.json();
-    console.warn('✅ Notifications envoyées:', result);
-
-    if (result.ok) {
-      return { success: true, sent: result.sent, total: result.total, failed: result.failed };
-    } else {
-      return { success: false, error: result.message || 'Réponse inattendue' };
-    }
-  } catch (error) {
-    console.error('Erreur préparation notification:', error);
-    return { success: false, error: error.message || 'Erreur réseau' };
-  }
-}
 
 export default function AdminPage() {
   // ===== ESTADOS =====

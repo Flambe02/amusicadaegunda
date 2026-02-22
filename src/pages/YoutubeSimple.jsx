@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import YouTubePlayer from '../components/YouTubePlayer';
+import { extractYouTubeId } from '@/lib/utils';
 
 export default function YoutubeSimple() {
   console.warn('🎬 YoutubeSimple component loaded');
@@ -23,12 +24,6 @@ export default function YoutubeSimple() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const extractYouTubeId = (url) => {
-    if (!url) return null;
-    const match = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
-    return match ? match[1] : null;
   };
 
   if (isLoading) {

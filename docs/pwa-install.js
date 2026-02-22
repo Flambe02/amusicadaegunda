@@ -1,211 +1,218 @@
-// Script d'installation PWA pour Música da Segunda
+// Script d'installation PWA pour Musica da Segunda
 class PWAInstaller {
   constructor() {
-    this.deferredPrompt = null;
-    this.installButton = null;
-    this.isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    this.init();
+    this.deferredPrompt = null
+    this.installButton = null
+    this.pendingWorker = null
+    this.isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    this.init()
+  }
+
+  debug(...args) {
+    if (this.isLocalDev) {
+      console.log(...args)
+    }
+  }
+
+  debugError(...args) {
+    if (this.isLocalDev) {
+      console.error(...args)
+    }
   }
 
   init() {
-    // Enregistrer le service worker
-    this.registerServiceWorker();
-    // En DEV, s'assurer qu'aucun SW existant ne contrôle la page
+    this.registerServiceWorker()
+    this.listenForServiceWorkerControllerChange()
+
+    // En local, ne pas activer le flux d'installation
     if (this.isLocalDev) {
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          regs.forEach(r => r.unregister());
-          console.log('🧹 DEV: Service Worker désinstallé pour éviter tout cache.');
-        }).catch(() => {});
+        navigator.serviceWorker
+          .getRegistrations()
+          .then((regs) => {
+            regs.forEach((r) => r.unregister())
+            this.debug('DEV: Service Worker desinstalle pour eviter tout cache')
+          })
+          .catch(() => {})
       }
-      // En local, désactiver le flux d'installation PWA (évite les warnings beforeinstallprompt)
-      return;
+      return
     }
-    
-    // Écouter l'événement d'installation
-    this.listenForInstallPrompt();
-    
-    // Créer le bouton d'installation
-    this.createInstallButton();
+
+    this.listenForInstallPrompt()
+    this.createInstallButton()
   }
 
-  // Enregistrer le service worker
   async registerServiceWorker() {
-    // En dev, pas de SW pour éviter les conflits HMR
     if (this.isLocalDev) {
-      console.log('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
-      return;
+      this.debug('DEV mode: Service Worker desactive pour eviter les conflits HMR')
+      return
     }
-    
+
+    // Eviter l'enregistrement du SW dans l'app native Capacitor
+    const isNativeCapacitor =
+      typeof window !== 'undefined' &&
+      window.Capacitor &&
+      typeof window.Capacitor.isNativePlatform === 'function' &&
+      window.Capacitor.isNativePlatform() === true
+
+    if (isNativeCapacitor) {
+      return
+    }
+
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
-        console.log('🎵 Service Worker enregistré avec succès:', registration);
-        
-        // Vérifier les mises à jour
+        const registration = await navigator.serviceWorker.register('/sw.js')
+
+        // Verifier les mises a jour
         registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
+          const newWorker = registration.installing
+          if (!newWorker) return
+
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('🔄 Nouvelle version disponible !');
-              this.showUpdateNotification();
+              this.pendingWorker = newWorker
+              this.showUpdateNotification()
             }
-          });
-        });
+          })
+        })
       } catch (error) {
-        console.error('❌ Erreur lors de l\'enregistrement du Service Worker:', error);
+        this.debugError('Erreur enregistrement Service Worker:', error)
       }
     }
   }
 
-  // Écouter l'événement d'installation
   listenForInstallPrompt() {
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-      console.log('📱 Installation PWA disponible !');
-      
-      // ✅ ACCESSIBILITÉ: Afficher le bouton avec ARIA
+      e.preventDefault()
+      this.deferredPrompt = e
+
       if (this.installButton) {
-        this.installButton.setAttribute('aria-hidden', 'false');
-        this.installButton.setAttribute('data-visible', 'true');
-        // Focus management optionnel : attendre 2s avant d'attirer l'attention
+        this.installButton.setAttribute('aria-hidden', 'false')
+        this.installButton.setAttribute('data-visible', 'true')
+
         setTimeout(() => {
           if (this.installButton.getAttribute('data-visible') === 'true') {
-            // Annoncer aux lecteurs d'écran sans voler le focus
-            this.installButton.setAttribute('aria-live', 'polite');
+            this.installButton.setAttribute('aria-live', 'polite')
           }
-        }, 2000);
+        }, 2000)
       }
-    });
+    })
   }
 
-  // ✅ ACCESSIBILITÉ: Créer le bouton d'installation avec ARIA et CSS externe
   createInstallButton() {
-    // Charger le CSS externe
-    const linkElem = document.createElement('link');
-    linkElem.rel = 'stylesheet';
-    linkElem.href = '/pwa-install.css';
-    document.head.appendChild(linkElem);
-    
-    // Créer le bouton avec des attributs ARIA appropriés
-    this.installButton = document.createElement('button');
-    this.installButton.className = 'pwa-install-button';
-    this.installButton.setAttribute('type', 'button');
-    this.installButton.setAttribute('aria-label', 'Instalar aplicação como PWA');
-    this.installButton.setAttribute('role', 'button');
-    this.installButton.textContent = '📱 Instalar App';
-    
-    // Masquer par défaut (sera affiché quand beforeinstallprompt se déclenche)
-    this.installButton.setAttribute('aria-hidden', 'true');
-    this.installButton.setAttribute('data-visible', 'false');
-    
-    // Ajouter le bouton au DOM
-    document.body.appendChild(this.installButton);
-    
-    // Gérer le clic
+    const linkElem = document.createElement('link')
+    linkElem.rel = 'stylesheet'
+    linkElem.href = '/pwa-install.css'
+    document.head.appendChild(linkElem)
+
+    this.installButton = document.createElement('button')
+    this.installButton.className = 'pwa-install-button'
+    this.installButton.setAttribute('type', 'button')
+    this.installButton.setAttribute('aria-label', 'Instalar aplicacao como PWA')
+    this.installButton.setAttribute('role', 'button')
+    this.installButton.textContent = 'Instalar App'
+
+    this.installButton.setAttribute('aria-hidden', 'true')
+    this.installButton.setAttribute('data-visible', 'false')
+
+    document.body.appendChild(this.installButton)
+
     this.installButton.addEventListener('click', () => {
-      this.installPWA();
-    });
-    
-    // Masquer le bouton si l'app est déjà installée
+      this.installPWA()
+    })
+
     if (window.matchMedia('(display-mode: standalone)').matches) {
-      this.installButton.setAttribute('aria-hidden', 'true');
-      this.installButton.setAttribute('data-visible', 'false');
+      this.installButton.setAttribute('aria-hidden', 'true')
+      this.installButton.setAttribute('data-visible', 'false')
     }
   }
 
-  // Installer la PWA
   async installPWA() {
-    if (this.deferredPrompt) {
-      this.deferredPrompt.prompt();
-      
-      const { outcome } = await this.deferredPrompt.userChoice;
-      console.log('📱 Résultat de l\'installation:', outcome);
-      
-      if (outcome === 'accepted') {
-        console.log('🎉 PWA installée avec succès !');
-        // ✅ ACCESSIBILITÉ: Masquer le bouton avec ARIA
-        this.installButton.setAttribute('aria-hidden', 'true');
-        this.installButton.setAttribute('data-visible', 'false');
-        
-        // Afficher une notification de succès
-        this.showSuccessNotification();
-        
-        // Ne plus activer automatiquement les push (désactivé pour conformité)
-        this.activatePushNotifications();
-      }
-      
-      this.deferredPrompt = null;
+    if (!this.deferredPrompt) return
+
+    this.deferredPrompt.prompt()
+
+    const { outcome } = await this.deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      this.installButton.setAttribute('aria-hidden', 'true')
+      this.installButton.setAttribute('data-visible', 'false')
+
+      this.showSuccessNotification()
+      this.activatePushNotifications()
     }
+
+    this.deferredPrompt = null
   }
 
-  // ✅ SÉCURITÉ: Ne plus activer automatiquement les push notifications
-  // Cette fonction est désormais obsolète et ne fait plus rien
-  // Les notifications doivent être activées manuellement par l'utilisateur
+  // Les notifications doivent etre activees manuellement par l'utilisateur
   async activatePushNotifications() {
-    // ⚠️ IMPORTANT: Ne JAMAIS demander automatiquement la permission
-    // C'est contraire aux guidelines Chrome/Apple et peut faire bloquer le domaine
-    console.log('ℹ️ Les notifications push doivent être activées manuellement par l\'utilisateur');
+    this.debug('Push notifications: activation manuelle uniquement')
   }
 
-  // Afficher la notification de mise à jour
   showUpdateNotification() {
+    const shouldUpdateNow = window.confirm('Nova versão disponível. Atualizar agora?')
+    if (shouldUpdateNow && this.pendingWorker) {
+      this.pendingWorker.postMessage({ type: 'SKIP_WAITING' })
+      return
+    }
+
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Música da Segunda', {
-        body: 'Nova versão disponível! Recarregue a página para atualizar.',
+      new Notification('Musica da Segunda', {
+        body: 'Nova versao disponivel! Recarregue a pagina para atualizar.',
         icon: '/icons/pwa/icon-192x192.png',
         badge: '/icons/pwa/icon-72x72.png'
-      });
+      })
     }
   }
 
-  // Afficher la notification de succès
+  listenForServiceWorkerControllerChange() {
+    if (!('serviceWorker' in navigator)) return
+
+    let refreshing = false
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return
+      refreshing = true
+      window.location.reload()
+    })
+  }
+
   showSuccessNotification() {
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Música da Segunda', {
-        body: 'App instalada com sucesso! 🎉',
+      new Notification('Musica da Segunda', {
+        body: 'App instalada com sucesso!',
         icon: '/icons/pwa/icon-192x192.png',
         badge: '/icons/pwa/icon-72x72.png'
-      });
+      })
     }
   }
 }
 
-// Initialiser l'installateur PWA quand le DOM est prêt
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    new PWAInstaller();
-  });
+    new PWAInstaller()
+  })
 } else {
-  new PWAInstaller();
+  new PWAInstaller()
 }
 
-// ✅ SÉCURITÉ: SUPPRIMÉ - Ne JAMAIS demander automatiquement la permission pour les notifications
-// C'est contraire aux guidelines Chrome/Apple et peut faire bloquer le domaine
-// Les notifications doivent être activées via un bouton explicite avec le consentement de l'utilisateur
-
-// Fonction manquante pour la conversion Base64 vers Uint8Array
+// Conversion Base64 vers Uint8Array (reserve pour usage push)
 const urlBase64ToUint8Array = (base64String) => {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
   for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+    outputArray[i] = rawData.charCodeAt(i)
   }
-  return outputArray;
-};
+  return outputArray
+}
 
-// Récupérer la clé VAPID depuis une variable globale (injectée par Vite) ou utiliser la valeur par défaut
-// Cette fonction peut être utilisée pour les push notifications si nécessaire
 const getVAPIDKey = () => {
-  // Vérifier si la clé est disponible via une variable globale (injectée par le build)
   if (typeof window !== 'undefined' && window.__VAPID_PUBLIC_KEY__) {
-    return window.__VAPID_PUBLIC_KEY__;
+    return window.__VAPID_PUBLIC_KEY__
   }
-  // Valeur par défaut (fallback)
-  return 'BNmWY52nhsYuohsMsFuFw5-vPv20qLw6nehrF-vyzPm87xU-6cPUoJhwtAVxj_18TcREBqx2uLdr5dcl57gVVNw';
-};
+  return 'BNmWY52nhsYuohsMsFuFw5-vPv20qLw6nehrF-vyzPm87xU-6cPUoJhwtAVxj_18TcREBqx2uLdr5dcl57gVVNw'
+}
 
-console.log('🚀 PWA Installer Música da Segunda initialisé !');
+void urlBase64ToUint8Array
+void getVAPIDKey
