@@ -417,11 +417,10 @@ export default function Home() {
               <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">
                 <button
                   onClick={() => handleShowDescription(displayedSong)}
-                  className="inline-flex items-center gap-2 hover:text-blue-600 transition-colors cursor-pointer"
+                  className="hover:text-blue-600 transition-colors cursor-pointer"
                   title="Ver descricao da musica"
                 >
-                  <span className="text-2xl">i</span>
-                  <span>{displayedSong.title}</span>
+                  {displayedSong.title}
                 </button>
               </h3>
               <YouTubeEmbed
