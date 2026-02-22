@@ -17,7 +17,7 @@ export default defineConfig(({ command, mode }) => ({
   build: {
     outDir: 'dist',
     // ✅ PERFORMANCE: Optimisations pour les Core Web Vitals
-    target: 'es2015',
+    target: 'es2020',
     // ✅ FIX FINAL: esbuild sans drop (scheduler a besoin de console/debugger intacts)
     minify: 'esbuild',
     sourcemap: false,

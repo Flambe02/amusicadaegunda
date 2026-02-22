@@ -1,9 +1,11 @@
 import { supabaseSongService } from './supabaseService';
 import { checkConnection } from '@/lib/supabase';
+import { logger } from '@/lib/logger';
+import { localStorageService } from '@/lib/localStorage';
 
 const devLog = (...args) => {
   if (import.meta.env?.DEV && import.meta.env?.VITE_VERBOSE_LOGS === 'true') {
-    console.warn(...args);
+    logger.debug(...args);
   }
 };
 
@@ -60,7 +62,7 @@ export const Song = {
         return [];
       }
     } catch (error) {
-      console.error('Erro ao carregar músicas desde Supabase:', error);
+      logger.error('Erro ao carregar músicas desde Supabase:', error);
       // Supabase-only: pas de fallback local
       return [];
     }
@@ -72,7 +74,7 @@ export const Song = {
         return await supabaseSongService.get(id);
       }
     } catch (error) {
-      console.error('Erro ao carregar música:', error);
+      logger.error('Erro ao carregar música:', error);
       return null;
     }
   },
@@ -93,7 +95,7 @@ export const Song = {
       return null;
       
     } catch (error) {
-      console.error('Erro ao carregar música atual:', error);
+      logger.error('Erro ao carregar música atual:', error);
       return null;
     }
   },
@@ -102,7 +104,7 @@ export const Song = {
     try {
       return await supabaseSongService.getByYouTubeUrl(youtubeUrl);
     } catch (error) {
-      console.error('❌ Erreur recherche par youtube_url:', error);
+      logger.error('❌ Erreur recherche par youtube_url:', error);
       return null;
     }
   },
@@ -111,7 +113,7 @@ export const Song = {
     try {
       return await supabaseSongService.getByTikTokId(tiktokVideoId);
     } catch (error) {
-      console.error('❌ Erreur recherche par tiktok_video_id:', error);
+      logger.error('❌ Erreur recherche par tiktok_video_id:', error);
       return null;
     }
   },
@@ -124,13 +126,13 @@ export const Song = {
       devLog('✅ Création Supabase réussie:', result);
       return result;
     } catch (error) {
-      console.error('❌ ERREUR CRÉATION SUPABASE:', error);
-      console.error('❌ Message:', error.message);
-      console.error('❌ Code:', error.code);
-      console.error('❌ Details:', error.details);
-      console.error('❌ Hint:', error.hint);
+      logger.error('❌ ERREUR CRÉATION SUPABASE:', error);
+      logger.error('❌ Message:', error.message);
+      logger.error('❌ Code:', error.code);
+      logger.error('❌ Details:', error.details);
+      logger.error('❌ Hint:', error.hint);
       if (error.existingSong) {
-        console.error('❌ Chanson existante:', error.existingSong);
+        logger.error('❌ Chanson existante:', error.existingSong);
       }
       throw error;
     }
@@ -155,16 +157,16 @@ export const Song = {
       
       return result;
     } catch (error) {
-      console.error('❌ ERREUR SUPABASE DÉTAILLÉE:', error);
-      console.error('❌ Message d\'erreur:', error.message);
-      console.error('❌ Code d\'erreur:', error.code);
-      console.error('❌ Détails de l\'erreur:', error.details);
-      console.error('❌ Hint:', error.hint);
-      console.error('❌ Stack trace:', error.stack);
-      console.error('❌ Erreur complète:', JSON.stringify(error, null, 2));
+      logger.error('❌ ERREUR SUPABASE DÉTAILLÉE:', error);
+      logger.error('❌ Message d\'erreur:', error.message);
+      logger.error('❌ Code d\'erreur:', error.code);
+      logger.error('❌ Détails de l\'erreur:', error.details);
+      logger.error('❌ Hint:', error.hint);
+      logger.error('❌ Stack trace:', error.stack);
+      logger.error('❌ Erreur complète:', JSON.stringify(error, null, 2));
       
       // NE PAS faire de fallback localStorage - forcer l'erreur
-      console.error('❌ ÉCHEC DE LA MISE À JOUR SUPABASE - PAS DE FALLBACK');
+      logger.error('❌ ÉCHEC DE LA MISE À JOUR SUPABASE - PAS DE FALLBACK');
       throw error; // Laisser l'erreur remonter sans la transformer
     }
   },
@@ -177,9 +179,9 @@ export const Song = {
       devLog('✅ Suppression Supabase réussie:', result);
       return result;
     } catch (error) {
-      console.error('❌ ERREUR SUPPRESSION SUPABASE:', error);
-      console.error('❌ Message:', error.message);
-      console.error('❌ Code:', error.code);
+      logger.error('❌ ERREUR SUPPRESSION SUPABASE:', error);
+      logger.error('❌ Message:', error.message);
+      logger.error('❌ Code:', error.code);
       // NE PAS faire de fallback localStorage - forcer l'erreur
       throw error;
     }
@@ -191,7 +193,7 @@ export const Song = {
         return await supabaseSongService.search(query);
       }
     } catch (error) {
-      console.error('Erro ao pesquisar músicas:', error);
+      logger.error('Erro ao pesquisar músicas:', error);
       return [];
     }
   },
@@ -202,7 +204,7 @@ export const Song = {
         return await supabaseSongService.getByStatus(status);
       }
     } catch (error) {
-      console.error('Erro ao carregar músicas por status:', error);
+      logger.error('Erro ao carregar músicas por status:', error);
       return [];
     }
   },
@@ -213,7 +215,7 @@ export const Song = {
         return await supabaseSongService.getByMonth(year, month);
       }
     } catch (error) {
-      console.error('Erro ao carregar músicas por mês:', error);
+      logger.error('Erro ao carregar músicas por mês:', error);
       return [];
     }
   },
@@ -226,7 +228,7 @@ export const Song = {
         return song || null;
       }
     } catch (error) {
-      console.error('Erro ao carregar música por slug:', error);
+      logger.error('Erro ao carregar música por slug:', error);
       return null;
     }
   }
@@ -257,7 +259,7 @@ export const AdventSong = {
         return limit ? sortedSongs.slice(0, limit) : sortedSongs;
       }
     } catch (error) {
-      console.error('Erro ao carregar músicas do Ano 2025:', error);
+      logger.error('Erro ao carregar músicas do Ano 2025:', error);
       // Fallback localStorage
       const songs = localStorageService.songs.getAll();
       const adventSongs = songs.filter(song => {

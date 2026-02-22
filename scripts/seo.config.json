@@ -4,7 +4,12 @@
   "brand": {
     "name": "A Música da Segunda",
     "handle": "@amusicadasegunda",
-    "logo": "/images/og-social-1200x630.jpg"
+    "logo": "/images/og-social-1200x630.jpg",
+    "sameAs": [
+      "https://www.tiktok.com/@amusicadasegunda",
+      "https://www.youtube.com/@amusicadasegunda",
+      "https://open.spotify.com/user/amusicadasegunda"
+    ]
   },
   "routes": {
     "static": [

@@ -45,7 +45,12 @@ function extractScriptsFromIndex() {
   
   const scripts = extractScriptsFromIndex();
 
-  const org = orgJsonLd({ name: cfg.brand.name, url: siteUrl, logo: `${siteUrl}${IMAGE}` });
+  const org = orgJsonLd({
+    name: cfg.brand.name,
+    url: siteUrl,
+    logo: `${siteUrl}${IMAGE}`,
+    sameAs: cfg.brand.sameAs || []
+  });
   const website = websiteJsonLd({ url: siteUrl, search: cfg.search });
 
   // ✅ STUB pour /musica (Playlist principale)

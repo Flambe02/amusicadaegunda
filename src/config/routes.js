@@ -28,6 +28,7 @@ const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
 const TikTokDemo = lazy(() => import('../pages/TikTokDemo'));
 const SearchPage = lazy(() => import('../pages/Search'));
+const includeDebugRoutes = import.meta.env.DEV;
 
 /**
  * Configuration des routes avec métadonnées SEO
@@ -123,36 +124,40 @@ export const ROUTES = [
     name: 'Song',
     seo: null // SEO dynamique basé sur la chanson
   },
-  {
-    path: '/youtube-test',
-    component: YoutubeTest,
-    name: 'YoutubeTest',
-    seo: null // Pages de test
-  },
-  {
-    path: '/youtube-simple',
-    component: YoutubeSimple,
-    name: 'YoutubeSimple',
-    seo: null // Pages de test
-  },
+  ...(includeDebugRoutes ? [
+    {
+      path: '/youtube-test',
+      component: YoutubeTest,
+      name: 'YoutubeTest',
+      seo: null // Pages de test
+    },
+    {
+      path: '/youtube-simple',
+      component: YoutubeSimple,
+      name: 'YoutubeSimple',
+      seo: null // Pages de test
+    }
+  ] : []),
   {
     path: '/youtube',
     component: Youtube,
     name: 'Youtube',
     seo: null // Pages internes
   },
-  {
-    path: '/tiktokdemo',
-    component: TikTokDemo,
-    name: 'TikTokDemo',
-    seo: null // Pages de démo
-  },
-  {
-    path: '/tiktok/:id',
-    component: TikTokDemo,
-    name: 'TikTokDemo',
-    seo: null // Pages de démo
-  },
+  ...(includeDebugRoutes ? [
+    {
+      path: '/tiktokdemo',
+      component: TikTokDemo,
+      name: 'TikTokDemo',
+      seo: null // Pages de demo
+    },
+    {
+      path: '/tiktok/:id',
+      component: TikTokDemo,
+      name: 'TikTokDemo',
+      seo: null // Pages de demo
+    }
+  ] : []),
   {
     path: '/search',
     component: SearchPage,
@@ -195,7 +200,7 @@ export function getCurrentPage(url) {
   }
 
   // Gérer les routes TikTok avec paramètres
-  if (urlLastPart.startsWith('tiktok')) {
+  if (includeDebugRoutes && urlLastPart.startsWith('tiktok')) {
     return 'TikTokDemo';
   }
 

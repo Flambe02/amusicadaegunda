@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Song } from '@/api/entities';
 import { Button } from '@/components/ui/button';
 import { Music, RotateCcw, ExternalLink, Play, Pause, Square } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const MONTHS_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -206,7 +207,7 @@ export default function RodaDaSegunda() {
   };
 
   const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
-  const songSlug = winner?.song?.title ? titleToSlug(winner.song.title) : null;
+  const songSlug = winner?.song?.slug || (winner?.song?.title ? titleToSlug(winner.song.title) : null);
 
   // Reset player state on each new result
   useEffect(() => {
@@ -301,14 +302,14 @@ export default function RodaDaSegunda() {
                     <div className="flex items-center gap-2">
                       <h3 className="text-xl font-black text-gray-800 truncate">{winner.song?.title}</h3>
                       {songSlug && (
-                        <a
-                          href={`/musica/${songSlug}/`}
+                        <Link
+                          to={`/musica/${songSlug}`}
                           title="Ver página da música"
                           className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110 border-2"
                           style={{ borderColor: winner.monthColor, color: winner.monthColor, backgroundColor: '#fff' }}
                         >
                           <ExternalLink className="w-4 h-4" />
-                        </a>
+                        </Link>
                       )}
                     </div>
                     {winner?.song?.artist && (

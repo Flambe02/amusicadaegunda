@@ -32,7 +32,9 @@ const slugifyTitle = (title) => {
     .trim()
 }
 
-let slugColumnSupported = true
+// Set to true only when DB migration for songs.slug is applied in the target environment.
+// This avoids noisy 400 GET errors on instances where the column does not exist yet.
+let slugColumnSupported = import.meta.env?.VITE_SUPABASE_HAS_SLUG === 'true'
 
 // ===== SERVICE SUPABASE POUR LES CHANSONS =====
 export const supabaseSongService = {

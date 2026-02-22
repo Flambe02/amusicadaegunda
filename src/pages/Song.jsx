@@ -144,7 +144,7 @@ export default function SongPage() {
         const songData = await Song.getBySlug(slug);
         if (!songData) {
           // Si la chanson n'existe pas, définir explicitement l'erreur
-          setError('Song not found');
+          setError('Música não encontrada');
           setSong(null);
         } else {
           setSong(songData);
@@ -155,7 +155,7 @@ export default function SongPage() {
         if (import.meta.env?.DEV) {
           console.error('Error loading song:', err);
         }
-        setError('Song not found');
+        setError('Música não encontrada');
         setSong(null);
       } finally {
         setIsLoading(false);
@@ -281,10 +281,10 @@ export default function SongPage() {
             </Button>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            {error || 'Song Not Found'}
+            {error || 'Música não encontrada'}
           </h2>
           <p className="text-gray-600">
-            The song &quot;{slug}&quot; could not be found.
+            A música &quot;{slug}&quot; não foi encontrada.
           </p>
         </div>
       </div>
@@ -405,9 +405,9 @@ export default function SongPage() {
                 Letras da Música
               </h2>
               <section className="lyrics-content">
-                <pre className="whitespace-pre-wrap text-gray-800 font-sans text-base md:text-lg leading-relaxed font-normal">
+                <div className="whitespace-pre-wrap text-gray-800 font-sans text-base md:text-lg leading-relaxed font-normal">
                   {song.lyrics}
-                </pre>
+                </div>
               </section>
             </article>
           )}

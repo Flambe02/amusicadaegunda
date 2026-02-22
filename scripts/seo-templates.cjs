@@ -72,8 +72,12 @@ ${scripts.pwa ? scripts.pwa : ''}
 }
 
 // JSON-LD factories
-function orgJsonLd({ name, url, logo }) {
-  return { "@context": "https://schema.org", "@type": "Organization", "name": name, "url": url, "logo": logo };
+function orgJsonLd({ name, url, logo, sameAs = [] }) {
+  const obj = { "@context": "https://schema.org", "@type": "Organization", "name": name, "url": url, "logo": logo };
+  if (Array.isArray(sameAs) && sameAs.length > 0) {
+    obj.sameAs = sameAs;
+  }
+  return obj;
 }
 
 function websiteJsonLd({ url, search }) {
