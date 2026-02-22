@@ -96,7 +96,7 @@ async function createIcon(sourcePath, outputPath, size, options = {}) {
 async function generateAllIcons() {
   console.log('🎨 Début de la génération des icônes...\n');
   
-  const sourcePath = path.join(__dirname, '../public/images/Logo.png');
+  const sourcePath = path.join(__dirname, '../public/images/Logo 3 D yellow.png');
   
   // Vérifier que le fichier source existe
   if (!fs.existsSync(sourcePath)) {
