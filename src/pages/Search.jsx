@@ -46,6 +46,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState('');
   const [selectedYears, setSelectedYears] = useState(new Set());   // multi-select
   const [selectedMonths, setSelectedMonths] = useState(new Set()); // multi-select
+  const [expandedDescriptionIds, setExpandedDescriptionIds] = useState(new Set());
 
   // Mini-player global
   const iframeRef = useRef(null);
@@ -116,6 +117,15 @@ export default function SearchPage() {
     setSelectedMonths(prev => {
       const next = new Set(prev);
       next.has(idx) ? next.delete(idx) : next.add(idx);
+      return next;
+    });
+  };
+
+  const toggleDescription = (songId) => {
+    setExpandedDescriptionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId);
+      else next.add(songId);
       return next;
     });
   };
@@ -260,6 +270,8 @@ export default function SearchPage() {
               const ytId = extractYouTubeId(song.youtube_url);
               const isActive = activeId === song.id;
               const isPlaying = isActive && playerState === 'playing';
+              const isDescriptionExpanded = expandedDescriptionIds.has(song.id);
+              const hasLongDescription = (song.description || '').trim().length > 160;
 
               return (
                 <div key={song.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -316,9 +328,20 @@ export default function SearchPage() {
 
                     {/* Description */}
                     {song.description && (
-                      <p className="text-sm text-gray-600 mt-2 leading-relaxed line-clamp-3 pl-12">
-                        {song.description}
-                      </p>
+                      <div className="pl-12 mt-2">
+                        <p className={`text-sm text-gray-600 leading-relaxed ${isDescriptionExpanded ? '' : 'line-clamp-3'}`}>
+                          {song.description}
+                        </p>
+                        {hasLongDescription && (
+                          <button
+                            type="button"
+                            onClick={() => toggleDescription(song.id)}
+                            className="mt-1.5 text-xs font-semibold text-[#32a2dc] hover:text-[#2589b8] underline underline-offset-2"
+                          >
+                            {isDescriptionExpanded ? 'Ver menos' : 'Ler mais'}
+                          </button>
+                        )}
+                      </div>
                     )}
 
                     {/* Boutons streaming */}

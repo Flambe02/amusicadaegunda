@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v7.0.0';
+const CACHE_VERSION = 'v7.0.1';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
 
 const CORE_URLS = [

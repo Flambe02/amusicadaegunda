@@ -47,6 +47,7 @@ const ICON_SIZES = {
     { size: 152, filename: 'icon-152x152.png' },
     { size: 180, filename: 'icon-180x180.png' },
     { size: 192, filename: 'icon-192x192.png' },
+    { size: 256, filename: 'icon-256x256.png' },
     { size: 384, filename: 'icon-384x384.png' },
     { size: 512, filename: 'icon-512x512.png' }
   ],

@@ -27,6 +27,10 @@ class ErrorBoundary extends React.Component {
     return { hasError: true };
   }
 
+  componentDidMount() {
+    sessionStorage.removeItem('chunk-recovery-reload');
+  }
+
   componentDidCatch(error, errorInfo) {
     // Log l'erreur
     console.error('🚨 ErrorBoundary caught an error:', error);
@@ -43,6 +47,9 @@ class ErrorBoundary extends React.Component {
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
+
+    // Auto-recovery for stale chunk issues after deployment (lazy route JS 404).
+    this.handleDynamicImportFailure(error);
 
     // Log vers le service de monitoring (future implémentation Sentry)
     this.logErrorToService(error, errorInfo);
@@ -72,6 +79,36 @@ class ErrorBoundary extends React.Component {
     } catch (e) {
       console.error('Failed to save error to localStorage:', e);
     }
+  };
+
+  handleDynamicImportFailure = async (error) => {
+    const message = String(error?.message || error || '');
+    const isDynamicImportFailure =
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('Importing a module script failed') ||
+      message.includes('ChunkLoadError');
+
+    if (!isDynamicImportFailure) return;
+
+    const reloadKey = 'chunk-recovery-reload';
+    if (sessionStorage.getItem(reloadKey) === '1') return;
+
+    sessionStorage.setItem(reloadKey, '1');
+
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.update()));
+      }
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+      }
+    } catch {
+      // Best effort recovery only.
+    }
+
+    window.location.reload();
   };
 
   handleReset = () => {
