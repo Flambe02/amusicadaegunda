@@ -81,7 +81,10 @@ export default function PushCTA() {
   }
 
   return (
-    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 animate-in slide-in-from-bottom-5 duration-300">
+    <div
+      className="fixed left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4 animate-in slide-in-from-bottom-5 duration-300"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)' }}
+    >
       <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 relative">
         {/* Bouton de fermeture */}
         <button

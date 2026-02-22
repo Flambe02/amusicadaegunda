@@ -133,7 +133,9 @@ const VAPID_KEY_VERSION = import.meta.env?.VITE_VAPID_KEY_VERSION || 'v1';
 const isIOS = () =>
   /iPad|iPhone|iPod/.test(navigator.userAgent) ||
   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const isStandalone = () => navigator.standalone === true;
+const isStandalone = () =>
+  window.matchMedia?.('(display-mode: standalone)')?.matches === true ||
+  navigator.standalone === true;
 const isAndroid = () => /Android/i.test(navigator.userAgent);
 export const isMobile = () => isIOS() || isAndroid();
 const supported = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -149,20 +151,28 @@ const b64ToUint8 = (base64) => {
 
 export const optedOut = () => localStorage.getItem('push_optout') === 'true';
 
-export const shouldShowPushCTA = () => {
+export const shouldShowPushCTA = async () => {
   if (!supported() || optedOut()) return false;
   const refusedUntil = localStorage.getItem('push_refused_until');
   if (refusedUntil && Date.now() < Number(refusedUntil)) return false;
+  if (Notification.permission === 'denied') return false;
   
   // Desktop: jamais de notifications push
   if (!isMobile()) return false;
   
   // Mobile: seulement si PWA installée ou en mode standalone
-  if (isMobile()) {
-    return isStandalone();
+  if (!isStandalone()) return false;
+
+  // Eviter d'afficher le CTA si déjà abonné
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const existingSubscription = await reg.pushManager.getSubscription();
+    if (existingSubscription) return false;
+  } catch {
+    // Si le SW n'est pas prêt, on laisse le CTA visible
   }
-  
-  return false;
+
+  return true;
 };
 
 async function getSWRegistration() {

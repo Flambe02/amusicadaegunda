@@ -126,3 +126,53 @@ self.addEventListener('fetch', (event) => {
       })
   );
 });
+
+self.addEventListener('push', (event) => {
+  const defaultTitle = 'A Musica da Segunda';
+  const defaultBody = 'Nova musica disponivel. Toque para ouvir.';
+  const defaultUrl = '/';
+
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = { body: event.data?.text?.() || defaultBody };
+  }
+
+  const title = payload.title || defaultTitle;
+  const body = payload.body || defaultBody;
+  const url = payload.url || defaultUrl;
+  const icon = payload.icon || '/icons/pwa/icon-192x192.png';
+  const badge = payload.badge || '/icons/pwa/icon-72x72.png';
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon,
+      badge,
+      tag: payload.tag || 'new-song',
+      renotify: true,
+      data: { url }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = event.notification?.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if ('focus' in client && client.url.includes(self.location.origin)) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+      return undefined;
+    })
+  );
+});
