@@ -231,84 +231,64 @@ export default function Home() {
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
 
   useEffect(() => {
-    logger.debug('🏠 Home useEffect triggered');
+    logger.debug('Home useEffect triggered');
     localStorageService.initialize();
-    
-    // Charger les chansons
-    loadCurrentSong();
-    loadRecentSongs();
+
+    // Single fetch: current song + list data
+    loadSongsData();
   }, []);
 
-  const loadCurrentSong = async () => {
+  const getLatestPublishedByCreatedAt = (songs) => {
+    if (!Array.isArray(songs) || songs.length === 0) return null;
+    return songs.reduce((latest, song) => {
+      if (!latest) return song;
+      const latestDate = latest?.created_at ? new Date(latest.created_at).getTime() : 0;
+      const songDate = song?.created_at ? new Date(song.created_at).getTime() : 0;
+      return songDate > latestDate ? song : latest;
+    }, null);
+  };
+
+  const loadSongsData = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      logger.debug('🔄 Tentative de chargement depuis Supabase...');
-      console.warn('🔄 loadCurrentSong appelé à:', new Date().toISOString());
-      
-      // Forcer un rechargement complet en production
-      const song = await Song.getCurrent();
-      logger.debug('📊 Chanson actuelle chargée:', song);
-      
-      // Log détaillé pour debug production
-      if (song) {
-        console.warn('🎵 Chanson chargée:', {
-          title: song.title,
-          created_at: song.created_at,
-          updated_at: song.updated_at,
-          release_date: song.release_date,
-          id: song.id
-        });
-        
-        // Vérifier si c'est bien la bonne chanson
-        if (song.title === 'Rio continua lindo (só que não)') {
-          console.error('⚠️ PROBLÈME: Ancienne chanson chargée (Rio) au lieu de William!');
-          console.error('⚠️ Vérifier les dates dans Supabase et le tri');
-        }
-      } else {
-        console.warn('⚠️ Aucune chanson chargée');
+      const allSongsData = await Song.list('-release_date', null);
+      const publishedSongs = (Array.isArray(allSongsData) ? allSongsData : [])
+        .filter((song) => !song?.status || song.status === 'published');
+
+      setAllSongs(publishedSongs);
+
+      // Keep previous behavior: current song chosen by newest created_at
+      const current = getLatestPublishedByCreatedAt(publishedSongs);
+      setCurrentSong(current);
+      setDisplayedSong(current);
+      setBackgroundImageLoaded(false);
+
+      const currentMonth = new Date();
+      const monthStart = startOfMonth(currentMonth);
+      const monthEnd = endOfMonth(currentMonth);
+
+      const monthSongs = publishedSongs.filter((song) => {
+        const songDate = parseISO(song.release_date);
+        return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
+      });
+
+      setRecentSongs(monthSongs);
+
+      if (!current) {
+        setError('Erro ao carregar a musica da semana. Tente novamente.');
       }
-      
-      setCurrentSong(song);
-      setDisplayedSong(song);
-      setBackgroundImageLoaded(false); // Réinitialiser l'état de chargement de l'image
     } catch (err) {
-      logger.error('❌ Erro ao carregar música atual:', err);
-      setError('Erro ao carregar a música da semana. Tente novamente.');
+      logger.error('Erro ao carregar musicas:', err);
+      setError('Erro ao carregar a musica da semana. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const loadRecentSongs = async () => {
-    try {
-      logger.debug('🔄 Chargement des musiques depuis Supabase...');
-      const allSongsData = await Song.list('-release_date', null);
-      logger.debug('📊 Toutes les musiques chargées:', allSongsData);
-      
-      // Stocker toutes les chansons pour la navigation
-      setAllSongs(allSongsData);
-      
-      // Filtrer pour le mois en cours (pour l'affichage de la liste)
-      const currentMonth = new Date();
-      const monthStart = startOfMonth(currentMonth);
-      const monthEnd = endOfMonth(currentMonth);
-      
-      const monthSongs = allSongsData.filter(song => {
-        const songDate = parseISO(song.release_date);
-        return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
-      });
-      
-      logger.debug('📅 Musiques du mois en cours:', monthSongs);
-      setRecentSongs(monthSongs);
-    } catch (err) {
-      logger.error('❌ Erro ao carregar músicas recentes:', err);
-    }
-  };
-
   const handleRetry = () => {
-    loadCurrentSong();
+    loadSongsData();
   };
 
   const handleReplaceVideo = (song, event) => {
