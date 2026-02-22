@@ -32,7 +32,7 @@ describe('JSON-LD Schema Validation', () => {
       expect(schema['@context']).toBe('https://schema.org');
       expect(schema['@type']).toBe('MusicRecording');
       expect(schema.name).toBe('Nobel Prize');
-      expect(schema.url).toBe('https://www.amusicadasegunda.com/musica/nobel-prize');
+      expect(schema.url).toBe('https://www.amusicadasegunda.com/musica/nobel-prize/');
       expect(schema.inLanguage).toBe('pt-BR');
       expect(schema.genre).toContain('Comedy');
       expect(schema.genre).toContain('Music');
@@ -158,14 +158,14 @@ describe('JSON-LD Schema Validation', () => {
         '@type': 'ListItem',
         position: 2,
         name: 'Músicas',
-        item: 'https://www.amusicadasegunda.com/musica'
+        item: 'https://www.amusicadasegunda.com/musica/'
       });
 
       expect(schema.itemListElement[2]).toEqual({
         '@type': 'ListItem',
         position: 3,
         name: 'Nobel Prize',
-        item: 'https://www.amusicadasegunda.com/musica/nobel-prize'
+        item: 'https://www.amusicadasegunda.com/musica/nobel-prize/'
       });
     });
 
@@ -201,7 +201,7 @@ describe('JSON-LD Schema Validation', () => {
       expect(schema['@context']).toBe('https://schema.org');
       expect(schema['@type']).toBe('MusicPlaylist');
       expect(schema.name).toBe('A Música da Segunda - Todas as Músicas');
-      expect(schema.url).toBe('https://www.amusicadasegunda.com/musica');
+      expect(schema.url).toBe('https://www.amusicadasegunda.com/musica/');
       expect(schema.inLanguage).toBe('pt-BR');
       expect(schema.genre).toContain('Comedy');
       expect(schema.genre).toContain('Music');
@@ -220,7 +220,7 @@ describe('JSON-LD Schema Validation', () => {
         '@type': 'MusicRecording',
         position: 1,
         name: 'Song 1',
-        url: 'https://www.amusicadasegunda.com/musica/song-1',
+        url: 'https://www.amusicadasegunda.com/musica/song-1/',
         byArtist: {
           '@type': 'MusicGroup',
           name: 'Artist 1'
@@ -279,7 +279,7 @@ describe('JSON-LD Schema Validation', () => {
         slug: 'test-song'
       });
 
-      expect(breadcrumbs.itemListElement[1].item).toBe('https://www.amusicadasegunda.com/musica');
+      expect(breadcrumbs.itemListElement[1].item).toBe('https://www.amusicadasegunda.com/musica/');
       expect(breadcrumbs.itemListElement[2].item).toContain('/musica/');
     });
 
@@ -288,7 +288,7 @@ describe('JSON-LD Schema Validation', () => {
         tracks: [{ title: 'Song 1', slug: 'song-1' }]
       });
 
-      expect(playlistSchema.url).toBe('https://www.amusicadasegunda.com/musica');
+      expect(playlistSchema.url).toBe('https://www.amusicadasegunda.com/musica/');
       expect(playlistSchema.track[0].url).toContain('/musica/');
     });
 

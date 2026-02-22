@@ -157,7 +157,7 @@ export function musicPlaylistJsonLd({
       "@type": "MusicRecording",
       "position": index + 1,
       "name": track.title,
-      "url": `${CANONICAL_HOST}/musica/${track.slug}`,
+      "url": `${CANONICAL_HOST}/musica/${track.slug}/`,
       "byArtist": {
         "@type": "MusicGroup",
         "name": track.artist || "A Música da Segunda"
