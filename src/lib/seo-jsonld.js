@@ -28,8 +28,8 @@ export function musicRecordingJsonLd({
   description,
   streamingUrls = []
 }) {
-  const url = `${CANONICAL_HOST}/musica/${slug}`;
-  
+  const url = `${CANONICAL_HOST}/musica/${slug}/`;
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "MusicRecording",
@@ -111,14 +111,14 @@ export function breadcrumbsJsonLd({ title, slug }) {
       { 
         "@type": "ListItem", 
         "position": 2, 
-        "name": "Músicas", 
-        "item": `${CANONICAL_HOST}/musica` 
+        "name": "Músicas",
+        "item": `${CANONICAL_HOST}/musica/`
       },
-      { 
+      {
         "@type": "ListItem", 
         "position": 3, 
-        "name": itemName, 
-        "item": `${CANONICAL_HOST}/musica/${slug}` 
+        "name": itemName,
+        "item": `${CANONICAL_HOST}/musica/${slug}/`
       }
     ]
   };
@@ -137,7 +137,7 @@ export function musicPlaylistJsonLd({
   playlistName = 'A Música da Segunda - Todas as Músicas',
   description = 'Playlist completa com todas as paródias musicais de A Música da Segunda. Nova música toda segunda-feira.'
 }) {
-  const url = `${CANONICAL_HOST}/musica`;
+  const url = `${CANONICAL_HOST}/musica/`;
   
   return {
     "@context": "https://schema.org",

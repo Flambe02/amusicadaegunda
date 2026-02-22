@@ -53,7 +53,7 @@ export default function Playlist() {
     <>
       <Helmet>
         <html lang="pt-BR" />
-        <meta name="robots" content="index,follow" />
+        <meta name="robots" content="index, follow, max-video-preview:0" />
       </Helmet>
 
       {/* Layout Desktop - Inchangé */}

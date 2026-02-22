@@ -46,7 +46,7 @@ ${ga4Block}
 <meta property="og:description" content="${escape(desc)}"/>
 <meta property="og:type" content="${ogType}"/>
 <meta property="og:url" content="${url}"/>
-${image ? `<meta property="og:image" content="${image}"/>` : ''}
+${image ? `<meta property="og:image" content="${image}"/>\n<meta property="og:image:width" content="1200"/>\n<meta property="og:image:height" content="630"/>` : ''}
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image"/>
