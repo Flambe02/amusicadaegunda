@@ -85,7 +85,8 @@ async function exportSongs() {
           // ✅ URLs YouTube pour VideoObject JSON-LD dans les stubs
           youtube_music_url: song.youtube_music_url || null,
           youtube_url: song.youtube_url || null,
-          description: song.description || null
+          description: song.description || null,
+          lyrics: song.lyrics || null
         };
       })
       .filter(song => song !== null); // Retirer les chansons sans slug

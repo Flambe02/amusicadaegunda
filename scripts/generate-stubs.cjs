@@ -275,7 +275,11 @@ ${songListHtml}
     await fs.ensureDir(dir);
     const url = `${siteUrl}${route}/`;
     const title = `${s.name} — A Música da Segunda`;
-    const desc = `Letra, áudio e história de "${s.name}" — nova música da segunda.`;
+    // ✅ Use rich description from DB if available, truncated to 155 chars for meta
+    const rawDesc = s.description
+      ? (s.description.length > 155 ? s.description.slice(0, 152).trimEnd() + '...' : s.description)
+      : `Letra, áudio e história de "${s.name}" — paródia musical da segunda.`;
+    const desc = rawDesc;
 
     // ✅ Extraire videoId pour iframe YouTube statique (requis pour "watch page" Google)
     const youtubeUrl = s.youtube_url || s.youtube_music_url;
@@ -310,11 +314,22 @@ ${songListHtml}
     <p style="color: #888;">Carregando conteúdo...</p>
   </div>`;
 
+    // ✅ Escape HTML special chars in lyrics to prevent XSS in static stub
+    const escapedLyrics = s.lyrics
+      ? s.lyrics.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      : null;
+    const lyricsHtml = escapedLyrics ? `
+  <div style="margin: 2rem 0;">
+    <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">Letra</h2>
+    <div style="white-space: pre-wrap; font-family: Georgia, serif; line-height: 1.8; color: #333; background: #f9f9f9; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #e63946;">${escapedLyrics}</div>
+  </div>` : '';
+
     const staticBody = `
 <div class="container mx-auto px-4 py-8" style="max-width: 1200px;">
   <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">${s.name}</h1>
   <p style="font-size: 1.125rem; color: #666; margin-bottom: 2rem;">${desc}</p>
   ${videoEmbedHtml}
+  ${lyricsHtml}
 </div>`;
 
     // ✅ VideoObject JSON-LD si YouTube URL disponible
