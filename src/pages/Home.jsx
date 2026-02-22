@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
 import CountdownTimer from '../components/CountdownTimer';
@@ -26,12 +26,42 @@ import { extractYouTubeId } from '@/lib/utils';
 // VideoObject JSON-LD removed from all pages (GSC: "Video isn't on a watch page")
 // No page in this app is a dedicated watch page for a single video.
 
+// Composant memoïzé pour éviter les re-renders inutiles de la liste de chansons
+const SongListItem = memo(function SongListItem({ song, onSelect }) {
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100">
+      <div className="flex items-center gap-4">
+        <div
+          className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
+          onClick={(e) => onSelect(song, e)}
+          title="Clique para ver esta musica na coluna de video"
+        >
+          <Play className="w-6 h-6 text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3
+            className="text-xl font-bold text-gray-800 truncate cursor-pointer hover:underline"
+            onClick={(e) => onSelect(song, e)}
+            title="Clique para ver esta musica na coluna de video"
+          >
+            {song.title}
+          </h3>
+          <p className="text-gray-600 text-base font-medium mt-1">{song.artist}</p>
+          <p className="text-gray-500 text-sm font-medium mt-1">
+            {format(parseISO(song.release_date), 'dd/MM/yyyy', { locale: ptBR })}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 // LCP fix: YouTube facade displays thumbnail + play button instead of loading iframe eagerly.
 // Iframe loads only on click to improve LCP.
 // Props attendues: youtube_music_url, youtube_url, title
 export default function Home() {
   const HOME_SONGS_LIMIT = 120;
-  logger.debug('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚ÂÃƒâ€šÃ‚Â  Home component loaded');
+  logger.debug('Home component loaded');
   const navigate = useNavigate();
   const { toast } = useToast();
   const [currentSong, setCurrentSong] = useState(null);
@@ -39,7 +69,6 @@ export default function Home() {
   const [allSongs, setAllSongs] = useState([]); // Toutes les chansons pour la navigation
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedVideo, _setSelectedVideo] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [showPlatformsDialog, setShowPlatformsDialog] = useState(false);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
@@ -112,26 +141,25 @@ export default function Home() {
     loadSongsData();
   };
 
-  const handleReplaceVideo = (song, event) => {
+  const handleReplaceVideo = useCallback((song, event) => {
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
-    
-    logger.debug('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â½Ãƒâ€šÃ‚Âµ handleReplaceVideo appelÃƒÆ’Ã‚Â© avec:', song.title);
+    logger.debug('handleReplaceVideo appelé avec:', song.title);
     setDisplayedSong(song);
-    setBackgroundImageLoaded(false); // RÃƒÆ’Ã‚Â©initialiser l'ÃƒÆ’Ã‚Â©tat de chargement de l'image
+    setBackgroundImageLoaded(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  // Navigation rapide entre les vidÃƒÆ’Ã‚Â©os
-  // Note: allSongs est triÃƒÆ’Ã‚Â© du plus rÃƒÆ’Ã‚Â©cent (index 0) au plus ancien
+  // Navigation rapide entre les vidéos
+  // Note: allSongs est trié du plus récent (index 0) au plus ancien
   const getCurrentSongIndex = () => {
     if (!displayedSong || allSongs.length === 0) return -1;
     return allSongs.findIndex(song => song.id === displayedSong.id);
   };
 
-  // FlÃƒÆ’Ã‚Â¨che GAUCHE (<) : Chanson PRÃƒÆ’Ã¢â‚¬Â°CÃƒÆ’Ã¢â‚¬Â°DENTE (plus ancienne, index + 1)
+  // Flèche GAUCHE (<) : Chanson PRÉCÉDENTE (plus ancienne, index + 1)
   const handlePreviousSong = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex >= 0 && currentIndex < allSongs.length - 1) {
@@ -140,22 +168,22 @@ export default function Home() {
     }
   };
 
-  // FlÃƒÆ’Ã‚Â¨che DROITE (>) : Chanson SUIVANTE (plus rÃƒÆ’Ã‚Â©cente, index - 1)
+  // Flèche DROITE (>) : Chanson SUIVANTE (plus récente, index - 1)
   const handleNextSong = () => {
     const currentIndex = getCurrentSongIndex();
     if (currentIndex > 0) {
-      const nextSong = allSongs[currentIndex - 1]; // Plus rÃƒÆ’Ã‚Â©cente
+      const nextSong = allSongs[currentIndex - 1]; // Plus récente
       handleReplaceVideo(nextSong, null);
     }
   };
 
-  // Cache la flÃƒÆ’Ã‚Â¨che GAUCHE si on est sur la plus vieille chanson (dernier index)
+  // Cache la flèche GAUCHE si on est sur la plus vieille chanson (dernier index)
   const canNavigatePrevious = () => {
     const currentIndex = getCurrentSongIndex();
     return currentIndex >= 0 && currentIndex < allSongs.length - 1;
   };
 
-  // Cache la flÃƒÆ’Ã‚Â¨che DROITE si on est sur la toute derniÃƒÆ’Ã‚Â¨re chanson sortie (index 0, la plus rÃƒÆ’Ã‚Â©cente)
+  // Cache la flèche DROITE si on est sur la toute dernière chanson sortie (index 0, la plus récente)
   const canNavigateNext = () => {
     const currentIndex = getCurrentSongIndex();
     return currentIndex > 0;
@@ -169,7 +197,8 @@ export default function Home() {
   const handleShowLyrics = (song) => {
     setSelectedSongForDialog(song);
     // Sur mobile, utiliser le drawer ; sur desktop, utiliser le dialog
-    const isMobile = window.innerWidth < 1024;
+    // matchMedia est plus fiable que window.innerWidth (gère zoom, device-pixel-ratio, CSS breakpoints)
+    const isMobile = window.matchMedia('(max-width: 1023px)').matches;
     if (isMobile) {
       setShowLyricsDrawer(true);
     } else {
@@ -192,12 +221,12 @@ export default function Home() {
         });
       } catch {}
     } else {
-      // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ UX: Toast au lieu d'alert() bloquante
+      // UX: Toast au lieu d'alert() bloquante
       const shareText = `${song.title} - ${song.artist}\nConfira esta musica incrivel da Musica da Segunda!`;
       navigator.clipboard.writeText(shareText);
       toast({
         title: "Copiado!",
-        description: "Link copiado para a ÃƒÆ’Ã‚Â¡rea de transferÃƒÆ’Ã‚Âªncia",
+        description: "Link copiado para a área de transferência",
         duration: 3000,
       });
     }
@@ -248,7 +277,7 @@ export default function Home() {
           <meta name="description" content="A Musica da Segunda: As Noticias do Brasil em Forma de Parodia. Site oficial de parodias musicais inteligentes e divertidas." />
         </Helmet>
         <div className="text-center mb-8">
-          {/* ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ SEO: Div stylisÃƒÆ’Ã‚Â© au lieu de H1 pour ÃƒÆ’Ã‚Â©viter H1 multiples (H1 principal dans le contenu) */}
+          {/* SEO: Div stylisé au lieu de H1 pour éviter H1 multiples */}
           <div className="text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg mb-2">
             A Musica da Segunda
           </div>
@@ -352,30 +381,36 @@ export default function Home() {
           {displayedSong ? (
             <div className="bg-white rounded-3xl p-6 shadow-lg relative">
               {/* Bouton Navigation Gauche - Desktop */}
-              {canNavigatePrevious() && (
-                <button
-                  onClick={handlePreviousSong}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90"
-                  aria-label="Musica anterior"
-                  title="Musica anterior"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-              )}
+              <button
+                onClick={canNavigatePrevious() ? handlePreviousSong : undefined}
+                disabled={!canNavigatePrevious()}
+                className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-sm transition-all duration-300 ${
+                  canNavigatePrevious()
+                    ? 'bg-black/20 text-white/80 hover:bg-black/40 hover:scale-110 active:scale-90 cursor-pointer'
+                    : 'bg-black/10 text-white/20 cursor-not-allowed'
+                }`}
+                aria-label={canNavigatePrevious() ? 'Música anterior' : 'Já é a música mais antiga'}
+                title={canNavigatePrevious() ? 'Música anterior' : 'Já é a música mais antiga'}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
 
               {/* Bouton Navigation Droite - Desktop */}
-              {canNavigateNext() && (
-                <button
-                  onClick={handleNextSong}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90"
-                  aria-label="Proxima musica"
-                  title="Proxima musica"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              )}
+              <button
+                onClick={canNavigateNext() ? handleNextSong : undefined}
+                disabled={!canNavigateNext()}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-sm transition-all duration-300 ${
+                  canNavigateNext()
+                    ? 'bg-black/20 text-white/80 hover:bg-black/40 hover:scale-110 active:scale-90 cursor-pointer'
+                    : 'bg-black/10 text-white/20 cursor-not-allowed'
+                }`}
+                aria-label={canNavigateNext() ? 'Próxima música' : 'Já é a música mais recente'}
+                title={canNavigateNext() ? 'Próxima música' : 'Já é a música mais recente'}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
 
-              {/* Date discrÃƒÆ’Ã‚Â¨te - Desktop */}
+              {/* Date discrète - Desktop */}
               <p className="text-xs font-medium uppercase tracking-widest text-gray-500 mb-2 text-center">
                 {displayedSong.release_date && format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()}
               </p>
@@ -405,7 +440,7 @@ export default function Home() {
                 </p>
               </div>
               
-              {/* 3 AÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes Principais - Desktop */}
+              {/* 3 Ações Principais - Desktop */}
               <div className="mt-6">
                 <div className="grid grid-cols-3 gap-3">
                   <Button
@@ -464,32 +499,7 @@ export default function Home() {
           {recentSongs.length > 0 ? (
             <div className="space-y-4">
               {recentSongs.map((song) => (
-                <div key={song.id} className="bg-white rounded-2xl p-4 shadow-md hover:shadow-lg transition-all duration-200 border border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-105"
-                      onClick={(e) => handleReplaceVideo(song, e)}
-                      title="Clique para ver esta musica na coluna de video"
-                    >
-                      <Play className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 
-                        className="text-xl font-bold text-gray-800 truncate cursor-pointer hover:underline"
-                        onClick={(e) => handleReplaceVideo(song, e)}
-                        title="Clique para ver esta musica na coluna de video"
-                      >
-                        {song.title}
-                      </h3>
-                      <p className="text-gray-600 text-base font-medium mt-1">
-                        {song.artist}
-                      </p>
-                      <p className="text-gray-500 text-sm font-medium mt-1">
-                        {format(parseISO(song.release_date), 'dd/MM/yyyy', { locale: ptBR })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <SongListItem key={song.id} song={song} onSelect={handleReplaceVideo} />
               ))}
             </div>
           ) : (
@@ -501,7 +511,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Lien discret vers le mois prÃƒÆ’Ã‚Â©cÃƒÆ’Ã‚Â©dent */}
+          {/* Lien discret vers le mois précédent */}
           <div className="mt-6 pt-4 border-t border-gray-200">
             <button
               onClick={handleNavigateToPreviousMonth}
@@ -518,9 +528,9 @@ export default function Home() {
       <div className="lg:hidden fixed inset-0 flex flex-col overflow-hidden">
         {displayedSong ? (
           <>
-            {/* Conteneur VÃƒÆ’Ã‚Â­deo: Prend presque toute la hauteur (flex-1), garde place pour Navbar */}
+            {/* Conteneur Vídeo: Prend presque toute la hauteur (flex-1), garde place pour Navbar */}
             <div className="relative flex-1 overflow-hidden">
-              {/* Background: Miniature vidÃƒÆ’Ã‚Â©o avec blur et overlay */}
+              {/* Background: Miniature vidéo avec blur et overlay */}
               {getYouTubeThumbnail(displayedSong) && (
                 <div className="absolute inset-0 z-0">
                   {/* Placeholder pendant le chargement */}
@@ -529,7 +539,10 @@ export default function Home() {
                   )}
                   <img
                     src={getYouTubeThumbnail(displayedSong)}
-                    alt={displayedSong.title}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
                     className={`absolute inset-0 w-full h-full object-cover blur-3xl scale-110 transition-opacity duration-500 ${
                       backgroundImageLoaded ? 'opacity-100' : 'opacity-0'
                     }`}
@@ -541,30 +554,36 @@ export default function Home() {
               )}
 
               {/* Bouton Navigation Gauche */}
-              {canNavigatePrevious() && (
-                <button
-                  onClick={handlePreviousSong}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90 touch-manipulation"
-                  aria-label="Musica anterior"
-                  title="Musica anterior"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-              )}
+              <button
+                onClick={canNavigatePrevious() ? handlePreviousSong : undefined}
+                disabled={!canNavigatePrevious()}
+                className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-sm touch-manipulation transition-all duration-300 ${
+                  canNavigatePrevious()
+                    ? 'bg-black/20 text-white/80 hover:bg-black/40 hover:scale-110 active:scale-90'
+                    : 'bg-black/10 text-white/20 cursor-not-allowed'
+                }`}
+                aria-label={canNavigatePrevious() ? 'Música anterior' : 'Já é a música mais antiga'}
+                title={canNavigatePrevious() ? 'Música anterior' : 'Já é a música mais antiga'}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
 
               {/* Bouton Navigation Droite */}
-              {canNavigateNext() && (
-                <button
-                  onClick={handleNextSong}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-black/20 backdrop-blur-sm text-white/80 hover:bg-black/40 transition-all duration-300 hover:scale-110 active:scale-90 touch-manipulation"
-                  aria-label="Proxima musica"
-                  title="Proxima musica"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              )}
+              <button
+                onClick={canNavigateNext() ? handleNextSong : undefined}
+                disabled={!canNavigateNext()}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-sm touch-manipulation transition-all duration-300 ${
+                  canNavigateNext()
+                    ? 'bg-black/20 text-white/80 hover:bg-black/40 hover:scale-110 active:scale-90'
+                    : 'bg-black/10 text-white/20 cursor-not-allowed'
+                }`}
+                aria-label={canNavigateNext() ? 'Próxima música' : 'Já é a música mais recente'}
+                title={canNavigateNext() ? 'Próxima música' : 'Já é a música mais recente'}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
 
-              {/* VÃƒÆ’Ã‚Â­deo: Prend toute la hauteur disponible */}
+              {/* Vídeo: Prend toute la hauteur disponible */}
               <div className="relative z-10 h-full flex items-center justify-center px-4">
                 <div className="w-full max-w-md">
                   <div className="bg-black/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10">
@@ -631,7 +650,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Bouton ÃƒÆ’Ã¢â‚¬Â°couter: Sticky en bas au centre, par-dessus le dÃƒÆ’Ã‚Â©gradÃƒÆ’Ã‚Â© */}
+            {/* Bouton Écouter: Sticky en bas au centre, par-dessus le dégradé */}
             <div className="relative z-30 pb-4 px-4 flex justify-center">
               <Button
                 size="lg"
@@ -639,7 +658,6 @@ export default function Home() {
                 className="w-full max-w-md bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 touch-manipulation"
               >
                 <span className="text-2xl">Ouvir</span>
-                <span>Ouvir</span>
               </Button>
             </div>
 

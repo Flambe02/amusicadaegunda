@@ -20,7 +20,9 @@ export default function SongPage() {
   const { slug: rawSlug } = useParams();
   const navigate = useNavigate();
   // Normaliser le slug (supprimer trailing slash et espaces)
-  const slug = rawSlug ? rawSlug.replace(/\/$/, '').trim() : null;
+  const rawNormalized = rawSlug ? rawSlug.replace(/\/$/, '').trim() : null;
+  // Valider le format : uniquement lettres minuscules, chiffres, tirets
+  const slug = rawNormalized && /^[a-z0-9-]+$/.test(rawNormalized) ? rawNormalized : null;
   const [song, setSong] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -143,7 +145,7 @@ export default function SongPage() {
       <div className="container mx-auto px-4 py-8">
         <Helmet>
           <html lang="pt-BR" />
-          <meta name="robots" content="index, follow" />
+          <meta name="robots" content="index, follow, max-video-preview:0" />
         </Helmet>
         <div className="max-w-4xl mx-auto">
           {/* Contenu visible pour les crawlers */}
@@ -168,7 +170,7 @@ export default function SongPage() {
       <div className="container mx-auto px-4 py-8">
         <Helmet>
           {/* Canonical géré par useSEO, pas besoin de le redéfinir ici */}
-          <meta name="robots" content="noindex,follow" />
+          <meta name="robots" content="noindex, follow" />
         </Helmet>
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-6">

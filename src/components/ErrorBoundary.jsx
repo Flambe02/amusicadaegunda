@@ -67,17 +67,18 @@ class ErrorBoundary extends React.Component {
       errorCount: this.state.errorCount
     };
 
-    // Pour l'instant, log en console (sera remplacé par Sentry)
-    console.log('📊 Error data for monitoring:', errorData);
+    // Log uniquement en dev (sera remplacé par Sentry en prod)
+    if (import.meta.env?.DEV) {
+      console.log('📊 Error data for monitoring:', errorData);
+    }
 
-    // Sauvegarder en localStorage pour debugging
+    // sessionStorage (effacé à la fermeture de l'onglet — évite la fuite d'infos entre sessions)
     try {
-      const existingErrors = JSON.parse(localStorage.getItem('app_errors') || '[]');
+      const existingErrors = JSON.parse(sessionStorage.getItem('app_errors') || '[]');
       existingErrors.push(errorData);
-      // Garder seulement les 10 dernières erreurs
-      localStorage.setItem('app_errors', JSON.stringify(existingErrors.slice(-10)));
+      sessionStorage.setItem('app_errors', JSON.stringify(existingErrors.slice(-10)));
     } catch (e) {
-      console.error('Failed to save error to localStorage:', e);
+      console.error('Failed to save error to sessionStorage:', e);
     }
   };
 
@@ -124,7 +125,22 @@ class ErrorBoundary extends React.Component {
   };
 
   handleReload = () => {
-    window.location.reload();
+    const reloadCount = parseInt(sessionStorage.getItem('eb-manual-reload') || '0', 10);
+    if (reloadCount >= 3) {
+      // Trop de rechargements : vider le cache d'abord
+      if ('caches' in window) {
+        caches.keys().then((names) => Promise.all(names.map((n) => caches.delete(n)))).finally(() => {
+          sessionStorage.removeItem('eb-manual-reload');
+          window.location.reload();
+        });
+      } else {
+        sessionStorage.removeItem('eb-manual-reload');
+        window.location.reload();
+      }
+    } else {
+      sessionStorage.setItem('eb-manual-reload', String(reloadCount + 1));
+      window.location.reload();
+    }
   };
 
   render() {

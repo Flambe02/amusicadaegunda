@@ -18,7 +18,7 @@ export default function OptimizedImage({
   className = '',
   loading = 'lazy',
   decoding = 'async',
-  fetchPriority, // ? LCP FIX: Support fetchPriority pour les images critiques
+  fetchpriority, // LCP FIX: attribut HTML lowercase (React 18 ne reconnaît pas camelCase fetchPriority)
   ...props
 }) {
   const [imageError, setImageError] = useState(false);
@@ -88,7 +88,7 @@ export default function OptimizedImage({
         className={className}
         loading={loading}
         decoding={decoding}
-        fetchPriority={fetchPriority}
+        fetchPriority={fetchpriority}
         onError={handleImageError}
         {...props}
       />
@@ -115,7 +115,7 @@ export default function OptimizedImage({
         className={className}
         loading={loading}
         decoding={decoding}
-        fetchPriority={fetchPriority}
+        fetchPriority={fetchpriority}
         onError={handleImageError}
         {...props}
       />

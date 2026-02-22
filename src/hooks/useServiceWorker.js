@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+ 
+const swLog = (...args) => isDev && console.log(...args);
+ 
+const swWarn = (...args) => isDev && console.warn(...args);
+
 /**
  * useServiceWorker - Hook pour gérer le Service Worker
  * 
@@ -28,18 +34,18 @@ export default function useServiceWorker() {
    */
   const registerServiceWorker = useCallback(async () => {
     if (!isSupported) {
-      console.warn('⚠️ Service Worker non supporté par ce navigateur');
+      swWarn('⚠️ Service Worker non supporté par ce navigateur');
       return false;
     }
 
     // Enregistrer uniquement en production
     if (typeof import.meta !== 'undefined' && !import.meta.env?.PROD) {
-      console.log('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
+      swLog('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
       return false;
     }
 
     try {
-      console.log('🚀 Enregistrement du Service Worker...');
+      swLog('🚀 Enregistrement du Service Worker...');
       
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
@@ -51,12 +57,12 @@ export default function useServiceWorker() {
 
       // Écouter les mises à jour
       registration.addEventListener('updatefound', () => {
-        console.log('🔄 Service Worker: Mise à jour disponible');
+        swLog('🔄 Service Worker: Mise à jour disponible');
         
         const newWorker = registration.installing;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            console.log('📱 Service Worker: Nouvelle version installée, rechargement recommandé');
+            swLog('📱 Service Worker: Nouvelle version installée, rechargement recommandé');
             // Ici vous pourriez afficher une notification à l'utilisateur
           }
         });
@@ -65,15 +71,15 @@ export default function useServiceWorker() {
       // Écouter les changements d'état
       registration.addEventListener('statechange', (event) => {
         const worker = event.target;
-        console.log('🔄 Service Worker: Changement d\'état', worker.state);
+        swLog('🔄 Service Worker: Changement d\'état', worker.state);
         
         if (worker.state === 'activated') {
-          console.log('✅ Service Worker: Activé et prêt');
+          swLog('✅ Service Worker: Activé et prêt');
           setupMessageChannel();
         }
       });
 
-      console.log('✅ Service Worker enregistré avec succès');
+      swLog('✅ Service Worker enregistré avec succès');
       return true;
 
     } catch (error) {
@@ -98,7 +104,7 @@ export default function useServiceWorker() {
         
         switch (type) {
           case 'CACHE_CLEAR_SUCCESS':
-            console.log('✅ Cache nettoyé:', message);
+            swLog('✅ Cache nettoyé:', message);
             getCacheInfo(); // Rafraîchir les infos
             break;
             
@@ -107,7 +113,7 @@ export default function useServiceWorker() {
             break;
             
           case 'TIKTOK_SYNC_REQUEST_SUCCESS':
-            console.log('📱 Sync TikTok planifiée:', message);
+            swLog('📱 Sync TikTok planifiée:', message);
             break;
             
           case 'TIKTOK_SYNC_REQUEST_ERROR':
@@ -123,7 +129,7 @@ export default function useServiceWorker() {
             break;
             
           default:
-            console.log('📨 Message Service Worker:', type, event.data);
+            swLog('📨 Message Service Worker:', type, event.data);
         }
       };
 
@@ -135,7 +141,7 @@ export default function useServiceWorker() {
         );
       }
 
-      console.log('📡 Canal de communication Service Worker configuré');
+      swLog('📡 Canal de communication Service Worker configuré');
 
     } catch (error) {
       console.error('❌ Erreur configuration canal de communication', error);
@@ -147,7 +153,7 @@ export default function useServiceWorker() {
    */
   const clearCache = useCallback(async () => {
     if (!messageChannel.current) {
-      console.warn('⚠️ Canal de communication non configuré');
+      swWarn('⚠️ Canal de communication non configuré');
       return false;
     }
 
@@ -157,7 +163,7 @@ export default function useServiceWorker() {
       // Envoyer la demande de nettoyage
       messageChannel.current.port1.postMessage({ type: 'CACHE_CLEAR' });
       
-      console.log('🗑️ Demande de nettoyage du cache envoyée');
+      swLog('🗑️ Demande de nettoyage du cache envoyée');
       return true;
 
     } catch (error) {
@@ -173,7 +179,7 @@ export default function useServiceWorker() {
    */
   const getCacheInfo = useCallback(async () => {
     if (!messageChannel.current) {
-      console.warn('⚠️ Canal de communication non configuré');
+      swWarn('⚠️ Canal de communication non configuré');
       return false;
     }
 
@@ -181,7 +187,7 @@ export default function useServiceWorker() {
       // Envoyer la demande d'information
       messageChannel.current.port1.postMessage({ type: 'GET_CACHE_INFO' });
       
-      console.log('📊 Demande d\'information cache envoyée');
+      swLog('📊 Demande d\'information cache envoyée');
       return true;
 
     } catch (error) {
@@ -195,7 +201,7 @@ export default function useServiceWorker() {
    */
   const requestTikTokSync = useCallback(async (videoData) => {
     if (!messageChannel.current) {
-      console.warn('⚠️ Canal de communication non configuré');
+      swWarn('⚠️ Canal de communication non configuré');
       return false;
     }
 
@@ -216,7 +222,7 @@ export default function useServiceWorker() {
         status: 'pending'
       }]);
       
-      console.log('📱 Demande de sync TikTok envoyée:', videoData.id);
+      swLog('📱 Demande de sync TikTok envoyée:', videoData.id);
       return true;
 
     } catch (error) {
@@ -235,9 +241,9 @@ export default function useServiceWorker() {
     setIsOnline(online);
     
     if (online) {
-      console.log('🌐 Connexion réseau rétablie');
+      swLog('🌐 Connexion réseau rétablie');
     } else {
-      console.log('📡 Connexion réseau perdue');
+      swLog('📡 Connexion réseau perdue');
     }
   }, []);
 
@@ -248,10 +254,10 @@ export default function useServiceWorker() {
     if (!swRegistration.current) return false;
 
     try {
-      console.log('🔄 Forçage de la mise à jour du Service Worker...');
+      swLog('🔄 Forçage de la mise à jour du Service Worker...');
       
       await swRegistration.current.update();
-      console.log('✅ Mise à jour Service Worker demandée');
+      swLog('✅ Mise à jour Service Worker demandée');
       return true;
 
     } catch (error) {
@@ -275,7 +281,7 @@ export default function useServiceWorker() {
       lastUpdate: swRegistration.current.updateTime || 'N/A'
     };
 
-    console.log('📊 Statistiques Service Worker:', stats);
+    swLog('📊 Statistiques Service Worker:', stats);
     return stats;
   }, [isOnline, cacheInfo, syncQueue.length, isSyncing]);
 
@@ -292,9 +298,16 @@ export default function useServiceWorker() {
     return () => {
       window.removeEventListener('online', checkConnectivity);
       window.removeEventListener('offline', checkConnectivity);
-      
+
       if (messageChannel.current) {
+        // Signaler au SW de libérer port2 avant de fermer port1
+        try {
+          messageChannel.current.port1.postMessage({ type: 'DISCONNECT' });
+        } catch {
+          // Port peut déjà être fermé
+        }
         messageChannel.current.port1.close();
+        messageChannel.current = null;
       }
     };
   }, [registerServiceWorker, checkConnectivity]);

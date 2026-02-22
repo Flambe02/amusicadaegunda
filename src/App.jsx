@@ -14,15 +14,11 @@ import migrationService from '@/lib/migration';
 function App() {
   // Exécuter la migration au démarrage de l'app
   useEffect(() => {
-    const runMigration = async () => {
-      try {
-        await migrationService.execute();
-      } catch (error) {
-        console.error('❌ Erreur lors de la migration:', error);
-      }
-    };
-    
-    runMigration();
+    let isMounted = true;
+    migrationService.execute().catch((error) => {
+      if (isMounted) console.error('❌ Erreur lors de la migration:', error);
+    });
+    return () => { isMounted = false; };
   }, []);
 
   return (

@@ -1,6 +1,6 @@
 import Layout from "./Layout.jsx";
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParams } from 'react-router-dom';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { ROUTES, getCurrentPage } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
@@ -18,13 +18,19 @@ function LegacyChansonRedirect() {
 function PagesContent() {
     const location = useLocation();
     const currentPage = getCurrentPage(location.pathname);
+    const gaTimer = useRef(null);
 
     useEffect(() => {
         if (typeof window.gtag !== 'function') return;
-        window.gtag('event', 'page_view', {
-            page_path: location.pathname + location.search,
-            page_title: document.title,
-        });
+        // Debounce 300ms pour éviter les doublons sur rapid back/forward
+        clearTimeout(gaTimer.current);
+        gaTimer.current = setTimeout(() => {
+            window.gtag('event', 'page_view', {
+                page_path: location.pathname + location.search,
+                page_title: document.title,
+            });
+        }, 300);
+        return () => clearTimeout(gaTimer.current);
     }, [location]);
 
     return (

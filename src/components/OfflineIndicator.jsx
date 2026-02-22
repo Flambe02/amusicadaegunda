@@ -39,7 +39,7 @@ export default function OfflineIndicator() {
   if (isOnline) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       {showOfflineMessage && (
         <div className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-bounce">
           <span>📱</span>

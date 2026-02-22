@@ -59,9 +59,13 @@ export default function YouTubeEmbed({
   }, [shouldAutoplay, info?.id]);
 
   if (!info) {
+    const hasUrl = primaryUrl || fallbackUrl;
     return (
-      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-        <p className="text-white text-sm">Video nao disponivel</p>
+      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-gray-800 to-gray-900">
+        <p className="text-white text-sm font-medium">Vídeo não disponível</p>
+        {hasUrl && (
+          <p className="text-gray-400 text-xs">URL inválida ou não suportada</p>
+        )}
       </div>
     );
   }
