@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search as SearchIcon, Music, Play, Pause } from 'lucide-react';
 import { Song } from '@/api/entities';
 import { useSEO } from '@/hooks/useSEO';
+import { extractYouTubeId, titleToSlug } from '@/lib/utils';
 
 const MONTHS = [
   { label: 'Jan', full: 'Janeiro',   index: 0,  color: '#3B82F6' },
@@ -29,29 +30,6 @@ function parseDate(dateStr) {
 function normalize(str) {
   return (str || '').toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-function titleToSlug(title) {
-  if (!title) return null;
-  return title.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-}
-
-function extractYouTubeId(url) {
-  if (!url) return null;
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/|music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
-  ];
-  for (const re of patterns) {
-    const m = url.match(re);
-    if (m) return m[1];
-  }
-  return null;
 }
 
 export default function SearchPage() {

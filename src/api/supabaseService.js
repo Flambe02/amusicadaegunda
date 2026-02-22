@@ -1,5 +1,6 @@
 import { supabase, TABLES, handleSupabaseError } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
+import { extractYouTubeId as extractYouTubeIdFromUtils, titleToSlug } from '@/lib/utils'
 
 // Utilitaire pour parser le paramètre orderBy (ex: '-release_date' ou 'title')
 const parseOrderBy = (orderBy) => {
@@ -18,18 +19,6 @@ const parseOrderBy = (orderBy) => {
   // Sécurité: si colonne vide après trim, fallback
   if (!column) column = 'release_date'
   return { column, ascending }
-}
-
-const slugifyTitle = (title) => {
-  if (!title || typeof title !== 'string') return ''
-  return title
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
 }
 
 // Set to true only when DB migration for songs.slug is applied in the target environment.
@@ -116,7 +105,7 @@ export const supabaseSongService = {
 
       if (error) throw error
 
-      const song = allSongs?.find((s) => slugifyTitle(s.title) === slug)
+      const song = allSongs?.find((s) => titleToSlug(s.title) === slug)
 
       return song || null
     } catch (error) {
@@ -183,35 +172,7 @@ export const supabaseSongService = {
 
   // Extraire l'ID YouTube depuis une URL
   extractYouTubeId(url) {
-    if (!url || typeof url !== 'string') return null;
-    
-    const trimmedUrl = url.trim();
-    if (!trimmedUrl) return null;
-    
-    // Patterns pour différentes URLs YouTube
-    const patterns = [
-      // https://www.youtube.com/watch?v=VIDEO_ID
-      /[?&]v=([A-Za-z0-9_-]{11})/,
-      // https://youtu.be/VIDEO_ID
-      /youtu\.be\/([A-Za-z0-9_-]{11})/,
-      // https://www.youtube.com/embed/VIDEO_ID
-      /youtube\.com\/embed\/([A-Za-z0-9_-]{11})/,
-      // https://www.youtube.com/v/VIDEO_ID
-      /youtube\.com\/v\/([A-Za-z0-9_-]{11})/,
-      // https://www.youtube.com/shorts/VIDEO_ID
-      /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,
-      // ID direct (11 caractères)
-      /^([A-Za-z0-9_-]{11})$/,
-    ];
-    
-    for (const pattern of patterns) {
-      const match = trimmedUrl.match(pattern);
-      if (match && match[1]) {
-        return match[1];
-      }
-    }
-    
-    return null;
+    return extractYouTubeIdFromUtils(url);
   },
 
   // Normaliser une URL YouTube pour la comparaison (enlever les paramètres si, etc.)

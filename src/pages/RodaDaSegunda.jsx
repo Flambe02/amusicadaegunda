@@ -3,6 +3,8 @@ import { Song } from '@/api/entities';
 import { Button } from '@/components/ui/button';
 import { Music, RotateCcw, ExternalLink, Play, Pause, Square } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { extractYouTubeId, titleToSlug } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const MONTHS_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -23,29 +25,6 @@ const MONTH_COLORS = [
   '#06B6D4', // Nov — cyan
   '#F43F5E', // Dez — rose rouge fêtes
 ];
-
-function titleToSlug(title) {
-  if (!title) return null;
-  return title.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-}
-
-function extractYouTubeId(url) {
-  if (!url) return null;
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube-nocookie\.com\/embed\/|music\.youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
-  ];
-  for (const re of patterns) {
-    const m = url.match(re);
-    if (m) return m[1];
-  }
-  return null;
-}
 
 function drawWheel(canvas, segments, rotation) {
   if (!canvas || segments.length === 0) return;
@@ -119,10 +98,14 @@ export default function RodaDaSegunda() {
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState(null); // { monthName, monthColor, song }
   const [playerState, setPlayerState] = useState('stopped'); // 'stopped' | 'playing' | 'paused'
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
   const canvasRef = useRef(null);
   const currentRotRef = useRef(0);
   const animRef = useRef(null);
   const iframeRef = useRef(null);
+  const autoplayFallbackTimerRef = useRef(null);
+  const playbackStartedRef = useRef(false);
   const CANVAS_SIZE = 360;
 
   // Grouper les chansons par mois (indépendamment de l'année)
@@ -208,18 +191,97 @@ export default function RodaDaSegunda() {
 
   const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
   const songSlug = winner?.song?.slug || (winner?.song?.title ? titleToSlug(winner.song.title) : null);
-
-  // Reset player state on each new result
-  useEffect(() => {
-    if (youtubeId) setPlayerState('playing');
-    else setPlayerState('stopped');
-  }, [youtubeId]);
+  const description = winner?.song?.description?.trim() || '';
+  const hasDescription = Boolean(description);
+  const hasLongDescription = description.length > 220;
 
   const sendYTCommand = (func) => {
     iframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func, args: [] }), '*'
     );
   };
+
+  const attemptAutoplay = () => {
+    if (!youtubeId) return;
+    // Best-effort autoplay: dépend de la policy navigateur/PWA.
+    sendYTCommand('playVideo');
+  };
+
+  // Reset player state on each new result + fallback si autoplay bloqué
+  useEffect(() => {
+    if (!youtubeId) {
+      setPlayerState('stopped');
+      playbackStartedRef.current = false;
+      if (autoplayFallbackTimerRef.current) {
+        clearTimeout(autoplayFallbackTimerRef.current);
+        autoplayFallbackTimerRef.current = null;
+      }
+      return;
+    }
+
+    setPlayerState('playing');
+    playbackStartedRef.current = false;
+
+    autoplayFallbackTimerRef.current = setTimeout(() => {
+      if (!playbackStartedRef.current) {
+        setPlayerState('paused');
+      }
+    }, 1500);
+
+    return () => {
+      if (autoplayFallbackTimerRef.current) {
+        clearTimeout(autoplayFallbackTimerRef.current);
+        autoplayFallbackTimerRef.current = null;
+      }
+    };
+  }, [youtubeId]);
+
+  // Reset description UI state on each new song
+  useEffect(() => {
+    setIsDescriptionExpanded(false);
+    setIsDescriptionDialogOpen(false);
+  }, [winner?.song?.id]);
+
+  // Sync UI avec les events de l'iframe YouTube
+  useEffect(() => {
+    if (!youtubeId) return undefined;
+
+    const handlePlayerMessage = (event) => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+
+      let payload = event.data;
+      if (typeof payload === 'string') {
+        try {
+          payload = JSON.parse(payload);
+        } catch {
+          return;
+        }
+      }
+      if (!payload || typeof payload !== 'object') return;
+
+      let state = null;
+      if (payload.event === 'onStateChange') {
+        state = payload.info;
+      } else if (payload.event === 'infoDelivery' && payload.info && typeof payload.info.playerState === 'number') {
+        state = payload.info.playerState;
+      }
+
+      if (typeof state !== 'number') return;
+
+      if (state === 1) {
+        playbackStartedRef.current = true;
+        setPlayerState('playing');
+      } else if (state === 2) {
+        setPlayerState('paused');
+      } else if (state === 0) {
+        setPlayerState('stopped');
+      }
+    };
+
+    window.addEventListener('message', handlePlayerMessage);
+    return () => window.removeEventListener('message', handlePlayerMessage);
+  }, [youtubeId]);
+
   const handlePlay  = () => { sendYTCommand('playVideo');  setPlayerState('playing'); };
   const handlePause = () => { sendYTCommand('pauseVideo'); setPlayerState('paused');  };
   const handleStop  = () => { sendYTCommand('stopVideo');  setPlayerState('stopped'); };
@@ -340,6 +402,7 @@ export default function RodaDaSegunda() {
                       src={`https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&rel=0`}
                       title={winner.song?.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      onLoad={attemptAutoplay}
                       style={{ position: 'fixed', top: '-9999px', left: '-9999px', width: '1px', height: '1px', opacity: 0, pointerEvents: 'none' }}
                     />
                     {/* Barre de contrôle */}
@@ -376,6 +439,42 @@ export default function RodaDaSegunda() {
                 )}
 
                 {/* Boutons streaming */}
+                {hasDescription && (
+                  <div
+                    className="rounded-2xl px-4 py-4 mb-4 border"
+                    style={{ borderColor: winner.monthColor + '33', backgroundColor: winner.monthColor + '10' }}
+                  >
+                    <p className="text-xs uppercase tracking-widest font-semibold mb-2" style={{ color: winner.monthColor }}>
+                      Sobre esta música
+                    </p>
+                    <p
+                      className={`text-sm leading-relaxed text-gray-700 ${!isDescriptionExpanded ? 'line-clamp-2 md:line-clamp-3' : ''}`}
+                    >
+                      {description}
+                    </p>
+                    {hasLongDescription && (
+                      <div className="flex items-center gap-2 mt-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+                          className="text-sm font-semibold underline underline-offset-2"
+                          style={{ color: winner.monthColor }}
+                        >
+                          {isDescriptionExpanded ? 'Ver menos' : 'Ler mais'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsDescriptionDialogOpen(true)}
+                          className="hidden md:inline-block text-sm font-semibold underline underline-offset-2"
+                          style={{ color: winner.monthColor }}
+                        >
+                          Abrir detalhes
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-2">
                   {winner.song?.spotify_url && (
                     <a href={winner.song.spotify_url} target="_blank" rel="noopener noreferrer" className="block">
@@ -413,6 +512,19 @@ export default function RodaDaSegunda() {
           )}
         </div>
       </div>
+
+      <Dialog open={isDescriptionDialogOpen} onOpenChange={setIsDescriptionDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Sobre esta música</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pr-1">
+            <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+              {description || 'Sem descrição disponível para esta música.'}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

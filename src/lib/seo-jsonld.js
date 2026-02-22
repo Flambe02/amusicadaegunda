@@ -3,6 +3,8 @@
  * Provides structured data for songs and navigation
  */
 
+import { extractYouTubeId as extractYouTubeIdFromUtils } from '@/lib/utils';
+
 const CANONICAL_HOST = 'https://www.amusicadasegunda.com';
 
 /**
@@ -176,32 +178,7 @@ export function musicPlaylistJsonLd({
  * @returns {string|null} - YouTube video ID or null if not found
  */
 export function extractYouTubeId(url) {
-  if (!url || typeof url !== 'string') return null;
-  
-  try {
-    // YouTube Shorts
-    const shortsMatch = url.match(/(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/);
-    if (shortsMatch) return shortsMatch[1];
-    
-    // YouTube watch, embed, v/, youtu.be
-    const videoMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-    if (videoMatch) return videoMatch[1];
-    
-    // music.youtube.com/watch?v=
-    const musicMatch = url.match(/music\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})/);
-    if (musicMatch) return musicMatch[1];
-    
-    // Playlist URL with video ID (list=...&v=VIDEO_ID)
-    const playlistVideoMatch = url.match(/[?&]v=([A-Za-z0-9_-]{11})/);
-    if (playlistVideoMatch) return playlistVideoMatch[1];
-    
-    // Raw video ID (11 characters)
-    if (/^[A-Za-z0-9_-]{11}$/.test(url.trim())) return url.trim();
-    
-    return null;
-  } catch {
-    return null;
-  }
+  return extractYouTubeIdFromUtils(url);
 }
 
 /**

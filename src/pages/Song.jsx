@@ -12,109 +12,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Music, Calendar, User, ExternalLink } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import YouTubeEmbed from '@/components/YouTubeEmbed';
 
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 // Props attendues: youtube_music_url, youtube_url, title
-function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
-  // Logs de debug supprimés pour production
-  
-  // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming) par défaut
-  // Gère les valeurs null/undefined/empty string
-  const targetUrl = (youtube_music_url && typeof youtube_music_url === 'string' && youtube_music_url.trim()) 
-    || (youtube_url && typeof youtube_url === 'string' && youtube_url.trim()) 
-    || '';
-
-  // Analyse l'URL et retourne { id, type }
-  const getYouTubeEmbedInfo = (url) => {
-    if (!url || typeof url !== 'string') return null;
-
-    try {
-      const lower = url.toLowerCase();
-
-      // Cas playlist explicite (youtube normal ou music)
-      const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
-      if (listMatch) {
-        return { id: listMatch[1], type: 'playlist' };
-      }
-
-      // Formats vidéo (inclut Shorts, watch, youtu.be)
-      const videoPatterns = [
-        /(?:youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([A-Za-z0-9_-]{11})/,
-        /^([A-Za-z0-9_-]{11})$/
-      ];
-      for (const re of videoPatterns) {
-        const m = url.match(re);
-        if (m) return { id: m[1], type: 'video' };
-      }
-
-      // music.youtube.com/watch?v=VIDEO_ID (sans list)
-      if (lower.includes('music.youtube.com')) {
-        const m = url.match(/[?&]v=([A-Za-z0-9_-]{11})/);
-        if (m) return { id: m[1], type: 'video' };
-      }
-
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
-  const info = getYouTubeEmbedInfo(targetUrl);
-  
-  if (!info) {
-    return (
-      <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-        <p className="text-white text-sm">Vidéo non disponible</p>
-      </div>
-    );
-  }
-
-  // Détecter si c'est un Short (format vertical 9:16)
-  const isShort = targetUrl.includes('/shorts/');
-  
-  const base = 'https://www.youtube-nocookie.com/embed';
-  const embedSrc =
-    info.type === 'video'
-      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1`
-      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
-
-  // Format vertical 9:16 pour Shorts, horizontal 16:9 pour vidéos normales
-  if (isShort) {
-    return (
-      <div className="w-full flex justify-center">
-        <div className="relative rounded-lg overflow-hidden shadow-lg" style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}>
-          <iframe
-            className="absolute top-0 left-0 w-full h-full"
-            src={embedSrc}
-            title={title || 'YouTube Short'}
-            frameBorder="0"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            loading="lazy"
-          />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
-      <iframe
-        className="w-full h-full"
-        src={embedSrc}
-        title={title || 'YouTube'}
-        frameBorder="0"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        loading="lazy"
-      />
-    </div>
-  );
-}
-
 export default function SongPage() {
   const { slug: rawSlug } = useParams();
   const navigate = useNavigate();
@@ -373,8 +274,8 @@ export default function SongPage() {
             {((song.youtube_music_url && typeof song.youtube_music_url === 'string' && song.youtube_music_url.trim()) 
               || (song.youtube_url && typeof song.youtube_url === 'string' && song.youtube_url.trim())) ? (
               <YouTubeEmbed
-                youtube_music_url={song.youtube_music_url}
-                youtube_url={song.youtube_url}
+                youtubeMusicUrl={song.youtube_music_url}
+                youtubeUrl={song.youtube_url}
                 title={song.title}
               />
             ) : (
