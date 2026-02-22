@@ -1,8 +1,8 @@
-# Headers optimaux pour GitHub Pages + Cloudflare
-# Améliore performance et sécurité
+﻿# Headers optimaux pour GitHub Pages + Cloudflare
+# AmÃ©liore performance et sÃ©curitÃ©
 
 # ===== REDIRECTIONS SEO - ANCIENNES URLS =====
-# Indiquer à Google que ces pages sont des redirections et ne doivent pas être indexées
+# Indiquer Ã  Google que ces pages sont des redirections et ne doivent pas Ãªtre indexÃ©es
 /chansons/*
   X-Robots-Tag: noindex, follow
   Link: </musica/>; rel="canonical"
@@ -23,7 +23,7 @@
   Cache-Control: public, max-age=31536000, immutable
   X-Content-Type-Options: nosniff
 
-# ===== ICÔNES (Cache 1 an) =====
+# ===== ICÃ”NES (Cache 1 an) =====
 /icons/*
   Cache-Control: public, max-age=31536000, immutable
 
@@ -80,7 +80,7 @@
   Cache-Control: public, max-age=31536000, immutable
   X-Content-Type-Options: nosniff
 
-# ===== SÉCURITÉ GLOBALE =====
+# ===== SÃ‰CURITÃ‰ GLOBALE =====
 /*
   X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
@@ -88,3 +88,4 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Content-Security-Policy: default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' blob: https://www.tiktok.com https://www.googletagmanager.com https://tracker.metricool.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://efnzmpzkzeuktqkghwfa.functions.supabase.co https://efnzmpzkzeuktqkghwfa.supabase.co https://www.tiktok.com https://*.tiktokcdn.com https://open.spotify.com https://api.spotify.com https://music.apple.com https://*.apple.com https://www.google-analytics.com https://analytics.google.com https://region1.google-analytics.com https://www.googletagmanager.com https://tracker.metricool.com; frame-src https://www.tiktok.com https://open.spotify.com https://music.apple.com https://www.youtube.com https://www.youtube-nocookie.com; media-src https: data:;
+

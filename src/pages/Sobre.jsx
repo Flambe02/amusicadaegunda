@@ -127,7 +127,7 @@ export default function Sobre() {
             <div className="inline-block p-2 bg-white/10 rounded-full mb-4 backdrop-blur-sm">
               <div className="w-16 h-16 mx-auto rounded-full overflow-hidden shadow-2xl ring-4 ring-white/20">
                 <OptimizedImage 
-                  src="images/Musica da segunda.jpg" 
+                  src="/images/2026 logo.png" 
                   alt="Logo A Música da Segunda - Paródias Musicais do Brasil" 
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -146,7 +146,7 @@ export default function Sobre() {
           <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-10 text-center mb-10 shadow-2xl border border-white/20">
             <div className="w-40 h-40 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl ring-8 ring-white/30 transform hover:scale-105 transition-transform duration-300">
               <OptimizedImage 
-                src="images/Musica da segunda.jpg" 
+                src="/images/2026 logo.png" 
                 alt="Logo Música da Segunda" 
                 className="w-full h-full object-cover"
                 loading="eager"

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search as SearchIcon, Music, Play, Pause } from 'lucide-react';
+import { Search as SearchIcon, Music, Play, Pause, FileText } from 'lucide-react';
 import { Song } from '@/api/entities';
 import { useSEO } from '@/hooks/useSEO';
 import { extractYouTubeId, titleToSlug } from '@/lib/utils';
+import LyricsDialog from '@/components/LyricsDialog';
+import LyricsDrawer from '@/components/LyricsDrawer';
 
 const MONTHS = [
   { label: 'Jan', full: 'Janeiro',   index: 0,  color: '#3B82F6' },
@@ -47,6 +49,9 @@ export default function SearchPage() {
   const [selectedYears, setSelectedYears] = useState(new Set());   // multi-select
   const [selectedMonths, setSelectedMonths] = useState(new Set()); // multi-select
   const [expandedDescriptionIds, setExpandedDescriptionIds] = useState(new Set());
+  const [selectedLyricsSong, setSelectedLyricsSong] = useState(null);
+  const [showLyricsDialog, setShowLyricsDialog] = useState(false);
+  const [showLyricsDrawer, setShowLyricsDrawer] = useState(false);
 
   // Mini-player global
   const iframeRef = useRef(null);
@@ -153,6 +158,16 @@ export default function SearchPage() {
       setActiveId(song.id);
       setActiveYtId(ytId);
       setPlayerState('playing');
+    }
+  };
+
+  const handleOpenLyrics = (song) => {
+    setSelectedLyricsSong(song);
+    const isMobile = window.innerWidth < 1024;
+    if (isMobile) {
+      setShowLyricsDrawer(true);
+    } else {
+      setShowLyricsDialog(true);
     }
   };
 
@@ -345,26 +360,42 @@ export default function SearchPage() {
                     )}
 
                     {/* Boutons streaming */}
-                    {(song.spotify_url || song.youtube_music_url || song.apple_music_url) && (
-                      <div className="flex flex-wrap gap-2 mt-3 pl-12">
+                    {(song.spotify_url || song.youtube_music_url || song.apple_music_url || song.lyrics) && (
+                      <div className="mt-3 pl-12">
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                         {song.spotify_url && (
                           <a href={song.spotify_url} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1DB954]/10 text-[#1DB954] text-xs font-bold hover:bg-[#1DB954]/20 transition-colors">
+                            className="inline-flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1DB954]/10 text-[#1DB954] text-xs font-bold hover:bg-[#1DB954]/20 transition-colors sm:w-auto sm:justify-start">
                             🎧 Spotify
                           </a>
                         )}
                         {song.apple_music_url && (
                           <a href={song.apple_music_url} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-50 text-pink-600 text-xs font-bold hover:bg-pink-100 transition-colors">
+                            className="inline-flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-50 text-pink-600 text-xs font-bold hover:bg-pink-100 transition-colors sm:w-auto sm:justify-start">
                             🎵 Apple Music
                           </a>
                         )}
                         {song.youtube_music_url && (
                           <a href={song.youtube_music_url} target="_blank" rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors">
+                            className="inline-flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 transition-colors sm:w-auto sm:justify-start">
                             📱 Video
                           </a>
                         )}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenLyrics(song)}
+                          disabled={!song.lyrics || !song.lyrics.trim()}
+                          className={`inline-flex w-full items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors sm:w-auto sm:justify-start ${
+                            song.lyrics && song.lyrics.trim()
+                              ? 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              : 'bg-slate-50 text-slate-400 cursor-not-allowed'
+                          }`}
+                          aria-label={song.lyrics && song.lyrics.trim() ? 'Ver letras' : 'Letras indisponíveis'}
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Letras
+                        </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -373,6 +404,21 @@ export default function SearchPage() {
             })}
           </div>
         )}
+
+        <LyricsDialog
+          open={showLyricsDialog}
+          onOpenChange={setShowLyricsDialog}
+          song={selectedLyricsSong}
+          title={selectedLyricsSong ? `Letras - ${selectedLyricsSong.title}` : 'Letras da Música'}
+          maxHeight="h-[55vh]"
+        />
+
+        <LyricsDrawer
+          open={showLyricsDrawer}
+          onOpenChange={setShowLyricsDrawer}
+          lyrics={selectedLyricsSong?.lyrics}
+          songTitle={selectedLyricsSong?.title}
+        />
       </div>
     </div>
   );

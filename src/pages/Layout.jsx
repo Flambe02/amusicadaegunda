@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+﻿import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Home, Calendar, Gift, Info, FileText, ListMusic, Search } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
@@ -24,7 +24,7 @@ export default function Layout({ children }) {
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'A Roda', url: createPageUrl('Roda'), icon: Gift },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
-    { name: 'Pesquisar', url: createPageUrl('Search'), icon: Search },
+    { name: 'Pesquisar', url: createPageUrl('Search'), icon: Search }
   ];
 
   const isActive = (page) => {
@@ -70,8 +70,8 @@ export default function Layout({ children }) {
 
         <header className="bg-white/90 backdrop-blur-lg border-b border-white/50 shadow-lg sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-4 min-w-0">
                 <Link to="/" className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 shadow-lg flex-shrink-0 bg-white">
                   <img
                     src="/images/2026 logo.png"
@@ -80,9 +80,9 @@ export default function Layout({ children }) {
                     loading="eager"
                   />
                 </Link>
-                <div>
-                  <div className="text-2xl font-black text-gray-800 leading-tight">A Música da Segunda</div>
-                  <p className="text-xs text-gray-600 mt-0.5">Site oficial de paródias musicais inteligentes e divertidas</p>
+                <div className="min-w-0">
+                  <div className="text-2xl font-black text-gray-800 leading-tight truncate">A Música da Segunda</div>
+                  <p className="text-xs text-gray-600 mt-0.5 truncate">Site oficial de paródias musicais inteligentes e divertidas</p>
                 </div>
               </div>
 
@@ -93,8 +93,8 @@ export default function Layout({ children }) {
                     to={page.url}
                     aria-current={isActive(page) ? 'page' : undefined}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 font-medium ${isActive(page)
-                        ? 'bg-[#32a2dc] text-white shadow-md'
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                      ? 'bg-[#32a2dc] text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
                       }`}
                   >
                     <page.icon className="w-4 h-4" aria-hidden="true" />
