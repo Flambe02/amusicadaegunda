@@ -55,6 +55,7 @@ export default function SearchPage() {
 
   // Mini-player global
   const iframeRef = useRef(null);
+  const playbackRetryRef = useRef(null);
   const [activeId, setActiveId] = useState(null);
   const [activeYtId, setActiveYtId] = useState(null);
   const [playerState, setPlayerState] = useState('stopped');
@@ -142,6 +143,12 @@ export default function SearchPage() {
     );
   };
 
+  const attemptPlayCurrent = () => {
+    if (!activeYtId) return;
+    sendYTCommand('playVideo');
+    setPlayerState('playing');
+  };
+
   const handleTogglePlay = (song) => {
     const ytId = extractYouTubeId(song.youtube_url);
     if (!ytId) return;
@@ -157,9 +164,24 @@ export default function SearchPage() {
     } else {
       setActiveId(song.id);
       setActiveYtId(ytId);
-      setPlayerState('playing');
+      setPlayerState('paused');
     }
   };
+
+  // PWA/mobile: ensure first tap starts playback without requiring a second tap.
+  useEffect(() => {
+    if (!activeYtId) return undefined;
+
+    const t1 = setTimeout(() => attemptPlayCurrent(), 250);
+    const t2 = setTimeout(() => attemptPlayCurrent(), 900);
+    playbackRetryRef.current = t2;
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      playbackRetryRef.current = null;
+    };
+  }, [activeYtId]);
 
   const handleOpenLyrics = (song) => {
     setSelectedLyricsSong(song);
@@ -181,6 +203,7 @@ export default function SearchPage() {
           src={`https://www.youtube-nocookie.com/embed/${activeYtId}?enablejsapi=1&autoplay=1&rel=0`}
           title="player"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          onLoad={attemptPlayCurrent}
           style={{ position: 'fixed', top: '-9999px', left: '-9999px', width: '1px', height: '1px', opacity: 0, pointerEvents: 'none' }}
         />
       )}

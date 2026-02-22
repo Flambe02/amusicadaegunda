@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getYouTubeEmbedInfo, getYouTubeThumbnailUrl } from '@/lib/utils';
 
 export default function YouTubeEmbed({
@@ -10,6 +10,7 @@ export default function YouTubeEmbed({
   thumbnailQuality = 'hqdefault'
 }) {
   const [activated, setActivated] = useState(false);
+  const iframeRef = useRef(null);
 
   const primaryUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
   const fallbackUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
@@ -26,30 +27,55 @@ export default function YouTubeEmbed({
     setActivated(false);
   }, [youtubeMusicUrl, youtubeUrl]);
 
+  const isShort = targetUrl.includes('/shorts/');
+  const shouldAutoplay = useFacade && activated && autoplayOnActivate;
+  const autoplay = shouldAutoplay ? '&autoplay=1' : '';
+  const base = 'https://www.youtube-nocookie.com/embed';
+  const embedSrc = info
+    ? info.type === 'video'
+      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${autoplay}`
+      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${autoplay}`
+    : '';
+
+  const thumbnailUrl =
+    info && info.type === 'video' ? getYouTubeThumbnailUrl(targetUrl, thumbnailQuality) : null;
+
+  const attemptPlay = () => {
+    if (!shouldAutoplay) return;
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+      '*'
+    );
+  };
+
+  useEffect(() => {
+    if (!shouldAutoplay) return undefined;
+    const t1 = setTimeout(() => attemptPlay(), 200);
+    const t2 = setTimeout(() => attemptPlay(), 800);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [shouldAutoplay, info?.id]);
+
   if (!info) {
     return (
       <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-        <p className="text-white text-sm">Vídeo não disponível</p>
+        <p className="text-white text-sm">Video nao disponivel</p>
       </div>
     );
   }
-
-  const isShort = targetUrl.includes('/shorts/');
-  const autoplay = useFacade && activated && autoplayOnActivate ? '&autoplay=1' : '';
-  const base = 'https://www.youtube-nocookie.com/embed';
-  const embedSrc =
-    info.type === 'video'
-      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1${autoplay}`
-      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1${autoplay}`;
-
-  const thumbnailUrl = info.type === 'video' ? getYouTubeThumbnailUrl(targetUrl, thumbnailQuality) : null;
 
   if (!useFacade || activated) {
     if (isShort) {
       return (
         <div className="w-full flex justify-center">
-          <div className="relative rounded-lg overflow-hidden shadow-lg" style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}>
+          <div
+            className="relative rounded-lg overflow-hidden shadow-lg"
+            style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}
+          >
             <iframe
+              ref={iframeRef}
               className="absolute top-0 left-0 w-full h-full"
               src={embedSrc}
               title={title || 'YouTube Short'}
@@ -58,6 +84,7 @@ export default function YouTubeEmbed({
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
               loading="lazy"
+              onLoad={attemptPlay}
             />
           </div>
         </div>
@@ -67,6 +94,7 @@ export default function YouTubeEmbed({
     return (
       <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
         <iframe
+          ref={iframeRef}
           className="w-full h-full"
           src={embedSrc}
           title={title || 'YouTube'}
@@ -75,12 +103,14 @@ export default function YouTubeEmbed({
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           loading="lazy"
+          onLoad={attemptPlay}
         />
       </div>
     );
   }
 
   const activateVideo = () => setActivated(true);
+
   const handleKeyActivate = (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -97,7 +127,7 @@ export default function YouTubeEmbed({
         onKeyDown={handleKeyActivate}
         role="button"
         tabIndex={0}
-        aria-label={`Reproduzir ${title || 'vídeo'}`}
+        aria-label={`Reproduzir ${title || 'video'}`}
       >
         {thumbnailUrl && (
           <img
@@ -126,7 +156,7 @@ export default function YouTubeEmbed({
       onKeyDown={handleKeyActivate}
       role="button"
       tabIndex={0}
-      aria-label={`Reproduzir ${title || 'vídeo'}`}
+      aria-label={`Reproduzir ${title || 'video'}`}
     >
       {thumbnailUrl ? (
         <img
@@ -149,3 +179,4 @@ export default function YouTubeEmbed({
     </div>
   );
 }
+
