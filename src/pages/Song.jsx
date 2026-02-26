@@ -28,6 +28,7 @@ export default function SongPage() {
   const [song, setSong] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [errorType, setErrorType] = useState(null);
 
   // Rediriger si l'URL a un trailing slash pour éviter les doublons
   useEffect(() => {
@@ -40,27 +41,33 @@ export default function SongPage() {
     const loadSongData = async () => {
       if (!slug) {
         setIsLoading(false);
+        setErrorType('invalid_slug');
         setError('Slug inválido');
         return;
       }
       setIsLoading(true);
       setError(null);
+      setErrorType(null);
       try {
         const songData = await Song.getBySlug(slug);
         if (!songData) {
           // Si la chanson n'existe pas, définir explicitement l'erreur
+          setErrorType('not_found');
           setError('Música não encontrada');
           setSong(null);
         } else {
           setSong(songData);
           setError(null);
+          setErrorType(null);
         }
       } catch (err) {
         // Logger seulement en dev pour éviter les logs excessifs en production
         if (import.meta.env?.DEV) {
           console.error('Error loading song:', err);
         }
-        setError('Música não encontrada');
+        // Erreur de chargement transitoire: ne pas traiter comme "not found" SEO.
+        setErrorType('fetch_error');
+        setError('Erro temporário ao carregar a música');
         setSong(null);
       } finally {
         setIsLoading(false);
@@ -183,11 +190,12 @@ export default function SongPage() {
   }
 
   if (error || !song) {
+    const shouldNoindex = errorType === 'invalid_slug' || errorType === 'not_found';
     return (
       <div className="container mx-auto px-4 py-8">
         <Helmet>
           {/* Canonical géré par useSEO, pas besoin de le redéfinir ici */}
-          <meta name="robots" content="noindex, follow" />
+          <meta name="robots" content={shouldNoindex ? 'noindex, follow' : 'index, follow, max-video-preview:-1'} />
         </Helmet>
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-6">
@@ -203,9 +211,15 @@ export default function SongPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             {error || 'Música não encontrada'}
           </h2>
-          <p className="text-gray-600">
-            A música &quot;{slug}&quot; não foi encontrada.
-          </p>
+          {errorType === 'fetch_error' ? (
+            <p className="text-gray-600">
+              Houve um problema temporário ao carregar os dados desta música. Tente novamente em instantes.
+            </p>
+          ) : (
+            <p className="text-gray-600">
+              A música &quot;{slug}&quot; não foi encontrada.
+            </p>
+          )}
         </div>
       </div>
     );

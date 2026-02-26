@@ -229,7 +229,7 @@ export const Song = {
       }
     } catch (error) {
       logger.error('Erro ao carregar música por slug:', error);
-      return null;
+      throw error;
     }
   }
 };
