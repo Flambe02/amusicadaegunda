@@ -1,8 +1,17 @@
 require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
-const { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd, extractYouTubeId, buildYouTubeUrls } = require('./seo-templates.cjs');
-// Note: videoObjectJsonLd removed - Google error "Video isn't on a watch page"
+const {
+  baseHtml,
+  orgJsonLd,
+  websiteJsonLd,
+  playlistJsonLd,
+  musicRecordingJsonLd,
+  videoObjectJsonLd,
+  breadcrumbsJsonLd,
+  extractYouTubeId,
+  buildYouTubeUrls
+} = require('./seo-templates.cjs');
 
 const cfg = require('./seo.config.json');
 const songsPath = path.resolve('content', 'songs.json');
@@ -84,6 +93,7 @@ ${songListHtml}
     title: playlistTitle,
     desc: playlistDesc,
     url: playlistUrl,
+    robots: 'index, follow, max-video-preview:0',
     image: `${siteUrl}${IMAGE}`,
     body: playlistBody,
     jsonld: [
@@ -154,6 +164,7 @@ ${songListHtml}
       title: page.title,
       desc: page.description,
       url: pageUrl,
+      robots: 'index, follow, max-video-preview:0',
       image: `${siteUrl}${IMAGE}`,
       body: pageBody,
       jsonld: [org, website],
@@ -281,16 +292,13 @@ ${songListHtml}
       : `Letra, áudio e história de "${s.name}" — paródia musical da segunda.`;
     const desc = rawDesc;
 
-    // ✅ Extraire videoId pour iframe YouTube statique (requis pour "watch page" Google)
+    // Canonical video for watch-page markup and embed
     const youtubeUrl = s.youtube_url || s.youtube_music_url;
-    let videoId = null;
-    let embedSrc = null;
-    if (youtubeUrl) {
-      videoId = extractYouTubeId(youtubeUrl);
-      if (videoId) {
-        embedSrc = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&controls=1`;
-      }
-    }
+    const videoId = youtubeUrl ? extractYouTubeId(youtubeUrl) : null;
+    const youtubeUrls = videoId ? buildYouTubeUrls(videoId) : null;
+    const embedSrc = youtubeUrls
+      ? `${youtubeUrls.embedUrl}?rel=0&modestbranding=1&playsinline=1&controls=1`
+      : null;
 
     // Contenu HTML statique visible avant le chargement React
     // ✅ Inclure iframe YouTube si disponible (requis pour Google "watch page")
@@ -332,7 +340,7 @@ ${songListHtml}
   ${lyricsHtml}
 </div>`;
 
-    // ✅ VideoObject JSON-LD si YouTube URL disponible
+    // Structured data for song watch page
     const jsonldSchemas = [
       org,
       website,
@@ -353,17 +361,27 @@ ${songListHtml}
       })
     ];
 
-    // ❌ VideoObject REMOVED - Google error "Video isn't on a watch page"
-    // Ces pages sont des MusicRecording, pas des pages dédiées aux vidéos.
-    // Google refuse d'indexer les VideoObject sur des pages mixtes (musique + vidéo + texte).
-    // Le MusicRecording est suffisant pour le SEO. Les vidéos YouTube sont découvertes via les iframes.
-    // Voir: https://developers.google.com/search/docs/appearance/video
+    if (videoId && youtubeUrls) {
+      const videoSchema = videoObjectJsonLd({
+        name: s.name,
+        description: desc,
+        uploadDate: s.datePublished,
+        duration: s.duration,
+        videoId,
+        pageUrl: url,
+        thumbnailUrl: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : youtubeUrls.thumbnailUrl
+      });
+      if (videoSchema) {
+        jsonldSchemas.push(videoSchema);
+      }
+    }
 
     const html = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
       desc,
       url,
+      robots: 'index, follow, max-video-preview:-1',
       ogType: 'music.song',
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
@@ -396,13 +414,27 @@ ${songListHtml}
       })
     ];
 
-    // ❌ VideoObject REMOVED - Same reason as above (not a watch page)
+    if (videoId && youtubeUrls) {
+      const videoSchemaNoSlash = videoObjectJsonLd({
+        name: s.name,
+        description: desc,
+        uploadDate: s.datePublished,
+        duration: s.duration,
+        videoId,
+        pageUrl: `${siteUrl}${route}/`,
+        thumbnailUrl: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : youtubeUrls.thumbnailUrl
+      });
+      if (videoSchemaNoSlash) {
+        jsonldSchemasNoSlash.push(videoSchemaNoSlash);
+      }
+    }
 
     const htmlNoSlash = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
       desc,
       url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
+      robots: 'index, follow, max-video-preview:-1',
       ogType: 'music.song',
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,

@@ -10,7 +10,7 @@ const escape = (s = '') => {
 
 const json = (obj) => JSON.stringify(obj, null, 2);
 
-function baseHtml({ lang = 'pt-BR', title, desc, url, image, ogType = 'website', body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' } }) {
+function baseHtml({ lang = 'pt-BR', title, desc, url, image, ogType = 'website', robots = 'index, follow', body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' } }) {
   const ga4Block = `
 <!-- Google tag (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
@@ -39,7 +39,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <title>${escape(title)}</title>
 <meta name="description" content="${escape(desc)}"/>
 <link rel="canonical" href="${url}"/>
-<meta name="robots" content="index, follow, max-video-preview:0" />
+<meta name="robots" content="${escape(robots)}" />
 ${ga4Block}
 <!-- Open Graph -->
 <meta property="og:title" content="${escape(title)}"/>
@@ -171,6 +171,29 @@ function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, durat
   return obj;
 }
 
+function videoObjectJsonLd({ name, description, uploadDate, duration, videoId, pageUrl, thumbnailUrl }) {
+  const youtubeUrls = buildYouTubeUrls(videoId);
+  if (!youtubeUrls) return null;
+
+  const obj = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": name || videoId,
+    "description": description || name || 'Video musical',
+    "thumbnailUrl": [thumbnailUrl || youtubeUrls.thumbnailUrl],
+    "uploadDate": uploadDate || new Date().toISOString().slice(0, 10),
+    "embedUrl": youtubeUrls.embedUrl,
+    "contentUrl": youtubeUrls.contentUrl,
+    "inLanguage": "pt-BR",
+    "isFamilyFriendly": true
+  };
+
+  if (duration) obj.duration = duration;
+  if (pageUrl) obj.mainEntityOfPage = pageUrl;
+
+  return obj;
+}
+
 function breadcrumbsJsonLd({ songName, songUrl }) {
   // ✅ Normaliser le slug en nom lisible si songName est manquant
   // Extrait le slug depuis l'URL si nécessaire
@@ -269,6 +292,16 @@ function buildYouTubeUrls(videoId) {
   };
 }
 
-// ❌ videoObjectJsonLd SUPPRIMÉ — erreur GSC "Video isn't on a watch page"
 
-module.exports = { baseHtml, orgJsonLd, websiteJsonLd, playlistJsonLd, musicRecordingJsonLd, breadcrumbsJsonLd, extractYouTubeId, buildYouTubeUrls };
+module.exports = {
+  baseHtml,
+  orgJsonLd,
+  websiteJsonLd,
+  playlistJsonLd,
+  musicRecordingJsonLd,
+  videoObjectJsonLd,
+  breadcrumbsJsonLd,
+  extractYouTubeId,
+  buildYouTubeUrls
+};
+

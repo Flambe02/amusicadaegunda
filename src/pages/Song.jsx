@@ -5,6 +5,8 @@ import { useSEO } from '../hooks/useSEO';
 import {
   musicRecordingJsonLd,
   breadcrumbsJsonLd,
+  videoObjectJsonLd,
+  extractYouTubeId,
   injectJsonLd
 } from '../lib/seo-jsonld';
 import { Helmet } from 'react-helmet-async';
@@ -72,9 +74,8 @@ export default function SongPage() {
   // ✅ SEO FIX: URL canonique AVEC trailing slash — cohérent avec sitemap et stubs statiques
   // Sans ça, React écrasait le canonical statique (/musica/slug/) par un sans slash (/musica/slug)
   const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}/` : '/musica/';
-  // ✅ SEO: type='music.song' pour og:type, max-video-preview:0 (pas une "watch page")
-  // NOTE: Ne PAS utiliser type='article' — la page est un MusicRecording, pas un Article.
-  // Le JSON-LD MusicRecording est injecté séparément par seo-jsonld.js (plus précis).
+  // ✅ SEO: type='music.song' pour og:type + watch-page video indexing.
+  // NOTE: Ne PAS utiliser type='article' — la page est un MusicRecording.
   useSEO({
     title: song ? song.title : (slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda'),
     description: song ? `Letra, áudio e história de "${song.title}" — nova música da segunda.` : `Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.`,
@@ -82,7 +83,7 @@ export default function SongPage() {
     image: song?.cover_image,
     url: normalizedUrl,
     type: 'music.song',
-    robots: 'index, follow, max-video-preview:0'
+    robots: 'index, follow, max-video-preview:-1'
   });
 
   // Inject JSON-LD schemas
@@ -124,18 +125,34 @@ export default function SongPage() {
       });
       injectJsonLd(fullBreadcrumb, 'song-breadcrumb-schema');
 
-      // ❌ VideoObject JSON-LD SUPPRIMÉ — erreur GSC "Video isn't on a watch page"
-      // Ces pages sont des MusicRecording, pas des "watch pages" dédiées aux vidéos.
-      // max-video-preview:0 dans le meta robots empêche aussi la détection automatique.
+      // VideoObject for the canonical in-page video.
+      const canonicalVideoUrl = song.youtube_url?.trim() || song.youtube_music_url?.trim() || '';
+      const videoId = extractYouTubeId(canonicalVideoUrl);
+      if (videoId) {
+        const videoSchema = videoObjectJsonLd({
+          title: song.title,
+          description: song.description || `Paródia musical ${song.title} por A Música da Segunda.`,
+          uploadDate: song.release_date || song.datePublished,
+          duration: song.duration,
+          videoId,
+          pageUrl: `https://www.amusicadasegunda.com${normalizedUrl}`,
+          thumbnailUrl: song.cover_image
+        });
+        if (videoSchema) {
+          injectJsonLd(videoSchema, 'song-video-schema');
+        }
+      }
     }
 
     return () => {
       const musicScript = document.getElementById('song-music-schema');
       const breadcrumbScript = document.getElementById('song-breadcrumb-schema');
+      const videoScript = document.getElementById('song-video-schema');
       if (musicScript) musicScript.remove();
       if (breadcrumbScript) breadcrumbScript.remove();
+      if (videoScript) videoScript.remove();
     };
-  }, [song, slug]);
+  }, [song, slug, normalizedUrl]);
 
   // Note: canonical géré par useSEO (sans hash), pas besoin de le définir ici
 
@@ -145,7 +162,7 @@ export default function SongPage() {
       <div className="container mx-auto px-4 py-8">
         <Helmet>
           <html lang="pt-BR" />
-          <meta name="robots" content="index, follow, max-video-preview:0" />
+          <meta name="robots" content="index, follow, max-video-preview:-1" />
         </Helmet>
         <div className="max-w-4xl mx-auto">
           {/* Contenu visible pour les crawlers */}
@@ -272,13 +289,14 @@ export default function SongPage() {
             </div>
 
             {/* Video */}
-            {/* Affiche la vidéo si youtube_music_url existe, sinon utilise youtube_url par défaut */}
-            {((song.youtube_music_url && typeof song.youtube_music_url === 'string' && song.youtube_music_url.trim()) 
-              || (song.youtube_url && typeof song.youtube_url === 'string' && song.youtube_url.trim())) ? (
+            {/* Canonical order: youtube_url first, fallback to youtube_music_url */}
+            {((song.youtube_url && typeof song.youtube_url === 'string' && song.youtube_url.trim())
+              || (song.youtube_music_url && typeof song.youtube_music_url === 'string' && song.youtube_music_url.trim())) ? (
               <YouTubeEmbed
                 youtubeMusicUrl={song.youtube_music_url}
                 youtubeUrl={song.youtube_url}
                 title={song.title}
+                loading="eager"
               />
             ) : (
               <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">

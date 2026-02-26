@@ -1,6 +1,12 @@
 # GitHub Pages redirects for SPA routing
 # Redirect all routes to index.html to let React Router handle them
 
+# 301 redirects for duplicate/legacy URLs (must come BEFORE the catch-all)
+/home        /          301
+/home/       /          301
+/playlist    /musica/   301
+/playlist/   /musica/   301
+
 # Allow crawlers to fetch sitemaps and robots.txt directly
 /sitemap.xml           /sitemap.xml    200
 /sitemap-static.xml    /sitemap-static.xml 200

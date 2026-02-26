@@ -97,20 +97,25 @@ export const supabaseSongService = {
         }
       }
 
-      // Fallback sans full-table scan: cible des candidats de titre puis match de slug en JS.
-      const titleCandidate = slug.replace(/-/g, ' ').trim()
-      if (!titleCandidate) return null
-
-      const { data: candidateSongs, error } = await supabase
+      // Fallback robuste si la colonne slug n'existe pas:
+      // récupérer les chansons published puis matcher le slug normalisé en JS.
+      // Cela évite les faux négatifs liés aux accents (ex: "é" vs "e") avec ILIKE.
+      const { data: publishedSongs, error } = await supabase
         .from(TABLES.SONGS)
         .select('*')
         .eq('status', 'published')
-        .ilike('title', `%${titleCandidate}%`)
-        .limit(12)
+        .order('release_date', { ascending: false })
+        .limit(500)
 
       if (error) throw error
 
-      const song = candidateSongs?.find((s) => titleToSlug(s?.title) === slug)
+      const song = publishedSongs?.find((s) => {
+        if (s?.slug && typeof s.slug === 'string' && s.slug.trim()) {
+          return s.slug.trim() === slug
+        }
+        return titleToSlug(s?.title) === slug
+      })
+
       return song || null
     } catch (error) {
       handleSupabaseError(error, `Recuperation chanson slug ${slug}`)

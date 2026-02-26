@@ -7,13 +7,14 @@ export default function YouTubeEmbed({
   title,
   useFacade = false,
   autoplayOnActivate = false,
-  thumbnailQuality = 'hqdefault'
+  thumbnailQuality = 'hqdefault',
+  loading = 'lazy'
 }) {
   const [activated, setActivated] = useState(false);
   const iframeRef = useRef(null);
 
-  const primaryUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
-  const fallbackUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
+  const primaryUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
+  const fallbackUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
 
   let info = primaryUrl ? getYouTubeEmbedInfo(primaryUrl) : null;
   let targetUrl = primaryUrl || '';
@@ -87,7 +88,7 @@ export default function YouTubeEmbed({
               referrerPolicy="strict-origin-when-cross-origin"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              loading="lazy"
+              loading={loading}
               onLoad={attemptPlay}
             />
           </div>
@@ -106,7 +107,7 @@ export default function YouTubeEmbed({
           referrerPolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          loading="lazy"
+          loading={loading}
           onLoad={attemptPlay}
         />
       </div>
@@ -183,4 +184,3 @@ export default function YouTubeEmbed({
     </div>
   );
 }
-

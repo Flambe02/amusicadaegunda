@@ -167,9 +167,54 @@ export function musicPlaylistJsonLd({
   };
 }
 
-// ❌ videoObjectJsonLd SUPPRIMÉ — erreur GSC "Video isn't on a watch page"
-// Les pages du site ne sont pas des "watch pages" dédiées aux vidéos.
-// Google refuse d'indexer VideoObject sur des pages mixtes (musique + vidéo + texte).
+// VideoObject is reserved for dedicated watch pages with a single canonical video.
+/**
+ * Generate VideoObject JSON-LD schema for watch pages
+ * @param {Object} params
+ * @param {string} params.title - Video title
+ * @param {string} [params.description] - Video description
+ * @param {string} [params.uploadDate] - Upload/publication date (YYYY-MM-DD)
+ * @param {string} [params.duration] - ISO 8601 duration (e.g. PT3M)
+ * @param {string} params.videoId - YouTube video ID
+ * @param {string} [params.pageUrl] - Canonical watch page URL
+ * @param {string} [params.thumbnailUrl] - Optional override thumbnail URL
+ * @returns {Object|null} JSON-LD schema object
+ */
+export function videoObjectJsonLd({
+  title,
+  description,
+  uploadDate,
+  duration,
+  videoId,
+  pageUrl,
+  thumbnailUrl
+}) {
+  const youtubeUrls = buildYouTubeUrls(videoId);
+  if (!youtubeUrls) return null;
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": title || videoId,
+    "description": description || title || 'Video musical',
+    "thumbnailUrl": [thumbnailUrl || youtubeUrls.thumbnailUrl],
+    "uploadDate": uploadDate || new Date().toISOString().slice(0, 10),
+    "embedUrl": youtubeUrls.embedUrl,
+    "contentUrl": youtubeUrls.contentUrl,
+    "inLanguage": "pt-BR",
+    "isFamilyFriendly": true
+  };
+
+  if (duration && /^P(T.*|.*)$/.test(duration)) {
+    schema.duration = duration;
+  }
+
+  if (pageUrl) {
+    schema.mainEntityOfPage = pageUrl;
+  }
+
+  return schema;
+}
 
 export const extractYouTubeId = extractYouTubeIdFromUtils;
 
