@@ -13,8 +13,8 @@ export default function YouTubeEmbed({
   const [activated, setActivated] = useState(false);
   const iframeRef = useRef(null);
 
-  const primaryUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
-  const fallbackUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
+  const primaryUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
+  const fallbackUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
 
   let info = primaryUrl ? getYouTubeEmbedInfo(primaryUrl) : null;
   let targetUrl = primaryUrl || '';

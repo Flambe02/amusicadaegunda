@@ -686,4 +686,77 @@ curl https://www.amusicadasegunda.com/sitemap-index.xml
 
 ---
 
+## Audit React / UX / PWA (2026-02-22)
+
+### Score global : 7.5/10 → objectif 8.5/10
+
+### Corrections appliquées (session 2026-02-22)
+
+| Fix | Fichier(s) | Détail |
+|-----|-----------|--------|
+| `selectedVideo` state mort supprimé | `src/pages/Home.jsx` | `useState(null)` jamais utilisé — refactoring incomplet |
+| 19 lignes mojibake corrigées | `src/pages/Home.jsx` | Double-encodage UTF-8 dans commentaires + logger.debug |
+| Doublon `<span>Ouvir</span>` supprimé | `src/pages/Home.jsx` | Bouton affichait "Ouvir" deux fois |
+| `safe-area-inset-top` sur OfflineIndicator | `src/components/OfflineIndicator.jsx` | Bannière offline cachée par le notch sur iPhone X+ |
+| `console.log/warn` → `swLog/swWarn` (dev only) | `src/hooks/useServiceWorker.js` | 25 logs silencieux en prod |
+| `fetchPriority` → `fetchpriority` (lowercase) | `Home.jsx`, `YouTubeEmbed.jsx`, `OptimizedImage.jsx` | React 18.3 ne reconnaît pas camelCase — warning console |
+| ErrorBoundary reload : vide le cache après 3 essais | `src/components/ErrorBoundary.jsx` | Évite boucle infinie sur erreur déterministe |
+| MessageChannel SW : signal DISCONNECT + close + null | `src/hooks/useServiceWorker.js` | Canaux zombies après unmount |
+| `SongListItem` extrait en `React.memo` + `useCallback` | `src/pages/Home.jsx` | Re-renders inutiles supprimés sur la liste du mois |
+| `window.innerWidth` → `window.matchMedia` | `src/pages/Home.jsx` | Breakpoint CSS-correct, gère zoom/DPI |
+| Debounce 300ms sur page_view GA4 | `src/pages/index.jsx` | Évite doublons sur rapid navigation back/forward |
+| `migrationService` : pattern `isMounted` | `src/App.jsx` | Pas de side-effect après unmount |
+| Message d'erreur YouTube amélioré | `src/components/YouTubeEmbed.jsx` | Distingue "pas d'URL" vs "URL invalide" |
+| Validation slug URL (`/^[a-z0-9-]+$/`) | `src/pages/Song.jsx` | Défense en profondeur avant appel Supabase |
+| Robots meta loading state : `max-video-preview:0` | `src/pages/Song.jsx` | Cohérence avec état final (SEO) |
+| `localStorage` → `sessionStorage` pour logs d'erreur | `src/components/ErrorBoundary.jsx` | Pas de fuite d'infos entre sessions |
+| `console.log` error data → dev-only | `src/components/ErrorBoundary.jsx` | Pas d'exposition de stack traces en prod |
+| Image de fond blur → `loading="lazy"` + `aria-hidden` | `src/pages/Home.jsx` | Image décorative, pas LCP — économise bandwidth |
+| Flèches navigation → `disabled` aux bornes au lieu de cachées | `src/pages/Home.jsx` | UX : l'utilisateur comprend pourquoi la flèche ne répond pas |
+
+### Corrections vérifiées (fixes appliqués antérieurement)
+
+Fixes appliqués par l'utilisateur suite à l'audit, vérifiés le 2026-02-22 :
+
+| Fix | Fichier(s) | Détail |
+|-----|-----------|--------|
+| `youtube_url \|\| youtube_music_url` ordre correct | `scripts/generate-stubs.cjs` | Embed utilise `youtube_url` en premier (YouTube Music) — pas le Short |
+| Screenshots manifest `.webp` | `public/manifest.json` | Format moderne, plus léger que PNG/JPEG |
+| Shortcut manifest → `/musica` | `public/manifest.json` | Raccourci PWA pointe vers la vraie playlist |
+| HSTS activé | `public/_headers` | `Strict-Transport-Security: max-age=31536000; includeSubDomains` |
+| CSP `connect-src` restreint | `public/_headers` | Domaines explicitement listés, pas de wildcard `*` |
+| `/roda/` dans le sitemap | `scripts/generate-sitemap-unified.cjs` | Page "Roda" incluse, priorité 0.8 |
+| Logo `loading="eager"` | `src/pages/Layout.jsx` | Logo LCP — doit charger en priorité, pas lazy |
+| YouTubeEmbed facade : `tabIndex` + `onKeyDown` | `src/components/YouTubeEmbed.jsx` | Accessible au clavier (Tab + Enter/Space pour activer) |
+| `og:image` 1200×630 | `index.html` | Dimensions recommandées pour un partage optimal sur les réseaux sociaux |
+| `id="main"` dans les stubs statiques uniquement | `scripts/seo-templates.cjs` | Pas de duplication avec React — évite le double landmark |
+| `og:type: 'music.song'` | `scripts/generate-stubs.cjs` | Type OG correct pour les pages chansons |
+| `offline.html` dans SW CORE_URLS | `public/sw.js` | Page offline précachée au install — disponible sans réseau |
+| `precacheShell()` + `discoverShellAssets()` | `public/sw.js` | Assets shell auto-découverts et précachés |
+| Chunks séparés : `vendor-ui` + `vendor-motion` | `vite.config.js` | Code splitting : framer-motion isolé, meilleur cache long terme |
+| Metricool dans `connect-src` CSP | `public/_headers` | `https://tracker.metricool.com` autorisé explicitement |
+
+> ⚠️ **Note `_headers`** : les commentaires du fichier ont du mojibake (ex. `AméÃ©liore`, `SéÃ©curitÃ©`) — encodage cosmétique uniquement, les headers eux-mêmes sont valides et fonctionnels.
+
+### Backlog audit React/UX/PWA (P2 — non critique)
+
+| Item | Fichier(s) | Impact |
+|------|-----------|--------|
+| Skeleton loader fidèle au layout réel sur Song | `src/pages/Song.jsx` | CLS élevé — layout jump quand les données arrivent |
+| Virtualisation liste chansons (react-virtual) | `src/pages/Home.jsx` | Performance si > 200 chansons dans la DB |
+| TypeScript strict mode | `tsconfig.json` | Type safety, détection erreurs à la compilation |
+| Tests unitaires Home.jsx + Song.jsx | `src/pages/` | Couverture actuelle : seulement 4 composants testés |
+| Sentry (remplacer sessionStorage error log) | `src/components/ErrorBoundary.jsx` | Visibilité erreurs production |
+
+### Règles clés apprises
+
+- **`fetchPriority` React 18** : utiliser `fetchpriority` (lowercase) — camelCase seulement supporté en React 19+
+- **console.log en prod** : toujours wrapper avec `import.meta.env.DEV`
+- **MessageChannel SW** : envoyer `DISCONNECT` + `port1.close()` + `ref = null` au cleanup
+- **ErrorBoundary reload** : compter les rechargements en sessionStorage, vider le cache au 4e essai
+- **Dual-layer SEO** : toujours corriger BOTH les stubs statiques ET les composants React
+- **`_headers` mojibake** : commentaires encodés `AméÃ©liore` etc. — cosmétique, les headers sont valides
+
+---
+
 **🎵 Música da Segunda - Descubra música nova toda segunda-feira! 🎵**
