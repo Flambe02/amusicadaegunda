@@ -310,6 +310,7 @@ export default function SongPage() {
                 youtubeMusicUrl={song.youtube_music_url}
                 youtubeUrl={song.youtube_url}
                 title={song.title}
+                preferWatchUrl
                 loading="eager"
               />
             ) : (

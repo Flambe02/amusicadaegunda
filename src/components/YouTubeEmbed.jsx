@@ -5,6 +5,7 @@ export default function YouTubeEmbed({
   youtubeMusicUrl,
   youtubeUrl,
   title,
+  preferWatchUrl = false,
   useFacade = false,
   autoplayOnActivate = false,
   thumbnailQuality = 'hqdefault',
@@ -13,8 +14,11 @@ export default function YouTubeEmbed({
   const [activated, setActivated] = useState(false);
   const iframeRef = useRef(null);
 
-  const primaryUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
-  const fallbackUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
+  const watchUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
+  const musicUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
+
+  const primaryUrl = preferWatchUrl ? (watchUrl || musicUrl) : (musicUrl || watchUrl);
+  const fallbackUrl = preferWatchUrl ? musicUrl : watchUrl;
 
   let info = primaryUrl ? getYouTubeEmbedInfo(primaryUrl) : null;
   let targetUrl = primaryUrl || '';
@@ -26,7 +30,7 @@ export default function YouTubeEmbed({
 
   useEffect(() => {
     setActivated(false);
-  }, [youtubeMusicUrl, youtubeUrl]);
+  }, [youtubeMusicUrl, youtubeUrl, preferWatchUrl]);
 
   const isShort = targetUrl.includes('/shorts/');
   const shouldAutoplay = useFacade && activated && autoplayOnActivate;
