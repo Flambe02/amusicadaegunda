@@ -7,7 +7,6 @@ const {
   websiteJsonLd,
   playlistJsonLd,
   musicRecordingJsonLd,
-  videoObjectJsonLd,
   breadcrumbsJsonLd,
   extractYouTubeId,
   buildYouTubeUrls
@@ -361,27 +360,12 @@ ${songListHtml}
       })
     ];
 
-    if (videoId && youtubeUrls) {
-      const videoSchema = videoObjectJsonLd({
-        name: s.name,
-        description: desc,
-        uploadDate: s.datePublished,
-        duration: s.duration,
-        videoId,
-        pageUrl: url,
-        thumbnailUrl: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : youtubeUrls.thumbnailUrl
-      });
-      if (videoSchema) {
-        jsonldSchemas.push(videoSchema);
-      }
-    }
-
     const html = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
       desc,
       url,
-      robots: 'index, follow, max-video-preview:-1',
+      robots: 'index, follow, max-video-preview:0',
       ogType: 'music.song',
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
@@ -414,27 +398,12 @@ ${songListHtml}
       })
     ];
 
-    if (videoId && youtubeUrls) {
-      const videoSchemaNoSlash = videoObjectJsonLd({
-        name: s.name,
-        description: desc,
-        uploadDate: s.datePublished,
-        duration: s.duration,
-        videoId,
-        pageUrl: `${siteUrl}${route}/`,
-        thumbnailUrl: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : youtubeUrls.thumbnailUrl
-      });
-      if (videoSchemaNoSlash) {
-        jsonldSchemasNoSlash.push(videoSchemaNoSlash);
-      }
-    }
-
     const htmlNoSlash = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
       title,
       desc,
       url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
-      robots: 'index, follow, max-video-preview:-1',
+      robots: 'index, follow, max-video-preview:0',
       ogType: 'music.song',
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,

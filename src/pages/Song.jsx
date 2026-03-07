@@ -5,8 +5,6 @@ import { useSEO } from '../hooks/useSEO';
 import {
   musicRecordingJsonLd,
   breadcrumbsJsonLd,
-  videoObjectJsonLd,
-  extractYouTubeId,
   injectJsonLd
 } from '../lib/seo-jsonld';
 import { Helmet } from 'react-helmet-async';
@@ -90,7 +88,7 @@ export default function SongPage() {
     image: song?.cover_image,
     url: normalizedUrl,
     type: 'music.song',
-    robots: 'index, follow, max-video-preview:-1'
+    robots: 'index, follow, max-video-preview:0'
   });
 
   // Inject JSON-LD schemas
@@ -132,32 +130,13 @@ export default function SongPage() {
       });
       injectJsonLd(fullBreadcrumb, 'song-breadcrumb-schema');
 
-      // VideoObject for the canonical in-page video.
-      const canonicalVideoUrl = song.youtube_url?.trim() || song.youtube_music_url?.trim() || '';
-      const videoId = extractYouTubeId(canonicalVideoUrl);
-      if (videoId) {
-        const videoSchema = videoObjectJsonLd({
-          title: song.title,
-          description: song.description || `Paródia musical ${song.title} por A Música da Segunda.`,
-          uploadDate: song.release_date || song.datePublished,
-          duration: song.duration,
-          videoId,
-          pageUrl: `https://www.amusicadasegunda.com${normalizedUrl}`,
-          thumbnailUrl: song.cover_image
-        });
-        if (videoSchema) {
-          injectJsonLd(videoSchema, 'song-video-schema');
-        }
-      }
     }
 
     return () => {
       const musicScript = document.getElementById('song-music-schema');
       const breadcrumbScript = document.getElementById('song-breadcrumb-schema');
-      const videoScript = document.getElementById('song-video-schema');
       if (musicScript) musicScript.remove();
       if (breadcrumbScript) breadcrumbScript.remove();
-      if (videoScript) videoScript.remove();
     };
   }, [song, slug, normalizedUrl]);
 
@@ -169,7 +148,7 @@ export default function SongPage() {
       <div className="container mx-auto px-4 py-8">
         <Helmet>
           <html lang="pt-BR" />
-          <meta name="robots" content="index, follow, max-video-preview:-1" />
+          <meta name="robots" content="index, follow, max-video-preview:0" />
         </Helmet>
         <div className="max-w-4xl mx-auto">
           {/* Contenu visible pour les crawlers */}
@@ -195,7 +174,7 @@ export default function SongPage() {
       <div className="container mx-auto px-4 py-8">
         <Helmet>
           {/* Canonical géré par useSEO, pas besoin de le redéfinir ici */}
-          <meta name="robots" content={shouldNoindex ? 'noindex, follow' : 'index, follow, max-video-preview:-1'} />
+          <meta name="robots" content={shouldNoindex ? 'noindex, follow' : 'index, follow, max-video-preview:0'} />
         </Helmet>
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-6">
