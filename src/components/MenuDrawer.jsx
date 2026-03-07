@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Gift, Info, Mail, Search } from 'lucide-react';
+import { FileText, Calendar, Info, Mail, Search } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -28,10 +28,10 @@ export default function MenuDrawer({
       description: 'Artigos e notícias sobre música'
     },
     {
-      name: 'A Roda de Segunda',
-      url: createPageUrl('Roda'),
-      icon: Gift,
-      description: 'Gire a roda e descubra uma música!'
+      name: 'Agenda',
+      url: createPageUrl('Calendar'),
+      icon: Calendar,
+      description: 'Calendário de músicas'
     },
     {
       name: 'Sobre / Nossa Missão',
