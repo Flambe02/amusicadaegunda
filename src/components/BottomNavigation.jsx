@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, ListMusic, Calendar, Menu } from 'lucide-react';
+import { Home, ListMusic, Shuffle, Menu } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { useState } from 'react';
 import MenuDrawer from './MenuDrawer';
@@ -21,10 +21,10 @@ export default function BottomNavigation() {
       icon: ListMusic,
       isLink: true
     },
-    { 
-      name: 'Agenda', 
-      url: createPageUrl('Calendar'), 
-      icon: Calendar,
+    {
+      name: 'A Roda',
+      url: createPageUrl('Roda'),
+      icon: Shuffle,
       isLink: true
     },
     { 
