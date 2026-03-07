@@ -79,7 +79,10 @@ export default function SongPage() {
   // ✅ SEO FIX: URL canonique AVEC trailing slash — cohérent avec sitemap et stubs statiques
   // Sans ça, React écrasait le canonical statique (/musica/slug/) par un sans slash (/musica/slug)
   const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}/` : '/musica/';
-  // ✅ SEO: type='music.song' pour og:type + watch-page video indexing.
+  // ✅ SEO: noindex UNIQUEMENT pour slug invalide (format incorrect).
+  // not_found et fetch_error → garder index (Supabase peut retourner null sur pages valides)
+  const shouldNoindex = !isLoading && errorType === 'invalid_slug';
+  // ✅ SEO: type='music.song' pour og:type.
   // NOTE: Ne PAS utiliser type='article' — la page est un MusicRecording.
   useSEO({
     title: song ? song.title : (slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda'),
@@ -88,7 +91,7 @@ export default function SongPage() {
     image: song?.cover_image,
     url: normalizedUrl,
     type: 'music.song',
-    robots: 'index, follow, max-video-preview:0'
+    robots: shouldNoindex ? 'noindex, follow' : 'index, follow, max-video-preview:0'
   });
 
   // Inject JSON-LD schemas
@@ -148,7 +151,6 @@ export default function SongPage() {
       <div className="container mx-auto px-4 py-8">
         <Helmet>
           <html lang="pt-BR" />
-          <meta name="robots" content="index, follow, max-video-preview:0" />
         </Helmet>
         <div className="max-w-4xl mx-auto">
           {/* Contenu visible pour les crawlers */}
@@ -169,13 +171,8 @@ export default function SongPage() {
   }
 
   if (error || !song) {
-    const shouldNoindex = errorType === 'invalid_slug' || errorType === 'not_found';
     return (
       <div className="container mx-auto px-4 py-8">
-        <Helmet>
-          {/* Canonical géré par useSEO, pas besoin de le redéfinir ici */}
-          <meta name="robots" content={shouldNoindex ? 'noindex, follow' : 'index, follow, max-video-preview:0'} />
-        </Helmet>
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-6">
             <Button 
