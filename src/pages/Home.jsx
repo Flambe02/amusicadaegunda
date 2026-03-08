@@ -665,19 +665,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Countdown compact + Bouton Reproduzir — en bas */}
-            <div className="relative z-30 pb-4 px-4 flex flex-col items-center gap-2">
-              <CountdownTimer compact />
-              <Button
-                size="lg"
-                onClick={() => { if (navigator.vibrate) navigator.vibrate(50); setVideoActivated(true); }}
-                className="w-full max-w-md bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-3 touch-manipulation"
-              >
-                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current flex-shrink-0"><path d="M8 5v14l11-7z"/></svg>
-                <span className="text-xl">Reproduzir</span>
-              </Button>
-            </div>
-
             {/* Lyrics Drawer pour mobile */}
             <LyricsDrawer
               open={showLyricsDrawer}
