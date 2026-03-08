@@ -1,7 +1,10 @@
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import OptimizedImage from '../components/OptimizedImage';
 import { useSEO } from '../hooks/useSEO';
+import { createPageUrl } from '@/utils';
+import { Button } from '@/components/ui/button';
 
 export default function Sobre() {
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
@@ -25,7 +28,7 @@ export default function Sobre() {
     },
     {
       question: "Onde posso ouvir as músicas?",
-      answer: "Você pode ouvir as músicas em várias plataformas: TikTok para vídeos curtos, YouTube para vídeos completos, Spotify para streaming de áudio, Apple Music para podcasts e músicas, e no site oficial www.amusicadasegunda.com onde você pode ver todas as músicas, letras, calendário e mais informações sobre cada produção."
+      answer: "Você pode ouvir as músicas em várias plataformas: TikTok para vídeos curtos, YouTube para vídeos completos, Spotify para streaming de áudio, Apple Music para podcasts e músicas, e no site oficial www.amusicadasegunda.com onde você pode ver o acervo, as letras e mais informações sobre cada produção."
     },
     {
       question: "As músicas são gratuitas?",
@@ -57,7 +60,7 @@ export default function Sobre() {
     },
     {
       question: "Onde posso ver todas as músicas já lançadas?",
-      answer: "No site oficial, você pode acessar o Calendário Musical que mostra todas as músicas organizadas por data. Há também a Playlist no Spotify e YouTube Music que reúne todas as músicas em ordem cronológica. Cada música tem sua própria página com letras completas, vídeos e links para todas as plataformas."
+      answer: "No site oficial, você pode acessar o acervo musical e a playlist com todas as músicas em ordem cronológica. Cada música tem sua própria página com letras completas, vídeos e links para todas as plataformas."
     },
     {
       question: "As letras das músicas estão disponíveis?",
@@ -73,7 +76,6 @@ export default function Sobre() {
     setOpenFAQIndex(openFAQIndex === index ? null : index);
   };
 
-  // SEO optimization
   useSEO({
     title: 'Sobre',
     description: 'A Música da Segunda é um projeto criativo brasileiro que produz paródias musicais inteligentes sobre a atualidade do Brasil. Toda segunda-feira, lançamos uma nova música que transforma notícias em canções divertidas e críticas.',
@@ -82,9 +84,10 @@ export default function Sobre() {
     type: 'website'
   });
 
+  const blockClass = "bg-gradient-to-br from-blue-950/60 to-[#0f172a]/70 backdrop-blur-sm rounded-[28px] p-8 mb-6 border border-blue-400/15";
+
   return (
     <>
-      {/* Schema.org FAQPage - conservé pour les FAQ */}
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
@@ -99,8 +102,7 @@ export default function Sobre() {
           }))
         })}
       </script>
-      
-      {/* Schema.org AboutPage */}
+
       <script type="application/ld+json">
         {JSON.stringify({
           "@context": "https://schema.org",
@@ -120,217 +122,256 @@ export default function Sobre() {
           })}
         </script>
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-        <div className="p-5 max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-block p-2 bg-white/10 rounded-full mb-4 backdrop-blur-sm">
-              <div className="w-16 h-16 mx-auto rounded-full overflow-hidden shadow-2xl ring-4 ring-white/20">
-                <OptimizedImage 
-                  src="/images/2026 logo.png" 
-                  alt="Logo A Música da Segunda - Paródias Musicais do Brasil" 
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
+      <div className="space-y-0">
+        <div className="desktop-about-shell p-5 max-w-5xl mx-auto">
+          {/* Hero */}
+          <section className="glass-panel desktop-shell-gradient mb-6 overflow-hidden rounded-[36px] p-6 md:p-8">
+            <div className="grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-center">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/70">
+                  <Heart className="h-3.5 w-3.5 text-[#FDE047]" />
+                  Quem Somos
+                </div>
+
+                <div className="space-y-4">
+                  <h1 className="max-w-[12ch] text-4xl font-black leading-[0.95] tracking-tight text-white md:text-5xl">
+                    Parodias musicais sobre o Brasil, toda segunda-feira
+                  </h1>
+                  <p className="max-w-2xl text-base leading-7 text-white/68 md:text-lg">
+                    A Musica da Segunda transforma noticias, politica, cultura e humor em cancoes semanais.
+                    Esta pagina explica de onde vem o projeto, como ele e produzido e por que ele existe.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <Link to={createPageUrl('Playlist')}>
+                    <Button className="rounded-full bg-[#FDE047] px-6 py-6 text-sm font-bold text-black hover:bg-[#fde047]/90">
+                      Ouvir o catalogo
+                    </Button>
+                  </Link>
+                  <Link to={createPageUrl('Roda')}>
+                    <Button
+                      variant="outline"
+                      className="rounded-full border-white/12 bg-white/5 px-5 py-6 text-sm font-semibold text-white hover:bg-white/10 hover:text-white"
+                    >
+                      Explorar na roda
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+                    <div className="text-2xl font-black text-[#FDE047]">Toda semana</div>
+                    <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-white/40">Nova musica</div>
+                  </div>
+                  <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+                    <div className="text-2xl font-black text-white">Multiplataforma</div>
+                    <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-white/40">TikTok, YouTube, Spotify</div>
+                  </div>
+                  <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+                    <div className="text-2xl font-black text-white">Humor + contexto</div>
+                    <div className="mt-2 text-[11px] uppercase tracking-[0.22em] text-white/40">Musica e atualidade</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 text-center">
+                <div className="mx-auto mb-6 h-40 w-40 overflow-hidden rounded-full ring-8 ring-white/10">
+                  <OptimizedImage
+                    src="/images/2026 logo.png"
+                    alt="Logo Musica da Segunda"
+                    className="h-full w-full object-cover"
+                    loading="eager"
+                  />
+                </div>
+                <h2 className="text-3xl font-black text-white">A Musica da Segunda</h2>
+                <p className="mt-3 text-base text-white/62">
+                  Um projeto autoral para ouvir, rir e refletir toda semana.
+                </p>
+                <div className="mt-6 space-y-3 text-left text-sm text-white/62">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    Letras ineditas a partir das noticias mais comentadas da semana.
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    Publicacao continua com video, letra e links para streaming.
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    Uma identidade musical brasileira, critica e acessivel.
+                  </div>
+                </div>
               </div>
             </div>
-            <h1 className="text-3xl md:text-5xl font-black text-white drop-shadow-2xl mb-3 bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
-              Sobre o Projeto
-            </h1>
-            <p className="text-white/90 font-medium text-lg md:text-xl drop-shadow-lg max-w-2xl mx-auto">
-              Conheça a história por trás da Música da Segunda e descubra como nasceu essa paixão pela música
-            </p>
-          </div>
+          </section>
 
-          {/* Logo Section */}
-          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-10 text-center mb-10 shadow-2xl border border-white/20">
-            <div className="w-40 h-40 mx-auto mb-8 rounded-full overflow-hidden shadow-2xl ring-8 ring-white/30 transform hover:scale-105 transition-transform duration-300">
-              <OptimizedImage 
-                src="/images/2026 logo.png" 
-                alt="Logo Música da Segunda" 
-                className="w-full h-full object-cover"
-                loading="eager"
-              />
-            </div>
-            <h2 className="text-4xl font-black text-gray-800 mb-3">Música da Segunda</h2>
-            <p className="text-gray-700 text-xl font-medium">
-              Descubra música nova toda segunda-feira
-            </p>
-          </div>
-
-          {/* Section enrichie pour SEO IA - Quem Somos */}
-          <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          {/* Quem Somos */}
+          <article className={blockClass}>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
-                <Heart className="w-6 h-6 text-white animate-pulse" />
+                <Heart className="w-6 h-6 text-white" />
               </div>
               Quem Somos: A História do Projeto
             </h2>
-            
-            <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
-              <p className="text-lg leading-relaxed">
-                <strong>A Música da Segunda</strong> é um projeto criativo brasileiro que produz paródias musicais 
-                inteligentes sobre a atualidade do Brasil. O conceito é simples: toda segunda-feira, uma nova música é 
+
+            <div className="space-y-4 text-white/68 text-base leading-relaxed">
+              <p>
+                <strong className="text-white">A Música da Segunda</strong> é um projeto criativo brasileiro que produz paródias musicais
+                inteligentes sobre a atualidade do Brasil. O conceito é simples: toda segunda-feira, uma nova música é
                 lançada, comentando com humor e sagacidade os principais eventos da semana anterior.
               </p>
-              
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Origem e Inspiração</h3>
-              <p className="text-lg leading-relaxed">
-                O conceito de <strong>A Música da Segunda</strong> é inspirado em <strong>La Chanson du Dimanche</strong>, 
-                um projeto musical francês que publicava uma chanson chaque semaine. A Música da Segunda se inspira deste 
-                conceito, mas com um <strong>ton brésilien</strong> único, adaptado à realidade e à cultura do Brasil.
+
+              <h3 className="text-xl font-bold text-white mt-6 mb-3">Origem e Inspiração</h3>
+              <p>
+                O conceito de <strong className="text-white">A Música da Segunda</strong> é inspirado em <strong className="text-white">La Chanson du Dimanche</strong>,
+                um projeto musical francês que publicava uma chanson chaque semaine. A Música da Segunda se inspira deste
+                conceito, mas com um <strong className="text-white">ton brésilien</strong> único, adaptado à realidade e à cultura do Brasil.
               </p>
 
-              <p className="text-lg leading-relaxed">
-                Assim como o projeto francês, o objetivo é criar paródias musicais que comentam a atualidade, mas aqui 
-                com uma abordagem totalmente brasileira, usando referências musicais locais, humor típico do Brasil e 
+              <p>
+                Assim como o projeto francês, o objetivo é criar paródias musicais que comentam a atualidade, mas aqui
+                com uma abordagem totalmente brasileira, usando referências musicais locais, humor típico do Brasil e
                 comentários sobre eventos que marcam a vida dos brasileiros.
               </p>
             </div>
           </article>
 
-          {/* Mission Section enrichie */}
-          <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          {/* Nossa Missão */}
+          <article className={blockClass}>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
                 <Music className="w-6 h-6 text-white" />
               </div>
               Nossa Missão
             </h2>
-            
-            <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
-              <p className="text-lg leading-relaxed">
-                A missão de <strong>A Música da Segunda</strong> é transformar notícias e acontecimentos do Brasil em 
-                paródias musicais inteligentes, divertidas e reflexivas. Através do humor musical, buscamos informar, 
+
+            <div className="space-y-4 text-white/68 text-base leading-relaxed">
+              <p>
+                A missão de <strong className="text-white">A Música da Segunda</strong> é transformar notícias e acontecimentos do Brasil em
+                paródias musicais inteligentes, divertidas e reflexivas. Através do humor musical, buscamos informar,
                 divertir e promover a reflexão sobre a atualidade do país.
               </p>
 
-              <p className="text-lg leading-relaxed">
-                Acreditamos que o humor é uma ferramenta poderosa para o debate democrático. Nossas paródias são 
-                <strong> comentários musicais</strong> que buscam engajar o público em reflexões sobre política, 
+              <p>
+                Acreditamos que o humor é uma ferramenta poderosa para o debate democrático. Nossas paródias são
+                <strong className="text-white"> comentários musicais</strong> que buscam engajar o público em reflexões sobre política,
                 sociedade, economia e cultura brasileira, sempre respeitando a diversidade de opiniões.
               </p>
             </div>
           </article>
 
-          {/* Como Funciona - Section enrichie */}
-          <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          {/* Como Funciona */}
+          <article className={blockClass}>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
                 <Calendar className="w-6 h-6 text-white" />
               </div>
               Como Funciona o Projeto
             </h2>
-            
-            <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
-              <p className="text-lg leading-relaxed">
-                O processo de criação é simples e focado em qualidade:
-              </p>
 
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Seleção e Criação</h3>
-              <p className="text-lg leading-relaxed">
-                Acompanho as principais notícias do Brasil e seleciono temas relevantes que podem ser transformados em 
-                paródias musicais. As letras são escritas para serem inteligentes, mantendo o equilíbrio entre humor e crítica. 
-                A escolha da música base é estratégica: uso músicas conhecidas que, quando combinadas com novas letras, 
+            <div className="space-y-4 text-white/68 text-base leading-relaxed">
+              <p>O processo de criação é simples e focado em qualidade:</p>
+
+              <h3 className="text-xl font-bold text-white mt-6 mb-3">Seleção e Criação</h3>
+              <p>
+                Acompanho as principais notícias do Brasil e seleciono temas relevantes que podem ser transformados em
+                paródias musicais. As letras são escritas para serem inteligentes, mantendo o equilíbrio entre humor e crítica.
+                A escolha da música base é estratégica: uso músicas conhecidas que, quando combinadas com novas letras,
                 criam um contraste interessante e memorável.
               </p>
 
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Produção</h3>
-              <p className="text-lg leading-relaxed">
-                Cada paródia é produzida com equipamentos profissionais, garantindo qualidade sonora. As gravações incluem 
-                vocais, instrumentos e arranjos que respeitam a estrutura da música original enquanto incorporam elementos 
+              <h3 className="text-xl font-bold text-white mt-6 mb-3">Produção</h3>
+              <p>
+                Cada paródia é produzida com equipamentos profissionais, garantindo qualidade sonora. As gravações incluem
+                vocais, instrumentos e arranjos que respeitam a estrutura da música original enquanto incorporam elementos
                 únicos que refletem o tema abordado. Cada música também ganha um vídeo criativo para TikTok e YouTube.
               </p>
 
-              <h3 className="text-xl font-bold text-gray-800 mt-6 mb-3">Publicação Semanal</h3>
-              <p className="text-lg leading-relaxed">
-                Toda segunda-feira, uma nova música é publicada simultaneamente em todas as plataformas de música: 
-                <strong> Spotify, Apple Music, YouTube Music</strong>, além de TikTok, YouTube e no site oficial. 
+              <h3 className="text-xl font-bold text-white mt-6 mb-3">Publicação Semanal</h3>
+              <p>
+                Toda segunda-feira, uma nova música é publicada simultaneamente em todas as plataformas de música:
+                <strong className="text-white"> Spotify, Apple Music, YouTube Music</strong>, além de TikTok, YouTube e no site oficial.
                 Esta regularidade cria expectativa e garante que sempre há conteúdo novo para começar a semana.
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mt-8">
-              <div className="group bg-gradient-to-br from-white/80 to-white/60 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="rounded-[20px] border border-blue-400/15 bg-blue-950/40 p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Calendar className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="font-bold text-gray-800 mb-3 text-lg">Toda Segunda</h4>
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <h4 className="font-bold text-white mb-3 text-lg">Toda Segunda</h4>
+                <p className="text-white/58 text-sm leading-relaxed">
                   Uma nova música é cuidadosamente selecionada e publicada para começar sua semana
                 </p>
               </div>
-              <div className="group bg-gradient-to-br from-white/80 to-white/60 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="rounded-[20px] border border-blue-400/15 bg-blue-950/40 p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Video className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="font-bold text-gray-800 mb-3 text-lg">Vídeo TikTok</h4>
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <h4 className="font-bold text-white mb-3 text-lg">Vídeo YouTube</h4>
+                <p className="text-white/58 text-sm leading-relaxed">
                   A música é apresentada em vídeo com qualidade profissional e criatividade
                 </p>
               </div>
-              <div className="group bg-gradient-to-br from-white/80 to-white/60 rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300">
+              <div className="rounded-[20px] border border-blue-400/15 bg-blue-950/40 p-6 text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Users className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="font-bold text-gray-800 mb-3 text-lg">Compartilhamento</h4>
-                <p className="text-gray-700 text-sm leading-relaxed">
+                <h4 className="font-bold text-white mb-3 text-lg">Compartilhamento</h4>
+                <p className="text-white/58 text-sm leading-relaxed">
                   A comunidade descobre, compartilha e cria conexões através da música
                 </p>
               </div>
             </div>
           </article>
 
-          {/* Público-Alvo - Section simplifiée */}
-          <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          {/* Para Quem */}
+          <article className={blockClass}>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
                 <Users className="w-6 h-6 text-white" />
               </div>
               Para Quem é Este Projeto?
             </h2>
-            
-            <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
-              <p className="text-lg leading-relaxed">
-                <strong>A Música da Segunda</strong> é para todos os brasileiros que se interessam por música, humor e atualidades. 
-                O projeto busca criar pontes através do humor e da música, sempre respeitando a diversidade de opiniões e 
-                promovendo o diálogo construtivo sobre os temas abordados.
-              </p>
-            </div>
+
+            <p className="text-white/68 text-base leading-relaxed">
+              <strong className="text-white">A Música da Segunda</strong> é para todos os brasileiros que se interessam por música, humor e atualidades.
+              O projeto busca criar pontes através do humor e da música, sempre respeitando a diversidade de opiniões e
+              promovendo o diálogo construtivo sobre os temas abordados.
+            </p>
           </article>
 
-          {/* Formato e Estilo Musical - Section simplifiée */}
-          <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          {/* Formato e Estilo */}
+          <article className={blockClass}>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
                 <Music className="w-6 h-6 text-white" />
               </div>
               Formato e Estilo Musical
             </h2>
-            
-            <div className="prose prose-lg max-w-none text-gray-700 space-y-4">
-              <p className="text-lg leading-relaxed">
-                As paródias de <strong>A Música da Segunda</strong> seguem uma abordagem musical diversificada. Não me limito 
-                a um único gênero: parodio desde MPB clássica até pop contemporâneo, rock, samba, funk e outros estilos 
+
+            <div className="space-y-4 text-white/68 text-base leading-relaxed">
+              <p>
+                As paródias de <strong className="text-white">A Música da Segunda</strong> seguem uma abordagem musical diversificada. Não me limito
+                a um único gênero: parodio desde MPB clássica até pop contemporâneo, rock, samba, funk e outros estilos
                 musicais brasileiros. A escolha do estilo musical sempre tem relação com o tema abordado.
               </p>
 
-              <p className="text-lg leading-relaxed">
-                O estilo de humor varia entre sátira política, ironia social, comentários sobre economia, cultura e até 
-                mesmo paródias de eventos esportivos ou culturais. O importante é que cada música seja <strong>memorável, 
+              <p>
+                O estilo de humor varia entre sátira política, ironia social, comentários sobre economia, cultura e até
+                mesmo paródias de eventos esportivos ou culturais. O importante é que cada música seja <strong className="text-white">memorável,
                 engajante e reflexiva</strong>, convidando o ouvinte a pensar sobre o tema abordado enquanto se diverte.
               </p>
 
-              <p className="text-lg leading-relaxed">
-                Todas as músicas são produzidas com qualidade profissional, utilizando equipamentos de gravação de alta 
+              <p>
+                Todas as músicas são produzidas com qualidade profissional, utilizando equipamentos de gravação de alta
                 qualidade e arranjos cuidadosamente elaborados.
               </p>
             </div>
           </article>
 
-          {/* Features existantes */}
-          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          {/* O Que Oferecemos */}
+          <div className={blockClass}>
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
                 <Star className="w-6 h-6 text-white" />
               </div>
@@ -338,136 +379,109 @@ export default function Sobre() {
             </h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">
-                <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-700 font-medium">Música nova toda segunda-feira</span>
-                </div>
-                <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-700 font-medium">Vídeos TikTok integrados</span>
-                </div>
-                <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                  <span className="text-gray-700 font-medium">Letras das músicas completas</span>
-                </div>
+                {[
+                  { color: 'bg-blue-400', text: 'Música nova toda segunda-feira' },
+                  { color: 'bg-green-400', text: 'Vídeos YouTube integrados' },
+                  { color: 'bg-purple-400', text: 'Letras das músicas completas' },
+                ].map(({ color, text }) => (
+                  <div key={text} className="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/8">
+                    <div className={`w-3 h-3 ${color} rounded-full flex-shrink-0`} />
+                    <span className="text-white/70 font-medium">{text}</span>
+                  </div>
+                ))}
               </div>
               <div className="space-y-4">
-                <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <span className="text-gray-700 font-medium">Disponível em Spotify, Apple Music e YouTube Music</span>
-                </div>
-                <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span className="text-gray-700 font-medium">Calendário musical interativo</span>
-                </div>
-                <div className="flex items-center gap-4 p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-                  <span className="text-gray-700 font-medium">Interface responsiva e moderna</span>
-                </div>
+                {[
+                  { color: 'bg-red-400', text: 'Disponível em Spotify, Apple Music e YouTube Music' },
+                  { color: 'bg-orange-400', text: 'Acervo musical navegável' },
+                  { color: 'bg-pink-400', text: 'Interface responsiva e moderna' },
+                ].map(({ color, text }) => (
+                  <div key={text} className="flex items-center gap-4 p-3 bg-white/5 rounded-xl border border-white/8">
+                    <div className={`w-3 h-3 ${color} rounded-full flex-shrink-0`} />
+                    <span className="text-white/70 font-medium">{text}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Technology */}
-          <div className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          <div className={blockClass}>
+            <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
                 <Award className="w-6 h-6 text-white" />
               </div>
               Tecnologia
             </h3>
-            <p className="text-gray-700 leading-relaxed mb-6 text-lg">
-              Este projeto foi desenvolvido com as mais modernas tecnologias web para garantir 
+            <p className="text-white/68 leading-relaxed mb-6 text-base">
+              Este projeto foi desenvolvido com as mais modernas tecnologias web para garantir
               uma experiência excepcional em todos os dispositivos.
             </p>
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl p-6 text-white backdrop-blur-sm border border-gray-700/50">
-                <h4 className="font-bold mb-4 text-lg flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+              <div className="rounded-[20px] border border-blue-400/15 bg-blue-950/50 p-6">
+                <h4 className="font-bold mb-4 text-lg text-white flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
                   Frontend
                 </h4>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span>React 18 + Vite</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span>Tailwind CSS</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                    <span>Radix UI Components</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                    <span>Responsive Design</span>
-                  </div>
+                <div className="space-y-2 text-sm text-white/60">
+                  {['React 18 + Vite', 'Tailwind CSS', 'Radix UI Components', 'Responsive Design'].map((item, i) => (
+                    <div key={item} className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${['bg-blue-400','bg-green-400','bg-purple-400','bg-orange-400'][i]}`} />
+                      <span>{item}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-2xl p-6 text-white backdrop-blur-sm border border-gray-700/50">
-                <h4 className="font-bold mb-4 text-lg flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <div className="rounded-[20px] border border-blue-400/15 bg-blue-950/50 p-6">
+                <h4 className="font-bold mb-4 text-lg text-white flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                   Funcionalidades
                 </h4>
-                <div className="space-y-2 text-sm text-gray-300">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                    <span>TikTok Integration</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                    <span>Music Calendar</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                    <span>Lyrics Display</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
-                    <span>Social Sharing</span>
-                  </div>
+                <div className="space-y-2 text-sm text-white/60">
+                  {['YouTube Integration', 'Music Library', 'Lyrics Display', 'Social Sharing'].map((item, i) => (
+                    <div key={item} className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${['bg-blue-400','bg-green-400','bg-purple-400','bg-orange-400'][i]}`} />
+                      <span>{item}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* FAQ Section */}
-          <article className="bg-gradient-to-br from-white/90 to-white/70 backdrop-blur-sm rounded-3xl p-8 mb-8 shadow-2xl border border-white/20">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-4">
+          {/* FAQ */}
+          <article className={blockClass}>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
                 <HelpCircle className="w-6 h-6 text-white" />
               </div>
               Perguntas Frequentes
             </h2>
-            
-            <div className="space-y-4">
+
+            <div className="space-y-3">
               {faqs.map((faq, index) => (
                 <article
                   key={index}
-                  className="bg-white/80 rounded-2xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-xl"
+                  className="rounded-[20px] border border-white/10 bg-white/5 overflow-hidden transition-all duration-300 hover:border-blue-400/25"
                   itemScope
                   itemType="https://schema.org/Question"
                 >
                   <button
                     onClick={() => toggleFAQ(index)}
-                    className="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+                    className="w-full px-6 py-5 text-left flex items-center justify-between focus:outline-none"
                     aria-expanded={openFAQIndex === index}
                     aria-controls={`faq-answer-${index}`}
                   >
-                    <h3
-                      className="text-lg md:text-xl font-bold text-gray-900 pr-8"
-                      itemProp="name"
-                    >
+                    <h3 className="text-base md:text-lg font-semibold text-white pr-8" itemProp="name">
                       {faq.question}
                     </h3>
                     <ChevronDown
-                      className={`w-6 h-6 text-gray-500 flex-shrink-0 transition-transform duration-300 ${
-                        openFAQIndex === index ? 'transform rotate-180' : ''
+                      className={`w-5 h-5 text-white/40 flex-shrink-0 transition-transform duration-300 ${
+                        openFAQIndex === index ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
-                  
+
                   <div
                     id={`faq-answer-${index}`}
                     className={`overflow-hidden transition-all duration-300 ${
@@ -475,14 +489,12 @@ export default function Sobre() {
                     }`}
                   >
                     <div
-                      className="px-6 pb-5 text-gray-700 leading-relaxed"
+                      className="px-6 pb-5 text-white/62 leading-relaxed"
                       itemScope
                       itemType="https://schema.org/Answer"
                       itemProp="acceptedAnswer"
                     >
-                      <p className="text-base md:text-lg" itemProp="text">
-                        {faq.answer}
-                      </p>
+                      <p className="text-sm md:text-base" itemProp="text">{faq.answer}</p>
                     </div>
                   </div>
                 </article>
@@ -491,16 +503,16 @@ export default function Sobre() {
           </article>
 
           {/* Social Media */}
-          <div className="bg-white/20 rounded-3xl p-6 mb-6">
+          <div className={blockClass}>
             <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
               <Instagram className="w-6 h-6 text-pink-400" />
               Redes Sociais
             </h3>
-            <p className="text-white/90 mb-4">
+            <p className="text-white/68 mb-6">
               Siga-nos nas redes sociais para ficar por dentro de todas as novidades!
             </p>
             <div className="flex justify-center gap-4">
-              <a href="https://www.tiktok.com/@amusicadasegunda" target="_blank" rel="noopener noreferrer" className="bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-colors">
+              <a href="https://www.tiktok.com/@amusicadasegunda" target="_blank" rel="noopener noreferrer" className="bg-white/10 border border-white/10 text-white p-3 rounded-full hover:bg-white/20 transition-colors">
                 <Video className="w-6 h-6" />
               </a>
               <a href="https://www.instagram.com/a_musica_da_segunda/" target="_blank" rel="noopener noreferrer" className="bg-gradient-to-r from-purple-400 to-pink-400 text-white p-3 rounded-full hover:opacity-80 transition-opacity">
@@ -519,20 +531,20 @@ export default function Sobre() {
           </div>
 
           {/* Contact */}
-          <div className="bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-3xl p-8 text-center shadow-2xl border border-white/20">
+          <div className="bg-gradient-to-br from-blue-900/60 to-[#0f172a]/80 backdrop-blur-sm rounded-[28px] p-8 text-center border border-blue-400/15 mb-6">
             <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
               <MessageCircle className="w-10 h-10 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-white mb-4">Entre em Contato</h3>
-            <p className="text-white/90 mb-6 text-lg max-w-2xl mx-auto">
+            <p className="text-white/70 mb-6 text-lg max-w-2xl mx-auto">
               Tem sugestões, críticas ou quer participar do projeto? Adoraríamos ouvir de você!
             </p>
-          <p className="text-white/70 mb-6 text-sm md:text-base max-w-2xl mx-auto">
-            Bastidores: A Música da Segunda é um projeto criativo idealizado e produzido por The Pimentão Rouge Project.
-          </p>
-            <a 
+            <p className="text-white/45 mb-6 text-sm max-w-2xl mx-auto">
+              Bastidores: A Música da Segunda é um projeto criativo idealizado e produzido por The Pimentão Rouge Project.
+            </p>
+            <a
               href="mailto:contact@amusicadasegunda.com"
-              className="inline-flex items-center gap-2 md:gap-3 bg-white/20 backdrop-blur-sm px-4 md:px-6 py-3 rounded-2xl border border-white/30 hover:bg-white/30 transition-all duration-200 hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2 md:gap-3 bg-white/10 backdrop-blur-sm px-4 md:px-6 py-3 rounded-2xl border border-white/15 hover:bg-white/20 transition-all duration-200 hover:scale-105 active:scale-95"
             >
               <Mail className="w-5 h-5 text-white flex-shrink-0" />
               <span className="text-white font-semibold text-sm md:text-base break-all">contact@amusicadasegunda.com</span>

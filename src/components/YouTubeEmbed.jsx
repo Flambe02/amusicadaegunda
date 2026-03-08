@@ -9,10 +9,16 @@ export default function YouTubeEmbed({
   useFacade = false,
   autoplayOnActivate = false,
   thumbnailQuality = 'hqdefault',
-  loading = 'lazy'
+  loading = 'lazy',
+  forceActivated = false,
+  shortMaxWidth = 400,
 }) {
   const [activated, setActivated] = useState(false);
   const iframeRef = useRef(null);
+
+  useEffect(() => {
+    if (forceActivated) setActivated(true);
+  }, [forceActivated]);
 
   const watchUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
   const musicUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
@@ -38,7 +44,7 @@ export default function YouTubeEmbed({
   const base = 'https://www.youtube-nocookie.com/embed';
   const embedSrc = info
     ? info.type === 'video'
-      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${autoplay}`
+      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1&loop=1&playlist=${info.id}${autoplay}`
       : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${autoplay}`
     : '';
 
@@ -78,10 +84,10 @@ export default function YouTubeEmbed({
   if (!useFacade || activated) {
     if (isShort) {
       return (
-        <div className="w-full flex justify-center">
-          <div
+        <div className="w-full h-full flex justify-center">
+        <div
             className="relative rounded-lg overflow-hidden shadow-lg"
-            style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}
+            style={{ width: '100%', maxWidth: `${shortMaxWidth}px`, aspectRatio: '9/16', maxHeight: '100%' }}
           >
             <iframe
               ref={iframeRef}
@@ -130,8 +136,12 @@ export default function YouTubeEmbed({
   if (isShort) {
     return (
       <div
-        className="relative rounded-lg overflow-hidden shadow-2xl cursor-pointer group"
-        style={{ width: '100%', aspectRatio: '9/16', minHeight: 'min(500px, 70vh)', maxHeight: '70vh' }}
+        className="relative w-full h-full rounded-lg overflow-hidden shadow-2xl cursor-pointer group"
+        style={{
+          maxWidth: `${shortMaxWidth}px`,
+          aspectRatio: '9/16',
+          maxHeight: '100%',
+        }}
         onClick={activateVideo}
         onKeyDown={handleKeyActivate}
         role="button"
