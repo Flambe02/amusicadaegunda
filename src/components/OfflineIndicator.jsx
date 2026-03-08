@@ -44,7 +44,7 @@ export default function OfflineIndicator() {
         <div className="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-bounce">
           <span>📱</span>
           <span className="text-sm font-medium">
-            Mode hors ligne - App disponível offline
+            Modo offline — App disponível sem internet
           </span>
         </div>
       )}

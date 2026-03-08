@@ -319,7 +319,7 @@ export default function RodaDaSegunda() {
           </div>
 
           <Button
-            onClick={spin}
+            onClick={() => { if (navigator.vibrate) navigator.vibrate(50); spin(); }}
             disabled={spinning || loading}
             className="mt-5 px-10 py-3 bg-[#32a2dc] hover:bg-[#2891c8] text-white font-black rounded-2xl text-lg shadow-lg transition-all hover:scale-105 disabled:opacity-60 disabled:scale-100"
           >
@@ -430,10 +430,28 @@ export default function RodaDaSegunda() {
                       >
                         <Square className="w-3 h-3" />
                       </button>
-                      {/* Statut */}
-                      <span className="text-sm font-semibold flex-1 truncate" style={{ color: winner.monthColor }}>
-                        {playerState === 'playing' ? '▶ A tocar...' : playerState === 'paused' ? '⏸ Pausado' : '⏹ Parado'}
-                      </span>
+                      {/* Statut + barras animadas */}
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {playerState === 'playing' && (
+                          <span className="flex items-end gap-[3px] flex-shrink-0" aria-hidden="true">
+                            {[1, 2, 3, 4].map((i) => (
+                              <span
+                                key={i}
+                                className="block w-[3px] rounded-full"
+                                style={{
+                                  backgroundColor: winner.monthColor,
+                                  height: `${8 + i * 4}px`,
+                                  animation: `bounce ${0.6 + i * 0.1}s ease-in-out infinite alternate`,
+                                  animationDelay: `${i * 0.1}s`,
+                                }}
+                              />
+                            ))}
+                          </span>
+                        )}
+                        <span className="text-sm font-semibold truncate" style={{ color: winner.monthColor }}>
+                          {playerState === 'playing' ? 'A tocar...' : playerState === 'paused' ? '⏸ Pausado' : '⏹ Parado'}
+                        </span>
+                      </div>
                     </div>
                   </>
                 )}
@@ -499,7 +517,7 @@ export default function RodaDaSegunda() {
                   )}
                   <Button
                     variant="outline"
-                    onClick={() => { setWinner(null); spin(); }}
+                    onClick={() => { if (navigator.vibrate) navigator.vibrate(50); setWinner(null); spin(); }}
                     className="w-full font-bold py-3 rounded-2xl text-sm gap-2 mt-1 border-2"
                     style={{ borderColor: winner.monthColor, color: winner.monthColor }}
                   >

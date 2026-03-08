@@ -70,6 +70,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoActivated, setVideoActivated] = useState(false);
   const [showPlatformsDialog, setShowPlatformsDialog] = useState(false);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
   const [showLyricsDrawer, setShowLyricsDrawer] = useState(false);
@@ -149,6 +150,7 @@ export default function Home() {
     logger.debug('handleReplaceVideo appelé avec:', song.title);
     setDisplayedSong(song);
     setBackgroundImageLoaded(false);
+    setVideoActivated(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -212,18 +214,19 @@ export default function Home() {
   };
 
   const handleShareSong = async (song) => {
+    const appUrl = song.slug
+      ? `https://www.amusicadasegunda.com/musica/${song.slug}`
+      : window.location.href;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${song.title} - ${song.artist}`,
-          text: `Confira esta musica incrivel da Musica da Segunda!`,
-          url: song.youtube_music_url || song.youtube_url || window.location.href,
+          title: `${song.title} - A Música da Segunda`,
+          text: `Confira esta paródia incrível da Música da Segunda!`,
+          url: appUrl,
         });
       } catch {}
     } else {
-      // UX: Toast au lieu d'alert() bloquante
-      const shareText = `${song.title} - ${song.artist}\nConfira esta musica incrivel da Musica da Segunda!`;
-      navigator.clipboard.writeText(shareText);
+      navigator.clipboard.writeText(appUrl);
       toast({
         title: "Copiado!",
         description: "Link copiado para a área de transferência",
@@ -593,6 +596,7 @@ export default function Home() {
                 useFacade
                 autoplayOnActivate
                 thumbnailQuality="hqdefault"
+                forceActivated={videoActivated}
               />
                   </div>
                 </div>
@@ -649,14 +653,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Bouton Écouter: Sticky en bas au centre, par-dessus le dégradé */}
-            <div className="relative z-30 pb-4 px-4 flex justify-center">
+            {/* Countdown compact + Bouton Reproduzir — en bas */}
+            <div className="relative z-30 pb-4 px-4 flex flex-col items-center gap-2">
+              <CountdownTimer compact />
               <Button
                 size="lg"
-                onClick={() => setShowPlatformsDrawer(true)}
-                className="w-full max-w-md bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 touch-manipulation"
+                onClick={() => { if (navigator.vibrate) navigator.vibrate(50); setVideoActivated(true); }}
+                className="w-full max-w-md bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-full shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center gap-3 touch-manipulation"
               >
-                <span className="text-2xl">Ouvir</span>
+                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current flex-shrink-0"><path d="M8 5v14l11-7z"/></svg>
+                <span className="text-xl">Reproduzir</span>
               </Button>
             </div>
 
@@ -772,12 +778,12 @@ export default function Home() {
       </Dialog>
 
       {/* ===== DIALOG LETRAS ===== */}
-      <LyricsDialog 
-        open={showLyricsDialog} 
-        onOpenChange={setShowLyricsDialog} 
+      <LyricsDialog
+        open={showLyricsDialog}
+        onOpenChange={setShowLyricsDialog}
         song={selectedSongForDialog}
         title="Letras da Musica"
-        maxHeight="h-52"
+        maxHeight="h-96"
         showIcon={false}
       />
 

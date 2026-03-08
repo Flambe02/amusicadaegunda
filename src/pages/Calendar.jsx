@@ -41,7 +41,6 @@ export default function Calendar() {
         const [year, month] = monthParam.split('-').map(Number);
         if (year && month !== undefined) {
           setCurrentDate(new Date(year, month - 1, 1)); // month - 1 car les mois commencent à 0
-          console.warn(`📅 Calendar: Mois chargé depuis l'URL: ${year}-${month}`);
         }
       } catch (error) {
         console.error('Erro ao parsear parâmetro month:', error);
@@ -66,8 +65,6 @@ export default function Calendar() {
       // Trier desc par date
       monthData.sort((a, b) => parseISO(b.release_date) - parseISO(a.release_date));
       setSongs(monthData);
-      
-      console.warn(`📅 Calendrier: ${monthData.length} chansons chargées pour ${month}/${year}:`, monthData.map(s => `${s.title} (${s.status})`));
     } catch (error) {
       console.error('Error loading monthly songs:', error);
       setSongs([]);
@@ -104,6 +101,7 @@ export default function Calendar() {
   };
 
   const navigateMonth = (direction) => {
+    setIsLoading(true);
     setCurrentDate(prev => {
       const newDate = new Date(prev);
       newDate.setMonth(prev.getMonth() + direction);
