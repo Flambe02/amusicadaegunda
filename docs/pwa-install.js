@@ -150,19 +150,50 @@ class PWAInstaller {
   }
 
   showUpdateNotification() {
-    const shouldUpdateNow = window.confirm('Nova versão disponível. Atualizar agora?')
-    if (shouldUpdateNow && this.pendingWorker) {
-      this.pendingWorker.postMessage({ type: 'SKIP_WAITING' })
-      return
-    }
+    const existing = document.getElementById('pwa-update-banner')
+    if (existing) return
 
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Musica da Segunda', {
-        body: 'Nova versao disponivel! Recarregue a pagina para atualizar.',
-        icon: '/icons/pwa/icon-192x192.png',
-        badge: '/icons/pwa/icon-72x72.png'
-      })
-    }
+    const banner = document.createElement('div')
+    banner.id = 'pwa-update-banner'
+    banner.setAttribute('role', 'alert')
+    banner.style.cssText = [
+      'position:fixed', 'bottom:16px', 'left:50%', 'transform:translateX(-50%)',
+      'background:#0f172a', 'color:#fff', 'padding:12px 20px', 'border-radius:12px',
+      'display:flex', 'align-items:center', 'gap:12px', 'z-index:9999',
+      'font-family:system-ui,sans-serif', 'font-size:14px',
+      'box-shadow:0 4px 20px rgba(0,0,0,0.3)', 'max-width:90vw'
+    ].join(';')
+
+    const msg = document.createElement('span')
+    msg.textContent = 'Nova versão disponível!'
+
+    const btn = document.createElement('button')
+    btn.textContent = 'Atualizar'
+    btn.style.cssText = [
+      'background:#32a2dc', 'color:#fff', 'border:none', 'border-radius:8px',
+      'padding:6px 14px', 'cursor:pointer', 'font-size:13px', 'font-weight:600',
+      'white-space:nowrap'
+    ].join(';')
+    btn.addEventListener('click', () => {
+      banner.remove()
+      if (this.pendingWorker) {
+        this.pendingWorker.postMessage({ type: 'SKIP_WAITING' })
+      }
+    })
+
+    const close = document.createElement('button')
+    close.textContent = '✕'
+    close.setAttribute('aria-label', 'Fechar')
+    close.style.cssText = [
+      'background:transparent', 'color:#94a3b8', 'border:none',
+      'cursor:pointer', 'font-size:14px', 'padding:0 2px'
+    ].join(';')
+    close.addEventListener('click', () => banner.remove())
+
+    banner.appendChild(msg)
+    banner.appendChild(btn)
+    banner.appendChild(close)
+    document.body.appendChild(banner)
   }
 
   listenForServiceWorkerControllerChange() {
@@ -211,7 +242,7 @@ const getVAPIDKey = () => {
   if (typeof window !== 'undefined' && window.__VAPID_PUBLIC_KEY__) {
     return window.__VAPID_PUBLIC_KEY__
   }
-  return 'BNmWY52nhsYuohsMsFuFw5-vPv20qLw6nehrF-vyzPm87xU-6cPUoJhwtAVxj_18TcREBqx2uLdr5dcl57gVVNw'
+  return 'BIp5mr-_lJ_hhA009N0VFN-48799w_Bzx7Itz4PVFAPZHG9A8Odpbg2aa_gbGZIB-Xej1mFCEOodyQY2H0jUJXI'
 }
 
 void urlBase64ToUint8Array

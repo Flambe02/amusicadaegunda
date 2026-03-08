@@ -117,21 +117,7 @@
       ]
     }
   ],
-  "screenshots": [
-    {
-      "src": "/images/LogoMusica.webp",
-      "sizes": "1280x720",
-      "type": "image/webp",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/images/LogoMusica.webp",
-      "sizes": "750x1334",
-      "type": "image/webp",
-      "form_factor": "narrow"
-    }
-  ],
-  "related_applications": [],
+"related_applications": [],
   "prefer_related_applications": false,
   "edge_side_panel": {
     "preferred_width": 400
