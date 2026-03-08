@@ -3,64 +3,174 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sem conexao - A Musica da Segunda</title>
-  <meta name="theme-color" content="#32a2dc" />
+  <title>Sem conexão - A Música da Segunda</title>
+  <meta name="theme-color" content="#FFD400" />
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f4f7fb;
-      --card: #ffffff;
-      --text: #0f172a;
-      --muted: #475569;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
       --brand: #32a2dc;
+      --yellow: #FFD400;
     }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; }
     body {
-      margin: 0;
-      min-height: 100vh;
+      min-height: 100dvh;
       display: grid;
       place-items: center;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(circle at top, #dff3ff, var(--bg));
+      background: radial-gradient(ellipse at top, #1a2744, var(--bg));
       color: var(--text);
       padding: 24px;
     }
     main {
       width: 100%;
-      max-width: 460px;
-      background: var(--card);
-      border-radius: 16px;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
-      padding: 24px;
+      max-width: 400px;
       text-align: center;
     }
+    .icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+      display: block;
+    }
     h1 {
-      margin: 0 0 10px;
       font-size: 1.5rem;
-      line-height: 1.2;
+      font-weight: 900;
+      margin-bottom: 8px;
     }
-    p {
-      margin: 0;
+    .subtitle {
       color: var(--muted);
+      font-size: 0.9rem;
       line-height: 1.5;
+      margin-bottom: 28px;
     }
-    a {
+    /* Last song card */
+    #last-song {
+      display: none;
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 24px;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    #last-song.visible { display: flex; align-items: center; gap: 14px; }
+    .last-song-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--yellow);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 20px;
+      display: block;
+      text-align: left;
+    }
+    .thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      object-fit: cover;
+      background: #334155;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .song-info { flex: 1; min-width: 0; }
+    .song-title {
+      font-weight: 800;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .song-artist {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 2px;
+    }
+    a.btn {
       display: inline-block;
-      margin-top: 18px;
       background: var(--brand);
       color: #fff;
       text-decoration: none;
-      font-weight: 600;
-      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 12px 28px;
       border-radius: 999px;
+      transition: opacity 0.2s;
+    }
+    a.btn:active { opacity: 0.8; }
+    .status {
+      margin-top: 20px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>Voce esta offline</h1>
-    <p>Sem internet no momento. Assim que a conexao voltar, atualize para continuar ouvindo as musicas.</p>
-    <a href="/">Tentar novamente</a>
+    <span class="icon">🎵</span>
+    <h1>Você está offline</h1>
+    <p class="subtitle">Sem internet no momento. Assim que a conexão voltar, o app atualiza automaticamente.</p>
+
+    <span class="last-song-label" id="last-label" style="display:none">Última música vista</span>
+    <div id="last-song">
+      <div class="thumb" id="thumb">🎶</div>
+      <div class="song-info">
+        <div class="song-title" id="song-title"></div>
+        <div class="song-artist" id="song-artist"></div>
+      </div>
+    </div>
+
+    <a class="btn" href="/">Tentar novamente</a>
+
+    <p class="status">
+      <span class="dot"></span>
+      Modo offline
+    </p>
   </main>
+
+  <script>
+    try {
+      const raw = localStorage.getItem('last-song-cache');
+      if (raw) {
+        const song = JSON.parse(raw);
+        if (song && song.title) {
+          document.getElementById('last-label').style.display = 'block';
+          document.getElementById('last-song').classList.add('visible');
+          document.getElementById('song-title').textContent = song.title;
+          document.getElementById('song-artist').textContent = song.artist || '';
+          if (song.thumbnail) {
+            const img = document.createElement('img');
+            img.src = song.thumbnail;
+            img.alt = song.title;
+            img.className = 'thumb';
+            img.onerror = function() { this.style.display = 'none'; };
+            document.getElementById('thumb').replaceWith(img);
+          }
+        }
+      }
+    } catch {}
+
+    // Auto-reload when back online
+    window.addEventListener('online', () => window.location.href = '/');
+  </script>
 </body>
 </html>

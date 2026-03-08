@@ -116,6 +116,18 @@ export default function Home() {
       setDisplayedSong(current);
       setBackgroundImageLoaded(false);
 
+      // Cache last song for offline page
+      if (current) {
+        try {
+          localStorage.setItem('last-song-cache', JSON.stringify({
+            title: current.title,
+            artist: current.artist,
+            slug: current.slug,
+            thumbnail: current.thumbnail_url || null,
+          }));
+        } catch {}
+      }
+
       const currentMonth = new Date();
       const monthStart = startOfMonth(currentMonth);
       const monthEnd = endOfMonth(currentMonth);
