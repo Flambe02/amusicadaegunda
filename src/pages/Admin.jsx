@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
@@ -624,7 +625,7 @@ export default function AdminPage() {
   // ===== EXTRAÇÃO DAS METADADAS TIKTOK (OTIMIZADA) =====
   const extractTikTokMetadata = async (videoId, tiktokUrl) => {
     try {
-      console.warn('🔍 Tentando extrair métadonnées de:', tiktokUrl);
+      isDev && console.warn('🔍 Tentando extrair métadonnées de:', tiktokUrl);
 
       // Método 1: API TikTok oEmbed (mais confiável)
       try {
@@ -632,7 +633,7 @@ export default function AdminPage() {
 
         if (response.ok) {
           const data = await response.json();
-          console.warn('📊 Réponse API oEmbed TikTok:', data);
+          isDev && console.warn('📊 Réponse API oEmbed TikTok:', data);
 
           // Extraire les hashtags du titre et de la description
           const hashtags = extractHashtags(data.title + ' ' + (data.description || ''));
@@ -641,7 +642,7 @@ export default function AdminPage() {
           let publicationDate = null;
           if (data.upload_date) {
             publicationDate = data.upload_date;
-            console.warn('✅ Data extraída via oEmbed (upload_date):', publicationDate);
+            isDev && console.warn('✅ Data extraída via oEmbed (upload_date):', publicationDate);
           }
 
           const metadata = {
@@ -652,21 +653,21 @@ export default function AdminPage() {
             author: data.author_name || 'A Música da Segunda'
           };
 
-          console.warn('✅ Métadonnées extraites avec succès via oEmbed:', metadata);
+          isDev && console.warn('✅ Métadonnées extraites avec succès via oEmbed:', metadata);
           return metadata;
         } else {
-          console.warn('❌ API oEmbed TikTok retornou erro:', response.status, response.statusText);
+          isDev && console.warn('❌ API oEmbed TikTok retornou erro:', response.status, response.statusText);
         }
       } catch (error) {
-        console.warn('🚫 Erro ao acessar API oEmbed TikTok:', error);
+        isDev && console.warn('🚫 Erro ao acessar API oEmbed TikTok:', error);
       }
 
       // Método 2: Fallback avec estimation basée sur l'ID de la vidéo
-      console.warn('🔄 Tentando fallback com estimativa baseada no ID da vídeo');
+      isDev && console.warn('🔄 Tentando fallback com estimativa baseada no ID da vídeo');
       const estimatedDate = estimateDateFromVideoId(videoId);
 
       if (estimatedDate) {
-        console.warn('✅ Usando data estimada baseada no ID:', estimatedDate);
+        isDev && console.warn('✅ Usando data estimada baseada no ID:', estimatedDate);
         const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
         const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
 
@@ -680,7 +681,7 @@ export default function AdminPage() {
       }
 
       // Fallback final: données simulées avec date d'aujourd'hui
-      console.warn('🔄 Usando dados simulados com data atual como fallback final');
+      isDev && console.warn('🔄 Usando dados simulados com data atual como fallback final');
       const fallbackTitle = `Música da Segunda - ${format(new Date(), 'dd/MM/yyyy', { locale: ptBR })}`;
       const fallbackHashtags = ['musica', 'trending', 'novidade', 'humor', 'viral', 'fyp'];
 
@@ -733,7 +734,7 @@ export default function AdminPage() {
   // ===== EXTRAÇÃO DA DATA DE PUBLICAÇÃO TIKTOK =====
   const extractTikTokPublicationDate = async (tiktokUrl, videoId) => {
     try {
-      console.warn('📅 Tentando extrair data de publicação para vídeo:', videoId);
+      isDev && console.warn('📅 Tentando extrair data de publicação para vídeo:', videoId);
 
       // Método 1: Tentar recuperar a página HTML do TikTok (via proxy CORS)
       try {
@@ -742,7 +743,7 @@ export default function AdminPage() {
 
         if (response.ok) {
           const html = await response.text();
-          console.warn('📄 HTML TikTok recuperado via proxy, tamanho:', html.length);
+          isDev && console.warn('📄 HTML TikTok recuperado via proxy, tamanho:', html.length);
 
           // Chercher des patterns de date dans le HTML
           const datePatterns = [
@@ -765,7 +766,7 @@ export default function AdminPage() {
                 const timestamp = parseInt(match[1]);
                 const date = new Date(timestamp > 1000000000000 ? timestamp : timestamp * 1000);
                 publicationDate = date.toISOString().split('T')[0];
-                console.warn('✅ Data extraída via timestamp:', publicationDate);
+                isDev && console.warn('✅ Data extraída via timestamp:', publicationDate);
                 return publicationDate;
               } else if (match[1]) {
                 // Format de date direct
@@ -776,16 +777,16 @@ export default function AdminPage() {
                   const [day, month, year] = dateStr.split('/');
                   publicationDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
                 }
-                console.warn('✅ Data extraída via pattern:', publicationDate);
+                isDev && console.warn('✅ Data extraída via pattern:', publicationDate);
                 return publicationDate;
               }
             }
           }
 
-          console.warn('⚠️ Nenhum padrão de data encontrado no HTML (via proxy)');
+          isDev && console.warn('⚠️ Nenhum padrão de data encontrado no HTML (via proxy)');
         }
       } catch (htmlError) {
-        console.warn('⚠️ Falha ao recuperar HTML TikTok via proxy:', htmlError);
+        isDev && console.warn('⚠️ Falha ao recuperar HTML TikTok via proxy:', htmlError);
       }
 
       // Método 2: Tentar a API alternativa (via proxy CORS)
@@ -795,24 +796,24 @@ export default function AdminPage() {
         const alternativeResponse = await fetch(altProxy);
         if (alternativeResponse.ok) {
           const data = await alternativeResponse.json();
-          console.warn('📊 Réponse API alternativa (via proxy):', data);
+          isDev && console.warn('📊 Réponse API alternativa (via proxy):', data);
 
           if (data.itemInfo && data.itemInfo.itemStruct) {
             const createTime = data.itemInfo.itemStruct.createTime;
             if (createTime) {
               const date = new Date(createTime * 1000);
               const publicationDate = date.toISOString().split('T')[0];
-              console.warn('✅ Data extraída via API alternativa (proxy):', publicationDate);
+              isDev && console.warn('✅ Data extraída via API alternativa (proxy):', publicationDate);
               return publicationDate;
             }
           }
         }
       } catch (apiError) {
-        console.warn('⚠️ API alternativa (proxy) falhou:', apiError);
+        isDev && console.warn('⚠️ API alternativa (proxy) falhou:', apiError);
       }
 
       // Fallback: utiliser la date d'aujourd'hui si aucune méthode ne fonctionne
-      console.warn('🔄 Usando data atual como fallback');
+      isDev && console.warn('🔄 Usando data atual como fallback');
       return new Date().toISOString().split('T')[0];
 
     } catch (error) {
@@ -824,7 +825,7 @@ export default function AdminPage() {
   // ===== GERAÇÃO INTELIGENTE DE DESCRIÇÃO =====
   const gerarDescricaoInteligente = async (letras, dataPublicacao, titulo = '') => {
     try {
-      console.warn('🧠 Gerando descrição inteligente pour:', titulo || 'música');
+      isDev && console.warn('🧠 Gerando descrição inteligente pour:', titulo || 'música');
 
       // 1. ANÁLISE DAS LETRAS - Tema principal
       const temaPrincipal = analisarTemaPrincipal(letras);
@@ -841,7 +842,7 @@ export default function AdminPage() {
       // 5. GERAÇÃO DA DESCRIÇÃO ESTRUTURADA
       const descricao = gerarDescricaoEstruturada(temaPrincipal, contexto, impacto, categoria);
 
-      console.warn('✅ Descrição inteligente gerada:', descricao);
+      isDev && console.warn('✅ Descrição inteligente gerada:', descricao);
       return descricao;
 
     } catch (error) {
@@ -1236,7 +1237,7 @@ export default function AdminPage() {
 
       return null;
     } catch (error) {
-      console.warn('⚠️ Erro na estimativa de data:', error);
+      isDev && console.warn('⚠️ Erro na estimativa de data:', error);
       return null;
     }
   };
@@ -1261,18 +1262,18 @@ export default function AdminPage() {
       hashtags: []
     });
 
-    console.warn('📝 Création d\'une nouvelle chanson en mode brouillon');
+    isDev && console.warn('📝 Création d\'une nouvelle chanson en mode brouillon');
     setShowForm(true);
     setIsEditing(false);
   };
 
   const handleEdit = (song) => {
-    console.warn('🔧 Editando música:', song);
+    isDev && console.warn('🔧 Editando música:', song);
     try {
       setEditingSong({ ...song });
       setShowForm(true);
       setIsEditing(true);
-      console.warn('✅ Estado de edição configurado com sucesso');
+      isDev && console.warn('✅ Estado de edição configurado com sucesso');
     } catch (error) {
       console.error('❌ Erro ao configurar edição:', error);
       displayMessage('error', 'Erro ao abrir edição da música');
@@ -1294,7 +1295,7 @@ export default function AdminPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.warn('🚀 handleSubmit appelé - début de la fonction');
+    isDev && console.warn('🚀 handleSubmit appelé - début de la fonction');
 
     // Sanitize all text inputs
     const sanitizedSong = {
@@ -1338,7 +1339,7 @@ export default function AdminPage() {
     // Si pas de TikTok, définir le statut en brouillon
     if (!editingSong.tiktok_url || editingSong.tiktok_url.trim() === '') {
       editingSong.status = 'draft';
-      console.warn('📝 Aucun TikTok fourni, chanson sauvegardée en mode brouillon');
+      isDev && console.warn('📝 Aucun TikTok fourni, chanson sauvegardée en mode brouillon');
     }
 
     // Use validated and sanitized data
@@ -1435,7 +1436,7 @@ export default function AdminPage() {
 
   const handleHashtagChange = (value) => {
     // Ne pas filtrer les tags vides pendant la saisie pour permettre l'ajout de virgules
-    console.warn('🏷️ handleHashtagChange:', value);
+    isDev && console.warn('🏷️ handleHashtagChange:', value);
     const hashtags = value.split(',').map(tag => tag);
     handleInputChange('hashtags', hashtags);
   };
@@ -1469,7 +1470,7 @@ export default function AdminPage() {
   //       try {
   //         const data = JSON.parse(e.target.result);
   //         // Import des données via l'API
-  //         console.warn('Import des données:', data);
+  //         isDev && console.warn('Import des données:', data);
   //         loadSongs();
   //         displayMessage('success', 'Dados importados com sucesso!');
   //       } catch (error) {
@@ -1483,7 +1484,7 @@ export default function AdminPage() {
   const clearAllData = () => {
     if (window.confirm('⚠️ ATENÇÃO: Isso apagará TODOS os dados! Tem certeza?')) {
       // Nettoyer les données via l'API
-      console.warn('Nettoyage des données');
+      isDev && console.warn('Nettoyage des données');
       loadSongs();
       displayMessage('success', 'Todos os dados foram apagados');
     }

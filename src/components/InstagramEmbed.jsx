@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+
 export default function InstagramEmbed({ postUrl, className = "" }) {
   const containerRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -255,7 +257,7 @@ export default function InstagramEmbed({ postUrl, className = "" }) {
     script.src = '//www.instagram.com/embed.js';
     script.async = true;
     script.onload = () => {
-      console.log('Instagram embed script loaded');
+      isDev && console.log('Instagram embed script loaded');
       setIsLoading(false);
     };
     script.onerror = () => {

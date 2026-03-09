@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 /**
  * Parse et valide les IDs TikTok depuis différentes sources
  * Supporte les formats : ID direct, URL complète, URL courte
@@ -48,7 +49,7 @@ export function parseTikTokId(input) {
 
   // Si c'est une URL courte, on ne peut pas extraire l'ID sans requête
   if (trimmedInput.includes('vm.tiktok.com')) {
-    console.warn('TikTok: URL courte détectée, impossible d\'extraire l\'ID sans requête');
+    isDev && console.warn('TikTok: URL courte détectée, impossible d\'extraire l\'ID sans requête');
     return null;
   }
 

@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
@@ -139,7 +140,7 @@ export default function useCoreWebVitals(options = {}) {
     }
 
     // Log de l'alerte
-    console.warn(`🚨 Alerte performance ${metricName}:`, alert.message);
+    isDev && console.warn(`🚨 Alerte performance ${metricName}:`, alert.message);
 
     return alert;
   }, [enableAlerts, alertThreshold, onAlert, formatMetric]);
@@ -149,7 +150,7 @@ export default function useCoreWebVitals(options = {}) {
    */
   const measureLCP = useCallback(() => {
     if (!('PerformanceObserver' in window)) {
-      console.warn('⚠️ PerformanceObserver non supporté pour LCP');
+      isDev && console.warn('⚠️ PerformanceObserver non supporté pour LCP');
       return;
     }
 
@@ -189,7 +190,7 @@ export default function useCoreWebVitals(options = {}) {
    */
   const measureFID = useCallback(() => {
     if (!('PerformanceObserver' in window)) {
-      console.warn('⚠️ PerformanceObserver non supporté pour FID');
+      isDev && console.warn('⚠️ PerformanceObserver non supporté pour FID');
       return;
     }
 
@@ -228,7 +229,7 @@ export default function useCoreWebVitals(options = {}) {
    */
   const measureCLS = useCallback(() => {
     if (!('PerformanceObserver' in window)) {
-      console.warn('⚠️ PerformanceObserver non supporté pour CLS');
+      isDev && console.warn('⚠️ PerformanceObserver non supporté pour CLS');
       return;
     }
 
@@ -306,7 +307,7 @@ export default function useCoreWebVitals(options = {}) {
     if (!enableMonitoring || isMonitoring) return;
 
     try {
-      console.log('📊 Démarrage du monitoring Core Web Vitals...');
+      isDev && console.log('📊 Démarrage du monitoring Core Web Vitals...');
       
       setIsMonitoring(true);
       
@@ -318,7 +319,7 @@ export default function useCoreWebVitals(options = {}) {
       measureFID();
       measureCLS();
       
-      console.log('✅ Monitoring Core Web Vitals démarré');
+      isDev && console.log('✅ Monitoring Core Web Vitals démarré');
 
     } catch (error) {
       console.error('❌ Erreur lors du démarrage du monitoring:', error);
@@ -333,7 +334,7 @@ export default function useCoreWebVitals(options = {}) {
     if (!isMonitoring) return;
 
     try {
-      console.log('🛑 Arrêt du monitoring Core Web Vitals...');
+      isDev && console.log('🛑 Arrêt du monitoring Core Web Vitals...');
       
       // Arrêter tous les observateurs
       Object.values(observersRef.current).forEach(observer => {
@@ -345,7 +346,7 @@ export default function useCoreWebVitals(options = {}) {
       observersRef.current = {};
       setIsMonitoring(false);
       
-      console.log('✅ Monitoring Core Web Vitals arrêté');
+      isDev && console.log('✅ Monitoring Core Web Vitals arrêté');
 
     } catch (error) {
       console.error('❌ Erreur lors de l\'arrêt du monitoring:', error);
@@ -357,7 +358,7 @@ export default function useCoreWebVitals(options = {}) {
    */
   const clearHistory = useCallback(() => {
     setHistory([]);
-    console.log('🗑️ Historique des métriques nettoyé');
+    isDev && console.log('🗑️ Historique des métriques nettoyé');
   }, []);
 
   /**
@@ -365,7 +366,7 @@ export default function useCoreWebVitals(options = {}) {
    */
   const clearAlerts = useCallback(() => {
     setAlerts([]);
-    console.log('🗑️ Alertes nettoyées');
+    isDev && console.log('🗑️ Alertes nettoyées');
   }, []);
 
   /**
@@ -384,7 +385,7 @@ export default function useCoreWebVitals(options = {}) {
       isMonitoring
     };
 
-    console.log('📊 Résumé des performances:', summary);
+    isDev && console.log('📊 Résumé des performances:', summary);
     return summary;
   }, [metrics, evaluateMetric, history.length, alerts.length, isMonitoring]);
 
@@ -409,7 +410,7 @@ export default function useCoreWebVitals(options = {}) {
     a.click();
     
     URL.revokeObjectURL(url);
-    console.log('📁 Données de performance exportées');
+    isDev && console.log('📁 Données de performance exportées');
   }, [metrics, history, alerts, getPerformanceSummary]);
 
   // Effets

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Music2, Play, FileText, Share2, X, Info } from 'lucide-react';
@@ -29,7 +31,7 @@ export default function SongCard({ song }) {
           url: song.tiktok_url || window.location.href,
         });
       } catch (error) {
-        console.log("Compartilhamento falhou:", error);
+        isDev && console.log("Compartilhamento falhou:", error);
       }
     }
   };

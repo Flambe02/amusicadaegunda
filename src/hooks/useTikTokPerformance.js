@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
@@ -58,7 +59,7 @@ export default function useTikTokPerformance(postId, options = {}) {
       performanceScore: 100
     }));
 
-    console.log('📊 useTikTokPerformance: Début du monitoring', { postId, startTime });
+    isDev && console.log('📊 useTikTokPerformance: Début du monitoring', { postId, startTime });
   }, [postId, enableMonitoring]);
 
   // Calculer le score de performance
@@ -107,7 +108,7 @@ export default function useTikTokPerformance(postId, options = {}) {
       return newMetrics;
     });
 
-    console.log('✅ useTikTokPerformance: Succès enregistré', { loadTime, totalTime });
+    isDev && console.log('✅ useTikTokPerformance: Succès enregistré', { loadTime, totalTime });
   }, [postId, calculatePerformanceScore]);
 
   // Enregistrer un échec
@@ -139,7 +140,7 @@ export default function useTikTokPerformance(postId, options = {}) {
       return newMetrics;
     });
 
-    console.warn('❌ useTikTokPerformance: Échec enregistré', { error, retryCount });
+    isDev && console.warn('❌ useTikTokPerformance: Échec enregistré', { error, retryCount });
   }, [postId, calculatePerformanceScore]);
 
   // Enregistrer l'activation du fallback
@@ -170,7 +171,7 @@ export default function useTikTokPerformance(postId, options = {}) {
       return newMetrics;
     });
 
-    console.log('🔄 useTikTokPerformance: Fallback enregistré', { reason, totalTime });
+    isDev && console.log('🔄 useTikTokPerformance: Fallback enregistré', { reason, totalTime });
   }, [postId, calculatePerformanceScore]);
 
   // Générer des alertes de performance
@@ -231,7 +232,7 @@ export default function useTikTokPerformance(postId, options = {}) {
     if (!reportToAnalytics || !metrics.totalLoadTime) return;
 
     // Simuler l'envoi aux analytics
-    console.log('📊 useTikTokPerformance: Rapport aux analytics', {
+    isDev && console.log('📊 useTikTokPerformance: Rapport aux analytics', {
       postId,
       metrics,
       timestamp: new Date().toISOString()

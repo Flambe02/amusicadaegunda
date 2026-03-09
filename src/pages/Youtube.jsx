@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import CountdownTimer from '../components/CountdownTimer';
@@ -21,11 +22,11 @@ import { getDocumentTitle } from '@/lib/documentTitle';
 // Composant d'intégration YouTube générique (remplace l'embed TikTok)
 // Props attendues: youtube_music_url, youtube_url, title
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
-  console.warn('🎬🎬🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
+  isDev && console.warn('🎬🎬🎬 YouTubeEmbed appelé avec:', { youtube_music_url, youtube_url, title });
   
   // Prioriser youtube_music_url (vidéo), sinon youtube_url (streaming)
   const targetUrl = youtube_music_url || youtube_url || '';
-  console.warn('🎬🎬🎬 YouTubeEmbed targetUrl:', targetUrl);
+  isDev && console.warn('🎬🎬🎬 YouTubeEmbed targetUrl:', targetUrl);
 
   // Analyse l'URL et retourne { id, type }
   const getYouTubeEmbedInfo = (url) => {
@@ -64,10 +65,10 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
   };
 
   const info = getYouTubeEmbedInfo(targetUrl);
-  console.warn('🎬🎬🎬 YouTubeEmbed info extraite:', info);
+  isDev && console.warn('🎬🎬🎬 YouTubeEmbed info extraite:', info);
   
   if (!info) {
-    console.warn('🎬🎬🎬 YouTubeEmbed: Aucune info valide, affichage fallback');
+    isDev && console.warn('🎬🎬🎬 YouTubeEmbed: Aucune info valide, affichage fallback');
     return (
       <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
         <p className="text-white text-sm">Vidéo non disponible</p>
@@ -84,8 +85,8 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
       ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1`
       : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1`;
   
-  console.warn('🎬🎬🎬 YouTubeEmbed embedSrc généré:', embedSrc);
-  console.warn('🎬🎬🎬 YouTubeEmbed isShort (9:16):', isShort);
+  isDev && console.warn('🎬🎬🎬 YouTubeEmbed embedSrc généré:', embedSrc);
+  isDev && console.warn('🎬🎬🎬 YouTubeEmbed isShort (9:16):', isShort);
 
   // Format vertical 9:16 pour Shorts, horizontal 16:9 pour vidéos normales
   if (isShort) {
@@ -122,7 +123,7 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
 }
 
 export default function Youtube() {
-  console.warn('🎬 Youtube component loaded');
+  isDev && console.warn('🎬 Youtube component loaded');
   const navigate = useNavigate();
   const [currentSong, setCurrentSong] = useState(null);
   const [recentSongs, setRecentSongs] = useState([]);
@@ -137,7 +138,7 @@ export default function Youtube() {
   const [displayedSong, setDisplayedSong] = useState(null);
 
   useEffect(() => {
-    console.warn('🎬 Youtube useEffect triggered');
+    isDev && console.warn('🎬 Youtube useEffect triggered');
     localStorageService.initialize();
     loadCurrentSong();
     loadRecentSongs();
@@ -148,36 +149,36 @@ export default function Youtube() {
     setError(null);
     
     try {
-      console.warn('🔄 Tentative de chargement depuis Supabase...');
+      isDev && console.warn('🔄 Tentative de chargement depuis Supabase...');
       const song = await Song.getCurrent();
-      console.warn('📊 Chanson actuelle chargée:', song);
+      isDev && console.warn('📊 Chanson actuelle chargée:', song);
       
       if (song) {
-        console.warn('✅ Chanson trouvée - id:', song.id);
-        console.warn('✅ Chanson trouvée - title:', song.title);
-        console.warn('✅ Chanson trouvée - youtube_url:', song.youtube_url);
-        console.warn('✅ Chanson trouvée - youtube_music_url:', song.youtube_music_url);
-        console.warn('✅ Chanson trouvée - has_youtube_music_url:', !!song.youtube_music_url);
-        console.warn('✅ Chanson trouvée - typeof youtube_music_url:', typeof song.youtube_music_url);
-        console.warn('✅ Chanson trouvée - toutes les clés:', Object.keys(song));
-        console.warn('✅ Chanson trouvée - youtube_music_url in keys?', 'youtube_music_url' in song);
+        isDev && console.warn('✅ Chanson trouvée - id:', song.id);
+        isDev && console.warn('✅ Chanson trouvée - title:', song.title);
+        isDev && console.warn('✅ Chanson trouvée - youtube_url:', song.youtube_url);
+        isDev && console.warn('✅ Chanson trouvée - youtube_music_url:', song.youtube_music_url);
+        isDev && console.warn('✅ Chanson trouvée - has_youtube_music_url:', !!song.youtube_music_url);
+        isDev && console.warn('✅ Chanson trouvée - typeof youtube_music_url:', typeof song.youtube_music_url);
+        isDev && console.warn('✅ Chanson trouvée - toutes les clés:', Object.keys(song));
+        isDev && console.warn('✅ Chanson trouvée - youtube_music_url in keys?', 'youtube_music_url' in song);
       } else {
-        console.warn('❌ Aucune chanson trouvée par getCurrent()');
+        isDev && console.warn('❌ Aucune chanson trouvée par getCurrent()');
       }
       
       setCurrentSong(song);
       
       // FORCE DEBUG avant setDisplayedSong
-      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song:', song);
-      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song.youtube_music_url:', song?.youtube_music_url);
-      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song.youtube_url:', song?.youtube_url);
-      console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - keys:', song ? Object.keys(song) : []);
+      isDev && console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song:', song);
+      isDev && console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song.youtube_music_url:', song?.youtube_music_url);
+      isDev && console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - song.youtube_url:', song?.youtube_url);
+      isDev && console.warn('🔍🔍🔍 FORCE DEBUG AVANT setDisplayedSong - keys:', song ? Object.keys(song) : []);
       
       setDisplayedSong(song);
       
       // FORCE DEBUG après setDisplayedSong
-      console.warn('🔍🔍🔍 FORCE DEBUG APRES setDisplayedSong - song:', song);
-      console.warn('🔍🔍🔍 FORCE DEBUG APRES setDisplayedSong - song.youtube_music_url:', song?.youtube_music_url);
+      isDev && console.warn('🔍🔍🔍 FORCE DEBUG APRES setDisplayedSong - song:', song);
+      isDev && console.warn('🔍🔍🔍 FORCE DEBUG APRES setDisplayedSong - song.youtube_music_url:', song?.youtube_music_url);
     } catch (err) {
       console.error('❌ Erro ao carregar música atual:', err);
       setError('Erro ao carregar a música da semana. Tente novamente.');
@@ -188,9 +189,9 @@ export default function Youtube() {
 
   const loadRecentSongs = async () => {
     try {
-      console.warn('🔄 Chargement des musiques récentes depuis Supabase...');
+      isDev && console.warn('🔄 Chargement des musiques récentes depuis Supabase...');
       const allSongs = await Song.list('-release_date', null);
-      console.warn('📊 Toutes les musiques chargées:', allSongs);
+      isDev && console.warn('📊 Toutes les musiques chargées:', allSongs);
       
       const currentMonth = new Date();
       const monthStart = startOfMonth(currentMonth);
@@ -201,7 +202,7 @@ export default function Youtube() {
         return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
       });
       
-      console.warn('📅 Musiques du mois en cours:', monthSongs);
+      isDev && console.warn('📅 Musiques du mois en cours:', monthSongs);
       setRecentSongs(monthSongs);
     } catch (err) {
       console.error('❌ Erro ao carregar músicas recentes:', err);
@@ -218,7 +219,7 @@ export default function Youtube() {
       event.stopPropagation();
     }
     
-    console.warn('🎵 handleReplaceVideo appelé avec:', song.title);
+    isDev && console.warn('🎵 handleReplaceVideo appelé avec:', song.title);
     setDisplayedSong(song);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

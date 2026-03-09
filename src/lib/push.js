@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { supabase } from '@/lib/supabase'
 
 // Minimal helper to upsert a push subscription (Option A - public insert)
@@ -6,9 +7,9 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
     throw new Error('Missing subscription fields: endpoint, p256dh, auth')
   }
   
-  console.warn('📡 upsertPushSubscription - Début');
-  console.warn('📡 Endpoint:', endpoint?.substring(0, 50) + '...');
-  console.warn('📡 Topic:', topic, 'Locale:', locale, 'VAPID version:', vapidKeyVersion);
+  isDev && console.warn('📡 upsertPushSubscription - Début');
+  isDev && console.warn('📡 Endpoint:', endpoint?.substring(0, 50) + '...');
+  isDev && console.warn('📡 Topic:', topic, 'Locale:', locale, 'VAPID version:', vapidKeyVersion);
   
   const payload = {
     endpoint,
@@ -20,7 +21,7 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
     last_seen_at: new Date().toISOString()
   };
   
-  console.warn('📡 Payload (sans clés):', { endpoint, topics: payload.topics, locale, vapid_key_version: payload.vapid_key_version });
+  isDev && console.warn('📡 Payload (sans clés):', { endpoint, topics: payload.topics, locale, vapid_key_version: payload.vapid_key_version });
   
   // Essayer d'abord avec onConflict sur la colonne
   // PostgREST devrait reconnaître soit la contrainte UNIQUE soit l'index UNIQUE
@@ -67,7 +68,7 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
             .maybeSingle();
           
           if (updateError) throw updateError;
-          console.warn('✅ Subscription mise à jour via fallback UPDATE');
+          isDev && console.warn('✅ Subscription mise à jour via fallback UPDATE');
           return updated || { endpoint, success: true };
         } else {
           // Insertion d'un nouvel enregistrement
@@ -78,7 +79,7 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
             .maybeSingle();
           
           if (insertError) throw insertError;
-          console.warn('✅ Subscription créée via fallback INSERT');
+          isDev && console.warn('✅ Subscription créée via fallback INSERT');
           return inserted || { endpoint, success: true };
         }
       } catch (fallbackError) {
@@ -103,24 +104,24 @@ export async function upsertPushSubscription({ endpoint, p256dh, auth, topic = '
   }
   
   if (!data) {
-    console.warn('⚠️ upsertPushSubscription: Aucune donnée retournée (mais pas d\'erreur)');
+    isDev && console.warn('⚠️ upsertPushSubscription: Aucune donnée retournée (mais pas d\'erreur)');
     // Retourner quand même un objet minimal pour indiquer le succès
     return { endpoint, success: true };
   }
   
-  console.warn('✅ Subscription sauvegardée avec succès:', data);
+  isDev && console.warn('✅ Subscription sauvegardée avec succès:', data);
   return data;
 }
 
 // src/lib/push.js - FORCE INCLUSION
-console.warn('🚀 PUSH LIB LOADED - VERSION:', Date.now());
+isDev && console.warn('🚀 PUSH LIB LOADED - VERSION:', Date.now());
 
 // Force export to prevent tree-shaking
 export const PUSH_VERSION = Date.now();
 
 // Test function to verify the file is loaded
 export function testPush() {
-  console.warn('🧪 TEST PUSH FUNCTION CALLED');
+  isDev && console.warn('🧪 TEST PUSH FUNCTION CALLED');
   return 'PUSH_LIB_WORKING';
 }
 
@@ -178,17 +179,17 @@ export const shouldShowPushCTA = async () => {
 async function getSWRegistration() {
   // En dev, pas de SW pour éviter les conflits HMR
   if (import.meta.env?.DEV) {
-    console.warn('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
+    isDev && console.warn('🔧 DEV mode: Service Worker désactivé pour éviter les conflits HMR');
     return null;
   }
   
   // Utiliser le SW déjà enregistré par pwa-install.js
   try { 
-    console.warn('🔍 Récupération du Service Worker existant...');
+    isDev && console.warn('🔍 Récupération du Service Worker existant...');
     return await navigator.serviceWorker.ready; 
   }
   catch {
-    console.warn('⚠️ SW pas prêt, tentative d\'enregistrement...');
+    isDev && console.warn('⚠️ SW pas prêt, tentative d\'enregistrement...');
     // Enregistrer uniquement en production
     if (import.meta.env?.PROD) {
       return await navigator.serviceWorker.register('/sw.js');
@@ -199,12 +200,12 @@ async function getSWRegistration() {
 
 export async function enablePush({ locale = 'pt-BR' } = {}) {
   // DIAGNOSTIC: Afficher les variables d'environnement
-  console.warn('🔍 DIAGNOSTIC VAPID:');
-  console.warn('VAPID_PUBLIC_KEY length:', VAPID_PUBLIC_KEY?.length);
-  console.warn('API_BASE:', API_BASE);
-  console.warn('---');
+  isDev && console.warn('🔍 DIAGNOSTIC VAPID:');
+  isDev && console.warn('VAPID_PUBLIC_KEY length:', VAPID_PUBLIC_KEY?.length);
+  isDev && console.warn('API_BASE:', API_BASE);
+  isDev && console.warn('---');
   
-  console.warn('🔍 Starting push activation...');
+  isDev && console.warn('🔍 Starting push activation...');
   
   if (!supported()) {
     console.error('❌ Push not supported');
@@ -219,12 +220,12 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
   // TEST: Vérifier la validité de la clé VAPID
   try {
     const testKey = b64ToUint8(VAPID_PUBLIC_KEY);
-    console.warn('🔑 VAPID key test - Length:', testKey.byteLength, '(doit être 65)');
+    isDev && console.warn('🔑 VAPID key test - Length:', testKey.byteLength, '(doit être 65)');
     if (testKey.byteLength !== 65) {
       console.error('❌ VAPID key invalide: longueur incorrecte');
       throw new Error('VAPID key invalide: longueur incorrecte');
     }
-    console.warn('✅ VAPID key valide');
+    isDev && console.warn('✅ VAPID key valide');
   } catch (e) {
     console.error('❌ VAPID key error:', e);
     throw new Error('VAPID key invalide: ' + e.message);
@@ -235,19 +236,19 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     throw new Error('API_BASE manquante');
   }
 
-  console.warn('✅ Environment variables loaded');
+  isDev && console.warn('✅ Environment variables loaded');
 
   const reg = await getSWRegistration();
   if (!reg) {
     console.error('❌ Service Worker registration failed');
     throw new Error('Service Worker registration failed');
   }
-  console.warn('✅ Service Worker registered');
-  console.warn('🔍 SW state:', reg.active?.state, 'controller:', !!navigator.serviceWorker.controller);
+  isDev && console.warn('✅ Service Worker registered');
+  isDev && console.warn('🔍 SW state:', reg.active?.state, 'controller:', !!navigator.serviceWorker.controller);
 
   // Request permission ONLY on user gesture
   const permission = await Notification.requestPermission();
-  console.warn('🔐 Permission result:', permission);
+  isDev && console.warn('🔐 Permission result:', permission);
   
   if (permission !== 'granted') {
     const in30d = Date.now() + 1000 * 60 * 60 * 24 * 30;
@@ -255,18 +256,18 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     throw new Error('Permission refusée');
   }
 
-  console.warn('🔑 Creating push subscription...');
+  isDev && console.warn('🔑 Creating push subscription...');
   const sub = await reg.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: b64ToUint8(VAPID_PUBLIC_KEY)
   });
-  console.warn('✅ Push subscription created');
+  isDev && console.warn('✅ Push subscription created');
 
   // Extraire les clés de la subscription
   const p256dh = btoa(String.fromCharCode(...new Uint8Array(sub.getKey('p256dh'))));
   const auth = btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth'))));
 
-  console.warn('📡 Sending subscription to server (Supabase)...');
+  isDev && console.warn('📡 Sending subscription to server (Supabase)...');
   
   try {
     // Utiliser Supabase directement pour sauvegarder l'abonnement
@@ -279,7 +280,7 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
       vapidKeyVersion: VAPID_KEY_VERSION
     });
     
-    console.warn('✅ Subscription saved to Supabase');
+    isDev && console.warn('✅ Subscription saved to Supabase');
   } catch (supabaseError) {
     console.error('❌ Supabase save failed:', supabaseError);
     console.error('❌ Error type:', supabaseError?.constructor?.name);
@@ -324,7 +325,7 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
         })
       });
       
-      console.warn('📊 API fallback response:', res.status, res.statusText);
+      isDev && console.warn('📊 API fallback response:', res.status, res.statusText);
       
       if (!res.ok) {
         const errorText = await res.text();
@@ -333,7 +334,7 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
         throw new Error(`Subscribe failed: ${res.status} ${res.statusText}. Détails: ${errorText}`);
       }
       
-      console.warn('✅ Subscription saved via API fallback');
+      isDev && console.warn('✅ Subscription saved via API fallback');
     } catch (apiError) {
       console.error('❌ API fallback also failed:', apiError);
       await sub.unsubscribe(); // Nettoyer l'abonnement échoué
@@ -341,7 +342,7 @@ export async function enablePush({ locale = 'pt-BR' } = {}) {
     }
   }
   
-  console.warn('✅ Push activation completed successfully');
+  isDev && console.warn('✅ Push activation completed successfully');
   return sub;
 }
 

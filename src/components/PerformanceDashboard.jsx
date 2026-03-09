@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import React, { useState, useMemo } from 'react';
 import { 
   TrendingUp, 
@@ -45,7 +46,7 @@ export default function PerformanceDashboard({ className = "" }) {
     enableAlerts: true,
     alertThreshold: 'NEEDS_IMPROVEMENT',
     onAlert: (alert) => {
-      console.log('🚨 Alerte reçue:', alert);
+      isDev && console.log('🚨 Alerte reçue:', alert);
       // Ici vous pourriez envoyer une notification push ou autre
     }
   });

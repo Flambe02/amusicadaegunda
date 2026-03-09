@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { createClient } from '@supabase/supabase-js'
 
 // Configuration Supabase - variables d'environnement obligatoires
@@ -46,13 +47,13 @@ export const checkConnection = async () => {
     if (error) {
       // Si la table n'existe pas, c'est normal au début
       if (error.code === 'PGRST116') {
-        console.log('✅ Connexion Supabase réussie (table songs non créée)')
+        isDev && console.log('✅ Connexion Supabase réussie (table songs non créée)')
         return true
       }
       throw error
     }
 
-    console.log('✅ Connexion Supabase réussie')
+    isDev && console.log('✅ Connexion Supabase réussie')
     return true
   } catch (error) {
     console.error('❌ Erreur de connexion Supabase:', error)
@@ -67,7 +68,7 @@ export const checkSupabaseData = async () => {
     if (error) throw error
     
     const hasData = data && data.length > 0
-    console.log(`📊 Supabase contient des données: ${hasData ? 'Oui' : 'Non'}`)
+    isDev && console.log(`📊 Supabase contient des données: ${hasData ? 'Oui' : 'Non'}`)
     return hasData
   } catch (error) {
     console.error('❌ Erreur vérification données Supabase:', error)

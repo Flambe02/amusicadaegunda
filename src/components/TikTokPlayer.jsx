@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Volume2, Play, RotateCcw } from 'lucide-react';
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+
 /**
  * TikTokPlayer - Composant robuste pour l'embed TikTok
  * 
@@ -30,7 +32,7 @@ export default function TikTokPlayer({
   const handleMessage = useCallback((event) => {
     // Vérification stricte de l'origine pour la sécurité
     if (event.origin !== 'https://www.tiktok.com') {
-      console.warn('TikTok player: message rejeté depuis une origine non autorisée:', event.origin);
+      isDev && console.warn('TikTok player: message rejeté depuis une origine non autorisée:', event.origin);
       return;
     }
 
@@ -39,13 +41,13 @@ export default function TikTokPlayer({
 
       // Validation des données reçues
       if (!data || typeof data !== 'object' || !data.event) {
-        console.warn('TikTok player: données de message invalides:', data);
+        isDev && console.warn('TikTok player: données de message invalides:', data);
         return;
       }
 
       switch (data.event) {
         case 'onPlayerReady':
-          console.log('TikTok player ready');
+          isDev && console.log('TikTok player ready');
           setPlayerReady(true);
           setIsLoading(false);
           break;
@@ -53,7 +55,7 @@ export default function TikTokPlayer({
         case 'onStateChange':
           // État 0 = fin de vidéo, relancer en boucle
           if (data.info === 0) {
-            console.log('Video ended, restarting loop');
+            isDev && console.log('Video ended, restarting loop');
             // Throttle pour éviter les événements trop fréquents
             if (playerReady) {
               sendMessageToPlayer('seekTo', 0);
@@ -75,7 +77,7 @@ export default function TikTokPlayer({
           console.debug('TikTok player: événement non géré:', data.event);
       }
     } catch (err) {
-      console.warn('Error parsing TikTok message:', err);
+      isDev && console.warn('Error parsing TikTok message:', err);
     }
   }, [playerReady]);
 
@@ -125,7 +127,7 @@ export default function TikTokPlayer({
       } catch (error) {
         // Suppression silencieuse des erreurs cross-origin (attendues)
         if (error.name !== 'SecurityError') {
-          console.log('Impossible de forcer la lecture avec son:', error);
+          isDev && console.log('Impossible de forcer la lecture avec son:', error);
         }
       }
     }
@@ -209,7 +211,7 @@ export default function TikTokPlayer({
 
     // Gestion des événements iframe
     iframe.onload = () => {
-      console.log('TikTok iframe loaded');
+      isDev && console.log('TikTok iframe loaded');
       // Le player enverra un message onPlayerReady
     };
 
@@ -226,7 +228,7 @@ export default function TikTokPlayer({
     // Timeout de sécurité pour éviter l'attente infinie
     const timeoutId = setTimeout(() => {
       if (isLoading && !playerReady) {
-        console.warn('TikTok player timeout');
+        isDev && console.warn('TikTok player timeout');
         setError('Timeout ao carregar TikTok');
         setIsLoading(false);
       }

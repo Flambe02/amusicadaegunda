@@ -1,15 +1,16 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import YouTubePlayer from '../components/YouTubePlayer';
 import { extractYouTubeId } from '@/lib/utils';
 
 export default function YoutubeSimple() {
-  console.warn('🎬 YoutubeSimple component loaded');
+  isDev && console.warn('🎬 YoutubeSimple component loaded');
   const [currentSong, setCurrentSong] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.warn('🎬 YoutubeSimple useEffect triggered');
+    isDev && console.warn('🎬 YoutubeSimple useEffect triggered');
     loadCurrentSong();
   }, []);
 
@@ -17,7 +18,7 @@ export default function YoutubeSimple() {
     setIsLoading(true);
     try {
       const song = await Song.getCurrent();
-      console.warn('📊 Chanson actuelle chargée:', song);
+      isDev && console.warn('📊 Chanson actuelle chargée:', song);
       setCurrentSong(song);
     } catch (err) {
       console.error('❌ Erro ao carregar música atual:', err);

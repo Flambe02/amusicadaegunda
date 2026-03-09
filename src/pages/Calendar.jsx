@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect, useCallback } from 'react';
 import { Song } from '@/api/entities';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, addDays, parseISO } from 'date-fns';
@@ -711,7 +712,7 @@ export default function Calendar() {
             onShowDescription={(song) => {
               // Pour Calendar, on peut ouvrir un dialog de description
               // ou rediriger vers la page Home
-              console.warn('Descrição solicitada para:', song.title);
+              isDev && console.warn('Descrição solicitada para:', song.title);
             }}
           />
         </DialogContent>

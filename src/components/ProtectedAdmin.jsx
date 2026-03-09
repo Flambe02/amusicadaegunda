@@ -6,6 +6,8 @@ import Login from '@/pages/Login';
 import UpdatePassword from '@/components/UpdatePassword';
 import { Helmet } from 'react-helmet-async';
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+
 export default function ProtectedAdmin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +53,7 @@ export default function ProtectedAdmin() {
 
   const checkAuth = async () => {
     try {
-      console.warn('🔐 Starting auth check...');
+      isDev && console.warn('🔐 Starting auth check...');
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -60,11 +62,11 @@ export default function ProtectedAdmin() {
       }
       
       if (session) {
-        console.warn('✅ Session found, checking admin status...');
+        isDev && console.warn('✅ Session found, checking admin status...');
         setIsAuthenticated(true);
         await checkAdminStatus(session.user.id);
       } else {
-        console.warn('⚠️ No session found');
+        isDev && console.warn('⚠️ No session found');
         setIsAuthenticated(false);
         setIsAdmin(false);
       }
@@ -74,7 +76,7 @@ export default function ProtectedAdmin() {
       setIsAdmin(false);
     } finally {
       // Toujours mettre isLoading à false, même en cas d'erreur ou de timeout
-      console.warn('🏁 Auth check complete, setting loading to false');
+      isDev && console.warn('🏁 Auth check complete, setting loading to false');
       setIsLoading(false);
     }
   };
@@ -83,7 +85,7 @@ export default function ProtectedAdmin() {
     let timeoutId;
     
     try {
-      console.warn('🔍 Checking admin status for user:', userId);
+      isDev && console.warn('🔍 Checking admin status for user:', userId);
       
       // Essayer d'abord une requête simple pour vérifier la connexion
       try {
@@ -93,12 +95,12 @@ export default function ProtectedAdmin() {
           .limit(1);
         
         if (testError && testError.code !== 'PGRST116') {
-          console.warn('⚠️ Test de connexion à la table admins:', testError.message);
+          isDev && console.warn('⚠️ Test de connexion à la table admins:', testError.message);
         } else {
-          console.warn('✅ Connexion à la table admins OK');
+          isDev && console.warn('✅ Connexion à la table admins OK');
         }
       } catch (testErr) {
-        console.warn('⚠️ Erreur test connexion:', testErr.message);
+        isDev && console.warn('⚠️ Erreur test connexion:', testErr.message);
       }
       
       // Utiliser .maybeSingle() qui est plus robuste et ne lance pas d'erreur si aucune ligne n'est trouvée
@@ -127,13 +129,13 @@ export default function ProtectedAdmin() {
         
         const { data, error } = result;
         
-        console.warn('📊 Admin check result:', { data, error, hasData: !!data });
+        isDev && console.warn('📊 Admin check result:', { data, error, hasData: !!data });
         
         if (error) {
           // PGRST116 = "The result contains 0 rows" - avec maybeSingle() cela ne devrait pas arriver
           // mais on le gère quand même pour être sûr
           if (error.code === 'PGRST116') {
-            console.warn('⚠️ User is NOT admin (no admin record found)');
+            isDev && console.warn('⚠️ User is NOT admin (no admin record found)');
             setIsAdmin(false);
             return;
           }
@@ -158,7 +160,7 @@ export default function ProtectedAdmin() {
         
         // Si pas d'erreur et data existe, l'utilisateur est admin
         const isAdminUser = !!data;
-        console.warn(isAdminUser ? '✅ User IS admin' : '⚠️ User is NOT admin');
+        isDev && console.warn(isAdminUser ? '✅ User IS admin' : '⚠️ User is NOT admin');
         setIsAdmin(isAdminUser);
       } catch (raceError) {
         if (timeoutId) clearTimeout(timeoutId);

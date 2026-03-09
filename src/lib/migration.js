@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 /**
  * Migration pour nettoyer le localStorage et forcer l'utilisation de Supabase
  * Problème : "Confissões Bancárias" cause des bugs TikTok car chargée depuis localStorage
@@ -20,7 +21,7 @@ export const migrationService = {
    */
   markCompleted() {
     localStorage.setItem(MIGRATION_KEY, MIGRATION_VERSION);
-    console.log('✅ Migration Confissões Bancárias terminée');
+    isDev && console.log('✅ Migration Confissões Bancárias terminée');
   },
 
   /**
@@ -28,11 +29,11 @@ export const migrationService = {
    */
   async execute() {
     if (this.isCompleted()) {
-      console.log('🔄 Migration déjà effectuée, passage...');
+      isDev && console.log('🔄 Migration déjà effectuée, passage...');
       return;
     }
 
-    console.log('🚀 Début de la migration Confissões Bancárias...');
+    isDev && console.log('🚀 Début de la migration Confissões Bancárias...');
 
     try {
       // 1. Supprimer "Confissões Bancárias" du localStorage
@@ -44,7 +45,7 @@ export const migrationService = {
       // 3. Marquer la migration comme terminée
       this.markCompleted();
       
-      console.log('🎉 Migration terminée avec succès !');
+      isDev && console.log('🎉 Migration terminée avec succès !');
       
     } catch (error) {
       console.error('❌ Erreur lors de la migration:', error);
@@ -74,8 +75,8 @@ export const migrationService = {
       // Sauvegarder le localStorage nettoyé
       localStorage.setItem('songs', JSON.stringify(renumberedSongs));
       
-      console.log(`🧹 localStorage nettoyé : ${songs.length - renumberedSongs.length} chanson(s) supprimée(s)`);
-      console.log(`📝 ${renumberedSongs.length} chanson(s) conservée(s) et renumérotée(s)`);
+      isDev && console.log(`🧹 localStorage nettoyé : ${songs.length - renumberedSongs.length} chanson(s) supprimée(s)`);
+      isDev && console.log(`📝 ${renumberedSongs.length} chanson(s) conservée(s) et renumérotée(s)`);
       
     } catch (error) {
       console.error('❌ Erreur lors du nettoyage du localStorage:', error);
@@ -92,7 +93,7 @@ export const migrationService = {
       localStorage.setItem('force_supabase_sync', 'true');
       localStorage.setItem('last_supabase_sync', new Date().toISOString());
       
-      console.log('🔄 Synchronisation Supabase forcée');
+      isDev && console.log('🔄 Synchronisation Supabase forcée');
       
     } catch (error) {
       console.error('❌ Erreur lors de la synchronisation Supabase:', error);
@@ -119,7 +120,7 @@ export const migrationService = {
     localStorage.removeItem(MIGRATION_KEY);
     localStorage.removeItem('force_supabase_sync');
     localStorage.removeItem('last_supabase_sync');
-    console.log('🔄 Migration réinitialisée');
+    isDev && console.log('🔄 Migration réinitialisée');
   }
 };
 

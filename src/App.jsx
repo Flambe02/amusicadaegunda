@@ -9,9 +9,6 @@ import { useEffect } from 'react';
 import migrationService from '@/lib/migration';
 // MigrationStatus supprimé pour la production
 
-// Composants de diagnostic supprimés pour la production
-// import TikTokDemo from "./pages/TikTokDemo";
-
 function App() {
   // Exécuter la migration au démarrage de l'app
   useEffect(() => {
@@ -26,9 +23,6 @@ function App() {
     <>
       <OfflineIndicator />
       <Pages />
-      {/* MigrationStatus supprimé pour la production */}
-      {/* Composants de diagnostic supprimés pour la production */}
-      {/* <TikTokDemo /> */}
       <InstallAppBanner />
       <Toaster />
       <PushCTA />

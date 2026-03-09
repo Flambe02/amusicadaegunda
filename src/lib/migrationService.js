@@ -1,3 +1,4 @@
+const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { localStorageService } from './localStorage'
 import { supabaseSongService, supabaseAlbumService, supabaseSettingsService } from '@/api/supabaseService'
 import { checkConnection } from './supabase'
@@ -10,7 +11,7 @@ export const migrationService = {
       // Vérifier la connexion Supabase
       const isConnected = await checkConnection()
       if (!isConnected) {
-        console.log('❌ Pas de connexion Supabase, migration impossible')
+        isDev && console.log('❌ Pas de connexion Supabase, migration impossible')
         return false
       }
 
@@ -23,9 +24,9 @@ export const migrationService = {
       // 2. Supabase a moins de données que localStorage
       const needsMigration = localSongs.length > 0 && supabaseSongs.length < localSongs.length
 
-      console.log(`📊 Migration nécessaire: ${needsMigration}`)
-      console.log(`📱 localStorage: ${localSongs.length} chansons`)
-      console.log(`☁️ Supabase: ${supabaseSongs.length} chansons`)
+      isDev && console.log(`📊 Migration nécessaire: ${needsMigration}`)
+      isDev && console.log(`📱 localStorage: ${localSongs.length} chansons`)
+      isDev && console.log(`☁️ Supabase: ${supabaseSongs.length} chansons`)
 
       return needsMigration
     } catch (error) {
@@ -37,7 +38,7 @@ export const migrationService = {
   // Effectuer la migration complète
   async migrateAll() {
     try {
-      console.log('🚀 Début de la migration localStorage → Supabase...')
+      isDev && console.log('🚀 Début de la migration localStorage → Supabase...')
 
       // Vérifier la connexion
       const isConnected = await checkConnection()
@@ -49,7 +50,7 @@ export const migrationService = {
       const localSongs = localStorageService.songs.getAll()
       const localAlbums = localStorageService.albums.getAll()
 
-      console.log(`📱 Données à migrer: ${localSongs.length} chansons, ${localAlbums.length} albums`)
+      isDev && console.log(`📱 Données à migrer: ${localSongs.length} chansons, ${localAlbums.length} albums`)
 
       // Migrer les chansons
       let migratedSongs = 0
@@ -78,7 +79,7 @@ export const migrationService = {
           // Créer dans Supabase
           await supabaseSongService.create(supabaseSong)
           migratedSongs++
-          console.log(`✅ Chanson migrée: ${song.title}`)
+          isDev && console.log(`✅ Chanson migrée: ${song.title}`)
 
         } catch (error) {
           failedSongs++
@@ -94,7 +95,7 @@ export const migrationService = {
         try {
           await supabaseAlbumService.create(album)
           migratedAlbums++
-          console.log(`✅ Album migré: ${album.title}`)
+          isDev && console.log(`✅ Album migré: ${album.title}`)
         } catch (error) {
           failedAlbums++
           console.error(`❌ Échec migration album "${album.title}":`, error)
@@ -121,7 +122,7 @@ export const migrationService = {
         timestamp: new Date().toISOString()
       }
 
-      console.log('🎉 Migration terminée avec succès!', result)
+      isDev && console.log('🎉 Migration terminée avec succès!', result)
       return result
 
     } catch (error) {
@@ -133,7 +134,7 @@ export const migrationService = {
   // Migrer seulement les nouvelles données
   async migrateNewData() {
     try {
-      console.log('🔄 Migration des nouvelles données...')
+      isDev && console.log('🔄 Migration des nouvelles données...')
 
       const localSongs = localStorageService.songs.getAll()
       const supabaseSongs = await supabaseSongService.list()
@@ -144,7 +145,7 @@ export const migrationService = {
         song.tiktok_video_id && !existingTikTokIds.includes(song.tiktok_video_id)
       )
 
-      console.log(`🆕 Nouvelles chansons à migrer: ${newSongs.length}`)
+      isDev && console.log(`🆕 Nouvelles chansons à migrer: ${newSongs.length}`)
 
       let migrated = 0
       for (const song of newSongs) {
@@ -168,7 +169,7 @@ export const migrationService = {
 
           await supabaseSongService.create(supabaseSong)
           migrated++
-          console.log(`✅ Nouvelle chanson migrée: ${song.title}`)
+          isDev && console.log(`✅ Nouvelle chanson migrée: ${song.title}`)
         } catch (error) {
           console.error(`❌ Échec migration nouvelle chanson "${song.title}":`, error)
         }
@@ -230,7 +231,7 @@ export const migrationService = {
   // Restaurer depuis Supabase (en cas de problème)
   async restoreFromSupabase() {
     try {
-      console.log('🔄 Restauration depuis Supabase...')
+      isDev && console.log('🔄 Restauration depuis Supabase...')
 
       const supabaseSongs = await supabaseSongService.list()
       const supabaseAlbums = await supabaseAlbumService.list()
@@ -271,7 +272,7 @@ export const migrationService = {
         }
       }
 
-      console.log('✅ Restauration terminée')
+      isDev && console.log('✅ Restauration terminée')
       return { success: true, songs: supabaseSongs.length, albums: supabaseAlbums.length }
     } catch (error) {
       console.error('❌ Erreur restauration:', error)

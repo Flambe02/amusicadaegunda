@@ -1,24 +1,26 @@
 import React, { useEffect, useRef } from 'react';
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+
 export default function YouTubePlayer({ videoId, className = "", title = "YouTube Video" }) {
   const iframeRef = useRef(null);
 
   useEffect(() => {
-    console.warn('🎬 YouTubePlayer - videoId reçu:', videoId);
-    console.warn('🎬 YouTubePlayer - title:', title);
-    
+    isDev && console.warn('🎬 YouTubePlayer - videoId reçu:', videoId);
+    isDev && console.warn('🎬 YouTubePlayer - title:', title);
+
     // Vérifier si l'iframe est bien dans le DOM
     if (iframeRef.current) {
-      console.warn('🔍 YouTubePlayer - iframe ref existe:', iframeRef.current);
-      console.warn('🔍 YouTubePlayer - iframe src:', iframeRef.current.src);
-      console.warn('🔍 YouTubePlayer - iframe computed style:', window.getComputedStyle(iframeRef.current));
-      console.warn('🔍 YouTubePlayer - iframe offsetWidth:', iframeRef.current.offsetWidth);
-      console.warn('🔍 YouTubePlayer - iframe offsetHeight:', iframeRef.current.offsetHeight);
+      isDev && console.warn('🔍 YouTubePlayer - iframe ref existe:', iframeRef.current);
+      isDev && console.warn('🔍 YouTubePlayer - iframe src:', iframeRef.current.src);
+      isDev && console.warn('🔍 YouTubePlayer - iframe computed style:', window.getComputedStyle(iframeRef.current));
+      isDev && console.warn('🔍 YouTubePlayer - iframe offsetWidth:', iframeRef.current.offsetWidth);
+      isDev && console.warn('🔍 YouTubePlayer - iframe offsetHeight:', iframeRef.current.offsetHeight);
     }
   }, [videoId, title]);
 
   if (!videoId) {
-    console.warn('❌ YouTubePlayer - videoId est vide ou null');
+    isDev && console.warn('❌ YouTubePlayer - videoId est vide ou null');
     return null;
   }
 
@@ -32,11 +34,11 @@ export default function YouTubePlayer({ videoId, className = "", title = "YouTub
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const src = `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${origin ? `&origin=${encodeURIComponent(origin)}` : ''}`;
 
-  console.warn('🎬 YouTubePlayer - URL iframe générée:', src);
+  isDev && console.warn('🎬 YouTubePlayer - URL iframe générée:', src);
 
   // Gestion du chargement de l'iframe
   const handleLoad = () => {
-    console.warn('✅ YouTubePlayer - iframe chargée avec succès');
+    isDev && console.warn('✅ YouTubePlayer - iframe chargée avec succès');
   };
 
   const handleError = (e) => {
@@ -44,8 +46,8 @@ export default function YouTubePlayer({ videoId, className = "", title = "YouTub
   };
 
   return (
-    <div 
-      className={`${className}`} 
+    <div
+      className={`${className}`}
       style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', backgroundColor: '#000' }}
     >
       <iframe
@@ -63,5 +65,3 @@ export default function YouTubePlayer({ videoId, className = "", title = "YouTub
     </div>
   );
 }
-
-
