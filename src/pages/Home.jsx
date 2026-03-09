@@ -36,6 +36,7 @@ import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
+import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
 import { getDocumentTitle } from '@/lib/documentTitle';
@@ -389,6 +390,21 @@ export default function Home() {
     if (!videoId) return null;
     return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
   };
+
+  useEffect(() => {
+    if (!displayedSong) return;
+
+    saveLastSongSnapshot({
+      title: displayedSong.title,
+      artist: displayedSong.artist,
+      slug: displayedSong.slug,
+      thumbnail:
+        displayedSong.thumbnail_url ||
+        displayedSong.cover_image ||
+        getYouTubeThumbnail(displayedSong) ||
+        null,
+    });
+  }, [displayedSong]);
 
   const heroArtwork =
     displayedSong?.cover_image ||

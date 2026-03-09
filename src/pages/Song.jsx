@@ -20,6 +20,7 @@ import { ptBR } from 'date-fns/locale';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import LyricsDialog from '@/components/LyricsDialog';
 import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
+import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 
 export default function SongPage() {
   const { slug: rawSlug } = useParams();
@@ -186,6 +187,17 @@ export default function SongPage() {
   const formattedReleaseDate = song?.release_date
     ? format(parseISO(song.release_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : null;
+
+  useEffect(() => {
+    if (!song) return;
+
+    saveLastSongSnapshot({
+      title: song.title,
+      artist: song.artist,
+      slug: song.slug || slug,
+      thumbnail: artwork,
+    });
+  }, [artwork, slug, song]);
 
   // Loading skeleton
   if (isLoading) {
