@@ -3,8 +3,6 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
-  ChevronLeft,
-  ChevronRight,
   FileText,
   History,
   MoreHorizontal,
@@ -54,7 +52,7 @@ export default function HomeMobileImmersive({
   const playerStateRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
   const [showUtilityActions, setShowUtilityActions] = useState(false);
-  const [touchStartY, setTouchStartY] = useState(null);
+  const [touchStartX, setTouchStartX] = useState(null);
   const reduceMotion = useReducedMotion();
 
   const heroArtwork = useMemo(
@@ -87,30 +85,30 @@ export default function HomeMobileImmersive({
     );
   }
 
-  const handleGestureNavigate = (deltaY) => {
-    if (Math.abs(deltaY) < SWIPE_THRESHOLD) return;
-    if (deltaY < 0 && canNavigatePrevious) {
+  const handleGestureNavigate = (deltaX) => {
+    if (Math.abs(deltaX) < SWIPE_THRESHOLD) return;
+    if (deltaX > 0 && canNavigatePrevious) {
       onPreviousSong();
       return;
     }
-    if (deltaY > 0 && canNavigateNext) {
+    if (deltaX < 0 && canNavigateNext) {
       onNextSong();
     }
   };
 
   const handleTouchStartCapture = (event) => {
-    setTouchStartY(event.touches?.[0]?.clientY ?? null);
+    setTouchStartX(event.touches?.[0]?.clientX ?? null);
   };
 
   const handleTouchEndCapture = (event) => {
-    if (touchStartY == null) return;
-    const endY = event.changedTouches?.[0]?.clientY ?? touchStartY;
-    handleGestureNavigate(endY - touchStartY);
-    setTouchStartY(null);
+    if (touchStartX == null) return;
+    const endX = event.changedTouches?.[0]?.clientX ?? touchStartX;
+    handleGestureNavigate(endX - touchStartX);
+    setTouchStartX(null);
   };
 
   const handleDragEnd = (_, info) => {
-    handleGestureNavigate(info.offset.y);
+    handleGestureNavigate(info.offset.x);
   };
 
   const toggleMute = () => {
@@ -146,8 +144,8 @@ export default function HomeMobileImmersive({
       <AnimatePresence mode="wait">
         <motion.div
           key={displayedSong.id}
-          drag="y"
-          dragConstraints={{ top: 0, bottom: 0 }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
           dragElastic={0.12}
           onDragEnd={handleDragEnd}
           initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
@@ -157,34 +155,6 @@ export default function HomeMobileImmersive({
           className="relative z-10 flex h-full flex-col px-2 pb-2 pt-1.5"
         >
           <div className="relative flex flex-1 items-center justify-center px-1 pb-[82px] pt-1">
-            <button
-              type="button"
-              onClick={canNavigatePrevious ? onPreviousSong : undefined}
-              disabled={!canNavigatePrevious}
-              className={`absolute left-0.5 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-200 ${
-                canNavigatePrevious
-                  ? 'border-white/16 bg-black/22 text-white/86 active:scale-95'
-                  : 'border-white/10 bg-black/10 text-white/25'
-              }`}
-              aria-label={canNavigatePrevious ? 'Musica anterior' : 'Sem musica anterior'}
-            >
-              <ChevronLeft className="h-4.5 w-4.5" />
-            </button>
-
-            <button
-              type="button"
-              onClick={canNavigateNext ? onNextSong : undefined}
-              disabled={!canNavigateNext}
-              className={`absolute right-0.5 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-200 ${
-                canNavigateNext
-                  ? 'border-white/16 bg-black/22 text-white/86 active:scale-95'
-                  : 'border-white/10 bg-black/10 text-white/25'
-              }`}
-              aria-label={canNavigateNext ? 'Musica seguinte' : 'Sem musica seguinte'}
-            >
-              <ChevronRight className="h-4.5 w-4.5" />
-            </button>
-
             <div className="relative mx-auto flex h-full w-full max-w-[420px] items-center justify-center">
               <div className="absolute inset-x-8 bottom-3 top-3 rounded-[40px] bg-white/8 blur-3xl" />
               <div className="relative h-full w-full max-w-[372px] overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,rgba(5,5,5,0.96)_0%,rgba(8,8,8,0.98)_100%)] shadow-[0_30px_100px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
@@ -206,6 +176,11 @@ export default function HomeMobileImmersive({
                 </div>
 
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/88 via-black/34 to-transparent" />
+                <div className="pointer-events-none absolute left-1/2 top-4 z-10 -translate-x-1/2 rounded-full border border-white/10 bg-black/20 px-3 py-1.5 backdrop-blur-xl">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/62">
+                    Deslize para mudar
+                  </p>
+                </div>
 
                 <div className="absolute bottom-4 left-0 right-0 flex items-end justify-between gap-2 px-3 pt-5">
                   <div className="min-w-0 space-y-2">
