@@ -1,5 +1,11 @@
 /* ===== CSS OPTIMISÉ POUR TIKTOK EMBEDDING PARFAIT ===== */
 
+/* Animation barras sonoras (A Roda de Segunda) */
+@keyframes bounce {
+  from { transform: scaleY(0.4); }
+  to   { transform: scaleY(1); }
+}
+
 /* Container principal TikTok */
 .tiktok-video-container {
   width: 100%;

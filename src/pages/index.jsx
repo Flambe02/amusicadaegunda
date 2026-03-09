@@ -44,6 +44,9 @@ function PagesContent() {
                     
                     {/* ✅ SEO: Redirection 301 pour /home → / (évite duplication de contenu) */}
                     <Route path="/home" element={<Navigate to="/" replace />} />
+
+                    {/* Produit: /calendar supprimé, redirection vers la home */}
+                    <Route path="/calendar" element={<Navigate to="/" replace />} />
                     
                     {/* ✅ SEO: Redirection 301 pour /playlist → /musica (single source of truth) */}
                     <Route path="/playlist" element={<Navigate to="/musica" replace />} />

@@ -1,12 +1,13 @@
-{
+﻿{
   "name": "A Música da Segunda",
   "short_name": "Música 2nda",
   "description": "Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais!",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#32a2dc",
-  "theme_color": "#32a2dc",
+  "background_color": "#050505",
+  "theme_color": "#050505",
   "orientation": "portrait",
   "categories": ["music", "entertainment", "lifestyle", "social"],
   "lang": "pt-BR",
@@ -93,9 +94,9 @@
       ]
     },
     {
-      "name": "Playlist",
-      "short_name": "Playlist",
-      "description": "Acessar playlists do Spotify",
+      "name": "Pesquisa",
+      "short_name": "Pesquisa",
+      "description": "Encontrar uma música ou tema",
       "url": "/musica",
       "icons": [
         {
@@ -117,7 +118,7 @@
       ]
     }
   ],
-"related_applications": [],
+  "related_applications": [],
   "prefer_related_applications": false,
   "edge_side_panel": {
     "preferred_width": 400

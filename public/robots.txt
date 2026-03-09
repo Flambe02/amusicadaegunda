@@ -4,16 +4,6 @@ Allow: /
 # Sitemap
 Sitemap: https://www.amusicadasegunda.com/sitemap-index.xml
 
-# ✅ SEO: Crawl-delay supprimé - ralentit inutilement Google et Bing
-# GitHub Pages peut gérer le trafic des crawlers sans problème
-
-# Permettre l'indexation des pages principales
-Allow: /calendar
-Allow: /blog
-Allow: /adventcalendar
-Allow: /sobre
-# ✅ /playlist removed - redirects to /musica (single source of truth)
-
 # Bloquer l'accès aux pages d'administration et login
 Disallow: /admin
 Disallow: /login
@@ -21,23 +11,12 @@ Disallow: /login
 # Bloquer les URLs avec hash (non indexables par Google)
 Disallow: /#/
 
-# ✅ SEO FIX: Bloquer le template SearchAction (Google crawle littéralement {search_term_string})
-Disallow: /*?q=*
-Disallow: /?q=
-
-# ✅ SEO FIX: /chansons/ n'est PLUS bloqué dans robots.txt
-# Les pages /chansons/ ont noindex + canonical → /musica/ dans leur HTML
-# Bloquer via robots.txt empêchait Google de lire le noindex et le canonical
-# Résultat : Google ne pouvait pas traiter la migration /chansons/ → /musica/
-# Allow: /chansons/ (implicite — pas de Disallow)
+# NOTE: SearchAction JSON-LD supprimé (search.enabled: false dans seo.config.json)
+# /?q={search_term_string} n'est plus dans aucun JSON-LD — ne pas bloquer ?q= pour
+# permettre à Google de crawler l'URL, voir le canonical vers / et la supprimer de son index
 
 # Bloquer l'accès aux fichiers de développement
 Disallow: /src/
 Disallow: /node_modules/
 Disallow: /*.js.map
 Disallow: /*.css.map
-
-# Permettre l'accès aux ressources statiques
-Allow: /images/
-Allow: /assets/
-Allow: /manifest.json

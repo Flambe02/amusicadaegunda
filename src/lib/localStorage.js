@@ -1,5 +1,7 @@
 // ===== SYSTÈME DE STOCKAGE LOCAL SIMPLE =====
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+
 // Clés de stockage
 const STORAGE_KEYS = {
   SONGS: 'musica-da-segunda-songs',
@@ -65,9 +67,9 @@ export const localStorageService = {
       if (existingSongs.length === 0) {
         // Charger les données par défaut si localStorage est vide
         localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(DEFAULT_SONGS));
-        console.warn('🔄 localStorage initialisé avec données de fallback:', DEFAULT_SONGS.length, 'chansons');
+        isDev && console.warn('🔄 localStorage initialisé avec données de fallback:', DEFAULT_SONGS.length, 'chansons');
       } else {
-        console.warn('🔄 localStorage déjà initialisé avec:', existingSongs.length, 'chansons');
+        isDev && console.warn('🔄 localStorage déjà initialisé avec:', existingSongs.length, 'chansons');
       }
     } catch (error) {
       console.error('❌ Erreur initialisation localStorage:', error);
@@ -79,7 +81,7 @@ export const localStorageService = {
   // Forcer la réinitialisation des données (vide)
   forceReset() {
     localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify([]));
-    console.warn('🔄 localStorage réinitialisé - données Supabase uniquement');
+    isDev && console.warn('🔄 localStorage réinitialisé - données Supabase uniquement');
   },
 
   // Nettoyer spécifiquement "Confissões Bancárias"
@@ -99,11 +101,11 @@ export const localStorageService = {
         }));
         
         localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(renumberedSongs));
-        console.warn(`🧹 "Confissões Bancárias" supprimée du localStorage. ${songs.length - cleanedSongs.length} chanson(s) nettoyée(s)`);
+        isDev && console.warn(`🧹 "Confissões Bancárias" supprimée du localStorage. ${songs.length - cleanedSongs.length} chanson(s) nettoyée(s)`);
         return true;
       }
       
-      console.warn('✅ localStorage déjà propre, aucune action nécessaire');
+      isDev && console.warn('✅ localStorage déjà propre, aucune action nécessaire');
       return false;
     } catch (error) {
       console.error('❌ Erreur lors du nettoyage:', error);

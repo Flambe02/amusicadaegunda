@@ -1,0 +1,31 @@
+{
+  "assets": [
+    "/",
+    "/assets/index-DRzbiIyb.js",
+    "/assets/index-yEiE5YkG.css",
+    "/assets/vendor-date-mUadzwGa.js",
+    "/assets/vendor-motion-XkFPCHrJ.js",
+    "/assets/vendor-react-DNVYbnJM.js",
+    "/assets/vendor-supabase-HJ9lvb4X.js",
+    "/assets/vendor-ui-D8WrYV8a.js",
+    "/content/songs.json",
+    "/icons/apple/apple-touch-icon-114x114.png",
+    "/icons/apple/apple-touch-icon-120x120.png",
+    "/icons/apple/apple-touch-icon-144x144.png",
+    "/icons/apple/apple-touch-icon-152x152.png",
+    "/icons/apple/apple-touch-icon-180x180.png",
+    "/icons/apple/apple-touch-icon-57x57.png",
+    "/icons/apple/apple-touch-icon-60x60.png",
+    "/icons/apple/apple-touch-icon-72x72.png",
+    "/icons/apple/apple-touch-icon-76x76.png",
+    "/icons/pwa/icon-128x128.png",
+    "/icons/pwa/icon-192x192.png",
+    "/icons/pwa/icon-256x256.png",
+    "/icons/pwa/icon-512x512.png",
+    "/images/Caipivara_transp-removebg-preview.png",
+    "/images/Musica da segunda.webp",
+    "/index.html",
+    "/manifest.json",
+    "/offline.html"
+  ]
+}

@@ -1,19 +1,18 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR" dir="ltr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Favicon et Icônes -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/pwa/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/pwa/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="48x48" href="/icons/pwa/favicon-48x48.png" />
-    <link rel="icon" type="image/png" sizes="64x64" href="/icons/pwa/favicon-64x64.png" />
+
+    <link rel="icon" type="image/png" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="shortcut icon" type="image/png" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/images/Caipivara_transp-removebg-preview.png" />
     <link rel="icon" type="image/png" sizes="128x128" href="/icons/pwa/icon-128x128.png" />
     <link rel="icon" type="image/png" sizes="256x256" href="/icons/pwa/icon-256x256.png" />
-    
-    <!-- Apple Touch Icons -->
+
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple/apple-touch-icon-180x180.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple/apple-touch-icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple/apple-touch-icon-144x144.png" />
@@ -23,38 +22,56 @@
     <link rel="apple-touch-icon" sizes="72x72" href="/icons/apple/apple-touch-icon-72x72.png" />
     <link rel="apple-touch-icon" sizes="60x60" href="/icons/apple/apple-touch-icon-60x60.png" />
     <link rel="apple-touch-icon" sizes="57x57" href="/icons/apple/apple-touch-icon-57x57.png" />
-    
-    <!-- Windows Tiles -->
-    <meta name="msapplication-TileColor" content="#FFD400" />
+
+    <meta name="msapplication-TileColor" content="#050505" />
     <meta name="msapplication-TileImage" content="/icons/pwa/icon-144x144.png" />
     <meta name="msapplication-config" content="none" />
-    
-    <!-- PWA Manifest -->
+
     <link rel="manifest" href="/manifest.json" />
-    
-    <!-- PWA Meta Tags -->
+
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Música 2nda" />
-    <meta name="application-name" content="Música 2nda" />
-    <meta name="theme-color" content="#FFD400" />
-    
-    <!-- Canonical URL -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="A Música da Segunda" />
+    <meta name="application-name" content="A Música da Segunda" />
+    <meta name="theme-color" content="#050505" />
+
     <link rel="canonical" href="https://www.amusicadasegunda.com/" />
-    
-    <!-- SEO Principal -->
+
+    <script>
+      (function () {
+        function sanitizeStandaloneTitle() {
+          document.title = document.title
+            .replace(/^A M(?:\u00fasica|usica) da Segunda\s*[-|:]\s*/i, '')
+            .replace(/\s*[-|:]\s*A M(?:\u00fasica|usica) da Segunda$/i, '')
+            .trim() || 'Inicio';
+        }
+
+        var supportsMatchMedia = typeof window.matchMedia === 'function';
+        var isStandalone = supportsMatchMedia && (
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.matchMedia('(display-mode: window-controls-overlay)').matches
+        );
+
+        isStandalone = isStandalone || window.navigator.standalone === true || document.referrer.indexOf('android-app://') === 0;
+
+        if (!isStandalone) return;
+
+        window.addEventListener('DOMContentLoaded', sanitizeStandaloneTitle, { once: true });
+        window.addEventListener('pageshow', sanitizeStandaloneTitle, { once: true });
+        setTimeout(sanitizeStandaloneTitle, 0);
+      })();
+    </script>
+
     <title>A Música da Segunda | Paródias Musicais do Brasil | Nova Música Toda Segunda</title>
-    <meta name="description" content="A Música da Segunda - Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira com humor e criatividade." />
-    <meta name="keywords" content="música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes" />
-    <meta name="author" content="Música da Segunda" />
-    <!-- ✅ SEO FIX: max-video-preview:0 empêche Google d'indexer la vidéo sur la homepage -->
+    <meta name="description" content="A Música da Segunda traz paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira, com humor, contexto e experiência PWA rápida." />
+    <meta name="keywords" content="música da segunda, paródias musicais, notícias do brasil, música brasileira, nova música toda segunda, humor político, pwa musical" />
+    <meta name="author" content="A Música da Segunda" />
     <meta name="robots" content="index, follow, max-video-preview:0" />
-    
-    <!-- Open Graph / Facebook -->
+
     <meta property="og:type" content="website" />
     <meta property="og:title" content="A Música da Segunda" />
-    <meta property="og:description" content="A Música da Segunda - Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira com humor e criatividade." />
+    <meta property="og:description" content="Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira." />
     <meta property="og:url" content="https://www.amusicadasegunda.com/" />
     <meta property="og:image" content="https://www.amusicadasegunda.com/images/og-social-1200x630.jpg" />
     <meta property="og:image:width" content="1200" />
@@ -62,57 +79,164 @@
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:site_name" content="A Música da Segunda" />
-    
-    <!-- Twitter -->
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="A Música da Segunda" />
-    <meta name="twitter:description" content="A Música da Segunda - Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira com humor e criatividade." />
+    <meta name="twitter:description" content="Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira." />
     <meta name="twitter:image" content="https://www.amusicadasegunda.com/images/og-social-1200x630.jpg" />
-    
-    <!-- Preconnect pour performance - Uniquement ressources critiques -->
-    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- TikTok, Spotify, Apple Music, YouTube : préconnexions différées (chargées lazy) -->
-    
-    <!-- ✅ LCP FIX: Preload de l'image critique (logo) en WebP pour Core Web Vitals -->
-    <!-- WebP = 181KB vs JPG = 1552KB → économie de 1.3MB par visite -->
-    <link rel="preload" href="/images/Musica da segunda.webp" as="image" type="image/webp" fetchpriority="high">
-    <!-- ✅ LCP FIX: Preconnect pour les thumbnails YouTube (élément LCP via facade) -->
-    <link rel="preconnect" href="https://img.youtube.com">
-    <!-- YouTube iframe: dns-prefetch uniquement (chargé au clic via facade) -->
-    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com">
 
-    <!-- Google tag (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
+    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
+    <link rel="preload" href="/images/Musica da segunda.webp" as="image" type="image/webp" fetchpriority="high" />
+    <link rel="preconnect" href="https://img.youtube.com" />
+    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
+
+    <style>
+      html {
+        background: #050505;
+        color-scheme: dark;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(253, 224, 71, 0.16), transparent 28%),
+          radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 22%),
+          linear-gradient(180deg, #111111 0%, #050505 100%);
+        color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+
+      #root {
+        min-height: 100vh;
+      }
+
+      .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -4rem;
+        z-index: 1000;
+        border-radius: 999px;
+        background: #fde047;
+        color: #111111;
+        padding: 0.75rem 1rem;
+        text-decoration: none;
+        font-weight: 700;
+        transition: top 0.2s ease;
+      }
+
+      .skip-link:focus {
+        top: 1rem;
+      }
+
+      .app-shell-fallback {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+
+      .app-shell-fallback h1 {
+        margin: 0 0 1rem;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        line-height: 0.95;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+      }
+
+      .app-shell-fallback p {
+        max-width: 48rem;
+        margin: 0 0 1.5rem;
+        font-size: clamp(1rem, 2vw, 1.2rem);
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .app-shell-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+
+      .app-shell-nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 0.8rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 700;
+        backdrop-filter: blur(18px);
+      }
+    </style>
+
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-SKRKX4N8XS', { send_page_view: false });
+      window.gtag = window.gtag || function gtag(){window.dataLayer.push(arguments);};
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-SKRKX4N8XS', { send_page_view: false });
+
+      (function () {
+        var loadedScripts = {};
+
+        function preconnect(origin) {
+          if (!origin || document.head.querySelector('link[data-origin="' + origin + '"]')) return;
+          var link = document.createElement('link');
+          link.rel = 'preconnect';
+          link.href = origin;
+          link.crossOrigin = 'anonymous';
+          link.setAttribute('data-origin', origin);
+          document.head.appendChild(link);
+        }
+
+        function loadScript(src, onload) {
+          if (!src || loadedScripts[src]) {
+            if (typeof onload === 'function') onload();
+            return;
+          }
+          loadedScripts[src] = true;
+          var script = document.createElement('script');
+          script.async = true;
+          script.src = src;
+          if (typeof onload === 'function') script.onload = onload;
+          document.head.appendChild(script);
+        }
+
+        function schedule(task) {
+          if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(task, { timeout: 2500 });
+            return;
+          }
+          window.addEventListener('load', function () {
+            window.setTimeout(task, 0);
+          }, { once: true });
+        }
+
+        schedule(function () {
+          preconnect('https://www.googletagmanager.com');
+          preconnect('https://tracker.metricool.com');
+          window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+          loadScript('https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS');
+          loadScript('https://www.googletagmanager.com/gtm.js?id=GTM-PQTFJ3C3');
+          loadScript('https://tracker.metricool.com/resources/be.js', function () {
+            if (window.beTracker && typeof window.beTracker.t === 'function') {
+              window.beTracker.t({ hash: '986e8ab34d58c474dc4a0a3d51de41d6' });
+            }
+          });
+        });
+      })();
     </script>
 
-    <!-- Google Tag Manager -->
-    <link rel="preconnect" href="https://www.googletagmanager.com">
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-PQTFJ3C3');</script>
-    <!-- End Google Tag Manager -->
-
-    <!-- Metricool -->
-    <script>function loadScript(a){var b=document.getElementsByTagName("head")[0],c=document.createElement("script");c.type="text/javascript",c.src="https://tracker.metricool.com/resources/be.js",c.onreadystatechange=a,c.onload=a,b.appendChild(c)}loadScript(function(){beTracker.t({hash:"986e8ab34d58c474dc4a0a3d51de41d6"})});</script>
-
-    <!-- Security Headers -->
-    <!-- Note: X-Frame-Options doit être défini via en-tête HTTP (_headers), pas via meta -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
-    <!-- X-Frame-Options est défini dans public/_headers -->
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(), camera=()" />
-    
-    <!-- Structured Data JSON-LD -->
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -143,31 +267,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </script>
   </head>
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PQTFJ3C3"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-    <!-- Skip link pour accessibilité -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-PQTFJ3C3" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <a href="#main" class="skip-link">Ir para o conteúdo</a>
-    
+
     <div id="root">
-      <!-- ✅ SEO: Contenu statique visible pour les crawlers avant le chargement React -->
-      <!-- React remplace ce contenu à l'hydratation -->
-      <main id="main" style="max-width: 1200px; margin: 0 auto; padding: 2rem 1rem;">
-        <h1 style="font-size: 2.5rem; font-weight: bold; color: #111; margin-bottom: 1rem;">A Música da Segunda</h1>
-        <p style="font-size: 1.25rem; color: #555; margin-bottom: 2rem;">Nova música toda segunda-feira! Paródias musicais inteligentes sobre as notícias do Brasil.</p>
+      <main id="main" class="app-shell-fallback">
+        <h1>A Música da Segunda</h1>
+        <p>Nova música toda segunda-feira. Paródias musicais inteligentes sobre as notícias do Brasil, com humor, contexto e acesso rápido mesmo antes do React carregar.</p>
         <nav aria-label="Navegação principal">
-          <ul style="list-style: none; padding: 0; display: flex; gap: 1.5rem; flex-wrap: wrap;">
-            <li><a href="/musica/" style="color: #2563eb; font-weight: 600;">Todas as Músicas</a></li>
-            <li><a href="/sobre/" style="color: #2563eb; font-weight: 600;">Sobre</a></li>
-            <li><a href="/calendar/" style="color: #2563eb; font-weight: 600;">Calendário</a></li>
+          <ul class="app-shell-nav">
+            <li><a href="/musica/">Todas as músicas</a></li>
+            <li><a href="/sobre/">Sobre</a></li>
+            <li><a href="/roda/">Roda</a></li>
           </ul>
         </nav>
       </main>
     </div>
-    <script src="/pwa-install.js"></script>
+
     <script type="module" src="/src/main.jsx"></script>
-    
   </body>
 </html>
-

@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Music, Calendar, Play, Headphones, Video, Filter, Search } from 'lucide-react';
+import { Music, Calendar, Play, Headphones, Video, Filter, Search, Sparkles, ArrowUpRight, Disc3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSEO } from '@/hooks/useSEO';
+import DesktopPageShell, { DesktopMetric, DesktopSurface } from '@/components/DesktopPageShell';
 
 // Composant d'intégration YouTube (identique aux autres pages)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
@@ -71,6 +72,7 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
             src={embedSrc}
             title={title || 'YouTube Short'}
             frameBorder="0"
+            loading="lazy"
             referrerPolicy="strict-origin-when-cross-origin"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -87,6 +89,7 @@ function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
         src={embedSrc}
         title={title || 'YouTube'}
         frameBorder="0"
+        loading="lazy"
         referrerPolicy="strict-origin-when-cross-origin"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
@@ -193,23 +196,37 @@ export default function Blog() {
     type: 'website'
   });
 
+  const featuredSong = filteredSongs[0] || songs[0] || null;
+
   if (isLoading) {
     return (
-      <div className="p-5 max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-2">
-            Blog Musical
-          </h2>
-          <p className="text-gray-700 font-medium text-lg">
-            Histórias por trás de cada música
-          </p>
+      <div className="space-y-4 animate-pulse">
+        {/* Header skeleton */}
+        <div className="glass-panel desktop-shell-gradient rounded-[36px] p-6 xl:p-8">
+          <div className="h-8 w-48 rounded-full bg-white/10 mb-3" />
+          <div className="h-5 w-64 rounded-full bg-white/6" />
         </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-gray-700">Carregando posts do blog...</p>
+        {/* Card skeletons */}
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="glass-panel desktop-shell-gradient rounded-[28px] p-6 xl:p-8">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
+              <div className="space-y-4">
+                <div className="h-4 w-32 rounded-full bg-white/8" />
+                <div className="h-9 w-3/4 rounded-2xl bg-white/10" />
+                <div className="space-y-2">
+                  <div className="h-4 w-full rounded bg-white/6" />
+                  <div className="h-4 w-5/6 rounded bg-white/6" />
+                  <div className="h-4 w-4/6 rounded bg-white/6" />
+                </div>
+                <div className="flex gap-3">
+                  <div className="h-10 w-24 rounded-full bg-white/8" />
+                  <div className="h-10 w-28 rounded-full bg-white/8" />
+                </div>
+              </div>
+              <div className="aspect-video rounded-[24px] bg-white/6" />
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     );
   }
@@ -238,7 +255,153 @@ export default function Blog() {
   }
 
   return (
-    <div className="p-5 max-w-4xl mx-auto">
+    <>
+      <DesktopPageShell
+        badge={
+          <>
+            <Sparkles className="h-3.5 w-3.5 text-[#FDE047]" />
+            Blog Musical
+          </>
+        }
+        title="Histórias por trás de cada música"
+        description="Cada lançamento ganha contexto, descrição detalhada e acesso rápido às plataformas, mantendo o mesmo shell desktop da home."
+        stats={
+          <>
+            <DesktopMetric label="Posts no acervo" value={songs.length} accent />
+            <DesktopMetric label="Filtrados" value={filteredSongs.length} />
+            <DesktopMetric label="Meses ativos" value={availableMonths.length} />
+          </>
+        }
+        sideContent={
+          <>
+            <div className="glass-panel rounded-[28px] p-5">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">Filtro</p>
+              <div className="mt-4 space-y-3">
+                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                  <SelectTrigger className="border-white/10 bg-white/[0.04] text-white">
+                    <SelectValue placeholder="Selecione um mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os meses ({songs.length})</SelectItem>
+                    {availableMonths.map((month) => (
+                      <SelectItem key={month.key} value={month.key}>
+                        {month.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedMonth !== 'all' ? (
+                  <Button
+                    variant="outline"
+                    onClick={resetFilter}
+                    className="w-full rounded-full border-white/12 bg-white/5 text-white hover:bg-white/10 hover:text-white"
+                  >
+                    Limpar filtro
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+            {featuredSong ? (
+              <div className="glass-panel rounded-[28px] p-5">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">Em destaque</p>
+                <h2 className="mt-3 text-xl font-bold text-white">{featuredSong.title}</h2>
+                <p className="mt-1 text-sm text-white/55">{featuredSong.artist}</p>
+                <p className="mt-4 line-clamp-4 text-sm leading-7 text-white/60">
+                  {featuredSong.description || 'Descrição editorial em atualização.'}
+                </p>
+              </div>
+            ) : null}
+          </>
+        }
+      >
+        <div className="grid gap-6">
+          {filteredSongs.length > 0 ? filteredSongs.map((song) => {
+            const mondayDate = getMondayOfWeek(song.release_date);
+
+            return (
+              <DesktopSurface key={song.id}>
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
+                  <div className="space-y-5">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-white/50">
+                          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] text-white/65">
+                            <Calendar className="h-3.5 w-3.5 text-[#FDE047]" />
+                            {format(mondayDate, 'dd MMMM yyyy', { locale: ptBR })}
+                          </span>
+                          <span className="text-[11px] uppercase tracking-[0.22em] text-white/35">
+                            {song.artist}
+                          </span>
+                        </div>
+                        <h2 className="mt-4 text-3xl font-black text-white">{song.title}</h2>
+                      </div>
+
+                    </div>
+
+                    <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+                      <p className="text-[11px] uppercase tracking-[0.24em] text-white/38">Sobre a música</p>
+                      <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-white/68">
+                        {song.description || 'A descrição desta música será adicionada em breve.'}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      {song.spotify_url ? (
+                        <a href={song.spotify_url} target="_blank" rel="noopener noreferrer">
+                          <Button className="rounded-full bg-[#1DB954] px-5 py-5 text-white hover:bg-[#1ed760]">
+                            <Headphones className="mr-2 h-4 w-4" />
+                            Spotify
+                          </Button>
+                        </a>
+                      ) : null}
+                      {song.youtube_url ? (
+                        <a href={song.youtube_url} target="_blank" rel="noopener noreferrer">
+                          <Button className="rounded-full bg-[#FF0000] px-5 py-5 text-white hover:bg-[#cc0000]">
+                            <ArrowUpRight className="mr-2 h-4 w-4" />
+                            YouTube
+                          </Button>
+                        </a>
+                      ) : null}
+                      {song.tiktok_url ? (
+                        <Button
+                          onClick={() => handlePlayTikTok(song)}
+                          variant="outline"
+                          className="rounded-full border-white/12 bg-white/5 px-5 py-5 text-white hover:bg-white/10 hover:text-white"
+                        >
+                          <Video className="mr-2 h-4 w-4" />
+                          Ver vídeo
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="overflow-hidden rounded-[28px] border border-white/10 bg-black">
+                      <YouTubeEmbed
+                        youtube_music_url={song.youtube_music_url}
+                        youtube_url={song.youtube_url}
+                        title={song.title}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </DesktopSurface>
+            );
+          }) : (
+            <DesktopSurface className="text-center">
+              <Search className="mx-auto mb-4 h-12 w-12 text-white/35" />
+              <h3 className="text-xl font-semibold text-white">Nenhum artigo encontrado</h3>
+              <p className="mt-2 text-white/60">
+                {selectedMonth === 'all'
+                  ? 'Não há artigos no blog ainda.'
+                  : `Não há artigos publicados em ${availableMonths.find(m => m.key === selectedMonth)?.label}.`}
+              </p>
+            </DesktopSurface>
+          )}
+        </div>
+      </DesktopPageShell>
+
+      <div className="p-5 max-w-4xl mx-auto lg:hidden">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-2">
@@ -443,6 +606,7 @@ export default function Blog() {
           </div>
         )}
       </div>
+      </div>
 
       {/* ===== MODAL VIDÉO TIKTOK ===== */}
       {showVideoModal && selectedVideo && (
@@ -507,6 +671,6 @@ export default function Blog() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

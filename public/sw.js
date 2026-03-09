@@ -1,13 +1,17 @@
-const CACHE_VERSION = 'v7.0.1';
+const CACHE_VERSION = 'v9.0.0';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
+const SHELL_MANIFEST_URL = '/sw-assets.json';
 
 const CORE_URLS = [
   '/',
   '/index.html',
   '/offline.html',
   '/manifest.json',
-  '/pwa-install.js',
-  '/pwa-install.css'
+  '/sw-assets.json',
+  '/content/songs.json',
+  '/images/Caipivara_transp-removebg-preview.png',
+  '/icons/pwa/icon-192x192.png',
+  '/icons/pwa/icon-512x512.png'
 ];
 
 function normalizeUrl(url) {
@@ -19,31 +23,23 @@ function normalizeUrl(url) {
   }
 }
 
-async function discoverShellAssets() {
-  const assets = new Set();
-
+async function loadShellAssetsManifest() {
   try {
-    const response = await fetch('/index.html', { cache: 'no-store' });
-    if (!response.ok) return assets;
+    const response = await fetch(SHELL_MANIFEST_URL, { cache: 'no-store' });
+    if (!response.ok) return [];
 
-    const html = await response.text();
-    const assetRegex = /(?:href|src)="([^"]+\.(?:js|css))"/g;
-    let match;
+    const payload = await response.json();
+    if (!Array.isArray(payload?.assets)) return [];
 
-    while ((match = assetRegex.exec(html)) !== null) {
-      const pathname = normalizeUrl(match[1]);
-      if (pathname) assets.add(pathname);
-    }
+    return payload.assets.map((asset) => normalizeUrl(asset)).filter(Boolean);
   } catch {
-    // Best effort only.
+    return [];
   }
-
-  return assets;
 }
 
 async function precacheShell() {
   const cache = await caches.open(CACHE_NAME);
-  const shellAssets = await discoverShellAssets();
+  const shellAssets = await loadShellAssetsManifest();
   const urlsToCache = [...new Set([...CORE_URLS, ...shellAssets])];
 
   await Promise.all(
@@ -71,6 +67,7 @@ self.addEventListener('activate', (event) => {
             .map((cacheName) => caches.delete(cacheName))
         )
       ),
+      self.registration.navigationPreload?.enable?.().catch(() => undefined),
       self.clients.claim()
     ])
   );
@@ -90,28 +87,86 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  const pathname = url.pathname;
+  const isStaticAsset = /\.(?:css|js|woff2?|png|jpg|jpeg|webp|svg|ico)$/i.test(pathname);
+  const isContentPayload = pathname.startsWith('/content/') || pathname.includes('/api/');
+  const isImageRequest = request.destination === 'image';
+
   // HTML navigation: network-first with offline page fallback.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
+      (async () => {
+        try {
+          const preloadResponse = await event.preloadResponse;
+          if (preloadResponse) {
+            const copy = preloadResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            return preloadResponse;
+          }
+        } catch {
+          // Ignore preload failures.
+        }
+
+        return fetch(request)
+          .then((response) => {
+            if (response && response.ok) {
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            }
+            return response;
+          })
+          .catch(async () => {
+            const cache = await caches.open(CACHE_NAME);
+            return (
+              (await cache.match(request)) ||
+              (await cache.match('/offline.html')) ||
+              new Response('<h1>Offline</h1>', {
+                status: 503,
+                headers: { 'Content-Type': 'text/html; charset=utf-8' }
+              })
+            );
+          });
+      })()
+    );
+    return;
+  }
+
+  // Images and cover assets: cache-first to keep the weekly experience visible offline.
+  if (isImageRequest) {
+    event.respondWith(
+      caches.match(request).then(async (cached) => {
+        if (cached) return cached;
+        try {
+          const response = await fetch(request);
           if (response && response.ok) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
           return response;
-        })
-        .catch(async () => {
-          const cache = await caches.open(CACHE_NAME);
-          return (
-            (await cache.match(request)) ||
-            (await cache.match('/offline.html')) ||
-            new Response('<h1>Offline</h1>', {
-              status: 503,
-              headers: { 'Content-Type': 'text/html; charset=utf-8' }
-            })
-          );
-        })
+        } catch {
+          return new Response('', { status: 503 });
+        }
+      })
+    );
+    return;
+  }
+
+  // Song metadata and shell assets: stale-while-revalidate for a snappier PWA shell.
+  if (isStaticAsset || isContentPayload) {
+    event.respondWith(
+      caches.match(request).then(async (cached) => {
+        const networkFetch = fetch(request)
+          .then((response) => {
+            if (response && response.ok) {
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            }
+            return response;
+          })
+          .catch(() => cached || new Response('', { status: 503 }));
+
+        return cached || networkFetch;
+      })
     );
     return;
   }

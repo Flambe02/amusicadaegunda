@@ -7,6 +7,7 @@ import MenuDrawer from './MenuDrawer';
 export default function BottomNavigation() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isMonday = new Date().getDay() === 1;
 
   const navigationItems = [
     { 
@@ -75,10 +76,15 @@ export default function BottomNavigation() {
                     }
                   `}
                 >
-                  <item.icon 
-                    className={`w-6 h-6 mb-1 flex-shrink-0 transition-colors ${active ? 'text-white scale-110' : 'text-white/60'}`} 
-                    aria-hidden="true" 
-                  />
+                  <div className="relative">
+                    <item.icon
+                      className={`w-6 h-6 mb-1 flex-shrink-0 transition-colors ${active ? 'text-white scale-110' : 'text-white/60'}`}
+                      aria-hidden="true"
+                    />
+                    {isMonday && item.name === 'Home' && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#FDE047] rounded-full border border-black" aria-label="Nova música hoje!" />
+                    )}
+                  </div>
                   <span className={`text-[10px] font-medium text-center leading-tight ${active ? 'text-white font-semibold' : 'text-white/60'}`}>
                     {item.name}
                   </span>

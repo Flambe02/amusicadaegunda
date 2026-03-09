@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sem conexÃ£o - A MÃºsica da Segunda</title>
-  <meta name="theme-color" content="#FFD400" />
+  <title>Sem conexão - A Música da Segunda</title>
+  <meta name="theme-color" content="#050505" />
   <style>
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
+      --bg: #050505;
+      --card: rgba(255, 255, 255, 0.06);
+      --text: #f8fafc;
+      --muted: rgba(248, 250, 252, 0.68);
       --brand: #32a2dc;
-      --yellow: #FFD400;
+      --yellow: #ffd400;
     }
     * { box-sizing: border-box; margin: 0; }
     body {
@@ -20,56 +20,66 @@
       display: grid;
       place-items: center;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      background: radial-gradient(ellipse at top, #1a2744, var(--bg));
+      background:
+        radial-gradient(circle at top, rgba(253, 212, 0, 0.18), transparent 32%),
+        linear-gradient(180deg, #101010 0%, var(--bg) 100%);
       color: var(--text);
       padding: 24px;
     }
     main {
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      background: rgba(17, 17, 17, 0.8);
+      backdrop-filter: blur(16px);
+      padding: 28px 22px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
     }
     .icon {
-      font-size: 3rem;
-      margin-bottom: 16px;
+      width: 92px;
+      height: 92px;
+      margin: 0 auto 18px;
       display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 14px 30px rgba(0,0,0,0.28));
     }
     h1 {
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       font-weight: 900;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .subtitle {
       color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin-bottom: 28px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
     }
-    /* Last song card */
     #last-song {
       display: none;
       background: var(--card);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       text-align: left;
       border: 1px solid rgba(255,255,255,0.08);
     }
     #last-song.visible { display: flex; align-items: center; gap: 14px; }
     .last-song-label {
-      font-size: 0.7rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--yellow);
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
       display: block;
       text-align: left;
     }
     .thumb {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
+      width: 58px;
+      height: 58px;
+      border-radius: 14px;
       object-fit: cover;
       background: #334155;
       flex-shrink: 0;
@@ -81,31 +91,43 @@
     .song-info { flex: 1; min-width: 0; }
     .song-title {
       font-weight: 800;
-      font-size: 0.95rem;
+      font-size: 0.98rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .song-artist {
       color: var(--muted);
-      font-size: 0.8rem;
-      margin-top: 2px;
+      font-size: 0.83rem;
+      margin-top: 3px;
     }
-    a.btn {
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
       display: inline-block;
       background: var(--brand);
       color: #fff;
       text-decoration: none;
       font-weight: 700;
       font-size: 0.95rem;
-      padding: 12px 28px;
+      padding: 12px 24px;
       border-radius: 999px;
       transition: opacity 0.2s;
+      border: 0;
+      cursor: pointer;
     }
-    a.btn:active { opacity: 0.8; }
+    .btn.secondary {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn:active { opacity: 0.82; }
     .status {
       margin-top: 20px;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       color: var(--muted);
       display: flex;
       align-items: center;
@@ -113,7 +135,8 @@
       gap: 6px;
     }
     .dot {
-      width: 6px; height: 6px;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: #ef4444;
       animation: pulse 1.5s ease-in-out infinite;
@@ -126,20 +149,23 @@
 </head>
 <body>
   <main>
-    <span class="icon">ðŸŽµ</span>
-    <h1>VocÃª estÃ¡ offline</h1>
-    <p class="subtitle">Sem internet no momento. Assim que a conexÃ£o voltar, o app atualiza automaticamente.</p>
+    <img class="icon" src="/images/Caipivara_transp-removebg-preview.png" alt="A Música da Segunda" />
+    <h1>Você está offline</h1>
+    <p class="subtitle">Sem internet no momento. O app continua disponível com o shell local e volta a sincronizar assim que a conexão retornar.</p>
 
-    <span class="last-song-label" id="last-label" style="display:none">Ãšltima mÃºsica vista</span>
+    <span class="last-song-label" id="last-label" style="display:none">Última música vista</span>
     <div id="last-song">
-      <div class="thumb" id="thumb">ðŸŽ¶</div>
+      <div class="thumb" id="thumb">??</div>
       <div class="song-info">
         <div class="song-title" id="song-title"></div>
         <div class="song-artist" id="song-artist"></div>
       </div>
     </div>
 
-    <a class="btn" href="/">Tentar novamente</a>
+    <div class="actions">
+      <button class="btn" id="retry-btn" type="button">Tentar novamente</button>
+      <a class="btn secondary" href="/">Ir para o início</a>
+    </div>
 
     <p class="status">
       <span class="dot"></span>
@@ -148,29 +174,83 @@
   </main>
 
   <script>
-    try {
-      const raw = localStorage.getItem('last-song-cache');
-      if (raw) {
-        const song = JSON.parse(raw);
-        if (song && song.title) {
-          document.getElementById('last-label').style.display = 'block';
-          document.getElementById('last-song').classList.add('visible');
-          document.getElementById('song-title').textContent = song.title;
-          document.getElementById('song-artist').textContent = song.artist || '';
-          if (song.thumbnail) {
-            const img = document.createElement('img');
-            img.src = song.thumbnail;
-            img.alt = song.title;
-            img.className = 'thumb';
-            img.onerror = function() { this.style.display = 'none'; };
-            document.getElementById('thumb').replaceWith(img);
-          }
-        }
-      }
-    } catch {}
+    const DB_NAME = 'musica-da-segunda-offline';
+    const STORE_NAME = 'app-state';
+    const LAST_SONG_KEY = 'last-song';
 
-    // Auto-reload when back online
-    window.addEventListener('online', () => window.location.href = '/');
+    function readLastSongFromIndexedDB() {
+      if (!('indexedDB' in window)) return Promise.resolve(null);
+
+      return new Promise((resolve) => {
+        const request = indexedDB.open(DB_NAME, 1);
+
+        request.onupgradeneeded = function () {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+
+        request.onerror = function () {
+          resolve(null);
+        };
+
+        request.onsuccess = function () {
+          const db = request.result;
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const getRequest = tx.objectStore(STORE_NAME).get(LAST_SONG_KEY);
+
+          getRequest.onsuccess = function () {
+            resolve(getRequest.result || null);
+            db.close();
+          };
+
+          getRequest.onerror = function () {
+            resolve(null);
+            db.close();
+          };
+        };
+      });
+    }
+
+    function renderLastSong(song) {
+      if (!song || !song.title) return;
+
+      document.getElementById('last-label').style.display = 'block';
+      document.getElementById('last-song').classList.add('visible');
+      document.getElementById('song-title').textContent = song.title;
+      document.getElementById('song-artist').textContent = song.artist || '';
+
+      if (song.thumbnail) {
+        const img = document.createElement('img');
+        img.src = song.thumbnail;
+        img.alt = song.title;
+        img.className = 'thumb';
+        img.onerror = function () { this.style.display = 'none'; };
+        document.getElementById('thumb').replaceWith(img);
+      }
+    }
+
+    readLastSongFromIndexedDB().then((song) => {
+      if (song) {
+        renderLastSong(song);
+        return;
+      }
+
+      try {
+        const raw = localStorage.getItem('last-song-cache');
+        if (raw) renderLastSong(JSON.parse(raw));
+      } catch {}
+    });
+
+    document.getElementById('retry-btn').addEventListener('click', function () {
+      window.location.href = '/';
+    });
+
+    window.addEventListener('online', function () {
+      window.location.href = '/';
+    });
   </script>
 </body>
 </html>
+

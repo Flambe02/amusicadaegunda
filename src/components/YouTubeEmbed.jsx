@@ -9,10 +9,22 @@ export default function YouTubeEmbed({
   useFacade = false,
   autoplayOnActivate = false,
   thumbnailQuality = 'hqdefault',
-  loading = 'lazy'
+  loading = 'lazy',
+  forceActivated = false,
+  shortMaxWidth = 400,
+  startMuted = false,
+  playerStateRef = null,
+  onActivatedChange,
+  onMuteChange,
+  portraitMode = false,
 }) {
   const [activated, setActivated] = useState(false);
+  const [isMuted, setIsMuted] = useState(startMuted);
   const iframeRef = useRef(null);
+
+  useEffect(() => {
+    if (forceActivated) setActivated(true);
+  }, [forceActivated]);
 
   const watchUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
   const musicUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
@@ -30,16 +42,19 @@ export default function YouTubeEmbed({
 
   useEffect(() => {
     setActivated(false);
+    setIsMuted(startMuted);
   }, [youtubeMusicUrl, youtubeUrl, preferWatchUrl]);
 
   const isShort = targetUrl.includes('/shorts/');
+  const portraitFrameAspect = isShort ? '9/16' : '16/9';
   const shouldAutoplay = useFacade && activated && autoplayOnActivate;
   const autoplay = shouldAutoplay ? '&autoplay=1' : '';
+  const muted = startMuted ? '&mute=1' : '';
   const base = 'https://www.youtube-nocookie.com/embed';
   const embedSrc = info
     ? info.type === 'video'
-      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${autoplay}`
-      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${autoplay}`
+      ? `${base}/${info.id}?rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1&loop=1&playlist=${info.id}${autoplay}${muted}`
+      : `${base}/videoseries?list=${info.id}&rel=0&modestbranding=1&playsinline=1&controls=1&enablejsapi=1${autoplay}${muted}`
     : '';
 
   const thumbnailUrl =
@@ -53,6 +68,31 @@ export default function YouTubeEmbed({
     );
   };
 
+  const sendCommand = (func) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func, args: [] }),
+      '*'
+    );
+  };
+
+  const mute = () => {
+    sendCommand('mute');
+    setIsMuted(true);
+  };
+
+  const unmute = () => {
+    sendCommand('unMute');
+    setIsMuted(false);
+  };
+
+  const toggleMute = () => {
+    if (isMuted) {
+      unmute();
+      return;
+    }
+    mute();
+  };
+
   useEffect(() => {
     if (!shouldAutoplay) return undefined;
     const t1 = setTimeout(() => attemptPlay(), 200);
@@ -62,6 +102,43 @@ export default function YouTubeEmbed({
       clearTimeout(t2);
     };
   }, [shouldAutoplay, info?.id]);
+
+  useEffect(() => {
+    if (!activated) return;
+    if (isMuted) {
+      const timer = setTimeout(() => mute(), 150);
+      return () => clearTimeout(timer);
+    }
+    const timer = setTimeout(() => unmute(), 150);
+    return () => clearTimeout(timer);
+  }, [activated, isMuted]);
+
+  useEffect(() => {
+    onActivatedChange?.(activated);
+  }, [activated, onActivatedChange]);
+
+  useEffect(() => {
+    onMuteChange?.(isMuted);
+  }, [isMuted, onMuteChange]);
+
+  useEffect(() => {
+    if (!playerStateRef) return;
+    playerStateRef.current = {
+      activated,
+      isMuted,
+      play: () => sendCommand('playVideo'),
+      pause: () => sendCommand('pauseVideo'),
+      stop: () => sendCommand('stopVideo'),
+      mute,
+      unmute,
+      toggleMute,
+    };
+    return () => {
+      if (playerStateRef) {
+        playerStateRef.current = null;
+      }
+    };
+  }, [activated, isMuted, playerStateRef]);
 
   if (!info) {
     const hasUrl = primaryUrl || fallbackUrl;
@@ -76,26 +153,43 @@ export default function YouTubeEmbed({
   }
 
   if (!useFacade || activated) {
-    if (isShort) {
+    if (isShort || portraitMode) {
       return (
-        <div className="w-full flex justify-center">
-          <div
-            className="relative rounded-lg overflow-hidden shadow-lg"
-            style={{ width: '100%', maxWidth: '400px', aspectRatio: '9/16' }}
-          >
-            <iframe
-              ref={iframeRef}
-              className="absolute top-0 left-0 w-full h-full"
-              src={embedSrc}
-              title={title || 'YouTube Short'}
-              frameBorder="0"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              loading={loading}
-              onLoad={attemptPlay}
-            />
-          </div>
+        <div className="flex h-full w-full justify-center">
+          {portraitMode && !isShort
+            ? renderPortraitFrame(
+                <iframe
+                  ref={iframeRef}
+                  className="h-full w-full bg-black"
+                  src={embedSrc}
+                  title={title || 'YouTube Short'}
+                  frameBorder="0"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading={loading}
+                  onLoad={attemptPlay}
+                />
+              )
+            : (
+              <div
+                className="relative h-full w-full overflow-hidden rounded-lg bg-black shadow-lg"
+                style={{ width: '100%', maxWidth: `${shortMaxWidth}px`, aspectRatio: '9/16', maxHeight: '100%' }}
+              >
+                <iframe
+                  ref={iframeRef}
+                  className="absolute left-0 top-0 h-full w-full bg-black"
+                  src={embedSrc}
+                  title={title || 'YouTube Short'}
+                  frameBorder="0"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading={loading}
+                  onLoad={attemptPlay}
+                />
+              </div>
+            )}
         </div>
       );
     }
@@ -127,11 +221,60 @@ export default function YouTubeEmbed({
     }
   };
 
+  const renderPortraitFrame = (content, { showPlayBadge = false } = {}) => (
+    <div
+      className="group relative h-full w-full overflow-hidden rounded-lg bg-black shadow-2xl"
+      style={{
+        maxWidth: `${shortMaxWidth}px`,
+        aspectRatio: '9/16',
+        maxHeight: '100%',
+      }}
+    >
+      {thumbnailUrl ? (
+        <>
+          <img
+            src={thumbnailUrl}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full scale-110 object-cover blur-3xl opacity-45"
+            loading="eager"
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.42),rgba(0,0,0,0.18)_40%,rgba(0,0,0,0.52))]" />
+        </>
+      ) : null}
+
+      <div className="absolute inset-0 flex items-center justify-center p-3">
+        <div
+          className="relative w-full overflow-hidden rounded-[28px] bg-black"
+          style={{
+            aspectRatio: portraitFrameAspect,
+            maxHeight: '100%',
+          }}
+        >
+          {content}
+        </div>
+      </div>
+
+      {showPlayBadge ? (
+        <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
+          <div className="rounded-full border border-white/10 bg-black/44 px-4 py-2 text-sm font-semibold text-white backdrop-blur-xl">
+            Toque para ouvir
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+
   if (isShort) {
     return (
       <div
-        className="relative rounded-lg overflow-hidden shadow-2xl cursor-pointer group"
-        style={{ width: '100%', aspectRatio: '9/16', minHeight: 'min(500px, 70vh)', maxHeight: '70vh' }}
+        className="relative w-full h-full rounded-lg overflow-hidden shadow-2xl cursor-pointer group"
+        style={{
+          maxWidth: `${shortMaxWidth}px`,
+          aspectRatio: '9/16',
+          maxHeight: '100%',
+        }}
         onClick={activateVideo}
         onKeyDown={handleKeyActivate}
         role="button"
@@ -154,6 +297,34 @@ export default function YouTubeEmbed({
             </svg>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (portraitMode) {
+    return (
+      <div
+        className="h-full w-full cursor-pointer"
+        onClick={activateVideo}
+        onKeyDown={handleKeyActivate}
+        role="button"
+        tabIndex={0}
+        aria-label={`Reproduzir ${title || 'video'}`}
+      >
+        {renderPortraitFrame(
+          thumbnailUrl ? (
+            <img
+              src={thumbnailUrl}
+              alt={title || 'YouTube'}
+              className="h-full w-full object-contain"
+              loading="eager"
+              fetchPriority="high"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-900" />
+          ),
+          { showPlayBadge: true }
+        )}
       </div>
     );
   }

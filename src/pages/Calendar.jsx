@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Song } from '@/api/entities';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, addDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Music, Play } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Music, Play, Sparkles, CalendarDays, Disc3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import VisuallyHidden from "@/components/ui/VisuallyHidden";
 import SongPlayer from '../components/SongPlayer';
 import '../styles/tiktok-optimized.css';
 import { useSEO } from '../hooks/useSEO';
+import DesktopPageShell, { DesktopMetric, DesktopSurface } from '@/components/DesktopPageShell';
 
 export default function Calendar() {
   const [songs, setSongs] = useState([]);
@@ -197,6 +198,11 @@ export default function Calendar() {
   }
 
   const allDaysToShow = getAllDaysToShow();
+  const monthSongs = songs.filter(song => {
+    const songDate = parseISO(song.release_date);
+    return songDate.getMonth() === currentDate.getMonth() &&
+      songDate.getFullYear() === currentDate.getFullYear();
+  });
 
   const handleSongClick = (song) => {
     if (song && song.id && song.title) {
@@ -208,8 +214,156 @@ export default function Calendar() {
 
   return (
     <>
+      <DesktopPageShell
+        badge={
+          <>
+            <Sparkles className="h-3.5 w-3.5 text-[#FDE047]" />
+            Calendário Musical
+          </>
+        }
+        title={format(currentDate, "MMMM yyyy", { locale: ptBR })}
+        description="Navegação mensal no mesmo shell desktop da home, com o calendário completo das segundas-feiras e acesso direto às músicas publicadas."
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => navigateMonth(-1)}
+              className="rounded-full border-white/12 bg-white/5 px-5 py-6 text-sm font-semibold text-white hover:bg-white/10 hover:text-white"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Mês anterior
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigateMonth(1)}
+              className="rounded-full border-white/12 bg-white/5 px-5 py-6 text-sm font-semibold text-white hover:bg-white/10 hover:text-white"
+            >
+              Próximo mês
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </>
+        }
+        stats={
+          <>
+            <DesktopMetric label="Faixas no mês" value={monthSongs.length} accent />
+            <DesktopMetric label="Segundas no grid" value={allDaysToShow.filter(isDateMonday).length} />
+            <DesktopMetric label="Última publicada" value={getLatestPublishedSong() ? 'Ativa' : 'Aguardando'} />
+          </>
+        }
+        sideContent={
+          <div className="glass-panel rounded-[28px] p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FDE047]/14 text-[#FDE047]">
+                <CalendarDays className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">Legenda rápida</p>
+                <p className="text-sm text-white/55">Publicada, prevista e arquivos no mesmo plano.</p>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3 text-sm text-white/60">
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full bg-[#FDE047]" />
+                Música publicada
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full border border-dashed border-white/40" />
+                Segunda-feira aguardando música
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="h-3 w-3 rounded-full bg-white/25" />
+                Dias sem lançamento
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_360px]">
+          <DesktopSurface className="overflow-hidden">
+            <div className="mb-5 grid grid-cols-7 gap-2 text-center text-[11px] uppercase tracking-[0.22em] text-white/38">
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                <div key={day} className="py-2">{day}</div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {allDaysToShow.map(day => {
+                const song = getSongForDate(day);
+                const isMondayDay = isDateMonday(day);
+                const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+
+                return (
+                  <button
+                    key={day.toISOString()}
+                    type="button"
+                    onClick={() => song && handleSongClick(song)}
+                    className={`min-h-[104px] rounded-[24px] border p-3 text-left transition-all duration-300 ${
+                      song
+                        ? 'border-[#FDE047]/25 bg-[#FDE047]/10 hover:-translate-y-1 hover:bg-[#FDE047]/14'
+                        : isMondayDay
+                          ? 'border-dashed border-white/20 bg-white/[0.04]'
+                          : 'border-white/8 bg-white/[0.03]'
+                    } ${!isCurrentMonth ? 'opacity-35' : ''}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-white">{format(day, 'd')}</span>
+                      {song ? (
+                        <Disc3 className="h-4 w-4 text-[#FDE047]" />
+                      ) : isMondayDay && isCurrentMonth ? (
+                        <span className="h-2.5 w-2.5 rounded-full bg-white/45" />
+                      ) : null}
+                    </div>
+                    <div className="mt-4">
+                      {song ? (
+                        <>
+                          <p className="line-clamp-2 text-sm font-semibold text-white">{song.title}</p>
+                          <p className="mt-1 line-clamp-1 text-xs text-white/55">{song.artist}</p>
+                        </>
+                      ) : (
+                        <p className="text-xs uppercase tracking-[0.18em] text-white/32">
+                          {isMondayDay && isCurrentMonth ? 'Segunda' : 'Sem lançamento'}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </DesktopSurface>
+
+          <DesktopSurface>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-white/38">Músicas do mês</p>
+            <div className="mt-4 space-y-3">
+              {monthSongs.length > 0 ? monthSongs.map(song => (
+                <button
+                  key={song.id}
+                  type="button"
+                  onClick={() => handleSongClick(song)}
+                  className="flex w-full items-center gap-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:bg-white/[0.07]"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FDE047]/14 text-[#FDE047]">
+                    <Play className="h-5 w-5 fill-current" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-white">{song.title}</p>
+                    <p className="truncate text-xs text-white/55">{song.artist}</p>
+                  </div>
+                  <p className="text-xs text-white/38">{format(parseISO(song.release_date), 'dd/MM')}</p>
+                </button>
+              )) : (
+                <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-6 text-center">
+                  <Music className="mx-auto mb-3 h-8 w-8 text-white/35" />
+                  <p className="text-sm text-white/60">
+                    Nenhuma música publicada em {format(currentDate, "MMMM yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+              )}
+            </div>
+          </DesktopSurface>
+        </div>
+      </DesktopPageShell>
       {/* Layout Desktop - Inchangé */}
-      <div className="hidden lg:block p-5 max-w-md mx-auto">
+      <div className="hidden p-5 max-w-md mx-auto">
         {/* Header Mobile uniquement */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-4 mb-4">
