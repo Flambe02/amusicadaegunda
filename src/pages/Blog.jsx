@@ -200,21 +200,33 @@ export default function Blog() {
 
   if (isLoading) {
     return (
-      <div className="p-5 max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-4xl md:text-5xl font-black text-gray-900 mb-2">
-            Blog Musical
-          </h2>
-          <p className="text-gray-700 font-medium text-lg">
-            Histórias por trás de cada música
-          </p>
+      <div className="space-y-4 animate-pulse">
+        {/* Header skeleton */}
+        <div className="glass-panel desktop-shell-gradient rounded-[36px] p-6 xl:p-8">
+          <div className="h-8 w-48 rounded-full bg-white/10 mb-3" />
+          <div className="h-5 w-64 rounded-full bg-white/6" />
         </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-gray-700">Carregando posts do blog...</p>
+        {/* Card skeletons */}
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="glass-panel desktop-shell-gradient rounded-[28px] p-6 xl:p-8">
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_360px]">
+              <div className="space-y-4">
+                <div className="h-4 w-32 rounded-full bg-white/8" />
+                <div className="h-9 w-3/4 rounded-2xl bg-white/10" />
+                <div className="space-y-2">
+                  <div className="h-4 w-full rounded bg-white/6" />
+                  <div className="h-4 w-5/6 rounded bg-white/6" />
+                  <div className="h-4 w-4/6 rounded bg-white/6" />
+                </div>
+                <div className="flex gap-3">
+                  <div className="h-10 w-24 rounded-full bg-white/8" />
+                  <div className="h-10 w-28 rounded-full bg-white/8" />
+                </div>
+              </div>
+              <div className="aspect-video rounded-[24px] bg-white/6" />
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     );
   }

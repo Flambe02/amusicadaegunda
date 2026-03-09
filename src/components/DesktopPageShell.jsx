@@ -34,7 +34,7 @@ export default function DesktopPageShell({
   return (
     <div className={cn('hidden lg:block space-y-8', className)}>
       <DesktopSurface className="desktop-shell-gradient overflow-hidden">
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1.4fr)_340px]">
+        <div className="grid gap-8 2xl:grid-cols-[minmax(0,1.4fr)_340px]">
           <div className="space-y-6">
             {badge ? (
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-medium uppercase tracking-[0.28em] text-white/68">
@@ -43,7 +43,7 @@ export default function DesktopPageShell({
             ) : null}
 
             <div className="space-y-4">
-              <h1 className="max-w-[14ch] text-5xl font-black leading-[0.95] tracking-tight text-white 2xl:text-6xl">
+              <h1 className="max-w-[14ch] text-[clamp(2.8rem,4vw,4.3rem)] font-black leading-[0.95] tracking-tight text-white 2xl:text-6xl">
                 {title}
               </h1>
               {description ? (
@@ -54,7 +54,7 @@ export default function DesktopPageShell({
             </div>
 
             {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
-            {stats ? <div className="grid gap-4 md:grid-cols-3">{stats}</div> : null}
+            {stats ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{stats}</div> : null}
           </div>
 
           {sideContent ? <div className="space-y-4">{sideContent}</div> : null}

@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- Favicon et Icônes -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/pwa/favicon-16x16.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/pwa/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="48x48" href="/icons/pwa/favicon-48x48.png" />
-    <link rel="icon" type="image/png" sizes="64x64" href="/icons/pwa/favicon-64x64.png" />
+    <link rel="icon" type="image/png" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="shortcut icon" type="image/png" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/images/Caipivara_transp-removebg-preview.png" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/images/Caipivara_transp-removebg-preview.png" />
     <link rel="icon" type="image/png" sizes="128x128" href="/icons/pwa/icon-128x128.png" />
     <link rel="icon" type="image/png" sizes="256x256" href="/icons/pwa/icon-256x256.png" />
     
@@ -44,6 +45,32 @@
     <link rel="canonical" href="https://www.amusicadasegunda.com/" />
     
     <!-- SEO Principal -->
+    <script>
+      (function () {
+        function sanitizeStandaloneTitle() {
+          document.title = document.title
+            .replace(/^A M(?:\u00fasica|usica) da Segunda\s*[-|:]\s*/i, '')
+            .replace(/\s*[-|:]\s*A M(?:\u00fasica|usica) da Segunda$/i, '')
+            .trim() || 'Inicio';
+        }
+
+        var supportsMatchMedia = typeof window.matchMedia === 'function';
+        var isStandalone = supportsMatchMedia && (
+          window.matchMedia('(display-mode: standalone)').matches ||
+          window.matchMedia('(display-mode: window-controls-overlay)').matches
+        );
+
+        isStandalone = isStandalone || window.navigator.standalone === true || document.referrer.indexOf('android-app://') === 0;
+
+        if (!isStandalone) {
+          return;
+        }
+
+        window.addEventListener('DOMContentLoaded', sanitizeStandaloneTitle, { once: true });
+        window.addEventListener('pageshow', sanitizeStandaloneTitle, { once: true });
+        setTimeout(sanitizeStandaloneTitle, 0);
+      })();
+    </script>
     <title>A Música da Segunda | Paródias Musicais do Brasil | Nova Música Toda Segunda</title>
     <meta name="description" content="A Música da Segunda - Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira com humor e criatividade." />
     <meta name="keywords" content="música da segunda, paródias musicais, notícias do brasil, música brasileira, descoberta musical, nova música toda segunda, paródias inteligentes" />
@@ -143,13 +170,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       }
     }
     </script>
-    <script type="module" crossorigin src="/assets/index-BGo2co11.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/vendor-react-CIPO2D4l.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-zx-X0Hh-.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-BqLUoT64.js">
+    <script type="module" crossorigin src="/assets/index-Cwqjbg8O.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-DNVYbnJM.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-ui-D8WrYV8a.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-supabase-HJ9lvb4X.js">
     <link rel="modulepreload" crossorigin href="/assets/vendor-date-mUadzwGa.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-motion-Bx86COJP.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-DkI_HNIG.css">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-motion-XkFPCHrJ.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CIIx7OgW.css">
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
@@ -183,7 +210,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </nav>
       </main>
     </div>
-    <script src="/pwa-install.js"></script>
     
   </body>
 </html>

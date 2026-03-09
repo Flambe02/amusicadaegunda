@@ -14,7 +14,6 @@ import { lazy } from 'react';
 import Home from '../pages/Home';
 
 // Toutes les autres routes sont lazy-loaded
-const Calendar = lazy(() => import('../pages/Calendar'));
 const RodaDaSegunda = lazy(() => import('../pages/RodaDaSegunda'));
 const ProtectedAdmin = lazy(() => import('../components/ProtectedAdmin'));
 const Sobre = lazy(() => import('../pages/Sobre'));
@@ -39,16 +38,6 @@ export const ROUTES = [
     component: Home,
     name: 'Home',
     seo: null // SEO géré directement dans Home.jsx pour éviter les doublons
-  },
-  {
-    path: '/calendar',
-    component: Calendar,
-    name: 'Calendar',
-    seo: {
-      title: 'Calendário Musical - A Música da Segunda',
-      description: 'Calendário completo de todas as músicas publicadas. Explore a história musical do projeto.',
-      keywords: 'calendário musical, músicas, histórico, publicação semanal'
-    }
   },
   {
     path: '/roda',
@@ -227,4 +216,5 @@ export function getRouteSEO(routeName) {
   const route = ROUTES.find(r => r.name === routeName);
   return route ? route.seo : null;
 }
+
 

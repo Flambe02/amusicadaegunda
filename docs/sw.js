@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v7.0.1';
+const CACHE_VERSION = 'v8.0.0';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
 
 const CORE_URLS = [
@@ -6,8 +6,9 @@ const CORE_URLS = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
-  '/pwa-install.js',
-  '/pwa-install.css'
+  '/content/songs.json',
+  '/icons/pwa/icon-192x192.png',
+  '/icons/pwa/icon-512x512.png'
 ];
 
 function normalizeUrl(url) {
@@ -90,6 +91,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  const pathname = url.pathname;
+  const isStaticAsset = /\.(?:css|js|woff2?|png|jpg|jpeg|webp|svg|ico)$/i.test(pathname);
+  const isContentPayload = pathname.startsWith('/content/') || pathname.includes('/api/');
+  const isImageRequest = request.destination === 'image';
+
   // HTML navigation: network-first with offline page fallback.
   if (request.mode === 'navigate') {
     event.respondWith(
@@ -112,6 +118,46 @@ self.addEventListener('fetch', (event) => {
             })
           );
         })
+    );
+    return;
+  }
+
+  // Images and cover assets: cache-first to keep the weekly experience visible offline.
+  if (isImageRequest) {
+    event.respondWith(
+      caches.match(request).then(async (cached) => {
+        if (cached) return cached;
+        try {
+          const response = await fetch(request);
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        } catch {
+          return new Response('', { status: 503 });
+        }
+      })
+    );
+    return;
+  }
+
+  // Song metadata and shell assets: stale-while-revalidate for a snappier PWA shell.
+  if (isStaticAsset || isContentPayload) {
+    event.respondWith(
+      caches.match(request).then(async (cached) => {
+        const networkFetch = fetch(request)
+          .then((response) => {
+            if (response && response.ok) {
+              const copy = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            }
+            return response;
+          })
+          .catch(() => cached || new Response('', { status: 503 }));
+
+        return cached || networkFetch;
+      })
     );
     return;
   }

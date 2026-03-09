@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Calendar, Info, Mail, Search } from 'lucide-react';
+import { FileText, Info, Search, Home, Gift, ListMusic } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -10,103 +10,83 @@ import {
 } from './ui/drawer';
 import { createPageUrl } from '@/utils';
 
-export default function MenuDrawer({ 
-  open, 
-  onOpenChange 
+export default function MenuDrawer({
+  open,
+  onOpenChange
 }) {
   const menuItems = [
     {
-      name: 'Pesquisar',
-      url: createPageUrl('Search'),
-      icon: Search,
-      description: 'Encontre uma mÃºsica'
+      name: 'Início',
+      url: createPageUrl('Home'),
+      icon: Home,
+      description: 'Voltar para a música da semana'
     },
     {
-      name: 'Blog Musical',
+      name: 'Roda',
+      url: createPageUrl('Roda'),
+      icon: Gift,
+      description: 'Descobrir uma música ao acaso'
+    },
+    {
+      name: 'Playlist',
+      url: createPageUrl('Playlist'),
+      icon: ListMusic,
+      description: 'Ouvir todo o catálogo'
+    },
+    {
+      name: 'Blog',
       url: createPageUrl('Blog'),
       icon: FileText,
-      description: 'Artigos e notÃ­cias sobre mÃºsica'
+      description: 'Histórias por trás das músicas'
     },
     {
-      name: 'Agenda',
-      url: createPageUrl('Calendar'),
-      icon: Calendar,
-      description: 'CalendÃ¡rio de mÃºsicas'
+      name: 'Pesquisa',
+      url: createPageUrl('Search'),
+      icon: Search,
+      description: 'Encontrar uma música'
     },
     {
-      name: 'Sobre / Nossa MissÃ£o',
+      name: 'Quem Somos',
       url: createPageUrl('Sobre'),
       icon: Info,
-      description: 'Descubra nossa histÃ³ria'
-    },
-    {
-      name: 'Contato',
-      url: 'mailto:contact@amusicadasegunda.com',
-      icon: Mail,
-      description: 'Envie-nos uma mensagem',
-      isExternal: true
+      description: 'Conhecer a história do projeto'
     },
   ];
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
-      <DrawerContent className="bg-black/95 backdrop-blur-xl border-t border-white/20 max-h-[85vh]">
-        {/* Handle bar */}
+      <DrawerContent className="max-h-[85vh] border-t border-white/20 bg-black/95 backdrop-blur-xl">
         <div className="mx-auto mt-4 h-1.5 w-16 rounded-full bg-white/30" />
-        
-        {/* Header avec titre */}
-        <DrawerHeader className="px-6 pt-4 pb-2">
-          <DrawerTitle className="text-xl font-bold text-white flex items-center gap-3">
+
+        <DrawerHeader className="px-6 pb-2 pt-4">
+          <DrawerTitle className="flex items-center gap-3 text-xl font-bold text-white">
             <span>Menu</span>
           </DrawerTitle>
           <DrawerDescription className="sr-only">
-            Menu principal de navigation mobile.
+            Menu principal de navegação mobile.
           </DrawerDescription>
         </DrawerHeader>
-        
-        {/* Liste des liens */}
-        <div className="px-6 pb-6 flex-1 overflow-y-auto">
+
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
           <div className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
-              
-              if (item.isExternal) {
-                return (
-                  <a
-                    key={item.name}
-                    href={item.url}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 active:scale-95 touch-manipulation group"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
-                      <Icon className="w-6 h-6 text-white drop-shadow-sm" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-semibold text-base mb-1 drop-shadow-sm">
-                        {item.name}
-                      </h3>
-                      <p className="text-white/70 text-sm drop-shadow-sm">
-                        {item.description}
-                      </p>
-                    </div>
-                  </a>
-                );
-              }
-              
+
               return (
                 <Link
                   key={item.name}
                   to={item.url}
                   onClick={() => onOpenChange(false)}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-200 active:scale-95 touch-manipulation group"
+                  className="group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 transition-all duration-200 active:scale-95 touch-manipulation hover:bg-white/10"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
-                    <Icon className="w-6 h-6 text-white" />
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 transition-colors group-hover:bg-white/20">
+                    <Icon className="h-6 w-6 text-white" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-white font-semibold text-base mb-1">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="mb-1 text-base font-semibold text-white">
                       {item.name}
                     </h3>
-                    <p className="text-white/60 text-sm">
+                    <p className="text-sm text-white/60">
                       {item.description}
                     </p>
                   </div>
@@ -119,4 +99,3 @@ export default function MenuDrawer({
     </Drawer>
   );
 }
-

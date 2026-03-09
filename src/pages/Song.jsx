@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { useSEO } from '../hooks/useSEO';
@@ -7,7 +7,6 @@ import { Helmet } from 'react-helmet-async';
 import {
   Music,
   Calendar,
-  User,
   Disc3,
   FileText,
   Sparkles,
@@ -15,7 +14,6 @@ import {
   Pause,
   Square,
   Search as SearchIcon,
-  X,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -137,6 +135,11 @@ export default function SongPage() {
       JSON.stringify({ event: 'command', func, args: [] }), '*'
     );
   };
+  const stopPlayerBar = useCallback(() => {
+    sendPlayerCommand('stopVideo');
+    setPlayerBarActive(false);
+    setPlayerBarPlaying(false);
+  }, []);
   const handlePlayerPlay = () => {
     if (!youtubeIdForPlayer) return;
     if (!playerBarActive) { setPlayerBarActive(true); setPlayerBarPlaying(true); }
@@ -144,9 +147,7 @@ export default function SongPage() {
     else { sendPlayerCommand('playVideo'); setPlayerBarPlaying(true); }
   };
   const handlePlayerStop = () => {
-    sendPlayerCommand('stopVideo');
-    setPlayerBarActive(false);
-    setPlayerBarPlaying(false);
+    stopPlayerBar();
   };
 
   // Search
@@ -166,6 +167,25 @@ export default function SongPage() {
     setSearchQuery('');
     navigate(`/musica/${targetSlug}`);
   };
+
+  const artwork = song?.cover_image ||
+    getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault') ||
+    '/images/Caipivara_square.png';
+
+  const isShort = Boolean(
+    song?.youtube_music_url?.includes('/shorts/') || song?.youtube_url?.includes('/shorts/')
+  );
+
+  const hasVideo = Boolean(
+    song?.youtube_url?.trim() || song?.youtube_music_url?.trim()
+  );
+
+  const descriptionPreview = song?.description
+    ? song.description.split(/\n{2,}/)[0]?.trim() || song.description
+    : '';
+  const formattedReleaseDate = song?.release_date
+    ? format(parseISO(song.release_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+    : null;
 
   // Loading skeleton
   if (isLoading) {
@@ -215,22 +235,6 @@ export default function SongPage() {
     );
   }
 
-  const artwork = song.cover_image ||
-    getYouTubeThumbnailUrl(song.youtube_url || song.youtube_music_url, 'hqdefault') ||
-    '/images/Caipivara_square.png';
-
-  const isShort = Boolean(
-    song.youtube_music_url?.includes('/shorts/') || song.youtube_url?.includes('/shorts/')
-  );
-
-  const hasVideo = Boolean(
-    (song.youtube_url?.trim()) || (song.youtube_music_url?.trim())
-  );
-
-  const descriptionPreview = song.description
-    ? song.description.split(/\n{2,}/)[0]?.trim() || song.description
-    : '';
-
   return (
     <>
       <Helmet>
@@ -275,8 +279,163 @@ export default function SongPage() {
           )}
         </div>
 
+        {/* Mobile-first song experience */}
+        <section className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[32px] p-4 lg:hidden">
+          <div className="absolute inset-0 overflow-hidden">
+            <img
+              src={artwork}
+              alt=""
+              aria-hidden="true"
+              className="h-full w-full scale-110 object-cover opacity-[0.18] blur-3xl"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.92),rgba(10,10,10,0.74)_35%,rgba(8,8,8,0.96))]" />
+          </div>
+
+          <div className="relative space-y-5">
+            <div className="flex items-center gap-4 rounded-[28px] border border-white/10 bg-black/24 p-3.5 shadow-[0_18px_45px_rgba(0,0,0,0.26)] backdrop-blur-xl">
+              <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-[24px] border border-white/10 bg-white/5">
+                <img
+                  src={artwork}
+                  alt={song.title}
+                  className="h-full w-full object-cover"
+                  loading="eager"
+                />
+              </div>
+              <div className="min-w-0 flex-1 space-y-2">
+                <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-white/42">
+                  Faixa da semana
+                </p>
+                <p className="line-clamp-2 text-lg font-bold leading-tight text-white">
+                  {song.title}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/56">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Disc3 className="h-3.5 w-3.5 text-[#FDE047]" />
+                    {song.artist || 'A Musica da Segunda'}
+                  </span>
+                  {formattedReleaseDate ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-[#FDE047]" />
+                      {formattedReleaseDate}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-white/70">
+                  <Sparkles className="h-3.5 w-3.5 text-[#FDE047]" />
+                  Parodia musical
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                <h1 className="text-[2.55rem] font-black leading-[0.92] tracking-tight text-white">
+                  {song.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-base text-white/68">
+                  <span className="inline-flex items-center gap-2">
+                    <Disc3 className="h-4 w-4 text-[#FDE047]" />
+                    {song.artist || 'A Música da Segunda'}
+                  </span>
+                  {formattedReleaseDate && (
+                    <span className="inline-flex items-center gap-2 text-white/45">
+                      <Calendar className="h-4 w-4 text-[#FDE047]" />
+                      {formattedReleaseDate}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {song.description?.trim() ? (
+                <div className="space-y-3">
+                  <p className={`text-sm leading-7 text-white/66 transition-all ${showFullDescription ? '' : 'line-clamp-4'}`}>
+                    {showFullDescription ? song.description.trim() : descriptionPreview}
+                  </p>
+                  <div className="flex items-center gap-5">
+                    <button
+                      type="button"
+                      onClick={() => setShowFullDescription((value) => !value)}
+                      className="text-sm font-semibold text-[#FDE047] transition hover:text-[#fde047]/80"
+                    >
+                      {showFullDescription ? 'Ver menos' : 'Ver descrição completa'}
+                    </button>
+                    {song.lyrics?.trim() ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsLyricsOpen(true)}
+                        className="flex items-center gap-1.5 text-sm font-semibold text-white/45 transition hover:text-white/70"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Letras
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-3">
+                {song.spotify_url && (
+                  <a
+                    href={song.spotify_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#1DB954] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1ed760]"
+                  >
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z" />
+                    </svg>
+                    Spotify
+                  </a>
+                )}
+
+                {song.apple_music_url && (
+                  <a
+                    href={song.apple_music_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#FA233B] to-[#FB5C74] px-5 py-3 text-sm font-bold text-white transition hover:opacity-90"
+                  >
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                    </svg>
+                    Apple Music
+                  </a>
+                )}
+
+                {song.youtube_url && (
+                  <a
+                    href={song.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-[#FF0000] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#cc0000]"
+                  >
+                    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z" />
+                    </svg>
+                    YouTube Music
+                  </a>
+                )}
+              </div>
+
+              {formattedReleaseDate && (
+                <div className="space-y-1 pt-1">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-white/38">Lançamento</p>
+                  <p className="text-base font-bold text-white">
+                    {formattedReleaseDate}
+                  </p>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </section>
+
         {/* Hero section */}
-        <section className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8">
+        <section className="glass-panel desktop-shell-gradient relative hidden overflow-hidden rounded-[36px] p-6 xl:p-8 lg:block">
           {/* Background artwork blur */}
           <div className="absolute inset-0 overflow-hidden">
             <img src={artwork} alt="" aria-hidden="true"
@@ -305,10 +464,10 @@ export default function SongPage() {
                     <Disc3 className="h-4 w-4 text-[#FDE047]" />
                     {song.artist || 'A Música da Segunda'}
                   </span>
-                  {song.release_date && (
+                  {formattedReleaseDate && (
                     <span className="inline-flex items-center gap-2 text-white/45">
                       <Calendar className="h-4 w-4 text-[#FDE047]" />
-                      {format(parseISO(song.release_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      {formattedReleaseDate}
                     </span>
                   )}
                 </div>
@@ -374,11 +533,11 @@ export default function SongPage() {
               </div>
 
               {/* Nav: lançamento date display */}
-              {song.release_date && (
+              {formattedReleaseDate && (
                 <div className="space-y-1 pt-1">
                   <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-white/38">Lançamento</p>
                   <p className="text-base font-bold text-white">
-                    {format(parseISO(song.release_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    {formattedReleaseDate}
                   </p>
                 </div>
               )}
@@ -501,7 +660,6 @@ export default function SongPage() {
         </div>
       </div>
 
-      {/* Lyrics dialog */}
       <LyricsDialog
         open={isLyricsOpen}
         onOpenChange={setIsLyricsOpen}

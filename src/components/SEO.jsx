@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { buildFullTitle, getDocumentTitle } from '../lib/documentTitle';
 
 export default function SEO({ 
   title, 
@@ -18,7 +19,8 @@ export default function SEO({
   const siteUrl = 'https://www.amusicadasegunda.com';
   const defaultImage = `${siteUrl}/icons/icon-512x512.png`;
   
-  const fullTitle = title ? `${title} | ${siteName}` : siteName;
+  const fullTitle = buildFullTitle(title, siteName);
+  const documentTitle = getDocumentTitle(title, siteName);
   const fullDescription = description || 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.';
   const fullKeywords = keywords || 'música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music';
   const fullImage = image || defaultImage;
@@ -26,7 +28,7 @@ export default function SEO({
 
   useEffect(() => {
     // Mise à jour dynamique du titre de la page
-    document.title = fullTitle;
+    document.title = documentTitle;
     
     // Mise à jour des métadonnées Open Graph
     updateMetaTag('property', 'og:title', fullTitle);
@@ -45,7 +47,7 @@ export default function SEO({
     
     // Mise à jour du lien canonique
     updateCanonicalLink(fullUrl);
-  }, [fullTitle, fullDescription, fullKeywords, fullImage, fullUrl]);
+  }, [documentTitle, fullTitle, fullDescription, fullKeywords, fullImage, fullUrl]);
 
   const updateMetaTag = (attribute, value, content) => {
     let meta = document.querySelector(`meta[${attribute}="${value}"]`);
@@ -70,7 +72,7 @@ export default function SEO({
   return (
     <Helmet>
       {/* Métadonnées de base */}
-      <title>{fullTitle}</title>
+      <title>{documentTitle}</title>
       <meta name="description" content={fullDescription} />
       <meta name="keywords" content={fullKeywords} />
       

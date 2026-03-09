@@ -6,12 +6,11 @@ import {
   Gift,
   Info,
   FileText,
-  ListMusic,
   Search
 } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
 import OnboardingScreen from '@/components/OnboardingScreen';
-import BottomNavigation from '@/components/BottomNavigation';
+import BottomNavigationModern from '@/components/BottomNavigationModern';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 
@@ -55,6 +54,7 @@ function SidebarCountdown() {
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   const pageName = getCurrentPage(location.pathname);
   const seoData = getRouteSEO(pageName);
@@ -67,7 +67,6 @@ export default function Layout({ children }) {
   const pages = [
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
     { name: 'Roda', url: createPageUrl('Roda'), icon: Gift },
-    { name: 'Playlist', url: createPageUrl('Playlist'), icon: ListMusic },
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Pesquisa', url: createPageUrl('Search'), icon: Search },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info }
@@ -83,32 +82,41 @@ export default function Layout({ children }) {
       <div className="lg:hidden flex flex-col h-[100dvh] overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
-        <header className="flex-shrink-0 bg-black/90 backdrop-blur-lg border-b border-white/10 z-40">
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
-              <Link to="/" className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0 bg-white">
+        <header className="z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl">
+          <div className="px-3 pb-2 pt-[max(env(safe-area-inset-top),0.35rem)]">
+            <div className="flex min-h-[52px] items-center justify-between gap-2">
+              {/* Left: Logo */}
+              <Link to="/" className="flex h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/8 shadow-sm">
                 <img
-                  src="/images/2026 logo.png"
-                  alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
+                  src="/images/Caipivara_square.png"
+                  alt="Logo A Musica da Segunda"
                   className="w-full h-full object-cover"
                   loading="eager"
                 />
               </Link>
-              <div className="flex-1 min-w-0">
-                <div className="text-lg font-black text-white leading-tight truncate drop-shadow-sm">A Música da Segunda</div>
-                <p className="text-xs text-gray-300 mt-0.5 truncate drop-shadow-sm">Nova música toda segunda-feira</p>
-              </div>
+              {/* Center: Title */}
+              <span className="text-sm font-black tracking-tight text-white">
+                A Música da Segunda
+              </span>
+              {/* Right: Info */}
+              <Link
+                to={createPageUrl('Sobre')}
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] touch-manipulation"
+                aria-label="Sobre o projeto"
+              >
+                <Info className="h-4 w-4 text-white/72" />
+              </Link>
             </div>
           </div>
         </header>
 
         <main id="main-mobile" className="flex-1 overflow-hidden relative">
-          <div className="h-full overflow-y-auto overscroll-behavior-contain pb-20">
+          <div className={`h-full overscroll-behavior-contain pb-[88px] ${isHomePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
             {children}
           </div>
         </main>
 
-        <BottomNavigation />
+        <BottomNavigationModern />
       </div>
 
       <div className="hidden lg:block min-h-screen text-white">

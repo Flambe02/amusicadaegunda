@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 // Garder un seul HelmetProvider à la racine évite la duplication de contextes
 import OfflineIndicator from "@/components/OfflineIndicator"
 import PushCTA from "@/components/PushCTA"
+import InstallAppBanner from "@/components/InstallAppBanner"
 import { useEffect } from 'react';
 import migrationService from '@/lib/migration';
 // MigrationStatus supprimé pour la production
@@ -28,6 +29,7 @@ function App() {
       {/* MigrationStatus supprimé pour la production */}
       {/* Composants de diagnostic supprimés pour la production */}
       {/* <TikTokDemo /> */}
+      <InstallAppBanner />
       <Toaster />
       <PushCTA />
     </>

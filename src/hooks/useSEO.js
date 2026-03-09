@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { buildFullTitle, getDocumentTitle } from '../lib/documentTitle';
 
 /**
  * Hook SEO simple pour mettre à jour les meta tags dynamiquement
@@ -20,9 +21,8 @@ export function useSEO({
   const defaultImage = `${siteUrl}/icons/icon-512x512.png`;
 
   // ✅ SEO: Si le title contient déjà un pipe, ne pas ajouter le siteName (évite répétition)
-  const fullTitle = title 
-    ? (title.includes('|') ? title : `${title} | ${siteName}`)
-    : siteName;
+  const fullTitle = buildFullTitle(title, siteName);
+  const documentTitle = getDocumentTitle(title, siteName);
   const fullDescription = description || 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.';
   const fullKeywords = keywords || 'música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music';
   const fullImage = image || defaultImage;
@@ -34,7 +34,7 @@ export function useSEO({
 
     try {
       // Mise à jour du titre de la page
-      document.title = fullTitle;
+      document.title = documentTitle;
 
       // Fonction pour mettre à jour ou créer un meta tag
       const updateMetaTag = (attribute, value, content) => {
@@ -142,5 +142,5 @@ export function useSEO({
     } catch (error) {
       console.error('Erro ao atualizar SEO:', error);
     }
-  }, [fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type, robots, defaultImage]);
+  }, [documentTitle, fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type, robots, defaultImage]);
 }

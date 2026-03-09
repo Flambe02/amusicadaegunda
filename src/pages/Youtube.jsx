@@ -16,6 +16,7 @@ import { extractYouTubeId } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
+import { getDocumentTitle } from '@/lib/documentTitle';
 
 // Composant d'intégration YouTube générique (remplace l'embed TikTok)
 // Props attendues: youtube_music_url, youtube_url, title
@@ -297,7 +298,7 @@ export default function Youtube() {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
         <Helmet>
-          <title>A Música da Segunda: Paródias das Notícias do Brasil</title>
+          <title>{getDocumentTitle('A Música da Segunda: Paródias das Notícias do Brasil')}</title>
           <meta name="description" content="A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas." />
         </Helmet>
         <div className="text-center mb-8">
@@ -322,7 +323,7 @@ export default function Youtube() {
     return (
       <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
         <Helmet>
-          <title>A Música da Segunda: Paródias das Notícias do Brasil</title>
+          <title>{getDocumentTitle('A Música da Segunda: Paródias das Notícias do Brasil')}</title>
           <meta name="description" content="A Música da Segunda: As Notícias do Brasil em Forma de Paródia. Site oficial de paródias musicais inteligentes e divertidas." />
         </Helmet>
         <div className="text-center mb-8">

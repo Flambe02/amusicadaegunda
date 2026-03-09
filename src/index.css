@@ -4,80 +4,116 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 6.5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 6.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 51 98% 64%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 68%;
+    --accent: 51 98% 64%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 51 98% 64%;
+    --chart-1: 51 98% 64%;
+    --chart-2: 172 76% 42%;
+    --chart-3: 205 86% 57%;
+    --chart-4: 12 88% 63%;
+    --chart-5: 326 78% 60%;
+    --radius: 1rem;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 51 98% 64%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 51 98% 64%;
+    --app-background: #0a0a0a;
+    --app-accent: #fde047;
+    --app-panel: rgba(255, 255, 255, 0.05);
+    --app-panel-border: rgba(255, 255, 255, 0.1);
+    --app-scrollbar: rgba(255, 255, 255, 0.18);
+    --app-scrollbar-hover: rgba(253, 224, 71, 0.45);
   }
   
   .dark {
     --background: 0 0% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 0 0% 6.5%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 0 0% 6.5%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
+    --primary: 51 98% 64%;
+    --primary-foreground: 0 0% 6%;
+    --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 68%;
+    --accent: 51 98% 64%;
+    --accent-foreground: 0 0% 6%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
+    --ring: 51 98% 64%;
+    --chart-1: 51 98% 64%;
+    --chart-2: 172 76% 42%;
+    --chart-3: 205 86% 57%;
+    --chart-4: 12 88% 63%;
+    --chart-5: 326 78% 60%;
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 51 98% 64%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 51 98% 64%;
+  }
+
+  .light {
+    --background: 36 33% 97%;
+    --foreground: 0 0% 8%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
+    --primary: 51 98% 56%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 30 20% 94%;
+    --secondary-foreground: 0 0% 14%;
+    --muted: 30 15% 92%;
+    --muted-foreground: 0 0% 38%;
+    --accent: 51 98% 56%;
+    --accent-foreground: 0 0% 8%;
+    --border: 20 14% 85%;
+    --input: 20 14% 85%;
+    --ring: 51 98% 56%;
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 51 98% 56%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 30 20% 94%;
+    --sidebar-accent-foreground: 0 0% 14%;
+    --sidebar-border: 20 14% 85%;
+    --sidebar-ring: 51 98% 56%;
   }
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--app-scrollbar) transparent;
   }
   
   /* Mobile Immersive Layout - Écran fixe */
@@ -85,23 +121,53 @@
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
+    color-scheme: dark;
+    background: var(--app-background);
   }
   
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
+    background:
+      radial-gradient(circle at top left, rgba(253, 224, 71, 0.16), transparent 28%),
+      radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 22%),
+      linear-gradient(180deg, #111111 0%, #0a0a0a 100%);
+    color: #ffffff;
   }
   
   /* Conteneur principal pour mobile immersif */
   #root {
     height: 100dvh;
-    background-color: #000000;
+    background: transparent;
     color: #ffffff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+
+  ::selection {
+    background: rgba(253, 224, 71, 0.28);
+    color: #ffffff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--app-scrollbar);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--app-scrollbar-hover);
   }
   
   /* Desktop: réinitialiser les styles pour ne pas affecter le layout desktop */
@@ -113,17 +179,78 @@
     }
     
     body {
+      min-height: 100vh;
       height: auto;
-      overflow: auto;
+      overflow-x: hidden;
+      overflow-y: auto;
       overscroll-behavior: auto;
+      background:
+        radial-gradient(circle at top left, rgba(253, 224, 71, 0.18), transparent 28%),
+        radial-gradient(circle at 85% 10%, rgba(125, 211, 252, 0.12), transparent 24%),
+        linear-gradient(180deg, #111111 0%, #0a0a0a 100%);
     }
     
     #root {
+      min-height: 100vh;
       height: auto;
-      background-color: transparent;
-      color: inherit;
       display: block;
       flex-direction: unset;
+      overflow: visible;
+    }
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .desktop-shell-gradient {
+    background:
+      radial-gradient(circle at top left, rgba(253, 224, 71, 0.12), transparent 20%),
+      radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.06), transparent 30%);
+  }
+
+  @media (min-width: 1024px) {
+    .desktop-about-shell > article,
+    .desktop-about-shell > div {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(24px);
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .desktop-about-shell h1,
+    .desktop-about-shell h2,
+    .desktop-about-shell h3,
+    .desktop-about-shell h4 {
+      color: #fff !important;
+    }
+
+    .desktop-about-shell p,
+    .desktop-about-shell span {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .desktop-about-shell .text-gray-700,
+    .desktop-about-shell .text-gray-800,
+    .desktop-about-shell .text-gray-900,
+    .desktop-about-shell .text-blue-900,
+    .desktop-about-shell .text-blue-700,
+    .desktop-about-shell .text-blue-600 {
+      color: #fff !important;
+    }
+
+    .desktop-about-shell .bg-white\/50,
+    .desktop-about-shell .bg-white\/80,
+    .desktop-about-shell .bg-gradient-to-br,
+    .desktop-about-shell .bg-white\/20 {
+      background: rgba(255, 255, 255, 0.04) !important;
     }
   }
 }
@@ -169,9 +296,9 @@
 }
 
 /* Bottom Navigation - Glassmorphism et Safe Area */
-.safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
-}
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
 
 /* Touch targets optimisés pour les pouces */
 .touch-manipulation {

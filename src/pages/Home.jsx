@@ -28,6 +28,7 @@ import LyricsDialog from '../components/LyricsDialog';
 import LyricsDrawer from '../components/LyricsDrawer';
 import PlatformsDrawer from '../components/PlatformsDrawer';
 import HistoryDrawer from '../components/HistoryDrawer';
+import HomeMobileImmersive from '../components/HomeMobileImmersive';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -37,6 +38,7 @@ import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
+import { getDocumentTitle } from '@/lib/documentTitle';
 import { useToast } from '@/components/ui/use-toast';
 import { extractYouTubeId } from '@/lib/utils';
 // VideoObject JSON-LD removed from all pages (GSC: "Video isn't on a watch page")
@@ -194,6 +196,8 @@ export default function Home() {
   const [playerBarActive, setPlayerBarActive] = useState(false);
   const [playerBarPlaying, setPlayerBarPlaying] = useState(false);
   const playerIframeRef = useRef(null);
+  const desktopHeroPlayerRef = useRef(null);
+  const [desktopVideoResetKey, setDesktopVideoResetKey] = useState(0);
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
   const [desktopVolume, setDesktopVolume] = useState(72);
   const [catalogMonthDate, setCatalogMonthDate] = useState(() => startOfMonth(new Date()));
@@ -405,6 +409,7 @@ export default function Home() {
   );
 
   const handleActivateDesktopPlayer = () => {
+    stopDesktopPlayerBar();
     setVideoActivated(true);
     const desktopVideo = document.getElementById('desktop-weekly-video');
     if (desktopVideo) {
@@ -414,23 +419,47 @@ export default function Home() {
     }
   };
 
+  const handleActivateMobileVideo = useCallback(() => {
+    setVideoActivated(true);
+  }, []);
+
   // ID YouTube extrait de youtube_url (ou youtube_music_url en fallback)
   const youtubeIdForPlayer = extractYouTubeId(
     displayedSong?.youtube_url || displayedSong?.youtube_music_url
   );
 
   // Commande postMessage vers l'iframe YouTube (même méthode que Roda)
-  const sendPlayerCommand = (func) => {
+  const sendPlayerCommand = useCallback((func) => {
     playerIframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func, args: [] }),
       '*'
     );
-  };
+  }, []);
+
+  const stopDesktopPlayerBar = useCallback(() => {
+    if (playerBarActive) {
+      sendPlayerCommand('stopVideo');
+    }
+    setPlayerBarActive(false);
+    setPlayerBarPlaying(false);
+  }, [playerBarActive, sendPlayerCommand]);
+
+  const stopDesktopHeroVideo = useCallback(() => {
+    desktopHeroPlayerRef.current?.pause?.();
+    desktopHeroPlayerRef.current?.stop?.();
+
+    if (desktopHeroPlayerRef.current?.activated || videoActivated) {
+      setVideoActivated(false);
+      // Remount the facade to unload the iframe and guarantee a single audio source.
+      setDesktopVideoResetKey((currentKey) => currentKey + 1);
+    }
+  }, [videoActivated]);
 
   // Play/Pause du mini player bar
   const handleDesktopPlayerPlay = () => {
     if (!youtubeIdForPlayer) return;
     if (!playerBarActive) {
+      stopDesktopHeroVideo();
       // Premier clic : charge l'iframe avec autoplay
       setPlayerBarActive(true);
       setPlayerBarPlaying(true);
@@ -438,15 +467,14 @@ export default function Home() {
       sendPlayerCommand('pauseVideo');
       setPlayerBarPlaying(false);
     } else {
+      stopDesktopHeroVideo();
       sendPlayerCommand('playVideo');
       setPlayerBarPlaying(true);
     }
   };
 
   const handleDesktopPlayerStop = () => {
-    sendPlayerCommand('stopVideo');
-    setPlayerBarActive(false);
-    setPlayerBarPlaying(false);
+    stopDesktopPlayerBar();
   };
 
   useSEO({
@@ -471,7 +499,7 @@ export default function Home() {
     return (
       <>
         <Helmet>
-          <title>A Musica da Segunda: Parodias das Noticias do Brasil</title>
+          <title>{getDocumentTitle('A Musica da Segunda: Parodias das Noticias do Brasil')}</title>
           <meta name="description" content="A Musica da Segunda: As Noticias do Brasil em Forma de Parodia. Site oficial de parodias musicais inteligentes e divertidas." />
         </Helmet>
 
@@ -516,7 +544,7 @@ export default function Home() {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
         <Helmet>
-          <title>A Musica da Segunda: Parodias das Noticias do Brasil</title>
+          <title>{getDocumentTitle('A Musica da Segunda: Parodias das Noticias do Brasil')}</title>
           <meta name="description" content="A Musica da Segunda: As Noticias do Brasil em Forma de Parodia. Site oficial de parodias musicais inteligentes e divertidas." />
         </Helmet>
         <div className="glass-panel rounded-[30px] p-8 text-center max-w-sm">
@@ -536,9 +564,9 @@ export default function Home() {
   }
 
   return (
-    <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-none">
-      {/* Header Mobile uniquement */}
-      <div className="lg:hidden text-center mb-8">
+    <div className="mx-auto h-full max-w-md md:max-w-2xl lg:max-w-none lg:p-5">
+      {/* Header Mobile legacy disabled: the shell header now owns the top bar */}
+      <div className="hidden text-center mb-8">
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
             <img
@@ -763,6 +791,7 @@ export default function Home() {
                   <div className="relative h-full">
                   {displayedSong ? (
                     <YouTubeEmbed
+                      key={`${displayedSong.id}-${desktopVideoResetKey}`}
                       youtubeMusicUrl={displayedSong.youtube_music_url}
                       youtubeUrl={displayedSong.youtube_url}
                       title={displayedSong.title}
@@ -771,6 +800,12 @@ export default function Home() {
                       thumbnailQuality="hqdefault"
                       forceActivated={videoActivated}
                       shortMaxWidth={520}
+                      playerStateRef={desktopHeroPlayerRef}
+                      onActivatedChange={(activated) => {
+                        if (activated) {
+                          stopDesktopPlayerBar();
+                        }
+                      }}
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-gradient-to-br from-zinc-950 to-zinc-900">
@@ -1203,167 +1238,43 @@ export default function Home() {
       </div>
 
       {/* ===== LAYOUT MOBILE IMMERSIF: STYLE TIKTOK ===== */}
-      <div className="lg:hidden fixed inset-0 flex flex-col overflow-hidden">
-        {displayedSong ? (
-          <>
-            {/* Conteneur Vídeo: Prend presque toute la hauteur (flex-1), garde place pour Navbar */}
-            <div className="relative flex-1 overflow-hidden">
-              {/* Background: Miniature vidéo avec blur et overlay */}
-              {getYouTubeThumbnail(displayedSong) && (
-                <div className="absolute inset-0 z-0">
-                  {/* Placeholder pendant le chargement */}
-                  {!backgroundImageLoaded && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black"></div>
-                  )}
-                  <img
-                    src={getYouTubeThumbnail(displayedSong)}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    decoding="async"
-                    className={`absolute inset-0 w-full h-full object-cover blur-3xl scale-110 transition-opacity duration-500 ${
-                      backgroundImageLoaded ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    onLoad={() => setBackgroundImageLoaded(true)}
-                    onError={() => setBackgroundImageLoaded(true)}
-                  />
-                  <div className="absolute inset-0 bg-black/50"></div>
-                </div>
-              )}
-
-              {/* Bouton Navigation Gauche */}
-              <button
-                onClick={canNavigatePrevious() ? handlePreviousSong : undefined}
-                disabled={!canNavigatePrevious()}
-                className={`absolute left-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-sm touch-manipulation transition-all duration-300 ${
-                  canNavigatePrevious()
-                    ? 'bg-black/20 text-white/80 hover:bg-black/40 hover:scale-110 active:scale-90'
-                    : 'bg-black/10 text-white/20 cursor-not-allowed'
-                }`}
-                aria-label={canNavigatePrevious() ? 'Música anterior' : 'Já é a música mais antiga'}
-                title={canNavigatePrevious() ? 'Música anterior' : 'Já é a música mais antiga'}
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-
-              {/* Bouton Navigation Droite */}
-              <button
-                onClick={canNavigateNext() ? handleNextSong : undefined}
-                disabled={!canNavigateNext()}
-                className={`absolute right-2 top-1/2 -translate-y-1/2 z-20 p-2 rounded-full backdrop-blur-sm touch-manipulation transition-all duration-300 ${
-                  canNavigateNext()
-                    ? 'bg-black/20 text-white/80 hover:bg-black/40 hover:scale-110 active:scale-90'
-                    : 'bg-black/10 text-white/20 cursor-not-allowed'
-                }`}
-                aria-label={canNavigateNext() ? 'Próxima música' : 'Já é a música mais recente'}
-                title={canNavigateNext() ? 'Próxima música' : 'Já é a música mais recente'}
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-
-              {/* Vídeo: Prend toute la hauteur disponible */}
-              <div className="relative z-10 h-full flex items-center justify-center px-4">
-                <div className="w-full max-w-md">
-                  <div className="bg-black/20 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/10">
-              <YouTubeEmbed
-                youtubeMusicUrl={displayedSong.youtube_music_url}
-                youtubeUrl={displayedSong.youtube_url}
-                title={displayedSong.title}
-                useFacade
-                autoplayOnActivate
-                thumbnailQuality="hqdefault"
-                forceActivated={videoActivated}
-              />
-                  </div>
-                </div>
-              </div>
-
-              {/* Dark gradient for text readability */}
-              <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/90 to-transparent z-10 pointer-events-none"></div>
-
-              {/* Overlay text: date and title */}
-              <div className="absolute bottom-4 left-4 z-20 text-white">
-                {/* Date en petit (xs uppercase) */}
-                <p className="text-xs font-medium uppercase tracking-widest text-white/80 mb-1 drop-shadow-lg">
-                  {displayedSong.release_date && format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()}
-                </p>
-                {/* Titre en gros (xl bold) */}
-                <h2 className="text-xl font-bold text-white drop-shadow-lg">
-                  {displayedSong.title}
-                </h2>
-              </div>
-
-              {/* Side actions: platforms, lyrics and share */}
-              <div className="absolute right-2 bottom-20 flex flex-col gap-3 z-20">
-                {/* Bouton Plateformes (vert avec note de musique) */}
-                <button
-                  onClick={() => setShowPlatformsDrawer(true)}
-                  className="w-14 h-14 bg-green-500/90 hover:bg-green-600 backdrop-blur-xl rounded-full flex items-center justify-center shadow-xl border border-green-400/30 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
-                  aria-label="Ouvir em outras plataformas"
-                  title="Ouvir em outras plataformas"
-                >
-                  <Music className="w-6 h-6 text-white drop-shadow-lg" />
-                </button>
-
-                {/* Bouton Paroles */}
-                {displayedSong.lyrics && displayedSong.lyrics.trim() && (
-                  <button
-                    onClick={() => handleShowLyrics(displayedSong)}
-                    className="w-14 h-14 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
-                    aria-label="Ver letras"
-                    title="Ver letras"
-                  >
-                    <FileText className="w-6 h-6 text-white drop-shadow-lg" />
-                  </button>
-                )}
-
-                {/* Bouton Partager */}
-                <button
-                  onClick={() => handleShareSong(displayedSong)}
-                  className="w-14 h-14 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation"
-                  aria-label="Compartilhar"
-                  title="Compartilhar"
-                >
-                  <Share2 className="w-6 h-6 text-white drop-shadow-lg" />
-                </button>
-              </div>
-            </div>
-
-            {/* Lyrics Drawer pour mobile */}
-            <LyricsDrawer
-              open={showLyricsDrawer}
-              onOpenChange={setShowLyricsDrawer}
-              lyrics={displayedSong?.lyrics}
-              songTitle={displayedSong?.title}
-            />
-
-            {/* Platforms Drawer pour mobile */}
-            <PlatformsDrawer
-              open={showPlatformsDrawer}
-              onOpenChange={setShowPlatformsDrawer}
-              song={displayedSong}
-            />
-
-            {/* History Drawer pour mobile */}
-            <HistoryDrawer
-              open={showHistoryDrawer}
-              onOpenChange={setShowHistoryDrawer}
-              songs={allSongs}
-              onSelectSong={(song) => handleReplaceVideo(song, null)}
-            />
-          </>
-        ) : (
-          <div className="relative z-10 h-full flex items-center justify-center px-4">
-            <div className="bg-black/40 backdrop-blur-xl rounded-3xl p-8 text-center border border-white/20 shadow-2xl">
-              <Music className="w-16 h-16 text-white/80 mx-auto mb-4 drop-shadow-lg" />
-              <h3 className="text-xl font-semibold text-white mb-2 drop-shadow-lg">Nenhuma musica disponivel</h3>
-              <p className="text-white/90 drop-shadow-md">
-                A musica da semana sera publicada em breve. Volte na segunda-feira!
-              </p>
-            </div>
-          </div>
-        )}
+      <div className="lg:hidden h-full">
+        <HomeMobileImmersive
+          displayedSong={displayedSong}
+          videoActivated={videoActivated}
+          onVideoActivated={handleActivateMobileVideo}
+          onPreviousSong={handlePreviousSong}
+          onNextSong={handleNextSong}
+          canNavigatePrevious={canNavigatePrevious()}
+          canNavigateNext={canNavigateNext()}
+          onShowPlatforms={() => setShowPlatformsDrawer(true)}
+          onShowLyrics={() => handleShowLyrics(displayedSong)}
+          onShareSong={() => handleShareSong(displayedSong)}
+          onShowHistory={() => setShowHistoryDrawer(true)}
+          getYouTubeThumbnail={getYouTubeThumbnail}
+          backgroundImageLoaded={backgroundImageLoaded}
+          setBackgroundImageLoaded={setBackgroundImageLoaded}
+        />
       </div>
+      <LyricsDrawer
+        open={showLyricsDrawer}
+        onOpenChange={setShowLyricsDrawer}
+        lyrics={displayedSong?.lyrics}
+        songTitle={displayedSong?.title}
+      />
+
+      <PlatformsDrawer
+        open={showPlatformsDrawer}
+        onOpenChange={setShowPlatformsDrawer}
+        song={displayedSong}
+      />
+
+      <HistoryDrawer
+        open={showHistoryDrawer}
+        onOpenChange={setShowHistoryDrawer}
+        songs={allSongs}
+        onSelectSong={(song) => handleReplaceVideo(song, null)}
+      />
 
       {/* ===== DIALOG PLATAFORMAS ===== */}
       <Dialog open={showPlatformsDialog} onOpenChange={setShowPlatformsDialog}>
@@ -1519,4 +1430,3 @@ export default function Home() {
     </div>
   );
 }
-
