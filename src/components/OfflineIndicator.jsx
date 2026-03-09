@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+
 export default function OfflineIndicator() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showOfflineMessage, setShowOfflineMessage] = useState(false);
@@ -8,13 +10,13 @@ export default function OfflineIndicator() {
     const handleOnline = () => {
       setIsOnline(true);
       setShowOfflineMessage(false);
-      console.log('🌐 Connexion restaurée');
+      isDev && console.log('🌐 Connexion restaurée');
     };
 
     const handleOffline = () => {
       setIsOnline(false);
       setShowOfflineMessage(true);
-      console.log('📱 Mode hors ligne détecté');
+      isDev && console.log('📱 Mode hors ligne détecté');
       
       // Masquer le message après 5 secondes
       setTimeout(() => setShowOfflineMessage(false), 5000);

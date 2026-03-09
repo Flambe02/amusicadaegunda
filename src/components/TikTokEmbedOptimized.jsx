@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Volume2, VolumeX, RotateCcw, AlertCircle, RefreshCw, ExternalLink, Play, Music, Video } from 'lucide-react';
 import '../styles/tiktok-global.css';
 
+const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+
 /**
  * TikTokEmbedOptimized V2.0.0 - Composant TikTok unifié et ultra-optimisé
  * 
@@ -83,7 +85,7 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
       totalLoadTime: null
     }));
     
-    console.log(`🚀 TikTok V2.0.0: Chargement de la vidéo ${postId}`);
+    isDev && console.log(`🚀 TikTok V2.0.0: Chargement de la vidéo ${postId}`);
     
     setIsLoading(true);
     setError(null);
@@ -98,7 +100,7 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
     
     // Timeout optimisé selon les best practices
     timeoutRef.current = window.setTimeout(() => {
-      console.warn('⏰ TikTok V2.0.0: Timeout de chargement atteint (15s)');
+      isDev && console.warn('⏰ TikTok V2.0.0: Timeout de chargement atteint (15s)');
       handleLoadError('Timeout: Chargement trop lent');
     }, loadTimeout);
     
@@ -108,7 +110,7 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
   const handleLoadSuccess = useCallback(() => {
     const tiktokLoadTime = performance.now() - (performanceMetrics.startTime || 0);
     
-    console.log('✅ TikTok V2.0.0: Vidéo chargée avec succès');
+    isDev && console.log('✅ TikTok V2.0.0: Vidéo chargée avec succès');
     clearTimeout();
     setIsLoading(false);
     setError(null);
@@ -124,7 +126,7 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
       totalLoadTime: tiktokLoadTime
     }));
     
-    console.log(`📊 TikTok V2.0.0: Temps de chargement: ${tiktokLoadTime.toFixed(2)}ms`);
+    isDev && console.log(`📊 TikTok V2.0.0: Temps de chargement: ${tiktokLoadTime.toFixed(2)}ms`);
   }, [clearTimeout, performanceMetrics.startTime]);
 
   const handleLoadError = useCallback((errorMessage = 'Erro ao carregar vídeo TikTok') => {
@@ -132,7 +134,7 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
     clearTimeout();
     
     if (retryCount < maxRetries) {
-      console.log(`🔄 Tentative de retry ${retryCount + 1}/${maxRetries}`);
+      isDev && console.log(`🔄 Tentative de retry ${retryCount + 1}/${maxRetries}`);
       
       setTimeout(() => {
         setRetryCount(prev => prev + 1);
@@ -147,7 +149,7 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
       }, retryDelay);
     } else {
       // Tous les retries échoués, activer le fallback
-      console.log('🔄 TikTok V2.0.0: Tous les retries échoués, activation du fallback');
+      isDev && console.log('🔄 TikTok V2.0.0: Tous les retries échoués, activation du fallback');
       setUseFallback(true);
       setError('TikTok indisponível - usando fallback');
       setIsLoading(false);
@@ -160,12 +162,12 @@ export default function TikTokEmbedOptimized({ postId, className = "", song = nu
         totalLoadTime
       }));
       
-      console.log(`📊 TikTok V2.0.0: Fallback activé après ${totalLoadTime.toFixed(2)}ms`);
+      isDev && console.log(`📊 TikTok V2.0.0: Fallback activé après ${totalLoadTime.toFixed(2)}ms`);
     }
   }, [retryCount, maxRetries, retryDelay, loadTimeout, clearTimeout, performanceMetrics.startTime]);
 
   const handleRetry = useCallback(() => {
-    console.log('🔄 TikTok V2.0.0: Retry manuel');
+    isDev && console.log('🔄 TikTok V2.0.0: Retry manuel');
     setRetryCount(0);
     setError(null);
     setUseFallback(false);

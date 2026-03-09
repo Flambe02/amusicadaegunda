@@ -1,7 +1,7 @@
 import Layout from "./Layout.jsx";
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParams } from 'react-router-dom';
 import { Suspense, useEffect, useRef } from 'react';
-import { ROUTES, getCurrentPage } from '@/config/routes';
+import { ROUTES } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
 
 // Export PAGES pour backward compatibility avec Layout.jsx
@@ -17,7 +17,6 @@ function LegacyChansonRedirect() {
 // Create a wrapper component that uses useLocation inside the Router context
 function PagesContent() {
     const location = useLocation();
-    const currentPage = getCurrentPage(location.pathname);
     const gaTimer = useRef(null);
 
     useEffect(() => {
@@ -34,7 +33,7 @@ function PagesContent() {
     }, [location]);
 
     return (
-        <Layout currentPageName={currentPage}>
+        <Layout>
             {/* ✅ PERFORMANCE: Suspense pour gérer le lazy loading des routes */}
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
