@@ -73,7 +73,10 @@ ${scripts.pwa ? scripts.pwa : ''}
 
 // JSON-LD factories
 function orgJsonLd({ name, url, logo, sameAs = [] }) {
-  const obj = { "@context": "https://schema.org", "@type": "Organization", "name": name, "url": url, "logo": logo };
+  const logoVal = logo
+    ? { "@type": "ImageObject", "url": logo, "width": 341, "height": 340 }
+    : undefined;
+  const obj = { "@context": "https://schema.org", "@type": "Organization", "name": name, "url": url, "logo": logoVal || logo };
   if (Array.isArray(sameAs) && sameAs.length > 0) {
     obj.sameAs = sameAs;
   }
