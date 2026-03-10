@@ -152,8 +152,8 @@ export default function HomeMobileImmersive({
 
             {/* ══ Carte vidéo 9:16 ══ */}
             <div
-              className="relative overflow-hidden rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
-              style={{ aspectRatio: '9/16', maxHeight: '100%' }}
+              className="relative h-full overflow-hidden rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
+              style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 52px)' }}
             >
               <YouTubeEmbed
                 youtubeMusicUrl={displayedSong.youtube_music_url}
@@ -174,30 +174,6 @@ export default function HomeMobileImmersive({
               {/* Gradient bas */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
-              {/* Navigation < > — haut droite */}
-              <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
-                {canNavigatePrevious && (
-                  <button
-                    type="button"
-                    onClick={onPreviousSong}
-                    aria-label="Video precedente"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/32 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                )}
-                {canNavigateNext && (
-                  <button
-                    type="button"
-                    onClick={onNextSong}
-                    aria-label="Proxima video"
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/32 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-
               {/* Infos chanson — bas gauche */}
               <div className="absolute bottom-5 left-4 right-4 z-10 space-y-1.5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
@@ -214,6 +190,32 @@ export default function HomeMobileImmersive({
 
             {/* ══ Boutons d'action — colonne droite, toujours adjacente à la carte ══ */}
             <div className="flex flex-col items-center gap-3 pb-6">
+              {/* Navigation < > — en haut de la colonne */}
+              {(canNavigatePrevious || canNavigateNext) && (
+                <div className="flex flex-col items-center gap-1.5">
+                  {canNavigatePrevious && (
+                    <button
+                      type="button"
+                      onClick={onPreviousSong}
+                      aria-label="Video precedente"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                  )}
+                  {canNavigateNext && (
+                    <button
+                      type="button"
+                      onClick={onNextSong}
+                      aria-label="Proxima video"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+
               <AnimatePresence>
                 {showUtilityActions ? (
                   <motion.div
