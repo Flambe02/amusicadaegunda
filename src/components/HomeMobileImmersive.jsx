@@ -52,8 +52,6 @@ export default function HomeMobileImmersive({
   onNextSong,
   canNavigatePrevious,
   canNavigateNext,
-  songPosition,
-  songTotal,
   onShowPlatforms,
   onShowLyrics,
   onShareSong,
@@ -114,8 +112,6 @@ export default function HomeMobileImmersive({
     ? format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()
     : 'SEM DATA';
 
-  const showPosition = songPosition != null && songTotal != null && songTotal > 1;
-
   return (
     <div
       className="relative h-full overflow-hidden bg-black"
@@ -142,146 +138,144 @@ export default function HomeMobileImmersive({
         <div className="absolute inset-0 bg-black/38" />
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={displayedSong.id}
-          initial={{ opacity: 0, scale: reduceMotion ? 1 : 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: reduceMotion ? 1 : 0.96 }}
-          transition={{ duration: reduceMotion ? 0.01 : 0.26, ease: 'easeOut' }}
-          className="relative z-10 flex h-full items-center justify-center py-2"
-        >
-          {/* flex-row : carte + boutons toujours adjacents, centrés verticalement */}
-          <div className="flex h-full items-center gap-2 pl-1">
+      {/* ── Layout fixe : cadre + boutons toujours visibles ── */}
+      <div className="relative z-10 flex h-full items-center justify-center py-2">
+        <div className="flex h-full items-center gap-2 pl-1">
 
-            {/* ══ Carte vidéo 9:16 ══ */}
-            <div
-              className="relative h-full overflow-hidden rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
-              style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 52px)' }}
-            >
-              <YouTubeEmbed
-                youtubeMusicUrl={displayedSong.youtube_music_url}
-                youtubeUrl={displayedSong.youtube_url}
-                title={displayedSong.title}
-                useFacade
-                autoplayOnActivate
-                thumbnailQuality="hqdefault"
-                forceActivated={videoActivated}
-                startMuted
-                shortMaxWidth={800}
-                playButtonStyle="minimal"
-                playerStateRef={playerStateRef}
-                onActivatedChange={handleVideoActivatedChange}
-                onMuteChange={setIsMuted}
-              />
+          {/* ══ Cadre de la carte 9:16 — statique ══ */}
+          <div
+            className="relative h-full overflow-hidden rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
+            style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 52px)' }}
+          >
+            {/* Contenu animé — seule la vidéo + infos transitionnent */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={displayedSong.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: reduceMotion ? 0.01 : 0.22, ease: 'easeInOut' }}
+                className="absolute inset-0"
+              >
+                <YouTubeEmbed
+                  youtubeMusicUrl={displayedSong.youtube_music_url}
+                  youtubeUrl={displayedSong.youtube_url}
+                  title={displayedSong.title}
+                  useFacade
+                  autoplayOnActivate
+                  thumbnailQuality="hqdefault"
+                  forceActivated={videoActivated}
+                  startMuted
+                  shortMaxWidth={800}
+                  playButtonStyle="minimal"
+                  playerStateRef={playerStateRef}
+                  onActivatedChange={handleVideoActivatedChange}
+                  onMuteChange={setIsMuted}
+                />
 
-              {/* Gradient bas */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
+                {/* Gradient bas */}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
-              {/* Infos chanson — bas gauche */}
-              <div className="absolute bottom-5 left-4 right-4 z-10 space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
-                  {releaseDate}
-                </p>
-                <h2 className="line-clamp-2 text-[17px] font-black leading-tight text-white drop-shadow-lg">
-                  {displayedSong.title}
-                </h2>
-                <p className="truncate text-sm text-white/60">
-                  {displayedSong.artist || 'A Musica da Segunda'}
-                </p>
-              </div>
-            </div>
-
-            {/* ══ Boutons d'action — colonne droite ══ */}
-            <div className="flex flex-col items-center gap-3 pb-4">
-
-              {/* Navigation < > */}
-              {(canNavigatePrevious || canNavigateNext) && (
-                <>
-                  <div className="flex flex-col items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => { vibrate(); onPreviousSong(); }}
-                      disabled={!canNavigatePrevious}
-                      aria-label="Video precedente"
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-150 ${
-                        canNavigatePrevious
-                          ? 'border-white/20 bg-black/40 text-white active:scale-90'
-                          : 'border-white/8 bg-black/20 text-white/25 cursor-default'
-                      }`}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    {showPosition && (
-                      <span className="font-mono text-[9px] font-semibold tabular-nums text-white/40">
-                        {songPosition}/{songTotal}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => { vibrate(); onNextSong(); }}
-                      disabled={!canNavigateNext}
-                      aria-label="Proxima video"
-                      className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-150 ${
-                        canNavigateNext
-                          ? 'border-white/20 bg-black/40 text-white active:scale-90'
-                          : 'border-white/8 bg-black/20 text-white/25 cursor-default'
-                      }`}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  {/* Séparateur */}
-                  <div className="h-px w-6 rounded-full bg-white/15" />
-                </>
-              )}
-
-              {/* Actions utilitaires (History + Share) */}
-              <AnimatePresence>
-                {showUtilityActions ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.9 }}
-                    transition={{ duration: reduceMotion ? 0.01 : 0.16, ease: 'easeOut' }}
-                    className="flex flex-col gap-3"
-                  >
-                    <ActionBtn
-                      icon={History}
-                      label="Historico das musicas"
-                      onClick={() => { setShowUtilityActions(false); onShowHistory(); }}
-                    />
-                    <ActionBtn
-                      icon={Share2}
-                      label="Compartilhar"
-                      onClick={() => { setShowUtilityActions(false); onShareSong(); }}
-                    />
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-
-              <ActionBtn icon={Music} label="Ouvir em outras plataformas" onClick={onShowPlatforms} accent />
-              {displayedSong.lyrics?.trim() ? (
-                <ActionBtn icon={FileText} label="Ver letras" onClick={onShowLyrics} />
-              ) : null}
-              {/* Mute — toujours visible, grisé avant activation */}
-              <ActionBtn
-                icon={isMuted ? VolumeX : Volume2}
-                label={isMuted ? 'Ativar som' : 'Silenciar video'}
-                onClick={videoActivated ? toggleMute : undefined}
-                dim={!videoActivated}
-              />
-              <ActionBtn
-                icon={MoreHorizontal}
-                label={showUtilityActions ? 'Fechar atalhos' : 'Mais acoes'}
-                onClick={() => setShowUtilityActions((c) => !c)}
-              />
-            </div>
-
+                {/* Infos chanson — bas gauche */}
+                <div className="absolute bottom-5 left-4 right-4 z-10 space-y-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">
+                    {releaseDate}
+                  </p>
+                  <h2 className="line-clamp-2 text-[17px] font-black leading-tight text-white drop-shadow-lg">
+                    {displayedSong.title}
+                  </h2>
+                  <p className="truncate text-sm text-white/60">
+                    {displayedSong.artist || 'A Musica da Segunda'}
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </motion.div>
-      </AnimatePresence>
+
+          {/* ══ Boutons d'action — colonne droite, statique ══ */}
+          <div className="flex flex-col items-center gap-3 pb-4">
+
+            {/* Navigation < > */}
+            {(canNavigatePrevious || canNavigateNext) && (
+              <>
+                <div className="flex flex-col items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => { vibrate(); onPreviousSong(); }}
+                    disabled={!canNavigatePrevious}
+                    aria-label="Video precedente"
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-150 ${
+                      canNavigatePrevious
+                        ? 'border-white/20 bg-black/40 text-white active:scale-90'
+                        : 'border-white/8 bg-black/20 text-white/25 cursor-default'
+                    }`}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { vibrate(); onNextSong(); }}
+                    disabled={!canNavigateNext}
+                    aria-label="Proxima video"
+                    className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-150 ${
+                      canNavigateNext
+                        ? 'border-white/20 bg-black/40 text-white active:scale-90'
+                        : 'border-white/8 bg-black/20 text-white/25 cursor-default'
+                    }`}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {/* Séparateur */}
+                <div className="h-px w-6 rounded-full bg-white/15" />
+              </>
+            )}
+
+            {/* Actions utilitaires (History + Share) */}
+            <AnimatePresence>
+              {showUtilityActions ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                  transition={{ duration: reduceMotion ? 0.01 : 0.16, ease: 'easeOut' }}
+                  className="flex flex-col gap-3"
+                >
+                  <ActionBtn
+                    icon={History}
+                    label="Historico das musicas"
+                    onClick={() => { setShowUtilityActions(false); onShowHistory(); }}
+                  />
+                  <ActionBtn
+                    icon={Share2}
+                    label="Compartilhar"
+                    onClick={() => { setShowUtilityActions(false); onShareSong(); }}
+                  />
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <ActionBtn icon={Music} label="Ouvir em outras plataformas" onClick={onShowPlatforms} accent />
+            {displayedSong.lyrics?.trim() ? (
+              <ActionBtn icon={FileText} label="Ver letras" onClick={onShowLyrics} />
+            ) : null}
+            {/* Mute — toujours visible, grisé avant activation */}
+            <ActionBtn
+              icon={isMuted ? VolumeX : Volume2}
+              label={isMuted ? 'Ativar som' : 'Silenciar video'}
+              onClick={videoActivated ? toggleMute : undefined}
+              dim={!videoActivated}
+            />
+            <ActionBtn
+              icon={MoreHorizontal}
+              label={showUtilityActions ? 'Fechar atalhos' : 'Mais acoes'}
+              onClick={() => setShowUtilityActions((c) => !c)}
+            />
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
