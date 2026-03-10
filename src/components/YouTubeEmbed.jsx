@@ -17,6 +17,7 @@ export default function YouTubeEmbed({
   onActivatedChange,
   onMuteChange,
   portraitMode = false,
+  playButtonStyle = 'youtube',
 }) {
   const [activated, setActivated] = useState(false);
   const [isMuted, setIsMuted] = useState(startMuted);
@@ -291,11 +292,19 @@ export default function YouTubeEmbed({
           />
         )}
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-          <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-            <svg viewBox="0 0 24 24" className="w-8 h-8 text-white ml-1" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
+          {playButtonStyle === 'minimal' ? (
+            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-white/15 backdrop-blur-sm shadow-lg transition-all duration-200 group-hover:scale-105 group-hover:bg-white/22">
+              <svg viewBox="0 0 24 24" className="w-6 h-6 text-white ml-0.5" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          ) : (
+            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+              <svg viewBox="0 0 24 24" className="w-8 h-8 text-white ml-1" fill="currentColor">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          )}
         </div>
       </div>
     );
