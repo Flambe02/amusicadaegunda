@@ -3,6 +3,8 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
+  ChevronLeft,
+  ChevronRight,
   FileText,
   History,
   MoreHorizontal,
@@ -95,7 +97,6 @@ export default function HomeMobileImmersive({
     handleGestureNavigate((e.changedTouches?.[0]?.clientX ?? touchStartX) - touchStartX);
     setTouchStartX(null);
   };
-  const handleDragEnd = (_, info) => handleGestureNavigate(info.offset.x);
   const toggleMute = () => playerStateRef.current?.toggleMute?.();
 
   const releaseDate = displayedSong.release_date
@@ -131,10 +132,6 @@ export default function HomeMobileImmersive({
       <AnimatePresence mode="wait">
         <motion.div
           key={displayedSong.id}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.12}
-          onDragEnd={handleDragEnd}
           initial={{ opacity: 0, scale: reduceMotion ? 1 : 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: reduceMotion ? 1 : 0.96 }}
@@ -146,12 +143,17 @@ export default function HomeMobileImmersive({
            * Les boutons sont toujours collés au bord droit de la carte,
            * quelle que soit la largeur d'écran.
            */}
-          <div className="flex h-full items-end gap-2">
+          {/*
+           * flex-row : carte + boutons toujours adjacents.
+           * La carte est contrainte par maxHeight (pas h-full + flex-shrink-0)
+           * pour éviter le débordement en PWA où card+gap+boutons > largeur écran.
+           */}
+          <div className="flex h-full items-end gap-2 pl-1">
 
             {/* ══ Carte vidéo 9:16 ══ */}
             <div
-              className="relative h-full flex-shrink-0 overflow-hidden rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
-              style={{ aspectRatio: '9/16' }}
+              className="relative overflow-hidden rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
+              style={{ aspectRatio: '9/16', maxHeight: '100%' }}
             >
               <YouTubeEmbed
                 youtubeMusicUrl={displayedSong.youtube_music_url}
@@ -172,11 +174,28 @@ export default function HomeMobileImmersive({
               {/* Gradient bas */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
 
-              {/* Hint haut */}
-              <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center">
-                <p className="rounded-full bg-black/28 px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-white/55 backdrop-blur-xl">
-                  Deslize para mudar
-                </p>
+              {/* Navigation < > — haut droite */}
+              <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5">
+                {canNavigatePrevious && (
+                  <button
+                    type="button"
+                    onClick={onPreviousSong}
+                    aria-label="Video precedente"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/32 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                )}
+                {canNavigateNext && (
+                  <button
+                    type="button"
+                    onClick={onNextSong}
+                    aria-label="Proxima video"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/32 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                )}
               </div>
 
               {/* Infos chanson — bas gauche */}
