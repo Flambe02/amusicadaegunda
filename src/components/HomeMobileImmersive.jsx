@@ -140,12 +140,12 @@ export default function HomeMobileImmersive({
 
       {/* ── Layout fixe : cadre + boutons toujours visibles ── */}
       <div className="relative z-10 flex h-full items-center justify-center py-2">
-        <div className="flex h-full items-center gap-2 pl-1">
+        <div className="flex h-full max-w-full items-center gap-2 overflow-hidden pl-1">
 
           {/* ══ Cadre de la carte 9:16 — statique ══ */}
           <div
-            className="relative h-full overflow-hidden rounded-[28px] shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
-            style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 52px)' }}
+            className="relative h-full overflow-hidden rounded-[28px] bg-black shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
+            style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 60px)' }}
           >
             {/* Contenu animé — seule la vidéo + infos transitionnent */}
             <AnimatePresence mode="wait">
@@ -155,7 +155,7 @@ export default function HomeMobileImmersive({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: reduceMotion ? 0.01 : 0.22, ease: 'easeInOut' }}
-                className="absolute inset-0"
+                className="absolute inset-0 bg-black"
               >
                 <YouTubeEmbed
                   youtubeMusicUrl={displayedSong.youtube_music_url}
