@@ -8,6 +8,16 @@ export default function BottomNavigationModern() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMonday = new Date().getDay() === 1;
+  const todayKey = `menu-seen-${new Date().toDateString()}`;
+  const [newSeen, setNewSeen] = useState(() => !!sessionStorage.getItem(todayKey));
+
+  const handleMenuOpen = () => {
+    setIsMenuOpen(true);
+    if (!newSeen) {
+      sessionStorage.setItem(todayKey, '1');
+      setNewSeen(true);
+    }
+  };
 
   const items = [
     { name: 'Home', url: createPageUrl('Home'), icon: Home, isLink: true },
@@ -40,7 +50,7 @@ export default function BottomNavigationModern() {
                     }`}
                     aria-hidden="true"
                   />
-                  {!item.isLink && isMonday ? (
+                  {!item.isLink && isMonday && !newSeen ? (
                     <span className="absolute -right-2 -top-1 rounded-full bg-[#FDE047] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-black">
                       New
                     </span>
@@ -79,7 +89,7 @@ export default function BottomNavigationModern() {
               <button
                 key={item.name}
                 type="button"
-                onClick={() => setIsMenuOpen(true)}
+                onClick={handleMenuOpen}
                 className={className}
                 aria-label="Ouvrir le menu"
               >

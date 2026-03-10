@@ -1263,6 +1263,8 @@ export default function Home() {
           onNextSong={handleNextSong}
           canNavigatePrevious={canNavigatePrevious()}
           canNavigateNext={canNavigateNext()}
+          songPosition={getCurrentSongIndex() + 1}
+          songTotal={allSongs.length}
           onShowPlatforms={() => setShowPlatformsDrawer(true)}
           onShowLyrics={() => handleShowLyrics(displayedSong)}
           onShareSong={() => handleShareSong(displayedSong)}

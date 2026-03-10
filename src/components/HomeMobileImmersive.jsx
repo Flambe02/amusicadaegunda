@@ -17,13 +17,22 @@ import YouTubeEmbed from '@/components/YouTubeEmbed';
 
 const SWIPE_THRESHOLD = 72;
 
-function ActionBtn({ icon: Icon, label, onClick, accent = false }) {
+const vibrate = () => navigator.vibrate?.(8);
+
+function ActionBtn({ icon: Icon, label, onClick, accent = false, dim = false }) {
+  const handleClick = () => {
+    vibrate();
+    onClick?.();
+  };
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
+      disabled={dim}
       className={`flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-2xl transition-all duration-200 active:scale-90 ${
-        accent
+        dim
+          ? 'border-white/8 bg-black/20 text-white/30 shadow-none cursor-default'
+          : accent
           ? 'border-emerald-300/30 bg-emerald-500/22 text-white shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
           : 'border-white/14 bg-black/30 text-white/90 shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
       }`}
@@ -43,6 +52,8 @@ export default function HomeMobileImmersive({
   onNextSong,
   canNavigatePrevious,
   canNavigateNext,
+  songPosition,
+  songTotal,
   onShowPlatforms,
   onShowLyrics,
   onShareSong,
@@ -87,8 +98,8 @@ export default function HomeMobileImmersive({
 
   const handleGestureNavigate = (deltaX) => {
     if (Math.abs(deltaX) < SWIPE_THRESHOLD) return;
-    if (deltaX > 0 && canNavigatePrevious) { onPreviousSong(); return; }
-    if (deltaX < 0 && canNavigateNext) onNextSong();
+    if (deltaX > 0 && canNavigatePrevious) { vibrate(); onPreviousSong(); return; }
+    if (deltaX < 0 && canNavigateNext) { vibrate(); onNextSong(); }
   };
 
   const handleTouchStartCapture = (e) => setTouchStartX(e.touches?.[0]?.clientX ?? null);
@@ -102,6 +113,8 @@ export default function HomeMobileImmersive({
   const releaseDate = displayedSong.release_date
     ? format(parseISO(displayedSong.release_date), 'dd MMMM yyyy', { locale: ptBR }).toUpperCase()
     : 'SEM DATA';
+
+  const showPosition = songPosition != null && songTotal != null && songTotal > 1;
 
   return (
     <div
@@ -138,17 +151,8 @@ export default function HomeMobileImmersive({
           transition={{ duration: reduceMotion ? 0.01 : 0.26, ease: 'easeOut' }}
           className="relative z-10 flex h-full items-center justify-center py-2"
         >
-          {/*
-           * ── Carte + boutons : un seul flex-row centré ──
-           * Les boutons sont toujours collés au bord droit de la carte,
-           * quelle que soit la largeur d'écran.
-           */}
-          {/*
-           * flex-row : carte + boutons toujours adjacents.
-           * La carte est contrainte par maxHeight (pas h-full + flex-shrink-0)
-           * pour éviter le débordement en PWA où card+gap+boutons > largeur écran.
-           */}
-          <div className="flex h-full items-end gap-2 pl-1">
+          {/* flex-row : carte + boutons toujours adjacents, centrés verticalement */}
+          <div className="flex h-full items-center gap-2 pl-1">
 
             {/* ══ Carte vidéo 9:16 ══ */}
             <div
@@ -188,34 +192,52 @@ export default function HomeMobileImmersive({
               </div>
             </div>
 
-            {/* ══ Boutons d'action — colonne droite, toujours adjacente à la carte ══ */}
-            <div className="flex flex-col items-center gap-3 pb-6">
-              {/* Navigation < > — en haut de la colonne */}
+            {/* ══ Boutons d'action — colonne droite ══ */}
+            <div className="flex flex-col items-center gap-3 pb-4">
+
+              {/* Navigation < > */}
               {(canNavigatePrevious || canNavigateNext) && (
-                <div className="flex flex-col items-center gap-1.5">
-                  {canNavigatePrevious && (
+                <>
+                  <div className="flex flex-col items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={onPreviousSong}
+                      onClick={() => { vibrate(); onPreviousSong(); }}
+                      disabled={!canNavigatePrevious}
                       aria-label="Video precedente"
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-150 ${
+                        canNavigatePrevious
+                          ? 'border-white/20 bg-black/40 text-white active:scale-90'
+                          : 'border-white/8 bg-black/20 text-white/25 cursor-default'
+                      }`}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
-                  )}
-                  {canNavigateNext && (
+                    {showPosition && (
+                      <span className="font-mono text-[9px] font-semibold tabular-nums text-white/40">
+                        {songPosition}/{songTotal}
+                      </span>
+                    )}
                     <button
                       type="button"
-                      onClick={onNextSong}
+                      onClick={() => { vibrate(); onNextSong(); }}
+                      disabled={!canNavigateNext}
                       aria-label="Proxima video"
-                      className="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-xl transition-all duration-150 active:scale-90"
+                      className={`flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-150 ${
+                        canNavigateNext
+                          ? 'border-white/20 bg-black/40 text-white active:scale-90'
+                          : 'border-white/8 bg-black/20 text-white/25 cursor-default'
+                      }`}
                     >
                       <ChevronRight className="h-4 w-4" />
                     </button>
-                  )}
-                </div>
+                  </div>
+
+                  {/* Séparateur */}
+                  <div className="h-px w-6 rounded-full bg-white/15" />
+                </>
               )}
 
+              {/* Actions utilitaires (History + Share) */}
               <AnimatePresence>
                 {showUtilityActions ? (
                   <motion.div
@@ -243,13 +265,13 @@ export default function HomeMobileImmersive({
               {displayedSong.lyrics?.trim() ? (
                 <ActionBtn icon={FileText} label="Ver letras" onClick={onShowLyrics} />
               ) : null}
-              {videoActivated ? (
-                <ActionBtn
-                  icon={isMuted ? VolumeX : Volume2}
-                  label={isMuted ? 'Ativar som' : 'Silenciar video'}
-                  onClick={toggleMute}
-                />
-              ) : null}
+              {/* Mute — toujours visible, grisé avant activation */}
+              <ActionBtn
+                icon={isMuted ? VolumeX : Volume2}
+                label={isMuted ? 'Ativar som' : 'Silenciar video'}
+                onClick={videoActivated ? toggleMute : undefined}
+                dim={!videoActivated}
+              />
               <ActionBtn
                 icon={MoreHorizontal}
                 label={showUtilityActions ? 'Fechar atalhos' : 'Mais acoes'}

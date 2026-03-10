@@ -82,7 +82,7 @@ export default function Layout({ children }) {
       <div className="lg:hidden flex flex-col h-[100dvh] overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
-        <header className="z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl">
+        <header className={`z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl${isHomePage ? ' hidden' : ''}`}>
           <div className="px-3 pb-2 pt-[max(env(safe-area-inset-top),0.35rem)]">
             <div className="flex min-h-[52px] items-center justify-between gap-2">
               {/* Left: Logo */}
