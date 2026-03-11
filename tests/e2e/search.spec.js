@@ -1,36 +1,29 @@
 import { test, expect } from '@playwright/test';
+import { disableIntroOverlays } from './helpers';
 
 test.describe('Search Functionality', () => {
+  test.beforeEach(async ({ page }) => {
+    await disableIntroOverlays(page);
+  });
+
   test('should display playlist page content', async ({ page }) => {
     await page.goto('/playlist', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('load');
-    await page.waitForTimeout(5000); // Wait for React, Supabase and useSEO to load
-    
-    // Wait for React to hydrate
-    await page.waitForSelector('#root', { state: 'attached' });
-    await page.waitForTimeout(3000);
-    
-    // Check if page loaded successfully
-    const pageTitle = page.locator('h1, h2').first();
+    await page.waitForTimeout(5000);
+
+    const pageTitle = page.locator('h1:visible, h2:visible').first();
     const hasTitle = await pageTitle.isVisible({ timeout: 5000 }).catch(() => false);
-    
-    // Wait for body to have content
-    await page.waitForFunction(() => {
-      const body = document.body;
-      return body && body.textContent && body.textContent.length > 50;
-    }, { timeout: 10000 }).catch(() => {
-      // If waitForFunction fails, try to get body text anyway
-    });
-    
-    // Check if songs are displayed or if there's a message about no songs
-    // Separate CSS selectors from text selectors (can't mix them)
     const hasSongs = await page.locator('[data-testid*="song"], .song-card, article').count();
-    const hasMusicText = await page.locator('text=/mÃºsica/i').count();
-    const hasEmptyState = await page.locator('text=/nenhuma mÃºsica/i, text=/sem mÃºsicas/i, text=/carregando/i').count();
+    const hasMusicText = await page.locator('text=/musica|música/i').count();
+    const hasEmptyState = await page.locator('text=/nenhuma|sem musicas|sem músicas|carregando/i').count();
     const hasContent = await page.locator('body').textContent();
-    
-    // Page should have loaded (either with content or empty state or at least some text)
-    expect(hasTitle || hasSongs > 0 || hasMusicText > 0 || hasEmptyState > 0 || (hasContent && hasContent.length > 50)).toBeTruthy();
+
+    expect(
+      hasTitle ||
+      hasSongs > 0 ||
+      hasMusicText > 0 ||
+      hasEmptyState > 0 ||
+      (hasContent && hasContent.length > 50)
+    ).toBeTruthy();
   });
 });
-
