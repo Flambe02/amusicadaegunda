@@ -2,6 +2,25 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
+function createIcoFromPngBuffer(pngBuffer) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(1, 4);
+
+  const directoryEntry = Buffer.alloc(16);
+  directoryEntry.writeUInt8(48, 0);
+  directoryEntry.writeUInt8(48, 1);
+  directoryEntry.writeUInt8(0, 2);
+  directoryEntry.writeUInt8(0, 3);
+  directoryEntry.writeUInt16LE(1, 4);
+  directoryEntry.writeUInt16LE(32, 6);
+  directoryEntry.writeUInt32LE(pngBuffer.length, 8);
+  directoryEntry.writeUInt32LE(header.length + directoryEntry.length, 12);
+
+  return Buffer.concat([header, directoryEntry, pngBuffer]);
+}
+
 // Configuration des icônes à générer
 const ICON_SIZES = {
   // iOS App Store et App Icons
@@ -93,11 +112,28 @@ async function createIcon(sourcePath, outputPath, size, options = {}) {
   }
 }
 
+async function createFaviconIco(sourcePath, outputPath) {
+  try {
+    const pngBuffer = await sharp(sourcePath)
+      .resize(48, 48, {
+        fit: 'cover',
+        position: 'center'
+      })
+      .png()
+      .toBuffer();
+
+    fs.writeFileSync(outputPath, createIcoFromPngBuffer(pngBuffer));
+    console.log(`✅ Généré: ${outputPath} (48x48 ICO)`);
+  } catch (error) {
+    console.error(`❌ Erreur lors de la génération de ${outputPath}:`, error.message);
+  }
+}
+
 // Fonction principale
 async function generateAllIcons() {
   console.log('🎨 Début de la génération des icônes...\n');
   
-  const sourcePath = path.join(__dirname, '../public/images/Logo 3 D yellow.png');
+  const sourcePath = path.join(__dirname, '../public/images/Caipivara_square.png');
   
   // Vérifier que le fichier source existe
   if (!fs.existsSync(sourcePath)) {
@@ -149,6 +185,10 @@ async function generateAllIcons() {
       background: '#32a2dc'
     });
   }
+
+  // Générer favicon.ico sans dépendance externe
+  console.log('\n⭐ Génération du favicon ICO...');
+  await createFaviconIco(sourcePath, path.join(__dirname, '../public/favicon.ico'));
   
   // Générer les icônes Apple Touch (carrées)
   console.log('\n🍎 Génération des icônes Apple Touch...');
