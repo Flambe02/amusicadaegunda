@@ -73,7 +73,7 @@ export default defineConfig(({ command, mode }) => ({
     port: 3000,
     strictPort: true,
     host: true,
-    open: true,
+    open: !process.env.CI,
     // HMR désactivé pour éviter les erreurs websocket dans cet environnement
     hmr: false
   },
