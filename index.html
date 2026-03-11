@@ -39,6 +39,10 @@
     <link rel="canonical" href="https://www.amusicadasegunda.com/" />
 
     <script>
+      document.documentElement.classList.add('js');
+    </script>
+
+    <script>
       (function () {
         function sanitizeStandaloneTitle() {
           document.title = document.title
@@ -172,6 +176,14 @@
         text-decoration: none;
         font-weight: 700;
         backdrop-filter: blur(18px);
+      }
+
+      .js .app-shell-fallback {
+        display: none;
+      }
+
+      .js .skip-link[href="#main"] {
+        display: none;
       }
     </style>
 
