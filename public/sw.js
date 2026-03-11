@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9.0.0';
+const CACHE_VERSION = 'v9.0.1';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
 const SHELL_MANIFEST_URL = '/sw-assets.json';
 
@@ -8,6 +8,7 @@ const CORE_URLS = [
   '/offline.html',
   '/manifest.json',
   '/sw-assets.json',
+  '/build-info.json',
   '/content/songs.json',
   '/images/Caipivara_transp-removebg-preview.png',
   '/icons/pwa/icon-192x192.png',
@@ -88,8 +89,9 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   const pathname = url.pathname;
-  const isStaticAsset = /\.(?:css|js|woff2?|png|jpg|jpeg|webp|svg|ico)$/i.test(pathname);
-  const isContentPayload = pathname.startsWith('/content/') || pathname.includes('/api/');
+  const isStaticAsset = /\.(?:css|js|woff2?|png|jpg|jpeg|webp|svg|ico|json)$/i.test(pathname);
+  const isSongPayload = pathname.startsWith('/content/');
+  const isApiPayload = pathname.includes('/api/');
   const isImageRequest = request.destination === 'image';
 
   // HTML navigation: network-first with offline page fallback.
@@ -151,8 +153,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Song metadata and shell assets: stale-while-revalidate for a snappier PWA shell.
-  if (isStaticAsset || isContentPayload) {
+  // Song metadata should stay fresh: network-first with cache fallback.
+  if (isSongPayload) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(async () => {
+          const cache = await caches.open(CACHE_NAME);
+          return cache.match(request) || new Response('', { status: 503 });
+        })
+    );
+    return;
+  }
+
+  // Shell assets and other same-origin JSON: stale-while-revalidate.
+  if (isStaticAsset || isApiPayload) {
     event.respondWith(
       caches.match(request).then(async (cached) => {
         const networkFetch = fetch(request)

@@ -6,8 +6,11 @@ import './styles/tiktok-optimized.css'
 import './styles/a11y.css'
 import { HelmetProvider } from 'react-helmet-async'
 import ErrorBoundary from './components/ErrorBoundary'
+import { logBuildInfo } from '@/lib/buildInfo'
 
 const helmetContext = {}
+
+logBuildInfo()
 
 // Handler pour logger les erreurs vers un service externe (future Sentry integration)
 const handleError = (error, errorInfo) => {

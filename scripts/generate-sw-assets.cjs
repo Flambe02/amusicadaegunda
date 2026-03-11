@@ -11,6 +11,7 @@ const STATIC_ENTRIES = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
+  '/build-info.json',
   '/content/songs.json',
   '/images/Caipivara_transp-removebg-preview.png',
   '/icons/pwa/icon-192x192.png',
