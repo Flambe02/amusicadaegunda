@@ -94,11 +94,6 @@
     <meta name="twitter:description" content="Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira." />
     <meta name="twitter:image" content="https://www.amusicadasegunda.com/images/og-social-1200x630.jpg" />
 
-    <link rel="preconnect" href="https://efnzmpzkzeuktqkghwfa.functions.supabase.co" />
-    <link rel="preload" href="/images/Musica da segunda.webp" as="image" type="image/webp" fetchpriority="high" />
-    <link rel="preconnect" href="https://img.youtube.com" />
-    <link rel="dns-prefetch" href="https://www.youtube-nocookie.com" />
-
     <style>
       html {
         background: #050505;
@@ -193,16 +188,6 @@
       (function () {
         var loadedScripts = {};
 
-        function preconnect(origin) {
-          if (!origin || document.head.querySelector('link[data-origin="' + origin + '"]')) return;
-          var link = document.createElement('link');
-          link.rel = 'preconnect';
-          link.href = origin;
-          link.crossOrigin = 'anonymous';
-          link.setAttribute('data-origin', origin);
-          document.head.appendChild(link);
-        }
-
         function loadScript(src, onload) {
           if (!src || loadedScripts[src]) {
             if (typeof onload === 'function') onload();
@@ -227,8 +212,6 @@
         }
 
         schedule(function () {
-          preconnect('https://www.googletagmanager.com');
-          preconnect('https://tracker.metricool.com');
           window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
           loadScript('https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS');
           loadScript('https://www.googletagmanager.com/gtm.js?id=GTM-PQTFJ3C3');

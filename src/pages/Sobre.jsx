@@ -5,6 +5,7 @@ import OptimizedImage from '../components/OptimizedImage';
 import { useSEO } from '../hooks/useSEO';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
+import { BRAND_LOGO_MEDIUM } from '@/lib/imageAssets';
 
 export default function Sobre() {
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
@@ -178,7 +179,7 @@ export default function Sobre() {
               <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 text-center">
                 <div className="mx-auto mb-6 h-40 w-40 overflow-hidden rounded-full ring-8 ring-white/10">
                   <OptimizedImage
-                    src="/images/2026 logo.png"
+                    src={BRAND_LOGO_MEDIUM}
                     alt="Logo A Música da Segunda"
                     className="h-full w-full object-cover"
                     loading="eager"

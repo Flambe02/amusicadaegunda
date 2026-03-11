@@ -14,6 +14,7 @@ import {
   VolumeX,
 } from 'lucide-react';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
 const SWIPE_THRESHOLD = 72;
 
@@ -67,7 +68,7 @@ export default function HomeMobileImmersive({
   const reduceMotion = useReducedMotion();
 
   const heroArtwork = useMemo(
-    () => getYouTubeThumbnail(displayedSong) || displayedSong?.cover_image || '/images/Caipivara_square.png',
+    () => getYouTubeThumbnail(displayedSong) || displayedSong?.cover_image || BRAND_SQUARE_MEDIUM,
     [displayedSong, getYouTubeThumbnail]
   );
 

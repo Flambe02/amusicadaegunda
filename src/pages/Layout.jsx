@@ -13,6 +13,7 @@ import OnboardingScreen from '@/components/OnboardingScreen';
 import BottomNavigationModern from '@/components/BottomNavigationModern';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
+import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 
 function getNextMondayMs() {
   const now = new Date();
@@ -88,10 +89,13 @@ export default function Layout({ children }) {
               {/* Left: Logo */}
               <Link to="/" className="flex h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/8 shadow-sm">
                 <img
-                  src="/images/Caipivara_square.png"
+                  src={BRAND_SQUARE_SMALL}
                   alt="Logo A Musica da Segunda"
                   className="w-full h-full object-cover"
                   loading="eager"
+                  decoding="async"
+                  width="40"
+                  height="40"
                 />
               </Link>
               {/* Center: Title */}
@@ -134,10 +138,13 @@ export default function Layout({ children }) {
                 className="h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-white/10 shadow-lg shadow-black/30"
               >
                 <img
-                  src="/images/Caipivara_square.png"
+                  src={BRAND_SQUARE_MEDIUM}
                   alt="Capybara A Musica da Segunda"
                   className="h-full w-full object-cover"
                   loading="eager"
+                  decoding="async"
+                  width="64"
+                  height="64"
                 />
               </Link>
 

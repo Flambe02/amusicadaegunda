@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/export-songs-from-supabase.cjs && node scripts/generate-build-info.cjs",
+    "prebuild": "node scripts/export-songs-from-supabase.cjs && node scripts/generate-build-info.cjs && node scripts/optimize-brand-images.cjs",
     "build": "vite build",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
@@ -42,10 +42,11 @@
     "qa:jsonld": "node scripts/check-jsonld-prod.js",
     "qa:sitemap": "node scripts/check-sitemap-prod.js",
     "qa:prod": "npm run qa:jsonld && npm run qa:sitemap",
-    "optimize:images": "node scripts/optimize-images.cjs"
+    "optimize:images": "node scripts/optimize-images.cjs",
+    "optimize:brand-images": "node scripts/optimize-brand-images.cjs"
   },
   "dependencies": {
-    "@capacitor/core": "^7.4.3",
+    "@capacitor/core": "^8.2.0",
     "@capacitor/splash-screen": "^7.0.2",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -99,7 +100,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@capacitor/android": "^7.4.3",
+    "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^7.4.3",
     "@eslint/js": "^9.19.0",
     "@flydotio/dockerfile": "^0.7.8",

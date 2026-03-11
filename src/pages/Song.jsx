@@ -21,6 +21,7 @@ import YouTubeEmbed from '@/components/YouTubeEmbed';
 import LyricsDialog from '@/components/LyricsDialog';
 import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
 export default function SongPage() {
   const { slug: rawSlug } = useParams();
@@ -171,7 +172,7 @@ export default function SongPage() {
 
   const artwork = song?.cover_image ||
     getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault') ||
-    '/images/Caipivara_square.png';
+    BRAND_SQUARE_MEDIUM;
 
   const isShort = Boolean(
     song?.youtube_music_url?.includes('/shorts/') || song?.youtube_url?.includes('/shorts/')
@@ -274,7 +275,7 @@ export default function SongPage() {
               <div className="p-2">
                 {searchSuggestions.map((item) => {
                   const itemSlug = item.slug || titleToSlug(item.title);
-                  const thumb = item.cover_image || getYouTubeThumbnailUrl(item.youtube_url || item.youtube_music_url, 'hqdefault') || '/images/Caipivara_square.png';
+                  const thumb = item.cover_image || getYouTubeThumbnailUrl(item.youtube_url || item.youtube_music_url, 'hqdefault') || BRAND_SQUARE_MEDIUM;
                   return (
                     <button key={itemSlug} type="button" onClick={() => handleSearchNavigate(item)}
                       className="flex w-full items-center gap-3 rounded-[18px] px-3 py-2.5 text-left transition hover:bg-white/6">

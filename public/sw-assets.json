@@ -1,13 +1,13 @@
 {
   "assets": [
     "/",
-    "/assets/index-DrdiEvuQ.js",
+    "/assets/index-CgdM_-uu.js",
     "/assets/index-Dy2GrsPu.css",
     "/assets/vendor-date-mUadzwGa.js",
-    "/assets/vendor-motion-XkFPCHrJ.js",
-    "/assets/vendor-react-DNVYbnJM.js",
-    "/assets/vendor-supabase-HJ9lvb4X.js",
-    "/assets/vendor-ui-D8WrYV8a.js",
+    "/assets/vendor-motion-fei4KSc9.js",
+    "/assets/vendor-react-I9ss9QsU.js",
+    "/assets/vendor-supabase-Dugkqoe8.js",
+    "/assets/vendor-ui-fCbHWK4W.js",
     "/build-info.json",
     "/content/songs.json",
     "/icons/apple/apple-touch-icon-114x114.png",
@@ -22,7 +22,6 @@
     "/icons/pwa/icon-192x192.png",
     "/icons/pwa/icon-512x512.png",
     "/images/Caipivara_transp-removebg-preview.png",
-    "/images/Musica da segunda.webp",
     "/index.html",
     "/manifest.json",
     "/offline.html"

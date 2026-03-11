@@ -42,6 +42,7 @@ import { Helmet } from 'react-helmet-async';
 import { getDocumentTitle } from '@/lib/documentTitle';
 import { useToast } from '@/components/ui/use-toast';
 import { extractYouTubeId } from '@/lib/utils';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 // VideoObject JSON-LD removed from all pages (GSC: "Video isn't on a watch page")
 // No page in this app is a dedicated watch page for a single video.
 
@@ -409,12 +410,16 @@ export default function Home() {
   const heroArtwork =
     displayedSong?.cover_image ||
     getYouTubeThumbnail(displayedSong) ||
-    '/images/Caipivara_square.png';
+    BRAND_SQUARE_MEDIUM;
 
   const dialogArtwork =
     selectedSongForDialog?.cover_image ||
     getYouTubeThumbnail(selectedSongForDialog) ||
-    '/images/Caipivara_square.png';
+    BRAND_SQUARE_MEDIUM;
+  const shouldRenderLegacyDesktop =
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    window.location.search.includes('legacy-home-desktop=1');
   const isCurrentCatalogMonth = isSameMonth(catalogMonthDate, startOfMonth(new Date()));
   const currentCatalogKey = format(catalogMonthDate, 'yyyy-MM');
   const currentCatalogLabel = format(catalogMonthDate, 'MMMM yyyy', { locale: ptBR });
@@ -1094,7 +1099,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ===== HEADER DESKTOP (LEGACY, DISABLED) ===== */}
+      {shouldRenderLegacyDesktop && (
+        <>
+          {/* Legacy desktop layout retained only for reference. */}
       <div className="hidden text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
           A Musica da Segunda
@@ -1252,6 +1259,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+        </>
+      )}
 
       {/* ===== LAYOUT MOBILE IMMERSIF: STYLE TIKTOK ===== */}
       <div className="lg:hidden h-full">

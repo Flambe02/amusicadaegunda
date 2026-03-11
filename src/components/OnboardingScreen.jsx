@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BRAND_LOGO_SMALL } from '@/lib/imageAssets';
 
 const ONBOARDING_KEY = 'onboarding-v1-seen';
 
@@ -32,10 +33,14 @@ export default function OnboardingScreen() {
       {/* Logo */}
       <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl mb-6 flex-shrink-0">
         <img
-          src="/images/2026 logo.png"
+          src={BRAND_LOGO_SMALL}
           alt="A Música da Segunda"
           className="w-full h-full object-cover"
           loading="eager"
+          decoding="async"
+          fetchPriority="high"
+          width="96"
+          height="96"
         />
       </div>
 
