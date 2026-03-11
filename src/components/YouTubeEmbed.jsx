@@ -231,20 +231,6 @@ export default function YouTubeEmbed({
         maxHeight: '100%',
       }}
     >
-      {thumbnailUrl ? (
-        <>
-          <img
-            src={thumbnailUrl}
-            alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full scale-110 object-cover blur-3xl opacity-45"
-            loading="eager"
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.42),rgba(0,0,0,0.18)_40%,rgba(0,0,0,0.52))]" />
-        </>
-      ) : null}
-
       <div className="absolute inset-0 flex items-center justify-center p-3">
         <div
           className="relative w-full overflow-hidden rounded-[28px] bg-black"
@@ -291,9 +277,9 @@ export default function YouTubeEmbed({
             fetchPriority="high"
           />
         )}
-        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center">
           {playButtonStyle === 'minimal' ? (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-white/15 backdrop-blur-sm shadow-lg transition-all duration-200 group-hover:scale-105 group-hover:bg-white/22">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/30 bg-black/28 backdrop-blur-sm shadow-lg transition-all duration-200 group-hover:scale-105">
               <svg viewBox="0 0 24 24" className="w-6 h-6 text-white ml-0.5" fill="currentColor">
                 <path d="M8 5v14l11-7z" />
               </svg>
@@ -358,7 +344,7 @@ export default function YouTubeEmbed({
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
       )}
-      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+      <div className="absolute inset-0 flex items-center justify-center">
         <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
           <svg viewBox="0 0 24 24" className="w-8 h-8 text-white ml-1" fill="currentColor">
             <path d="M8 5v14l11-7z" />
