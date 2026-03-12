@@ -415,10 +415,9 @@ ${songListHtml}
     await fs.writeFile(fileNoSlash, htmlWithVersionNoSlash, { encoding: 'utf8' });
   }
 
-  // ✅ LCP FIX: Injecter le preload de la thumbnail YouTube dans dist/index.html
-  // La homepage dépend de JS→React→API pour connaître l'URL de la thumbnail.
-  // En injectant le preload au build-time, le navigateur commence à télécharger
-  // la thumbnail dès le parsing HTML, sans attendre JavaScript.
+  // ✅ LCP FIX: Injecter le preload de la miniature courante dans dist/index.html.
+  // On privilégie une copie same-origin générée au build pour éviter une dépendance
+  // réseau immédiate vers img.youtube.com sur mobile.
   const indexHtmlPath = path.resolve('dist', 'index.html');
   if (songs.length > 0 && fs.existsSync(indexHtmlPath)) {
     // Trouver la chanson la plus récente (triée par datePublished desc)
@@ -430,13 +429,19 @@ ${songListHtml}
     const videoId = youtubeUrl ? extractYouTubeId(youtubeUrl) : null;
 
     if (videoId) {
-      const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      const localThumbnailPath = '/images/current-song-thumb.webp';
+      const localThumbnailFile = path.resolve('public', localThumbnailPath.replace(/^\//, ''));
+      const thumbnailUrl = fs.existsSync(localThumbnailFile)
+        ? localThumbnailPath
+        : `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
 
-      const preloadTag =
-        `\n    <!-- ✅ LCP FIX: Preload de la thumbnail YouTube de la chanson actuelle (build-time) -->` +
-        `\n    <link rel="preconnect" href="https://img.youtube.com" crossorigin>` +
-        `\n    <link rel="preload" href="${thumbnailUrl}" as="image" fetchpriority="high" crossorigin>`;
+      const preloadTag = fs.existsSync(localThumbnailFile)
+        ? `\n    <!-- ✅ LCP FIX: Preload same-origin de la miniature courante -->` +
+          `\n    <link rel="preload" href="${thumbnailUrl}" as="image" fetchpriority="high">`
+        : `\n    <!-- ✅ LCP FIX: Preload de secours de la thumbnail YouTube courante -->` +
+          `\n    <link rel="preconnect" href="https://img.youtube.com" crossorigin>` +
+          `\n    <link rel="preload" href="${thumbnailUrl}" as="image" fetchpriority="high" crossorigin>`;
 
       indexHtml = indexHtml.replace(
         /<\/head>/,
@@ -444,7 +449,7 @@ ${songListHtml}
       );
 
       fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
-      console.log(`✅ Preload thumbnail YouTube injecté dans index.html sans rendu visible (${currentSong.name}, video: ${videoId})`);
+      console.log(`✅ Preload miniature courante injecté dans index.html (${currentSong.name}, source: ${thumbnailUrl})`);
     }
   }
 

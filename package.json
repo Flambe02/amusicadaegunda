@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/export-songs-from-supabase.cjs && node scripts/generate-build-info.cjs && node scripts/optimize-brand-images.cjs",
+    "prebuild": "node scripts/export-songs-from-supabase.cjs && node scripts/generate-build-info.cjs && node scripts/generate-current-song-artwork.cjs && node scripts/optimize-brand-images.cjs",
     "build": "vite build",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",

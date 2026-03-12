@@ -30,7 +30,6 @@ import PlatformsDrawer from '../components/PlatformsDrawer';
 import HistoryDrawer from '../components/HistoryDrawer';
 import HomeMobileImmersive from '../components/HomeMobileImmersive';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
-import { AnimatePresence, motion } from 'framer-motion';
 
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -42,6 +41,7 @@ import { getDocumentTitle } from '@/lib/documentTitle';
 import { useToast } from '@/components/ui/use-toast';
 import { extractYouTubeId } from '@/lib/utils';
 import { BRAND_LOGO_MEDIUM, BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+import { CURRENT_SONG_ARTWORK } from '@/generated/currentSongArtwork';
 // VideoObject JSON-LD removed from all pages (GSC: "Video isn't on a watch page")
 // No page in this app is a dedicated watch page for a single video.
 
@@ -110,21 +110,6 @@ function DesktopCountdown() {
   );
 }
 
-const catalogSlideVariants = {
-  enter: (direction) => ({
-    x: direction < 0 ? 72 : -72,
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (direction) => ({
-    x: direction < 0 ? -72 : 72,
-    opacity: 0,
-  }),
-};
-
 const SongListItem = memo(function SongListItem({ song, onSelect, thumbnailUrl }) {
   return (
     <button
@@ -141,6 +126,9 @@ const SongListItem = memo(function SongListItem({ song, onSelect, thumbnailUrl }
             aria-hidden="true"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
+            width="480"
+            height="600"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-900 to-zinc-800">
@@ -182,6 +170,7 @@ function getCachedHomePreview() {
     return {
       title: cached.title,
       artist: cached.artist || 'A Musica da Segunda',
+      slug: cached.slug || null,
       thumbnail: cached.thumbnail || null,
     };
   } catch {
@@ -190,9 +179,14 @@ function getCachedHomePreview() {
 }
 
 function HomeLoadingShell({ preview }) {
-  const artwork = preview?.thumbnail || BRAND_LOGO_MEDIUM;
-  const title = preview?.title || 'A Musica da Segunda';
-  const artist = preview?.artist || 'Nova musica toda segunda-feira';
+  const hasFreshPreview = Boolean(
+    preview?.slug &&
+      CURRENT_SONG_ARTWORK.slug &&
+      preview.slug === CURRENT_SONG_ARTWORK.slug
+  );
+  const artwork = CURRENT_SONG_ARTWORK.path || preview?.thumbnail || BRAND_LOGO_MEDIUM;
+  const title = hasFreshPreview ? preview.title : 'A Musica da Segunda';
+  const artist = hasFreshPreview ? preview.artist : 'Nova musica toda segunda-feira';
 
   return (
     <>
@@ -215,6 +209,8 @@ function HomeLoadingShell({ preview }) {
               loading="eager"
               decoding="async"
               fetchPriority="high"
+              width="720"
+              height="1280"
             />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.16),_transparent_35%),linear-gradient(180deg,#151515_0%,#050505_100%)]" />
           </div>
@@ -231,6 +227,8 @@ function HomeLoadingShell({ preview }) {
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
+                width="720"
+                height="1280"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/36 to-transparent" />
 
@@ -276,10 +274,12 @@ function HomeLoadingShell({ preview }) {
                 src={artwork}
                 alt=""
                 aria-hidden="true"
-                className="h-full w-full object-cover opacity-80"
-                loading="eager"
-                decoding="async"
-              />
+              className="h-full w-full object-cover opacity-80"
+              loading="eager"
+              decoding="async"
+              width="720"
+              height="1280"
+            />
             </div>
           </div>
         </div>
@@ -319,7 +319,6 @@ export default function Home() {
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
   const [desktopVolume, setDesktopVolume] = useState(72);
   const [catalogMonthDate, setCatalogMonthDate] = useState(() => startOfMonth(new Date()));
-  const [catalogDirection, setCatalogDirection] = useState(-1);
 
   useEffect(() => {
     logger.debug('Home useEffect triggered');
@@ -371,11 +370,7 @@ export default function Home() {
           title: fetchedCurrentSong.title,
           artist: fetchedCurrentSong.artist,
           slug: fetchedCurrentSong.slug,
-          thumbnail:
-            fetchedCurrentSong.cover_image ||
-            fetchedCurrentSong.thumbnail_url ||
-            getYouTubeThumbnail(fetchedCurrentSong) ||
-            null,
+          thumbnail: getSongArtwork(fetchedCurrentSong) || null,
         });
       }
 
@@ -399,11 +394,7 @@ export default function Home() {
           title: resolvedCurrentSong.title,
           artist: resolvedCurrentSong.artist,
           slug: resolvedCurrentSong.slug,
-          thumbnail:
-            resolvedCurrentSong.cover_image ||
-            resolvedCurrentSong.thumbnail_url ||
-            getYouTubeThumbnail(resolvedCurrentSong) ||
-            null,
+          thumbnail: getSongArtwork(resolvedCurrentSong) || null,
         });
       }
 
@@ -519,17 +510,30 @@ export default function Home() {
   };
 
   const handleShiftCatalogMonth = (direction) => {
-    setCatalogDirection(direction);
     setCatalogMonthDate((currentDate) => startOfMonth(addMonths(currentDate, direction)));
   };
 
-  // Obtenir l'URL de la miniature YouTube
-  const getYouTubeThumbnail = (song) => {
-    if (!song) return null;
+  const getSongArtwork = useCallback((song, quality = 'hqdefault') => {
+    if (!song) return BRAND_SQUARE_MEDIUM;
+
+    if (
+      CURRENT_SONG_ARTWORK.path &&
+      CURRENT_SONG_ARTWORK.slug &&
+      song.slug === CURRENT_SONG_ARTWORK.slug
+    ) {
+      return CURRENT_SONG_ARTWORK.path;
+    }
+
+    if (song.cover_image) return song.cover_image;
+    if (song.thumbnail_url) return song.thumbnail_url;
+
     const videoId = extractYouTubeId(song.youtube_music_url || song.youtube_url);
-    if (!videoId) return null;
-    return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
-  };
+    if (videoId) {
+      return `https://img.youtube.com/vi/${videoId}/${quality}.jpg`;
+    }
+
+    return BRAND_SQUARE_MEDIUM;
+  }, []);
 
   useEffect(() => {
     if (!displayedSong) return;
@@ -538,46 +542,24 @@ export default function Home() {
       title: displayedSong.title,
       artist: displayedSong.artist,
       slug: displayedSong.slug,
-      thumbnail:
-        displayedSong.thumbnail_url ||
-        displayedSong.cover_image ||
-        getYouTubeThumbnail(displayedSong) ||
-        null,
+      thumbnail: getSongArtwork(displayedSong) || null,
     });
-  }, [displayedSong]);
+  }, [displayedSong, getSongArtwork]);
 
-  const heroArtwork =
-    displayedSong?.cover_image ||
-    getYouTubeThumbnail(displayedSong) ||
-    BRAND_SQUARE_MEDIUM;
+  const heroArtwork = getSongArtwork(displayedSong) || BRAND_SQUARE_MEDIUM;
 
-  const dialogArtwork =
-    selectedSongForDialog?.cover_image ||
-    getYouTubeThumbnail(selectedSongForDialog) ||
-    BRAND_SQUARE_MEDIUM;
+  const dialogArtwork = getSongArtwork(selectedSongForDialog) || BRAND_SQUARE_MEDIUM;
   const shouldRenderLegacyDesktop =
     import.meta.env.DEV &&
     typeof window !== 'undefined' &&
     window.location.search.includes('legacy-home-desktop=1');
   const isCurrentCatalogMonth = isSameMonth(catalogMonthDate, startOfMonth(new Date()));
-  const currentCatalogKey = format(catalogMonthDate, 'yyyy-MM');
   const currentCatalogLabel = format(catalogMonthDate, 'MMMM yyyy', { locale: ptBR });
   const isDesktopShort = Boolean(
     displayedSong &&
       (displayedSong.youtube_music_url?.includes('/shorts/') ||
         displayedSong.youtube_url?.includes('/shorts/'))
   );
-
-  const handleActivateDesktopPlayer = () => {
-    stopDesktopPlayerBar();
-    setVideoActivated(true);
-    const desktopVideo = document.getElementById('desktop-weekly-video');
-    if (desktopVideo) {
-      desktopVideo.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
 
   const handleActivateMobileVideo = useCallback(() => {
     setVideoActivated(true);
@@ -775,6 +757,8 @@ export default function Home() {
               alt=""
               aria-hidden="true"
               className="h-full w-full object-cover opacity-20 blur-3xl scale-110"
+              width="1280"
+              height="720"
             />
             <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(10,10,10,0.78),rgba(10,10,10,0.42)_45%,rgba(10,10,10,0.92))]" />
           </div>
@@ -947,6 +931,8 @@ export default function Home() {
                         alt=""
                         aria-hidden="true"
                         className="absolute inset-0 h-full w-full object-cover blur-3xl scale-110 opacity-25"
+                        width="720"
+                        height="1280"
                       />
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.16),_transparent_45%),linear-gradient(180deg,rgba(0,0,0,0.15),rgba(0,0,0,0.55))]" />
                     </>
@@ -989,6 +975,8 @@ export default function Home() {
                       alt=""
                       aria-hidden="true"
                       className="h-full w-full object-cover"
+                      width="720"
+                      height="1280"
                     />
                   </div>
 
@@ -1044,16 +1032,7 @@ export default function Home() {
             </div>
 
             <div className="relative overflow-hidden">
-              <AnimatePresence custom={catalogDirection} initial={false} mode="wait">
-                <motion.div
-                  key={currentCatalogKey}
-                  custom={catalogDirection}
-                  variants={catalogSlideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
-                >
+              <div>
                   {recentSongs.length > 0 ? (
                     <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
                       {recentSongs.map((song) => (
@@ -1061,7 +1040,7 @@ export default function Home() {
                           key={song.id}
                           song={song}
                           onSelect={handleReplaceVideo}
-                          thumbnailUrl={getYouTubeThumbnail(song)}
+                          thumbnailUrl={getSongArtwork(song)}
                         />
                       ))}
                     </div>
@@ -1073,8 +1052,7 @@ export default function Home() {
                       </p>
                     </div>
                   )}
-                </motion.div>
-              </AnimatePresence>
+              </div>
             </div>
           </div>
 
@@ -1114,6 +1092,9 @@ export default function Home() {
                   alt="Capivara A Música da Segunda"
                   className="h-28 w-auto object-contain drop-shadow-[0_4px_16px_rgba(253,224,71,0.25)] flex-shrink-0"
                   loading="lazy"
+                  decoding="async"
+                  width="277"
+                  height="498"
                 />
                 <div className="pb-1">
                   <h3 className="text-lg font-bold text-white">Plataformas</h3>
@@ -1139,6 +1120,8 @@ export default function Home() {
                     alt=""
                     aria-hidden="true"
                     className={`h-full w-full object-cover transition-opacity duration-300 ${playerBarActive ? 'opacity-0' : 'opacity-100'}`}
+                    width="128"
+                    height="128"
                   />
                   {/* Iframe YouTube chargée au premier clic play (même méthode que Roda) */}
                   {playerBarActive && youtubeIdForPlayer && (
@@ -1421,7 +1404,7 @@ export default function Home() {
           onShowLyrics={() => handleShowLyrics(displayedSong)}
           onShareSong={() => handleShareSong(displayedSong)}
           onShowHistory={() => setShowHistoryDrawer(true)}
-          getYouTubeThumbnail={getYouTubeThumbnail}
+          heroArtwork={heroArtwork}
           backgroundImageLoaded={backgroundImageLoaded}
           setBackgroundImageLoaded={setBackgroundImageLoaded}
         />
@@ -1464,6 +1447,8 @@ export default function Home() {
                     alt=""
                     aria-hidden="true"
                     className="h-full w-full object-cover"
+                    width="80"
+                    height="80"
                   />
                 </div>
                 <div className="min-w-0">
@@ -1558,6 +1543,8 @@ export default function Home() {
                     alt=""
                     aria-hidden="true"
                     className="h-full w-full object-cover"
+                    width="112"
+                    height="112"
                   />
                 </div>
 

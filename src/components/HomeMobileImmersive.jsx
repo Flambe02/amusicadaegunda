@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
@@ -57,24 +56,37 @@ export default function HomeMobileImmersive({
   onShowLyrics,
   onShareSong,
   onShowHistory,
-  getYouTubeThumbnail,
+  heroArtwork,
   backgroundImageLoaded,
   setBackgroundImageLoaded,
 }) {
   const playerStateRef = useRef(null);
   const [isMuted, setIsMuted] = useState(true);
   const [showUtilityActions, setShowUtilityActions] = useState(false);
+  const [shouldRenderBackdrop, setShouldRenderBackdrop] = useState(false);
   const [touchStartX, setTouchStartX] = useState(null);
-  const reduceMotion = useReducedMotion();
-
-  const heroArtwork = useMemo(
-    () => getYouTubeThumbnail(displayedSong) || displayedSong?.cover_image || BRAND_SQUARE_MEDIUM,
-    [displayedSong, getYouTubeThumbnail]
-  );
+  const resolvedHeroArtwork = heroArtwork || displayedSong?.cover_image || BRAND_SQUARE_MEDIUM;
 
   useEffect(() => {
     setShowUtilityActions(false);
   }, [displayedSong?.id]);
+
+  useEffect(() => {
+    setShouldRenderBackdrop(false);
+    setBackgroundImageLoaded(false);
+
+    const revealBackdrop = () => setShouldRenderBackdrop(true);
+    let idleHandle;
+    let timeoutHandle;
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleHandle = window.requestIdleCallback(revealBackdrop, { timeout: 1400 });
+      return () => window.cancelIdleCallback(idleHandle);
+    }
+
+    timeoutHandle = window.setTimeout(revealBackdrop, 700);
+    return () => window.clearTimeout(timeoutHandle);
+  }, [displayedSong?.id, setBackgroundImageLoaded]);
 
   const handleVideoActivatedChange = useCallback((activated) => {
     if (activated) onVideoActivated();
@@ -124,18 +136,22 @@ export default function HomeMobileImmersive({
         {!backgroundImageLoaded && (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.16),_transparent_35%),linear-gradient(180deg,#151515_0%,#050505_100%)]" />
         )}
-        <img
-          src={heroArtwork}
-          alt=""
-          aria-hidden="true"
-          loading="lazy"
-          decoding="async"
-          className={`absolute inset-0 h-full w-full object-cover blur-[56px] saturate-150 scale-110 transition-opacity duration-500 ${
-            backgroundImageLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={() => setBackgroundImageLoaded(true)}
-          onError={() => setBackgroundImageLoaded(true)}
-        />
+        {shouldRenderBackdrop ? (
+          <img
+            src={resolvedHeroArtwork}
+            alt=""
+            aria-hidden="true"
+            loading="eager"
+            decoding="async"
+            width="720"
+            height="1280"
+            className={`absolute inset-0 h-full w-full object-cover blur-[56px] saturate-150 scale-110 transition-opacity duration-500 ${
+              backgroundImageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setBackgroundImageLoaded(true)}
+            onError={() => setBackgroundImageLoaded(true)}
+          />
+        ) : null}
         <div className="absolute inset-0 bg-black/38" />
       </div>
 
@@ -149,15 +165,7 @@ export default function HomeMobileImmersive({
             style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 60px)' }}
           >
             {/* Contenu animé — seule la vidéo + infos transitionnent */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={displayedSong.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: reduceMotion ? 0.01 : 0.22, ease: 'easeInOut' }}
-                className="absolute inset-0 bg-black"
-              >
+            <div key={displayedSong.id} className="absolute inset-0 bg-black">
                 <YouTubeEmbed
                   youtubeMusicUrl={displayedSong.youtube_music_url}
                   youtubeUrl={displayedSong.youtube_url}
@@ -189,8 +197,7 @@ export default function HomeMobileImmersive({
                     {displayedSong.artist || 'A Musica da Segunda'}
                   </p>
                 </div>
-              </motion.div>
-            </AnimatePresence>
+            </div>
           </div>
 
           {/* ══ Boutons d'action — colonne droite, statique ══ */}
@@ -234,28 +241,20 @@ export default function HomeMobileImmersive({
             )}
 
             {/* Actions utilitaires (History + Share) */}
-            <AnimatePresence>
-              {showUtilityActions ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.9 }}
-                  transition={{ duration: reduceMotion ? 0.01 : 0.16, ease: 'easeOut' }}
-                  className="flex flex-col gap-3"
-                >
-                  <ActionBtn
-                    icon={History}
-                    label="Historico das musicas"
-                    onClick={() => { setShowUtilityActions(false); onShowHistory(); }}
-                  />
-                  <ActionBtn
-                    icon={Share2}
-                    label="Compartilhar"
-                    onClick={() => { setShowUtilityActions(false); onShareSong(); }}
-                  />
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            {showUtilityActions ? (
+              <div className="flex flex-col gap-3">
+                <ActionBtn
+                  icon={History}
+                  label="Historico das musicas"
+                  onClick={() => { setShowUtilityActions(false); onShowHistory(); }}
+                />
+                <ActionBtn
+                  icon={Share2}
+                  label="Compartilhar"
+                  onClick={() => { setShowUtilityActions(false); onShareSong(); }}
+                />
+              </div>
+            ) : null}
 
             <ActionBtn icon={Music} label="Ouvir em outras plataformas" onClick={onShowPlatforms} accent />
             {displayedSong.lyrics?.trim() ? (

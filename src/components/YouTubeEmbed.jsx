@@ -275,6 +275,9 @@ export default function YouTubeEmbed({
             className="absolute inset-0 w-full h-full object-cover"
             loading="eager"
             fetchPriority="high"
+            decoding="async"
+            width="720"
+            height="1280"
           />
         )}
         <div className="absolute inset-0 flex items-center justify-center">
@@ -314,6 +317,9 @@ export default function YouTubeEmbed({
               className="h-full w-full object-contain"
               loading="eager"
               fetchPriority="high"
+              decoding="async"
+              width="720"
+              height="1280"
             />
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-gray-800 to-gray-900" />
@@ -340,6 +346,9 @@ export default function YouTubeEmbed({
           className="w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
+          decoding="async"
+          width="1280"
+          height="720"
         />
       ) : (
         <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900" />
