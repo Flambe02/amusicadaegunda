@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { disableIntroOverlays, normalizeText } from './helpers';
+import { disableIntroOverlays } from './helpers';
 
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
@@ -19,16 +19,13 @@ test.describe('Navigation', () => {
     await expect(sobreLink).toBeVisible({ timeout: 10000 });
     await sobreLink.click();
     await expect(page).toHaveURL(/\/sobre$/, { timeout: 15000 });
-    await page.waitForLoadState('load');
 
-    const faqHeading = page.locator('h2:has-text("Perguntas"):visible').first();
-    if (await faqHeading.count()) {
-      await expect(faqHeading).toBeVisible({ timeout: 10000 });
-      return;
-    }
+    // Wait for React to render the Sobre route (SPA — network load is not enough)
+    const sobreHeroHeading = page.getByRole('heading', { level: 1, name: /segunda-feira/i }).first();
+    await expect(sobreHeroHeading).toBeVisible({ timeout: 10000 });
 
-    const bodyText = await page.locator('body').textContent();
-    expect(normalizeText(bodyText)).toContain('perguntas');
+    const catalogLink = page.getByRole('link', { name: /ouvir o cat/i }).first();
+    await expect(catalogLink).toBeVisible({ timeout: 10000 });
   });
 
   test('should have accessible navigation links', async ({ page }) => {

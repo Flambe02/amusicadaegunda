@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { createPageUrl } from '@/utils';
 import {
   Home,
@@ -8,12 +9,13 @@ import {
   FileText,
   Search
 } from 'lucide-react';
-import TutorialManager from '@/components/TutorialManager';
-import StandaloneOnboarding from '@/components/StandaloneOnboarding';
 import BottomNavigationModern from '@/components/BottomNavigationModern';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
+
+const TutorialManager = lazy(() => import('@/components/TutorialManager'));
+const StandaloneOnboarding = lazy(() => import('@/components/StandaloneOnboarding'));
 
 function getNextMondayMs() {
   const now = new Date();
@@ -55,6 +57,7 @@ function SidebarCountdown() {
 
 export default function Layout({ children }) {
   const location = useLocation();
+  const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
   const isHomePage = location.pathname === '/';
 
   const pageName = getCurrentPage(location.pathname);
@@ -77,6 +80,26 @@ export default function Layout({ children }) {
     if (page.name === 'Início' && location.pathname === '/') return true;
     return location.pathname === page.url;
   };
+
+  useEffect(() => {
+    let timeoutId = null;
+    let idleId = null;
+
+    const revealAuxUi = () => setDeferredAuxUiReady(true);
+
+    if ('requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(revealAuxUi, { timeout: 2000 });
+    } else {
+      timeoutId = window.setTimeout(revealAuxUi, 1200);
+    }
+
+    return () => {
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+      if (idleId !== null && 'cancelIdleCallback' in window) {
+        window.cancelIdleCallback(idleId);
+      }
+    };
+  }, []);
 
   return (
     <>
@@ -220,8 +243,12 @@ export default function Layout({ children }) {
         </div>
       </div>
 
-      <TutorialManager />
-      <StandaloneOnboarding />
+      {deferredAuxUiReady ? (
+        <Suspense fallback={null}>
+          <TutorialManager />
+          <StandaloneOnboarding />
+        </Suspense>
+      ) : null}
     </>
   );
 }

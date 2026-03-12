@@ -35,14 +35,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import '../styles/tiktok-optimized.css';
-import { localStorageService } from '@/lib/localStorage';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
 import { getDocumentTitle } from '@/lib/documentTitle';
 import { useToast } from '@/components/ui/use-toast';
 import { extractYouTubeId } from '@/lib/utils';
-import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+import { BRAND_LOGO_MEDIUM, BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 // VideoObject JSON-LD removed from all pages (GSC: "Video isn't on a watch page")
 // No page in this app is a dedicated watch page for a single video.
 
@@ -173,11 +172,128 @@ const SongListItem = memo(function SongListItem({ song, onSelect, thumbnailUrl }
   );
 });
 
+function getCachedHomePreview() {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const cached = JSON.parse(localStorage.getItem('last-song-cache') || 'null');
+    if (!cached?.title) return null;
+
+    return {
+      title: cached.title,
+      artist: cached.artist || 'A Musica da Segunda',
+      thumbnail: cached.thumbnail || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function HomeLoadingShell({ preview }) {
+  const artwork = preview?.thumbnail || BRAND_LOGO_MEDIUM;
+  const title = preview?.title || 'A Musica da Segunda';
+  const artist = preview?.artist || 'Nova musica toda segunda-feira';
+
+  return (
+    <>
+      <Helmet>
+        <title>{getDocumentTitle('A Musica da Segunda: Parodias das Noticias do Brasil')}</title>
+        <meta
+          name="description"
+          content="A Musica da Segunda: As noticias do Brasil em forma de parodia. Site oficial de parodias musicais inteligentes e divertidas."
+        />
+      </Helmet>
+
+      <div className="lg:hidden h-full">
+        <div className="relative h-full overflow-hidden bg-black">
+          <div className="absolute inset-0">
+            <img
+              src={artwork}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-[56px]"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.16),_transparent_35%),linear-gradient(180deg,#151515_0%,#050505_100%)]" />
+          </div>
+
+          <div className="relative z-10 flex h-full items-center justify-center py-2">
+            <div
+              className="relative h-full overflow-hidden rounded-[28px] bg-black shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
+              style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 60px)' }}
+            >
+              <img
+                src={artwork}
+                alt={title}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/36 to-transparent" />
+
+              <div className="absolute bottom-5 left-4 right-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/58">
+                  Carregando a musica da semana
+                </p>
+                <h1 className="mt-2 line-clamp-2 text-[17px] font-black leading-tight text-white">
+                  {title}
+                </h1>
+                <p className="mt-1 truncate text-sm text-white/68">{artist}</p>
+                <div className="mt-4 h-11 rounded-full border border-white/10 bg-white/10" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden lg:block space-y-8 animate-pulse">
+        <div className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8">
+          <div className="grid items-end gap-6 lg:grid-cols-[1fr_minmax(0,260px)] xl:grid-cols-[1fr_minmax(0,330px)] 2xl:grid-cols-[1fr_minmax(0,410px)]">
+            <div className="space-y-6">
+              <div className="h-6 w-36 rounded-full bg-white/8" />
+              <div className="space-y-3">
+                <div className="h-12 w-3/4 rounded-2xl bg-white/10" />
+                <div className="h-12 w-1/2 rounded-2xl bg-white/10" />
+                <div className="h-5 w-40 rounded-full bg-white/6" />
+                <div className="space-y-2 pt-2">
+                  <div className="h-4 w-full rounded bg-white/6" />
+                  <div className="h-4 w-5/6 rounded bg-white/6" />
+                  <div className="h-4 w-2/3 rounded bg-white/6" />
+                </div>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <div className="h-12 w-36 rounded-full bg-white/10" />
+                <div className="h-12 w-32 rounded-full bg-white/8" />
+                <div className="h-12 w-32 rounded-full bg-white/8" />
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[34px] bg-white/6 aspect-[9/16]">
+              <img
+                src={artwork}
+                alt=""
+                aria-hidden="true"
+                className="h-full w-full object-cover opacity-80"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // LCP fix: YouTube facade displays thumbnail + play button instead of loading iframe eagerly.
 // Iframe loads only on click to improve LCP.
 // Props attendues: youtube_music_url, youtube_url, title
 export default function Home() {
   const HOME_SONGS_LIMIT = 120;
+  const cachedPreviewRef = useRef(getCachedHomePreview());
   logger.debug('Home component loaded');
   const { toast } = useToast();
   const [currentSong, setCurrentSong] = useState(null);
@@ -207,9 +323,6 @@ export default function Home() {
 
   useEffect(() => {
     logger.debug('Home useEffect triggered');
-    localStorageService.initialize();
-
-    // Single fetch: current song + list data
     loadSongsData();
   }, []);
 
@@ -244,31 +357,57 @@ export default function Home() {
     setError(null);
 
     try {
-      const allSongsData = await Song.list('-release_date', HOME_SONGS_LIMIT);
+      const currentSongPromise = Song.getCurrent();
+      const allSongsPromise = Song.list('-release_date', HOME_SONGS_LIMIT);
+      const fetchedCurrentSong = await currentSongPromise;
+
+      if (fetchedCurrentSong) {
+        setCurrentSong(fetchedCurrentSong);
+        setDisplayedSong(fetchedCurrentSong);
+        setBackgroundImageLoaded(false);
+        setIsLoading(false);
+
+        saveLastSongSnapshot({
+          title: fetchedCurrentSong.title,
+          artist: fetchedCurrentSong.artist,
+          slug: fetchedCurrentSong.slug,
+          thumbnail:
+            fetchedCurrentSong.cover_image ||
+            fetchedCurrentSong.thumbnail_url ||
+            getYouTubeThumbnail(fetchedCurrentSong) ||
+            null,
+        });
+      }
+
+      const allSongsData = await allSongsPromise;
       const publishedSongs = (Array.isArray(allSongsData) ? allSongsData : [])
         .filter((song) => !song?.status || song.status === 'published');
 
       setAllSongs(publishedSongs);
 
       // Keep previous behavior: current song chosen by newest created_at
-      const current = getLatestPublishedByCreatedAt(publishedSongs);
-      setCurrentSong(current);
-      setDisplayedSong(current);
-      setBackgroundImageLoaded(false);
-
-      // Cache last song for offline page
-      if (current) {
-        try {
-          localStorage.setItem('last-song-cache', JSON.stringify({
-            title: current.title,
-            artist: current.artist,
-            slug: current.slug,
-            thumbnail: current.thumbnail_url || null,
-          }));
-        } catch {}
+      const resolvedCurrentSong = fetchedCurrentSong || getLatestPublishedByCreatedAt(publishedSongs);
+      if (resolvedCurrentSong) {
+        setCurrentSong((previousSong) => previousSong || resolvedCurrentSong);
+        setDisplayedSong((previousSong) => previousSong || resolvedCurrentSong);
+        setBackgroundImageLoaded(false);
+        setIsLoading(false);
       }
 
-      if (!current) {
+      if (resolvedCurrentSong && !fetchedCurrentSong) {
+        saveLastSongSnapshot({
+          title: resolvedCurrentSong.title,
+          artist: resolvedCurrentSong.artist,
+          slug: resolvedCurrentSong.slug,
+          thumbnail:
+            resolvedCurrentSong.cover_image ||
+            resolvedCurrentSong.thumbnail_url ||
+            getYouTubeThumbnail(resolvedCurrentSong) ||
+            null,
+        });
+      }
+
+      if (!resolvedCurrentSong) {
         setError('Erro ao carregar a música da semana. Tente novamente.');
       }
     } catch (err) {
@@ -516,6 +655,10 @@ export default function Home() {
   // Song pages are the appropriate pages for video context.
   // Les pages /musica/{slug} sont les vraies "watch pages" avec VideoObject.
 
+  if (isLoading && !displayedSong) {
+    return <HomeLoadingShell preview={cachedPreviewRef.current} />;
+  }
+
   if (isLoading) {
     return (
       <>
@@ -561,7 +704,7 @@ export default function Home() {
     );
   }
 
-  if (error) {
+  if (error && !displayedSong) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
         <Helmet>

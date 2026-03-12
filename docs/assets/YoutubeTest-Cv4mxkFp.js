@@ -1,0 +1,1 @@
+import{j as e}from"./vendor-react-5P1E0Cxt.js";import"./vendor-ui-CA5mLAKf.js";function o(){return e.jsxs("div",{className:"p-5",children:[e.jsx("h1",{className:"text-4xl font-bold text-white",children:"YouTube Test Page"}),e.jsx("p",{className:"text-white mt-4",children:"Si vous voyez ce message, le routing fonctionne !"})]})}export{o as default};
