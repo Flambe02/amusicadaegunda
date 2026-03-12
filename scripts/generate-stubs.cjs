@@ -433,23 +433,18 @@ ${songListHtml}
       const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
 
-      // Injecter le preload de la thumbnail YouTube après le preload du logo
-      const preloadTag = `\n    <!-- ✅ LCP FIX: Preload de la thumbnail YouTube de la chanson actuelle (build-time) -->\n    <link rel="preload" href="${thumbnailUrl}" as="image" fetchpriority="high" crossorigin>`;
-      indexHtml = indexHtml.replace(
-        /(<link rel="preconnect" href="https:\/\/img\.youtube\.com">)/,
-        `$1${preloadTag}`
-      );
+      const preloadTag =
+        `\n    <!-- ✅ LCP FIX: Preload de la thumbnail YouTube de la chanson actuelle (build-time) -->` +
+        `\n    <link rel="preconnect" href="https://img.youtube.com" crossorigin>` +
+        `\n    <link rel="preload" href="${thumbnailUrl}" as="image" fetchpriority="high" crossorigin>`;
 
-      // Injecter la thumbnail dans le contenu statique du <div id="root">
-      // pour que le navigateur la rende immédiatement sans attendre JS
-      const staticThumbnail = `\n        <div style="margin: 1rem auto; max-width: 480px; aspect-ratio: 16/9; border-radius: 0.5rem; overflow: hidden; position: relative;">\n          <img src="${thumbnailUrl}" alt="${currentSong.name} - A Música da Segunda" style="width: 100%; height: 100%; object-fit: cover;" fetchpriority="high" crossorigin>\n          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">\n            <div style="width: 64px; height: 64px; background: rgba(220,38,38,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center;">\n              <svg viewBox="0 0 24 24" width="32" height="32" fill="white"><path d="M8 5v14l11-7z"/></svg>\n            </div>\n          </div>\n        </div>`;
       indexHtml = indexHtml.replace(
-        /(<nav aria-label="Navegação principal">)/,
-        `${staticThumbnail}\n        $1`
+        /<\/head>/,
+        `${preloadTag}\n  </head>`
       );
 
       fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
-      console.log(`✅ Preload thumbnail YouTube injecté dans index.html (${currentSong.name}, video: ${videoId})`);
+      console.log(`✅ Preload thumbnail YouTube injecté dans index.html sans rendu visible (${currentSong.name}, video: ${videoId})`);
     }
   }
 
