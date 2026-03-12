@@ -103,7 +103,7 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <div className="lg:hidden flex flex-col h-[100dvh] overflow-hidden bg-black text-white">
+      <div className="lg:hidden flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
         <header className={`z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl${isHomePage ? ' hidden' : ''}`}>
@@ -137,8 +137,8 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        <main id="main-mobile" className="flex-1 overflow-hidden relative">
-          <div className={`h-full overscroll-behavior-contain pb-[88px] ${isHomePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+        <main id="main-mobile" className="relative min-h-0 flex-1 overflow-hidden">
+          <div className={`min-h-0 h-full overscroll-behavior-contain pb-[88px] ${isHomePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
             {children}
           </div>
         </main>
