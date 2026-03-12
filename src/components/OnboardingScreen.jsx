@@ -3,6 +3,22 @@ import { BRAND_LOGO_SMALL } from '@/lib/imageAssets';
 
 const ONBOARDING_KEY = 'onboarding-v1-seen';
 
+function isStandaloneExperience() {
+  if (typeof window === 'undefined') return false;
+
+  const supportsMatchMedia = typeof window.matchMedia === 'function';
+  const displayModeStandalone = supportsMatchMedia && (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: window-controls-overlay)').matches
+  );
+
+  return (
+    displayModeStandalone ||
+    window.navigator.standalone === true ||
+    document.referrer.indexOf('android-app://') === 0
+  );
+}
+
 export default function OnboardingScreen() {
   const [visible, setVisible] = useState(false);
 

@@ -39,10 +39,6 @@
     <link rel="canonical" href="https://www.amusicadasegunda.com/" />
 
     <script>
-      document.documentElement.classList.add('js');
-    </script>
-
-    <script>
       (function () {
         function sanitizeStandaloneTitle() {
           document.title = document.title
@@ -173,13 +169,6 @@
         backdrop-filter: blur(18px);
       }
 
-      .js .app-shell-fallback {
-        display: none;
-      }
-
-      .js .skip-link[href="#main"] {
-        display: none;
-      }
     </style>
 
     <script>
@@ -214,16 +203,37 @@
           }, { once: true });
         }
 
-        schedule(function () {
-          window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
-          loadScript('https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS');
-          loadScript('https://www.googletagmanager.com/gtm.js?id=GTM-PQTFJ3C3');
-          loadScript('https://tracker.metricool.com/resources/be.js', function () {
-            if (window.beTracker && typeof window.beTracker.t === 'function') {
-              window.beTracker.t({ hash: '986e8ab34d58c474dc4a0a3d51de41d6' });
-            }
+        var interactionEvents = ['pointerdown', 'keydown', 'touchstart', 'scroll'];
+        var thirdPartyLoaded = false;
+
+        function loadThirdPartyScripts() {
+          if (thirdPartyLoaded) return;
+          thirdPartyLoaded = true;
+
+          interactionEvents.forEach(function (eventName) {
+            window.removeEventListener(eventName, loadThirdPartyScripts, listenerOptions);
           });
+
+          schedule(function () {
+            window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+            loadScript('https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS');
+            loadScript('https://www.googletagmanager.com/gtm.js?id=GTM-PQTFJ3C3');
+            loadScript('https://tracker.metricool.com/resources/be.js', function () {
+              if (window.beTracker && typeof window.beTracker.t === 'function') {
+                window.beTracker.t({ hash: '986e8ab34d58c474dc4a0a3d51de41d6' });
+              }
+            });
+          });
+        }
+
+        var listenerOptions = { once: true, passive: true };
+        interactionEvents.forEach(function (eventName) {
+          window.addEventListener(eventName, loadThirdPartyScripts, listenerOptions);
         });
+
+        window.addEventListener('load', function () {
+          window.setTimeout(loadThirdPartyScripts, 7000);
+        }, { once: true });
       })();
     </script>
 

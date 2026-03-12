@@ -9,7 +9,7 @@ import {
   Search
 } from 'lucide-react';
 import TutorialManager from '@/components/TutorialManager';
-import OnboardingScreen from '@/components/OnboardingScreen';
+import StandaloneOnboarding from '@/components/StandaloneOnboarding';
 import BottomNavigationModern from '@/components/BottomNavigationModern';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
@@ -221,7 +221,7 @@ export default function Layout({ children }) {
       </div>
 
       <TutorialManager />
-      <OnboardingScreen />
+      <StandaloneOnboarding />
     </>
   );
 }
