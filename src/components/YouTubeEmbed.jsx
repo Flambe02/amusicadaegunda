@@ -47,6 +47,29 @@ export default function YouTubeEmbed({
     return () => window.removeEventListener('message', handleYTMessage);
   }, [activated]);
 
+  // Shorts: auto-replay when video ends (state 0) — replaces loop=1&playlist= params
+  // which cause YouTube error code 2 for newly-uploaded Shorts.
+  useEffect(() => {
+    if (!activated || !isShort) return;
+    const handleShortEnd = (event) => {
+      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data?.event === 'onStateChange' && data?.info === 0) {
+          // Video ended — replay it (mimics native Short loop behavior)
+          setTimeout(() => {
+            iframeRef.current?.contentWindow?.postMessage(
+              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+              '*'
+            );
+          }, 300);
+        }
+      } catch {}
+    };
+    window.addEventListener('message', handleShortEnd);
+    return () => window.removeEventListener('message', handleShortEnd);
+  }, [activated, isShort]);
+
   // Reset embed error when URL changes
   useEffect(() => {
     setEmbedError(false);
