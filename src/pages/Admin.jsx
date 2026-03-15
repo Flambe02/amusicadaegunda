@@ -1,6 +1,7 @@
 const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
+import { generateSongData } from '@/lib/hashtagGenerator';
 import { logger } from '@/lib/logger';
 import {
   Plus,
@@ -711,24 +712,9 @@ export default function AdminPage() {
 
   // ===== EXTRAÇÃO DAS HASHTAGS =====
   const extractHashtags = (text) => {
+    // Replaced by generateHashtagsForSong — kept as no-op for safety
     if (!text) return [];
-
-    // Extraire les hashtags du texte
-    const hashtagRegex = /#(\w+)/g;
-    const hashtags = [];
-    let match;
-
-    while ((match = hashtagRegex.exec(text)) !== null) {
-      hashtags.push(match[1].toLowerCase());
-    }
-
-    // Ajouter des hashtags par défaut si aucun n'est trouvé
-    if (hashtags.length === 0) {
-      hashtags.push('musica', 'trending', 'novidade', 'humor');
-    }
-
-    // Limiter à 10 hashtags maximum
-    return hashtags.slice(0, 10);
+    return [];
   };
 
   // ===== EXTRAÇÃO DA DATA DE PUBLICAÇÃO TIKTOK =====
@@ -1965,15 +1951,59 @@ export default function AdminPage() {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Categoria principal
+                        </label>
+                        <select
+                          value={editingSong.category || ''}
+                          onChange={(e) => handleInputChange('category', e.target.value)}
+                          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-200"
+                        >
+                          <option value="">— selecionar —</option>
+                          <option value="politica">🏛️ Política</option>
+                          <option value="economia">💰 Economia</option>
+                          <option value="policia">👮 Polícia / Justiça</option>
+                          <option value="midia">📺 Mídia</option>
+                          <option value="internacional">🌍 Internacional</option>
+                          <option value="energia">⚡ Energia</option>
+                          <option value="saude">🏥 Saúde</option>
+                          <option value="esporte">⚽ Esporte</option>
+                          <option value="tecnologia">💻 Tecnologia</option>
+                          <option value="seguranca">🚔 Segurança</option>
+                          <option value="cultura">🎭 Cultura</option>
+                          <option value="gastronomia">🍽️ Gastronomia</option>
+                          <option value="outros">❓ Outros</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Hashtags (separados por vírgula)
                         </label>
-                        <Input
-                          value={Array.isArray(editingSong.hashtags) ? editingSong.hashtags.join(', ') : ''}
-                          onChange={(e) => handleHashtagChange(e.target.value)}
-                          placeholder="humor, musica, trending, novidade"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            value={Array.isArray(editingSong.hashtags) ? editingSong.hashtags.join(', ') : ''}
+                            onChange={(e) => handleHashtagChange(e.target.value)}
+                            placeholder="parodia, politica, danielvorcaro…"
+                            className="flex-1"
+                          />
+                          <button
+                            type="button"
+                            title="Gerar hashtags e categoria automaticamente a partir da descrição"
+                            onClick={() => {
+                              const { hashtags, category } = generateSongData({
+                                title: editingSong.title,
+                                description: editingSong.description,
+                              });
+                              handleInputChange('hashtags', hashtags);
+                              handleInputChange('category', category);
+                            }}
+                            className="px-3 py-2 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 text-xs font-semibold border border-orange-300 whitespace-nowrap transition-colors"
+                          >
+                            ✨ Gerar
+                          </button>
+                        </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          Exemplo: humor, musica, trending, novidade, viral
+                          Clique em &quot;Gerar&quot; para sugerir hashtags a partir do título e descrição. Edite livremente depois.
                         </p>
                       </div>
 

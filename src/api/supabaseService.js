@@ -137,9 +137,8 @@ export const supabaseSongService = {
         .from(TABLES.SONGS)
         .select('*')
         .eq('status', 'published')
-        // Trier UNIQUEMENT par created_at (date d'enregistrement dans Supabase) pour obtenir la dernière vidéo enregistrée
-        // C'est le critère le plus fiable pour déterminer la "dernière" chanson
-        .order('created_at', { ascending: false })
+        // Trier par release_date pour afficher la chanson la plus récente selon sa date de sortie
+        .order('release_date', { ascending: false })
         .limit(1)
         .single(); // Utiliser .single() pour obtenir un objet unique ou null, plus propre que .limit(1)
 
@@ -164,7 +163,7 @@ export const supabaseSongService = {
       logger.debug('🎯 Chanson sélectionnée:', result);
       
       // Logs détaillés pour debug production
-      logger.debug('🔍 DEBUG getCurrent - Tri appliqué:');
+      logger.debug('🔍 DEBUG getCurrent - Tri par release_date:');
       logger.debug('  - Titre:', result?.title);
       logger.debug('  - created_at:', result?.created_at);
       logger.debug('  - updated_at:', result?.updated_at);
