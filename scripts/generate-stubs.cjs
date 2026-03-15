@@ -175,6 +175,29 @@ ${songListHtml}
   }
   console.log(`✅ Stubs statiques créés pour pages éditoriales (${staticPages.length})`);
 
+  // ✅ Admin: Stub minimal pour /admin (noindex, juste charger la SPA)
+  const adminDir = path.join(OUT, 'admin');
+  const adminFile = path.join(adminDir, 'index.html');
+  await fs.ensureDir(adminDir);
+  const adminHtml = `<!-- build:${new Date().toISOString()} -->
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin - A Música da Segunda</title>
+<meta name="robots" content="noindex, nofollow"/>
+${scripts}
+</head>
+<body>
+<div id="root"></div>
+<noscript>Este site requer JavaScript para interação total.</noscript>
+<script src="/pwa-install.js"></script>
+</body>
+</html>`;
+  await fs.writeFile(adminFile, adminHtml, { encoding: 'utf8' });
+  console.log('✅ Stub /admin créé');
+
   // ✅ SEO: Stub pour /home avec redirection 301 vers /
   const homeDir = path.join(OUT, 'home');
   const homeFile = path.join(homeDir, 'index.html');
