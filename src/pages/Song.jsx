@@ -137,11 +137,18 @@ export default function SongPage() {
     if (slug) injectJsonLd(breadcrumbsJsonLd({ title: null, slug }), 'song-breadcrumb-schema');
     if (song && slug) {
       const streamingUrls = [song.spotify_url, song.apple_music_url, song.youtube_url, song.youtube_music_url].filter(Boolean);
+      const songKeywords = [
+        song.title,
+        song.subtitle ? song.subtitle.replace(/—.*$/, '').trim() : null,
+        song.category ? CATEGORY_LABELS[song.category] || song.category : null,
+        'paródia musical', 'música da segunda', 'brasil', 'sátira musical',
+      ].filter(Boolean);
       injectJsonLd(musicRecordingJsonLd({
         title: song.title, slug, datePublished: song.release_date,
         image: song.cover_image, byArtist: song.artist || 'A Música da Segunda',
         description: song.description || `Paródia musical de ${song.title} por A Música da Segunda.`,
         streamingUrls,
+        keywords: songKeywords,
       }), 'song-music-schema');
       injectJsonLd(breadcrumbsJsonLd({ title: song.title, slug }), 'song-breadcrumb-schema');
     }

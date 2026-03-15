@@ -416,6 +416,17 @@ ${scripts.js}
   ${relatedHtml}
 </div>`;
 
+    // Derive keywords from category, title, subtitle, and fixed terms
+    const songKeywords = [
+      s.name,
+      s.subtitle ? s.subtitle.replace(/—.*$/, '').trim() : null,
+      s.category || null,
+      'paródia musical',
+      'música da segunda',
+      'brasil',
+      'sátira musical',
+    ].filter(Boolean);
+
     // Structured data for song watch page
     const jsonldSchemas = [
       org,
@@ -429,7 +440,8 @@ ${scripts.js}
         duration: s.duration,
         inLanguage: s.inLanguage,
         byArtist: s.byArtist,
-        description: fullDesc
+        description: fullDesc,
+        keywords: songKeywords,
       }),
       breadcrumbsJsonLd({
         songName: s.name,
@@ -469,7 +481,8 @@ ${scripts.js}
         duration: s.duration,
         inLanguage: s.inLanguage,
         byArtist: s.byArtist,
-        description: fullDesc
+        description: fullDesc,
+        keywords: songKeywords,
       }),
       breadcrumbsJsonLd({
         songName: s.name,

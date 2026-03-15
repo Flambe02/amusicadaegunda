@@ -203,6 +203,21 @@ async function main() {
     
     // 2. Generate songs sitemap
     console.log('\n🎵 Génération du sitemap des chansons...');
+    // Sort songs by release_date descending to compute priority gradient
+    const sortedByDate = [...songs].sort((a, b) => {
+      const da = new Date(a.release_date || a.created_at || 0);
+      const db = new Date(b.release_date || b.created_at || 0);
+      return db - da;
+    });
+    const priorityBySlug = {};
+    sortedByDate.forEach((song, i) => {
+      const slug = getSlug(song);
+      // Recent 10 → 0.9, next 15 → 0.8, rest → 0.7
+      if (i < 10) priorityBySlug[slug] = 0.9;
+      else if (i < 25) priorityBySlug[slug] = 0.8;
+      else priorityBySlug[slug] = 0.7;
+    });
+
     const songUrls = songs.map(song => {
       let lastmod = now;
       if (song.updated_at) {
@@ -212,14 +227,14 @@ async function main() {
       } else if (song.created_at) {
         lastmod = formatISO(new Date(song.created_at), { representation: 'date' });
       }
-      
+
       const slug = getSlug(song);
-      
+
       return {
         loc: `${cfg.siteUrl}/musica/${slug}`, // ✅ Use /musica/ not /chansons/
         lastmod,
         changefreq: 'weekly',
-        priority: 0.9
+        priority: priorityBySlug[slug] || 0.7
       };
     });
     

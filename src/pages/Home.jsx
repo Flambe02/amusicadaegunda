@@ -123,8 +123,7 @@ const SongListItem = memo(function SongListItem({ song, onSelect, thumbnailUrl }
         {thumbnailUrl ? (
           <img
             src={thumbnailUrl}
-            alt=""
-            aria-hidden="true"
+            alt={`Capa de "${song.title}"`}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
             decoding="async"
