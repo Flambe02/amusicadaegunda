@@ -187,7 +187,8 @@ ${songListHtml}
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Admin - A Música da Segunda</title>
 <meta name="robots" content="noindex, nofollow"/>
-${scripts}
+${scripts.css}
+${scripts.js}
 </head>
 <body>
 <div id="root"></div>

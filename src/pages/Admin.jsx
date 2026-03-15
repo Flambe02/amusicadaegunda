@@ -700,12 +700,18 @@ export default function AdminPage() {
       const wasPublished = panel?.status === 'published';
       const becomesPublished = formData.status === 'published';
 
+      // Strip empty strings and empty arrays so newly-added columns don't trigger
+      // "column not found in schema cache" errors if PostgREST cache is stale
+      const toSave = Object.fromEntries(
+        Object.entries(formData).filter(([, v]) => v !== '' && !(Array.isArray(v) && v.length === 0))
+      );
+
       if (panel === 'new') {
-        const { error: insertErr } = await supabase.from('songs').insert([formData]);
+        const { error: insertErr } = await supabase.from('songs').insert([toSave]);
         if (insertErr) throw insertErr;
         toast({ title: '✅ Música criada!' });
       } else {
-        const { error: updateErr } = await supabase.from('songs').update(formData).eq('id', panel.id);
+        const { error: updateErr } = await supabase.from('songs').update(toSave).eq('id', panel.id);
         if (updateErr) throw updateErr;
         toast({ title: '✅ Música actualizada!' });
       }

@@ -1,6 +1,6 @@
 export const CURRENT_SONG_ARTWORK = {
-  "slug": "sinfonia-do-vorcaro",
-  "title": "Sinfonia do Vorcaro ",
+  "slug": "esse-lugar-chama-ormuz",
+  "title": "Esse Lugar Chama Ormuz",
   "path": "/images/current-song-thumb.webp",
   "width": 1280,
   "height": 720,

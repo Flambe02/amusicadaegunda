@@ -24,6 +24,19 @@ export default function YouTubeEmbed({
   const [embedError, setEmbedError] = useState(false);
   const iframeRef = useRef(null);
 
+  // URL processing — must be declared before useEffects that reference isShort in their deps
+  const watchUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
+  const musicUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
+  const primaryUrl = preferWatchUrl ? (watchUrl || musicUrl) : (musicUrl || watchUrl);
+  const fallbackUrl = preferWatchUrl ? musicUrl : watchUrl;
+  let info = primaryUrl ? getYouTubeEmbedInfo(primaryUrl) : null;
+  let targetUrl = primaryUrl || '';
+  if (!info && fallbackUrl) {
+    info = getYouTubeEmbedInfo(fallbackUrl);
+    targetUrl = fallbackUrl || '';
+  }
+  const isShort = targetUrl.includes('/shorts/');
+
   useEffect(() => {
     if (forceActivated) setActivated(true);
   }, [forceActivated]);
@@ -75,27 +88,10 @@ export default function YouTubeEmbed({
     setEmbedError(false);
   }, [youtubeMusicUrl, youtubeUrl]);
 
-  const watchUrl = youtubeUrl && youtubeUrl.trim() ? youtubeUrl.trim() : null;
-  const musicUrl = youtubeMusicUrl && youtubeMusicUrl.trim() ? youtubeMusicUrl.trim() : null;
-
-  const primaryUrl = preferWatchUrl ? (watchUrl || musicUrl) : (musicUrl || watchUrl);
-  const fallbackUrl = preferWatchUrl ? musicUrl : watchUrl;
-
-  let info = primaryUrl ? getYouTubeEmbedInfo(primaryUrl) : null;
-  let targetUrl = primaryUrl || '';
-
-  if (!info && fallbackUrl) {
-    info = getYouTubeEmbedInfo(fallbackUrl);
-    targetUrl = fallbackUrl || '';
-  }
-
-
   useEffect(() => {
     setActivated(false);
     setIsMuted(startMuted);
   }, [youtubeMusicUrl, youtubeUrl, preferWatchUrl]);
-
-  const isShort = targetUrl.includes('/shorts/');
   const portraitFrameAspect = isShort ? '9/16' : '16/9';
   const shouldAutoplay = useFacade && activated && autoplayOnActivate;
   const autoplay = shouldAutoplay ? '&autoplay=1' : '';
