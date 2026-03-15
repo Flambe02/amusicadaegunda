@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, memo, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
 import CountdownTimer from '../components/CountdownTimer';
@@ -982,6 +983,35 @@ export default function Home() {
               </div>
             </div>
           </aside>
+        </section>
+
+        {/* Desktop categories section */}
+        <section className="glass-panel rounded-[28px] p-6 xl:p-8">
+          <h2 className="text-lg font-bold text-white mb-4">Explorar por tema</h2>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { slug: 'politica', label: 'Política' },
+              { slug: 'internacional', label: 'Internacional' },
+              { slug: 'midia', label: 'Mídia' },
+              { slug: 'saude', label: 'Saúde' },
+              { slug: 'esporte', label: 'Esporte' },
+              { slug: 'cultura', label: 'Cultura' },
+              { slug: 'energia', label: 'Energia' },
+              { slug: 'tecnologia', label: 'Tecnologia' },
+              { slug: 'policia', label: 'Polícia' },
+              { slug: 'seguranca', label: 'Segurança' },
+              { slug: 'gastronomia', label: 'Gastronomia' },
+              { slug: 'outros', label: 'Outros' },
+            ].map(cat => (
+              <Link
+                key={cat.slug}
+                to={`/categoria/${cat.slug}`}
+                className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/70 hover:bg-white/12 hover:text-white hover:border-white/30 transition"
+              >
+                {cat.label}
+              </Link>
+            ))}
+          </div>
         </section>
 
         {/* Desktop sticky bottom player bar */}

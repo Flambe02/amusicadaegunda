@@ -478,6 +478,83 @@ ${scripts.js}
     await fs.writeFile(fileNoSlash, htmlWithVersionNoSlash, { encoding: 'utf8' });
   }
 
+  // ✅ SEO: Stubs for category pages /categoria/[slug]
+  const CATEGORY_LABELS = {
+    internacional: 'Internacional',
+    midia: 'Mídia',
+    energia: 'Energia',
+    esporte: 'Esporte',
+    cultura: 'Cultura',
+    outros: 'Outros',
+    saude: 'Saúde',
+    policia: 'Polícia',
+    politica: 'Política',
+    seguranca: 'Segurança',
+    tecnologia: 'Tecnologia',
+    gastronomia: 'Gastronomia',
+  };
+
+  const CATEGORY_DESCRIPTIONS = {
+    internacional: 'Paródias sobre geopolítica, diplomacia e eventos fora do Brasil.',
+    midia: 'Sátiras sobre jornalismo, redes sociais e comunicação.',
+    energia: 'Músicas sobre crises energéticas, apagões e infraestrutura elétrica.',
+    esporte: 'Paródias do universo do esporte brasileiro e internacional.',
+    cultura: 'Sátiras sobre carnaval, entretenimento e vida cultural brasileira.',
+    outros: 'Músicas sobre temas variados do cotidiano.',
+    saude: 'Paródias sobre saúde pública, medicina e bem-estar.',
+    policia: 'Sátiras sobre segurança pública e casos policiais.',
+    politica: 'Músicas sobre política brasileira, eleições e mandatos.',
+    seguranca: 'Paródias sobre violência urbana e segurança pública.',
+    tecnologia: 'Sátiras sobre startups, inteligência artificial e inovação.',
+    gastronomia: 'Músicas sobre gastronomia, culinária e cultura alimentar.',
+  };
+
+  // Collect unique categories present in songs.json
+  const categoriesInUse = [...new Set(songs.map(s => s.category).filter(Boolean))];
+
+  for (const catSlug of categoriesInUse) {
+    const catLabel = CATEGORY_LABELS[catSlug] || catSlug;
+    const catDesc = CATEGORY_DESCRIPTIONS[catSlug] || `Paródias musicais da categoria ${catLabel} — A Música da Segunda.`;
+    const catSongs = songs.filter(s => s.category === catSlug);
+    const catUrl = `${siteUrl}/categoria/${catSlug}/`;
+    const catTitle = `${catLabel} — Paródias Musicais | A Música da Segunda`;
+
+    const catSongListHtml = catSongs.map((s, i) =>
+      `    <li style="margin-bottom: 0.5rem;"><a href="${siteUrl}/musica/${s.slug}/" style="color: #2563eb; text-decoration: none;">${s.name}</a>${s.subtitle ? ` — <em style="color:#555;">${s.subtitle}</em>` : ''}</li>`
+    ).join('\n');
+
+    const catBody = `
+<div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: sans-serif; line-height: 1.7; color: #222;">
+  <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #888; margin-bottom: 0.5rem;">Categoria</p>
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111;">${catLabel}</h1>
+  <p style="font-size: 1.05rem; color: #555; margin-bottom: 2rem;">${catDesc}</p>
+  <nav aria-label="Músicas da categoria ${catLabel}">
+    <ol style="list-style: decimal; padding-left: 1.5rem;">
+${catSongListHtml}
+    </ol>
+  </nav>
+  <p style="margin-top: 2rem;"><a href="${siteUrl}/musica/" style="color: #2563eb;">← Todas as músicas</a></p>
+</div>`;
+
+    const catHtml = baseHtml({
+      lang: cfg.defaultLocale,
+      title: catTitle,
+      desc: catDesc,
+      url: catUrl,
+      robots: 'index, follow, max-video-preview:0',
+      image: `${siteUrl}${IMAGE}`,
+      body: catBody,
+      jsonld: [org, website],
+      scripts
+    });
+
+    const catDir = path.join(OUT, 'categoria', catSlug);
+    await fs.ensureDir(catDir);
+    const catFile = path.join(catDir, 'index.html');
+    await fs.writeFile(catFile, `<!-- build:${new Date().toISOString()} -->\n` + catHtml, { encoding: 'utf8' });
+  }
+  console.log(`✅ Stubs /categoria/[slug] créés (${categoriesInUse.length} catégories)`);
+
   // ✅ LCP FIX: Injecter le preload de la miniature courante dans dist/index.html.
   // On privilégie une copie same-origin générée au build pour éviter une dépendance
   // réseau immédiate vers img.youtube.com sur mobile.

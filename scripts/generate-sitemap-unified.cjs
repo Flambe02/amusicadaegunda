@@ -43,6 +43,19 @@ const staticPages = [
   { path: '/blog', priority: 0.8, changefreq: 'weekly' },
   { path: '/sobre', priority: 0.7, changefreq: 'monthly' },
   { path: '/adventcalendar', priority: 0.8, changefreq: 'weekly' },
+  // Category pages
+  { path: '/categoria/politica', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/internacional', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/midia', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/saude', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/esporte', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/cultura', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/energia', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/tecnologia', priority: 0.75, changefreq: 'weekly' },
+  { path: '/categoria/policia', priority: 0.7, changefreq: 'weekly' },
+  { path: '/categoria/seguranca', priority: 0.7, changefreq: 'weekly' },
+  { path: '/categoria/gastronomia', priority: 0.7, changefreq: 'weekly' },
+  { path: '/categoria/outros', priority: 0.65, changefreq: 'weekly' },
 ];
 
 /**

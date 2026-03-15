@@ -27,6 +27,7 @@ const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
 const TikTokDemo = lazy(() => import('../pages/TikTokDemo'));
 const SearchPage = lazy(() => import('../pages/Search'));
+const Categoria = lazy(() => import('../pages/Categoria'));
 const includeDebugRoutes = import.meta.env.DEV;
 
 /**
@@ -152,6 +153,12 @@ export const ROUTES = [
     component: SearchPage,
     name: 'Search',
     seo: null // noindex géré dans le composant
+  },
+  {
+    path: '/categoria/:slug',
+    component: Categoria,
+    name: 'Categoria',
+    seo: null // SEO dynamique basé sur la catégorie
   }
 ];
 
@@ -196,6 +203,11 @@ export function getCurrentPage(url) {
   // Gérer les routes musica avec slug (ex: /musica/nobel-prize)
   if (url.startsWith('/musica/') && urlLastPart !== 'musica') {
     return 'Song';
+  }
+
+  // Gérer les routes categoria avec slug (ex: /categoria/politica)
+  if (url.startsWith('/categoria/') && urlLastPart !== 'categoria') {
+    return 'Categoria';
   }
 
   // Chercher dans les routes configurées

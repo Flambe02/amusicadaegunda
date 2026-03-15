@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { useSEO } from '../hooks/useSEO';
 import { musicRecordingJsonLd, breadcrumbsJsonLd, injectJsonLd } from '../lib/seo-jsonld';
@@ -22,6 +22,21 @@ import LyricsDialog from '@/components/LyricsDialog';
 import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+
+const CATEGORY_LABELS = {
+  internacional: 'Internacional',
+  midia: 'Mídia',
+  energia: 'Energia',
+  esporte: 'Esporte',
+  cultura: 'Cultura',
+  outros: 'Outros',
+  saude: 'Saúde',
+  policia: 'Polícia',
+  politica: 'Política',
+  seguranca: 'Segurança',
+  tecnologia: 'Tecnologia',
+  gastronomia: 'Gastronomia',
+};
 
 export default function SongPage() {
   const { slug: rawSlug } = useParams();
@@ -369,6 +384,14 @@ export default function SongPage() {
                       {formattedReleaseDate}
                     </span>
                   )}
+                  {song.category && CATEGORY_LABELS[song.category] && (
+                    <Link
+                      to={`/categoria/${song.category}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-2.5 py-0.5 text-xs font-medium text-white/60 hover:text-white hover:border-white/30 transition"
+                    >
+                      {CATEGORY_LABELS[song.category]}
+                    </Link>
+                  )}
                 </div>
               </div>
 
@@ -496,6 +519,14 @@ export default function SongPage() {
                       <Calendar className="h-4 w-4 text-[#FDE047]" />
                       {formattedReleaseDate}
                     </span>
+                  )}
+                  {song.category && CATEGORY_LABELS[song.category] && (
+                    <Link
+                      to={`/categoria/${song.category}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-2.5 py-0.5 text-xs font-medium text-white/60 hover:text-white hover:border-white/30 transition"
+                    >
+                      {CATEGORY_LABELS[song.category]}
+                    </Link>
                   )}
                 </div>
               </div>
