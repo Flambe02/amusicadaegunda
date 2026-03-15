@@ -10,7 +10,7 @@ const escape = (s = '') => {
 
 const json = (obj) => JSON.stringify(obj, null, 2);
 
-function baseHtml({ lang = 'pt-BR', title, desc, url, image, ogType = 'website', robots = 'index, follow', body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' } }) {
+function baseHtml({ lang = 'pt-BR', title, desc, url, image, ogType = 'website', robots = 'index, follow', body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' }, publishedTime = null, articleSection = null }) {
   const ga4Block = `
 <!-- Google tag (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-SKRKX4N8XS"></script>
@@ -47,6 +47,8 @@ ${ga4Block}
 <meta property="og:type" content="${ogType}"/>
 <meta property="og:url" content="${url}"/>
 ${image ? `<meta property="og:image" content="${image}"/>\n<meta property="og:image:width" content="1200"/>\n<meta property="og:image:height" content="630"/>` : ''}
+${publishedTime ? `<meta property="article:published_time" content="${publishedTime}"/>` : ''}
+${articleSection ? `<meta property="article:section" content="${escape(articleSection)}"/>` : ''}
 
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image"/>

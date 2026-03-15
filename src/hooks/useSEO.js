@@ -13,6 +13,8 @@ export function useSEO({
   url,
   type = 'website',
   robots = 'index, follow', // ✅ SEO: Support robots directives (e.g., 'max-video-preview:0')
+  publishedTime = null, // ISO date string — for article:published_time OG tag
+  articleSection = null, // category string — for article:section OG tag
   enabled = true
 }) {
   const siteName = 'A Música da Segunda';
@@ -73,6 +75,8 @@ export function useSEO({
       updateMetaTag('property', 'og:type', type);
       updateMetaTag('property', 'og:site_name', siteName);
       updateMetaTag('property', 'og:locale', 'pt_BR');
+      if (publishedTime) updateMetaTag('property', 'article:published_time', publishedTime);
+      if (articleSection) updateMetaTag('property', 'article:section', articleSection);
 
       // Mise à jour des métadonnées Twitter
       updateMetaTag('name', 'twitter:card', 'summary_large_image');

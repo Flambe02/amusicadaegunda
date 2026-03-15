@@ -394,12 +394,26 @@ ${scripts.js}
     <div style="white-space: pre-wrap; font-family: Georgia, serif; line-height: 1.8; color: #333; background: #f9f9f9; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #e63946;">${escapedLyrics}</div>
   </div>` : '';
 
+    // Related songs (same category, up to 4, excluding self)
+    const relatedSongs = s.category
+      ? songs.filter(r => r.category === s.category && r.slug !== s.slug).slice(0, 4)
+      : [];
+    const relatedHtml = relatedSongs.length > 0 ? `
+  <div style="margin: 2.5rem 0; padding: 1.25rem 1.5rem; background: #f0f4ff; border-radius: 0.75rem;">
+    <h2 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 0.75rem; color: #111;">Outras músicas sobre o mesmo tema</h2>
+    <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+      ${relatedSongs.map(r => `<li><a href="${siteUrl}/musica/${r.slug}/" style="color: #2563eb; text-decoration: none; font-weight: 600;">${r.name}</a>${r.subtitle ? ` <span style="color:#666; font-style: italic;">— ${r.subtitle}</span>` : ''}</li>`).join('\n      ')}
+    </ul>
+    <p style="margin-top: 0.75rem;"><a href="${siteUrl}/categoria/${s.category}/" style="color: #2563eb; font-size: 0.9rem;">Ver todas as músicas desta categoria →</a></p>
+  </div>` : '';
+
     const staticBody = `
 <div class="container mx-auto px-4 py-8" style="max-width: 1200px;">
   <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.25rem; color: #111;">${s.name}</h1>${subtitleHtml}
   ${contextHtml}
   ${videoEmbedHtml}
   ${lyricsHtml}
+  ${relatedHtml}
 </div>`;
 
     // Structured data for song watch page
@@ -433,7 +447,9 @@ ${scripts.js}
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
       jsonld: jsonldSchemas,
-      scripts
+      scripts,
+      publishedTime: s.datePublished || null,
+      articleSection: s.category || null,
     });
     const versionComment = `<!-- build:${new Date().toISOString()} -->\n`;
     const htmlWithVersion = versionComment + html;
@@ -471,7 +487,9 @@ ${scripts.js}
       image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
       body: staticBody,
       jsonld: jsonldSchemasNoSlash,
-      scripts
+      scripts,
+      publishedTime: s.datePublished || null,
+      articleSection: s.category || null,
     });
     const versionCommentNoSlash = `<!-- build:${new Date().toISOString()} -->\n`;
     const htmlWithVersionNoSlash = versionCommentNoSlash + htmlNoSlash;

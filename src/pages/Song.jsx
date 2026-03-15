@@ -129,6 +129,8 @@ export default function SongPage() {
     url: normalizedUrl,
     type: 'music.song',
     robots: shouldNoindex ? 'noindex, follow' : 'index, follow, max-video-preview:0',
+    publishedTime: song?.release_date || null,
+    articleSection: song?.category ? (CATEGORY_LABELS[song.category] || song.category) : null,
   });
 
   useEffect(() => {
@@ -180,6 +182,14 @@ export default function SongPage() {
         return item.title?.toLowerCase().includes(normalizedSearch) || item.artist?.toLowerCase().includes(normalizedSearch);
       }).slice(0, 5)
     : allSongs.filter((item) => (item.slug || titleToSlug(item.title)) !== slug).slice(0, 4);
+
+  // Related songs: same category, excluding current, max 4
+  const relatedSongs = song?.category
+    ? allSongs.filter(item => {
+        const itemSlug = item.slug || titleToSlug(item.title);
+        return item.category === song.category && itemSlug !== slug;
+      }).slice(0, 4)
+    : [];
 
   const handleSearchNavigate = (targetSong) => {
     const targetSlug = targetSong.slug || titleToSlug(targetSong.title);
@@ -479,6 +489,40 @@ export default function SongPage() {
           </div>
         </section>
 
+        {/* Related songs — mobile */}
+        {relatedSongs.length > 0 && (
+          <section className="lg:hidden glass-panel rounded-[24px] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
+                Mais sobre{' '}
+                <Link to={`/categoria/${song.category}`} className="text-[#FDE047]">
+                  {CATEGORY_LABELS[song.category]}
+                </Link>
+              </p>
+              <Link to={`/categoria/${song.category}`} className="text-[10px] text-white/30 hover:text-white/60 transition">
+                Ver todas →
+              </Link>
+            </div>
+            <div className="space-y-2">
+              {relatedSongs.map(item => {
+                const itemSlug = item.slug || titleToSlug(item.title);
+                return (
+                  <Link
+                    key={item.id || itemSlug}
+                    to={`/musica/${itemSlug}`}
+                    className="flex flex-col gap-0.5 rounded-xl border border-white/8 bg-white/4 px-3.5 py-2.5 transition hover:bg-white/8"
+                  >
+                    <p className="font-bold text-white text-sm line-clamp-1">{item.title}</p>
+                    {item.subtitle && (
+                      <p className="text-[11px] text-white/40 italic line-clamp-1">{item.subtitle}</p>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Hero section */}
         <section className="glass-panel desktop-shell-gradient relative hidden overflow-hidden rounded-[36px] p-6 xl:p-8 lg:block">
           {/* Background artwork blur */}
@@ -666,6 +710,43 @@ export default function SongPage() {
             </div>
           </div>
         </section>
+
+        {/* Related songs section (desktop) — same category cluster */}
+        {relatedSongs.length > 0 && (
+          <section className="hidden lg:block glass-panel rounded-[28px] p-6 xl:p-8">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-bold text-white">
+                Outras músicas sobre{' '}
+                <Link to={`/categoria/${song.category}`} className="text-[#FDE047] hover:underline">
+                  {CATEGORY_LABELS[song.category]}
+                </Link>
+              </h2>
+              <Link
+                to={`/categoria/${song.category}`}
+                className="text-xs font-medium text-white/40 hover:text-white/70 transition"
+              >
+                Ver todas →
+              </Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {relatedSongs.map(item => {
+                const itemSlug = item.slug || titleToSlug(item.title);
+                return (
+                  <Link
+                    key={item.id || itemSlug}
+                    to={`/musica/${itemSlug}`}
+                    className="flex flex-col gap-1 rounded-xl border border-white/8 bg-white/4 px-4 py-3 transition hover:bg-white/8 hover:border-white/15"
+                  >
+                    <p className="font-bold text-white text-sm leading-snug line-clamp-2">{item.title}</p>
+                    {item.subtitle && (
+                      <p className="text-[11px] text-white/40 italic line-clamp-1">{item.subtitle}</p>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Sticky bottom player bar (desktop) */}
         <div className="sticky bottom-4 z-30 hidden lg:block">

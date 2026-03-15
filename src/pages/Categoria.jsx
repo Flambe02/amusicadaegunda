@@ -20,6 +20,22 @@ const CATEGORY_LABELS = {
   gastronomia: 'Gastronomia',
 };
 
+// Related categories — 2-3 adjacent topics per category
+const RELATED_CATEGORIES = {
+  politica: ['midia', 'policia', 'internacional'],
+  internacional: ['politica', 'midia', 'energia'],
+  midia: ['politica', 'cultura', 'tecnologia'],
+  saude: ['politica', 'tecnologia', 'outros'],
+  esporte: ['cultura', 'internacional', 'outros'],
+  cultura: ['midia', 'esporte', 'gastronomia'],
+  energia: ['politica', 'internacional', 'tecnologia'],
+  tecnologia: ['midia', 'energia', 'outros'],
+  policia: ['politica', 'seguranca', 'outros'],
+  seguranca: ['policia', 'politica', 'outros'],
+  gastronomia: ['cultura', 'outros'],
+  outros: ['cultura', 'politica'],
+};
+
 const CATEGORY_DESCRIPTIONS = {
   internacional: 'Paródias sobre geopolítica, diplomacia e eventos fora do Brasil.',
   midia: 'Sátiras sobre jornalismo, redes sociais e comunicação.',
@@ -128,8 +144,26 @@ export default function Categoria() {
             </ol>
           )}
 
+          {/* Related categories */}
+          {(RELATED_CATEGORIES[slug] || []).length > 0 && (
+            <div className="mt-10 pt-8 border-t border-white/8">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/35 mb-3">Categorias relacionadas</p>
+              <div className="flex flex-wrap gap-2">
+                {(RELATED_CATEGORIES[slug] || []).map(rel => (
+                  <Link
+                    key={rel}
+                    to={`/categoria/${rel}`}
+                    className="inline-flex items-center rounded-full border border-white/12 bg-white/5 px-4 py-1.5 text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white hover:border-white/25 transition"
+                  >
+                    {CATEGORY_LABELS[rel]}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Back link */}
-          <p className="mt-10">
+          <p className="mt-8">
             <Link to="/musica" className="text-sm text-white/40 hover:text-white transition">
               ← Todas as músicas
             </Link>
