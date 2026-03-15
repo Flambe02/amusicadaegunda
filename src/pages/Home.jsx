@@ -160,148 +160,12 @@ const SongListItem = memo(function SongListItem({ song, onSelect, thumbnailUrl }
   );
 });
 
-function getCachedHomePreview() {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const cached = JSON.parse(localStorage.getItem('last-song-cache') || 'null');
-    if (!cached?.title) return null;
-
-    return {
-      title: cached.title,
-      artist: cached.artist || 'A Musica da Segunda',
-      slug: cached.slug || null,
-      thumbnail: cached.thumbnail || null,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function HomeLoadingShell({ preview }) {
-  const hasFreshPreview = Boolean(
-    preview?.slug &&
-      CURRENT_SONG_ARTWORK.slug &&
-      preview.slug === CURRENT_SONG_ARTWORK.slug
-  );
-  const artwork = CURRENT_SONG_ARTWORK.path || preview?.thumbnail || BRAND_LOGO_MEDIUM;
-  // Detect aspect ratio from generated artwork dimensions to avoid CLS (skeleton ≠ real video)
-  const isShellShort = CURRENT_SONG_ARTWORK.height > CURRENT_SONG_ARTWORK.width;
-  const title = hasFreshPreview ? preview.title : 'A Musica da Segunda';
-  const artist = hasFreshPreview ? preview.artist : 'Nova musica toda segunda-feira';
-
-  return (
-    <>
-      <Helmet>
-        <title>{getDocumentTitle('A Musica da Segunda: Parodias das Noticias do Brasil')}</title>
-        <meta
-          name="description"
-          content="A Musica da Segunda: As noticias do Brasil em forma de parodia. Site oficial de parodias musicais inteligentes e divertidas."
-        />
-      </Helmet>
-
-      <div className="lg:hidden h-full">
-        <div className="relative h-full overflow-hidden bg-black">
-          <div className="absolute inset-0">
-            <img
-              src={artwork}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-45 blur-[56px]"
-              loading="eager"
-              decoding="async"
-              fetchPriority="high"
-              width="720"
-              height="1280"
-            />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.16),_transparent_35%),linear-gradient(180deg,#151515_0%,#050505_100%)]" />
-          </div>
-
-          <div className="relative z-10 flex h-full items-center justify-center py-2">
-            <div
-              className="relative h-full overflow-hidden rounded-[28px] bg-black shadow-[0_0_0_1px_rgba(255,255,255,0.18),0_32px_80px_rgba(0,0,0,0.65)]"
-              style={{ aspectRatio: '9/16', maxWidth: 'calc(100vw - 60px)' }}
-            >
-              <img
-                src={artwork}
-                alt={title}
-                className="absolute inset-0 h-full w-full object-cover"
-                loading="eager"
-                decoding="async"
-                fetchPriority="high"
-                width="720"
-                height="1280"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/88 via-black/36 to-transparent" />
-
-              <div className="absolute bottom-5 left-4 right-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/58">
-                  Carregando a musica da semana
-                </p>
-                <h1 className="mt-2 line-clamp-2 text-[17px] font-black leading-tight text-white">
-                  {title}
-                </h1>
-                <p className="mt-1 truncate text-sm text-white/68">{artist}</p>
-                <div className="mt-4 h-11 rounded-full border border-white/10 bg-white/10" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="hidden lg:block space-y-8 animate-pulse">
-        <div className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8 min-h-[460px] xl:min-h-[500px]">
-          <div className="grid items-start gap-6 lg:grid-cols-[1fr_minmax(0,260px)] xl:grid-cols-[1fr_minmax(0,330px)] 2xl:grid-cols-[1fr_minmax(0,410px)]">
-            <div className="flex flex-col justify-between gap-6 min-h-[408px] xl:min-h-[444px]">
-              <div className="space-y-5">
-                <div className="h-5 w-32 rounded-full bg-white/10" />
-                <div className="space-y-3">
-                  <div className="h-10 w-3/4 rounded-2xl bg-white/12" />
-                  <div className="h-10 w-1/2 rounded-2xl bg-white/12" />
-                </div>
-                <div className="h-5 w-40 rounded-full bg-white/10" />
-                <div className="space-y-2">
-                  <div className="h-4 w-full rounded bg-white/8" />
-                  <div className="h-4 w-5/6 rounded bg-white/8" />
-                  <div className="h-4 w-2/3 rounded bg-white/8" />
-                </div>
-                <div className="space-y-1 pt-1">
-                  <div className="h-3 w-24 rounded bg-white/8" />
-                  <div className="h-5 w-44 rounded bg-white/10" />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <div className="h-11 w-24 rounded-full bg-white/12" />
-                <div className="h-11 w-24 rounded-full bg-white/10" />
-                <div className="h-11 w-28 rounded-full bg-white/10" />
-              </div>
-            </div>
-
-            <div className={`overflow-hidden rounded-[34px] bg-white/6 ${isShellShort ? 'aspect-[9/16]' : 'aspect-video'}`}>
-              <img
-                src={artwork}
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full object-cover opacity-80"
-                loading="eager"
-                decoding="async"
-                width={CURRENT_SONG_ARTWORK.width || 720}
-                height={CURRENT_SONG_ARTWORK.height || 1280}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
 
 // LCP fix: YouTube facade displays thumbnail + play button instead of loading iframe eagerly.
 // Iframe loads only on click to improve LCP.
 // Props attendues: youtube_music_url, youtube_url, title
 export default function Home() {
   const HOME_SONGS_LIMIT = 120;
-  const cachedPreviewRef = useRef(getCachedHomePreview());
   logger.debug('Home component loaded');
   const { toast } = useToast();
   const [currentSong, setCurrentSong] = useState(null);
@@ -645,10 +509,6 @@ export default function Home() {
   // Song pages are the appropriate pages for video context.
   // Les pages /musica/{slug} sont les vraies "watch pages" avec VideoObject.
 
-  if (isLoading && !displayedSong) {
-    return <HomeLoadingShell preview={cachedPreviewRef.current} />;
-  }
-
   if (isLoading) {
     return (
       <>
@@ -767,6 +627,7 @@ export default function Home() {
         <section className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8 min-h-[460px] xl:min-h-[500px]">
           <div className="absolute inset-0 overflow-hidden">
             <img
+              key={heroArtwork}
               src={heroArtwork}
               alt=""
               aria-hidden="true"
@@ -941,6 +802,7 @@ export default function Home() {
                   {isDesktopShort && (
                     <>
                       <img
+                        key={heroArtwork}
                         src={heroArtwork}
                         alt=""
                         aria-hidden="true"
@@ -985,6 +847,7 @@ export default function Home() {
                 <div className="grid grid-cols-[auto,1fr] gap-4 px-4 py-3">
                   <div className="h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                     <img
+                      key={heroArtwork}
                       src={heroArtwork}
                       alt=""
                       aria-hidden="true"
@@ -1130,6 +993,7 @@ export default function Home() {
                 <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
                   {/* Thumbnail visible quand player inactif */}
                   <img
+                    key={heroArtwork}
                     src={heroArtwork}
                     alt=""
                     aria-hidden="true"

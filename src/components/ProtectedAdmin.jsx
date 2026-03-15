@@ -17,11 +17,22 @@ export default function ProtectedAdmin() {
    
   useEffect(() => {
     let isMounted = true;
-    
+
     const initializeAuth = async () => {
+      // Dev mode: ensure we have a session before checkAuth so RLS works
+      if (isDev) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
+          const devPass  = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
+          if (devEmail && devPass) {
+            await supabase.auth.signInWithPassword({ email: devEmail, password: devPass });
+          }
+        }
+      }
       await checkAuth();
     };
-    
+
     initializeAuth();
     
     // Vérifier si on est dans le contexte de réinitialisation
@@ -187,6 +198,13 @@ export default function ProtectedAdmin() {
       setIsAdmin(false);
     }
   };
+
+  // Dev mode: skip login UI but still need a valid session for RLS
+  // isAuthenticated is set by checkAuth() → checkAdminStatus() via the normal flow
+  // Just skip the "not admin" gate and render Admin as soon as loading is done
+  if (isDev && !isLoading) {
+    return <Admin />;
+  }
 
   // Afficher la page de mise à jour de mot de passe si demandée
   if (showUpdatePassword) {

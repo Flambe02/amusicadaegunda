@@ -16,9 +16,12 @@ export default function UpdatePassword({ onBackToLogin }) {
   const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    // Vérifier si on est dans le contexte de réinitialisation
-    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-    if (hashParams.get('reset') !== 'true') {
+    // Accept Supabase recovery hash (type=recovery) and legacy reset=true
+    const hash = window.location.hash;
+    const hasRecovery = hash.includes('type=recovery');
+    const hashParams = new URLSearchParams(hash.split('?')[1]);
+    const hasLegacy = hashParams.get('reset') === 'true';
+    if (!hasRecovery && !hasLegacy) {
       onBackToLogin();
     }
   }, [onBackToLogin]);

@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Lock, Eye, EyeOff, Loader2, Shield, KeyRound } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import ResetPassword from '@/components/ResetPassword';
+import UpdatePassword from '@/components/UpdatePassword';
 import { Helmet } from 'react-helmet-async';
 import { loginSchema, safeParse } from '@/lib/validation';
 import { sanitizeInput } from '@/lib/security';
@@ -20,9 +21,13 @@ export default function LoginPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [showResetPassword, setShowResetPassword] = useState(false);
+  // Detect Supabase password-recovery hash: /#access_token=...&type=recovery
+  const [showUpdatePassword, setShowUpdatePassword] = useState(() =>
+    window.location.hash.includes('type=recovery')
+  );
 
   // Vérifier si l'utilisateur est déjà connecté
-   
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -126,6 +131,11 @@ export default function LoginPage() {
   const handleSignUp = async () => {
     setError('ℹ️ Pour créer un compte administrateur, contactez l\'administrateur du système.');
   };
+
+  // Supabase password-recovery link detected → show update-password form
+  if (showUpdatePassword) {
+    return <UpdatePassword onBackToLogin={() => setShowUpdatePassword(false)} />;
+  }
 
   // Afficher la page de réinitialisation si demandée
   if (showResetPassword) {

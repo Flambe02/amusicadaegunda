@@ -1,5 +1,5 @@
 import Layout from "./Layout.jsx";
-import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParams, useNavigate } from 'react-router-dom';
 import { Suspense, useEffect, useRef } from 'react';
 import { ROUTES } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
@@ -12,6 +12,20 @@ function LegacyChansonRedirect() {
     const { slug } = useParams();
     const target = slug ? `/musica/${slug}` : '/musica';
     return <Navigate to={target} replace />;
+}
+
+// Intercept Supabase auth hash tokens (password recovery, magic link, etc.)
+// Supabase sends: /#access_token=...&type=recovery  →  redirect to /login
+function AuthHashHandler() {
+    const navigate = useNavigate();
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (hash && hash.includes('type=recovery')) {
+            // Preserve the hash so Login/ProtectedAdmin can read the token
+            navigate('/login' + hash, { replace: true });
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return null;
 }
 
 // Create a wrapper component that uses useLocation inside the Router context
@@ -34,6 +48,7 @@ function PagesContent() {
 
     return (
         <Layout>
+            <AuthHashHandler />
             {/* ✅ PERFORMANCE: Suspense pour gérer le lazy loading des routes */}
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>
