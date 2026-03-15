@@ -119,8 +119,8 @@ ${songListHtml}
   const staticPages = [
     {
       path: '/sobre',
-      title: 'Sobre - A Música da Segunda',
-      description: 'Conheça a história e a missão do projeto A Música da Segunda.'
+      title: 'Sobre o Projeto — A Música da Segunda | Paródia e Sátira Musical das Notícias do Brasil',
+      description: 'A Música da Segunda é um projeto de sátira musical semanal. Toda segunda-feira, um acontecimento do noticiário brasileiro vira paródia musical com letra, vídeo e contexto editorial.'
     },
     {
       path: '/calendar',
@@ -144,6 +144,29 @@ ${songListHtml}
     }
   ];
 
+  // ✅ SEO: Rich static body for /sobre (crawlable without JS)
+  const sobreBody = `
+<div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: Georgia, serif; line-height: 1.8; color: #222;">
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem; color: #111;">A Música da Segunda</h1>
+  <p style="font-size: 1.05rem; color: #666; font-style: italic; margin-bottom: 2rem;">Paródia e sátira musical das notícias do Brasil, publicada toda segunda-feira.</p>
+
+  <p style="margin-bottom: 1.25rem;">A Música da Segunda é um projeto de sátira musical semanal. Toda semana, um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical publicada às segundas-feiras.</p>
+
+  <p style="margin-bottom: 1.25rem;">O projeto surgiu da ideia de que o humor é uma das formas mais eficazes de processar e comentar a realidade. Em vez de um artigo ou uma thread, a sátira vem em forma de música: com letra, melodia e um ponto de vista bem claro sobre o que está acontecendo no Brasil.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Por que paródia musical?</h2>
+  <p style="margin-bottom: 1.25rem;">A paródia musical combina duas coisas que os brasileiros adoram: música e humor político. Uma letra bem construída consegue sintetizar em três minutos o que levaria uma coluna inteira para explicar — e ainda faz rir. É crítica com melodia. É análise com ritmo.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Como funciona?</h2>
+  <p style="margin-bottom: 1.25rem;">A cada semana, o projeto acompanha as notícias do Brasil e do mundo. Quando um tema se destaca — um escândalo político, uma crise econômica, um momento cultural, uma polêmica internacional — ele vira o mote da nova música. A letra é escrita, a música gravada, e tudo é publicado às segundas.</p>
+  <p style="margin-bottom: 1.25rem;">Cada página de música traz a letra completa, o vídeo, e o contexto da notícia que inspirou a paródia. Porque entender o que está sendo satirizado faz parte da piada.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Temas</h2>
+  <p style="margin-bottom: 1.25rem;">O projeto já publicou paródias sobre política brasileira, economia, energia elétrica, futebol, carnaval, geopolítica internacional, escândalos corporativos, cultura popular e muito mais. Cada semana é uma surpresa — e uma nova janela de humor sobre a realidade.</p>
+
+  <p style="margin-top: 2rem;"><a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">← Ver todas as músicas</a></p>
+</div>`;
+
   for (const page of staticPages) {
     const slug = page.path.replace(/^\//, '');
     const pageDir = path.join(OUT, slug);
@@ -151,7 +174,8 @@ ${songListHtml}
     await fs.ensureDir(pageDir);
 
     const pageUrl = `${siteUrl}${page.path}/`;
-    const pageBody = `
+    // ✅ SEO: /sobre gets rich editorial body; other pages get minimal body
+    const pageBody = page.path === '/sobre' ? sobreBody : `
 <div style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 2rem;">
   <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111;">${page.title}</h1>
   <p style="font-size: 1.125rem; color: #666; margin-bottom: 1.5rem;">${page.description}</p>
@@ -308,12 +332,6 @@ ${scripts.js}
     const file = path.join(dir, 'index.html');
     await fs.ensureDir(dir);
     const url = `${siteUrl}${route}/`;
-    const title = `${s.name} — A Música da Segunda`;
-    // ✅ Use rich description from DB if available, truncated to 155 chars for meta
-    const rawDesc = s.description
-      ? (s.description.length > 155 ? s.description.slice(0, 152).trimEnd() + '...' : s.description)
-      : `Letra, áudio e história de "${s.name}" — paródia musical da segunda.`;
-    const desc = rawDesc;
 
     // Canonical video for watch-page markup and embed
     const youtubeUrl = s.youtube_url || s.youtube_music_url;
@@ -323,11 +341,32 @@ ${scripts.js}
       ? `${youtubeUrls.embedUrl}?rel=0&modestbranding=1&playsinline=1&controls=1`
       : null;
 
-    // Contenu HTML statique visible avant le chargement React
-    // ✅ Inclure iframe YouTube si disponible (requis pour Google "watch page")
+    // ✅ SEO: Two separate descriptions
+    // metaDesc (≤155 chars) → <meta name="description"> and <title>
+    // fullDesc (complete)   → JSON-LD description + static body
+    const fullDesc = s.description || `Letra, áudio e história de "${s.name}" — paródia musical da segunda.`;
+    const metaDesc = fullDesc.length > 155 ? fullDesc.slice(0, 152).trimEnd() + '...' : fullDesc;
+
+    // ✅ SEO: Enriched title with subtitle
+    const pageTitle = s.subtitle
+      ? `${s.name} — ${s.subtitle} | A Música da Segunda`
+      : `${s.name} — A Música da Segunda`;
+
+    // ✅ SEO: Subtitle block under H1
+    const subtitleHtml = s.subtitle
+      ? `\n  <p style="font-size: 1.1rem; color: #555; margin-top: 0.35rem; margin-bottom: 1.5rem; font-style: italic;">${s.subtitle}</p>`
+      : '';
+
+    // ✅ SEO: Context block — full description visible for crawlers (not truncated)
+    const contextHtml = fullDesc ? `
+  <div style="margin-bottom: 2rem; padding: 1.25rem 1.5rem; background: #f5f5f5; border-left: 4px solid #222; border-radius: 0.5rem;">
+    <p style="font-size: 1rem; line-height: 1.8; color: #333; white-space: pre-wrap;">${fullDesc.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+  </div>` : '';
+
     // ✅ LCP FIX: loading="eager" et fetchpriority="high" car c'est l'élément LCP principal
     const videoEmbedHtml = embedSrc ? `
   <div style="margin: 2rem 0;">
+    <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">Assista</h2>
     <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
       <iframe
         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
@@ -351,14 +390,14 @@ ${scripts.js}
       : null;
     const lyricsHtml = escapedLyrics ? `
   <div style="margin: 2rem 0;">
-    <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">Letra</h2>
+    <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">A Letra</h2>
     <div style="white-space: pre-wrap; font-family: Georgia, serif; line-height: 1.8; color: #333; background: #f9f9f9; padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid #e63946;">${escapedLyrics}</div>
   </div>` : '';
 
     const staticBody = `
 <div class="container mx-auto px-4 py-8" style="max-width: 1200px;">
-  <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 1rem; color: #111;">${s.name}</h1>
-  <p style="font-size: 1.125rem; color: #666; margin-bottom: 2rem;">${desc}</p>
+  <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.25rem; color: #111;">${s.name}</h1>${subtitleHtml}
+  ${contextHtml}
   ${videoEmbedHtml}
   ${lyricsHtml}
 </div>`;
@@ -376,7 +415,7 @@ ${scripts.js}
         duration: s.duration,
         inLanguage: s.inLanguage,
         byArtist: s.byArtist,
-        description: desc
+        description: fullDesc
       }),
       breadcrumbsJsonLd({
         songName: s.name,
@@ -386,8 +425,8 @@ ${scripts.js}
 
     const html = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
-      title,
-      desc,
+      title: pageTitle,
+      desc: metaDesc,
       url,
       robots: 'index, follow, max-video-preview:0',
       ogType: 'music.song',
@@ -414,7 +453,7 @@ ${scripts.js}
         duration: s.duration,
         inLanguage: s.inLanguage,
         byArtist: s.byArtist,
-        description: desc
+        description: fullDesc
       }),
       breadcrumbsJsonLd({
         songName: s.name,
@@ -424,8 +463,8 @@ ${scripts.js}
 
     const htmlNoSlash = baseHtml({
       lang: s.inLanguage || cfg.defaultLocale,
-      title,
-      desc,
+      title: pageTitle,
+      desc: metaDesc,
       url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
       robots: 'index, follow, max-video-preview:0',
       ogType: 'music.song',

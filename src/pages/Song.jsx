@@ -100,12 +100,16 @@ export default function SongPage() {
   const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}/` : '/musica/';
   const shouldNoindex = !isLoading && errorType === 'invalid_slug';
 
+  const seoTitle = song
+    ? (song.subtitle ? `${song.title} — ${song.subtitle} | A Música da Segunda` : `${song.title} — A Música da Segunda`)
+    : slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda';
+  const seoDescription = song?.description
+    ? (song.description.length > 155 ? song.description.slice(0, 152).trimEnd() + '...' : song.description)
+    : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.';
+
   useSEO({
-    title: song ? song.title : slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda',
-    description: song
-      ? `Letra, áudio e história de "${song.title}" — nova música da segunda.`
-      : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.',
-    keywords: song ? `${song.title}, música da segunda, paródias musicais` : 'música da segunda, paródias musicais',
+    title: seoTitle,
+    description: seoDescription,
     image: song?.cover_image,
     url: normalizedUrl,
     type: 'music.song',
@@ -310,7 +314,7 @@ export default function SongPage() {
               <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-[24px] border border-white/10 bg-white/5">
                 <img
                   src={artwork}
-                  alt={song.title}
+                  alt={song.subtitle ? `Capa de "${song.title}" — ${song.subtitle}` : `Capa de "${song.title}" — A Música da Segunda`}
                   className="h-full w-full object-cover"
                   loading="eager"
                 />
@@ -349,6 +353,11 @@ export default function SongPage() {
                 <h1 className="text-[2.55rem] font-black leading-[0.92] tracking-tight text-white">
                   {song.title}
                 </h1>
+                {song.subtitle && (
+                  <p className="text-sm font-medium italic text-white/55 leading-snug">
+                    {song.subtitle}
+                  </p>
+                )}
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-base text-white/68">
                   <span className="inline-flex items-center gap-2">
                     <Disc3 className="h-4 w-4 text-[#FDE047]" />
@@ -467,11 +476,16 @@ export default function SongPage() {
                 </span>
               </div>
 
-              {/* Title + artist + date */}
+              {/* Title + subtitle + artist + date */}
               <div className="space-y-3">
                 <h1 className="text-4xl font-black leading-[0.93] tracking-tight text-white xl:text-5xl 2xl:text-6xl">
                   {song.title}
                 </h1>
+                {song.subtitle && (
+                  <p className="text-base font-medium italic text-white/55 leading-snug">
+                    {song.subtitle}
+                  </p>
+                )}
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-base text-white/68">
                   <span className="inline-flex items-center gap-2">
                     <Disc3 className="h-4 w-4 text-[#FDE047]" />

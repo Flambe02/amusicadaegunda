@@ -86,7 +86,8 @@ async function exportSongs() {
           youtube_music_url: song.youtube_music_url || null,
           youtube_url: song.youtube_url || null,
           description: song.description || null,
-          lyrics: song.lyrics || null
+          lyrics: song.lyrics || null,
+          subtitle: song.subtitle || null
         };
       })
       .filter(song => song !== null); // Retirer les chansons sans slug

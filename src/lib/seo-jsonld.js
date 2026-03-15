@@ -19,13 +19,15 @@ const CANONICAL_HOST = 'https://www.amusicadasegunda.com';
  * @param {string[]} [params.streamingUrls] - Array of URLs for streaming platforms
  * @returns {Object} JSON-LD schema object
  */
-export function musicRecordingJsonLd({ 
-  title, 
-  slug, 
-  datePublished, 
-  image, 
+export function musicRecordingJsonLd({
+  title,
+  slug,
+  datePublished,
+  image,
   byArtist = 'A Música da Segunda',
   description,
+  keywords,
+  about,
   streamingUrls = []
 }) {
   const url = `${CANONICAL_HOST}/musica/${slug}/`;
@@ -34,16 +36,18 @@ export function musicRecordingJsonLd({
     "@context": "https://schema.org",
     "@type": "MusicRecording",
     "name": title || slug,
-    "byArtist": { 
-      "@type": "MusicGroup", 
-      "name": byArtist 
+    "byArtist": {
+      "@type": "MusicGroup",
+      "name": byArtist
     },
     "datePublished": datePublished || new Date().toISOString().slice(0, 10),
     "inLanguage": "pt-BR",
     "url": url,
     "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
     ...(image ? { "image": image } : {}),
-    ...(description ? { "description": description } : {})
+    ...(description ? { "description": description } : {}),
+    ...(Array.isArray(keywords) && keywords.length > 0 ? { "keywords": keywords } : {}),
+    ...(about ? { "about": about } : {})
   };
 
   // Ajoute les liens sameAs s'ils existent

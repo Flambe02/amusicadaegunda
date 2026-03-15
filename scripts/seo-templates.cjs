@@ -129,7 +129,7 @@ function playlistJsonLd({ name, url, image, tracks = [] }) {
   return schema;
 }
 
-function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, duration, inLanguage, byArtist, description }) {
+function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, duration, inLanguage, byArtist, description, keywords, about }) {
   const obj = {
     "@context": "https://schema.org",
     "@type": "MusicRecording",
@@ -138,12 +138,14 @@ function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, durat
     "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
     "inLanguage": inLanguage || "pt-BR"
   };
-  
+
   if (datePublished) obj.datePublished = datePublished;
   if (description) obj.description = description;
   if (image) obj.image = image;
   if (duration) obj.duration = duration;
-  
+  if (Array.isArray(keywords) && keywords.length > 0) obj.keywords = keywords;
+  if (about) obj.about = about;
+
   if (byArtist) {
     obj.byArtist = { "@type": "MusicGroup", "name": byArtist.name, "url": byArtist.url };
   }

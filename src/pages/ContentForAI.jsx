@@ -55,6 +55,7 @@ export default function ContentForAI() {
             description: "Página com perguntas frequentes sobre o projeto"
           },
           social: {
+            facebook: "https://www.facebook.com/musicadasegunda/",
             tiktok: "https://www.tiktok.com/@amusicadasegunda",
             instagram: "https://www.instagram.com/a_musica_da_segunda/",
             youtube: "https://music.youtube.com/playlist?list=PLmoOyuQg7Y2QZKbcj20s7dcadsVx7WuWH",
