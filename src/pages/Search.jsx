@@ -7,6 +7,21 @@ import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/uti
 import LyricsDialog from '@/components/LyricsDialog';
 import LyricsDrawer from '@/components/LyricsDrawer';
 
+const CATEGORY_LABELS = {
+  politica:      'Política',
+  internacional: 'Internacional',
+  cultura:       'Cultura',
+  policia:       'Polícia',
+  midia:         'Mídia',
+  esporte:       'Esporte',
+  energia:       'Energia',
+  seguranca:     'Segurança',
+  gastronomia:   'Gastronomia',
+  outros:        'Outros',
+  saude:         'Saúde',
+  tecnologia:    'Tecnologia',
+};
+
 const MONTHS = [
   { label: 'Jan', full: 'Janeiro',   index: 0  },
   { label: 'Fev', full: 'Fevereiro', index: 1  },
@@ -33,7 +48,7 @@ function normalize(str) {
   return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 }
 
-function SongCard({ song, isActive, isPlaying, onTogglePlay, onOpenLyrics, isDescriptionExpanded, onToggleDescription }) {
+function SongCard({ song, isActive, isPlaying, onTogglePlay, onOpenLyrics, isDescriptionExpanded, onToggleDescription, onCategoryClick }) {
   const slug = titleToSlug(song.title);
   const d = parseDate(song.release_date);
   const ytId = extractYouTubeId(song.youtube_url || song.youtube_music_url);
@@ -83,14 +98,23 @@ function SongCard({ song, isActive, isPlaying, onTogglePlay, onOpenLyrics, isDes
               ) : (
                 <p className="truncate text-base font-bold text-white">{song.title}</p>
               )}
-              <p className="mt-0.5 text-sm text-white/50">
-                {song.artist}
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="text-sm text-white/50">{song.artist}</span>
                 {d && (
-                  <span className="ml-2 text-white/30">
+                  <span className="text-sm text-white/30">
                     · {d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
                 )}
-              </p>
+                {song.category && CATEGORY_LABELS[song.category] && (
+                  <button
+                    type="button"
+                    onClick={() => onCategoryClick?.(song.category)}
+                    className="inline-flex items-center rounded-full border border-white/15 bg-white/8 px-2 py-0.5 text-[10px] font-semibold text-white/50 hover:text-white hover:border-white/30 transition-colors"
+                  >
+                    {CATEGORY_LABELS[song.category]}
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Play button */}
@@ -186,6 +210,7 @@ export default function SearchPage() {
   const [query, setQuery] = useState('');
   const [selectedYears, setSelectedYears] = useState(new Set());
   const [selectedMonths, setSelectedMonths] = useState(new Set());
+  const [selectedCategories, setSelectedCategories] = useState(new Set());
   const [expandedDescriptionIds, setExpandedDescriptionIds] = useState(new Set());
   const [selectedLyricsSong, setSelectedLyricsSong] = useState(null);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
@@ -220,12 +245,19 @@ export default function SearchPage() {
     return [...years].sort((a, b) => b - a);
   }, [songs]);
 
+  const availableCategories = useMemo(() => {
+    const cats = new Set();
+    songs.forEach(s => { if (s.category && CATEGORY_LABELS[s.category]) cats.add(s.category); });
+    return [...cats].sort((a, b) => (CATEGORY_LABELS[a] || a).localeCompare(CATEGORY_LABELS[b] || b, 'pt-BR'));
+  }, [songs]);
+
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
     const hasText = q.length > 0;
     const hasYearFilter = selectedYears.size > 0;
     const hasMonthFilter = selectedMonths.size > 0;
-    if (!hasText && !hasYearFilter && !hasMonthFilter) return [];
+    const hasCatFilter = selectedCategories.size > 0;
+    if (!hasText && !hasYearFilter && !hasMonthFilter && !hasCatFilter) return [];
     return songs.filter(s => {
       const d = parseDate(s.release_date);
       const matchText = !hasText || (
@@ -236,11 +268,12 @@ export default function SearchPage() {
       );
       const matchYear  = !hasYearFilter  || (d && selectedYears.has(d.getFullYear()));
       const matchMonth = !hasMonthFilter || (d && selectedMonths.has(d.getMonth()));
-      return matchText && matchYear && matchMonth;
+      const matchCat   = !hasCatFilter   || selectedCategories.has(s.category);
+      return matchText && matchYear && matchMonth && matchCat;
     });
-  }, [query, selectedYears, selectedMonths, songs]);
+  }, [query, selectedYears, selectedMonths, selectedCategories, songs]);
 
-  const hasFilter = query.trim().length > 0 || selectedYears.size > 0 || selectedMonths.size > 0;
+  const hasFilter = query.trim().length > 0 || selectedYears.size > 0 || selectedMonths.size > 0 || selectedCategories.size > 0;
 
   const toggleYear = (yr) => setSelectedYears(prev => {
     const next = new Set(prev);
@@ -251,6 +284,12 @@ export default function SearchPage() {
   const toggleMonth = (idx) => setSelectedMonths(prev => {
     const next = new Set(prev);
     next.has(idx) ? next.delete(idx) : next.add(idx);
+    return next;
+  });
+
+  const toggleCategory = (cat) => setSelectedCategories(prev => {
+    const next = new Set(prev);
+    next.has(cat) ? next.delete(cat) : next.add(cat);
     return next;
   });
 
@@ -401,6 +440,26 @@ export default function SearchPage() {
                 );
               })}
             </div>
+
+            {/* Category pills */}
+            {availableCategories.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] uppercase tracking-[0.24em] text-white/30 mr-1">Tema</span>
+                {availableCategories.map(cat => {
+                  const active = selectedCategories.has(cat);
+                  return (
+                    <button key={cat} onClick={() => toggleCategory(cat)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all ${
+                        active
+                          ? 'bg-[#FDE047] text-black'
+                          : 'border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                      }`}>
+                      {CATEGORY_LABELS[cat]}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -457,6 +516,7 @@ export default function SearchPage() {
                   onOpenLyrics={handleOpenLyrics}
                   isDescriptionExpanded={expandedDescriptionIds.has(song.id)}
                   onToggleDescription={toggleDescription}
+                  onCategoryClick={toggleCategory}
                 />
               ))}
             </div>

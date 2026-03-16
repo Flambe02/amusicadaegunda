@@ -425,34 +425,46 @@ dans les aperçus de partage et dans les signaux Google Discover.
 
 ## Roadmap d'exécution
 
-### Phase 1 — Fondations éditoriales (semanas 1–4)
+### Phase 1 — Fondations éditoriales ✅ TERMINÉE (2026-03-15)
 
-- [ ] Ajouter champs `subtitle` + `context` dans Supabase (`songs`)
-- [ ] Rendre `subtitle` (balise `<p>`) sous le H1 dans `Song.jsx`
-- [ ] Rendre `context` (bloc visible) avant les paroles dans `Song.jsx`
-- [ ] Rédiger `subtitle` + `context` pour les 10 chansons les plus récentes
-- [ ] Enrichir le stub `/sobre/` avec 200+ mots de contenu statique
-- [ ] Corriger `alt` des thumbnails liste sur `Home.jsx`
-- [ ] Corriger `alt` de l'artwork principal dans `Song.jsx` (utiliser subtitle)
-- [ ] Mettre à jour le `<title>` de la homepage
+- [x] Ajouter champ `subtitle` dans Supabase + 39 lignes remplies via SQL
+- [x] Rendre `subtitle` sous H1 dans `Song.jsx` (mobile + desktop)
+- [x] `description` Supabase = contexte éditorial visible dans React + stubs statiques (pas de champ `context` séparé nécessaire)
+- [x] Enrichir stub `/sobre/` — 267 mots, 4 sections H2 ✅
+- [x] Corriger `alt` des thumbnails liste sur `Home.jsx`
+- [x] Corriger `alt` de l'artwork principal dans `Song.jsx` — pattern `Capa de "${title}" — ${subtitle}`
+- [x] Mettre à jour le `<title>` de la homepage — "A Música da Segunda — Paródia e Sátira Musical das Notícias do Brasil" (2026-03-16)
+- [x] Séparer `metaDescription` (155 chars) / `fullDescription` (complet dans JSON-LD)
 
-### Phase 2 — Architecture thématique (semaines 5–12)
+### Phase 2 — Architecture thématique ✅ TERMINÉE (2026-03-15)
 
-- [ ] Rédiger `subtitle` + `context` pour les 29 chansons restantes
-- [ ] Créer les 7 pages de catégories (`Categoria.jsx` + stubs)
-- [ ] Implémenter les liens croisés dans les pages de chansons
-- [ ] Ajouter la section catégories dans `Home.jsx`
-- [ ] Ajouter les catégories dans le sitemap
-- [ ] Enrichir les stubs chansons (`subtitle` + `context` + liens croisés)
-- [ ] Mettre à jour les `<title>` des 39 pages de chansons
+- [x] Créer 10 pages de catégories (`Categoria.jsx` + stubs HTML + sitemap)
+- [x] Implémenter les liens croisés dans les pages de chansons (mobile + desktop)
+- [x] Badge catégorie cliquable sur chaque page chanson → /categoria/
+- [x] Section "Explorar por tema" dans `Home.jsx` (desktop)
+- [x] Filtres catégorie dans la page Pesquisar
+- [x] Catégories dans le sitemap (priority gradient 0.6–0.75)
+- [x] Enrichir stubs chansons — subtitle + description complète + liens croisés
+- [x] Taxonomie corrigée en Supabase : 39 chansons, 10 catégories cohérentes
+- [x] Mettre à jour les `<title>` des 39 pages — format `{titre} — {subtitle} | A Música da Segunda`
 
-### Phase 3 — Enrichissement technique (semaines 10–16)
+### Phase 3 — Enrichissement technique ✅ TERMINÉE (2026-03-15–16)
 
-- [ ] Séparer `metaDescription` / `fullDescription` dans `seo-templates.cjs`
-- [ ] Ajouter `about` + `keywords` + `dateModified` dans `musicRecordingJsonLd()`
-- [ ] Propager ces champs dans `generate-stubs.cjs`
-- [ ] Ajouter Open Graph `article:published_time` + `article:section`
-- [ ] Réviser les priorités du sitemap (gradient par âge)
+- [x] Séparer `metaDescription` / `fullDescription` dans `seo-templates.cjs`
+- [x] Ajouter `keywords` dans `musicRecordingJsonLd()` (dérivés titre + subtitle + catégorie)
+- [x] `musicRecordingJsonLd()` et `seo-jsonld.js` acceptent `about` (prêt, non peuplé)
+- [x] Ajouter Open Graph `article:published_time` + `article:section`
+- [x] Réviser priorités sitemap — gradient par âge (0.9 / 0.8 / 0.7)
+- [x] WebSite + Organization JSON-LD enrichis (description, inLanguage, @id, knowsAbout)
+- [x] Homepage static content enrichi dynamiquement (8 songs récentes + 10 catégories)
+
+### Phase 4 — Croissance (mois 4–12)
+
+- [ ] Maintenir la cadence hebdomadaire (52+ chansons/an)
+- [ ] Créer une section `/arquivo/` (chansons groupées par année et thème)
+- [ ] Cibler les événements saisonniers à fort volume : eleições, copa, carnaval, olimpíadas
+- [ ] Publier systématiquement avec `subtitle` + `description` dès la première chanson
+- [ ] JSON-LD `about` → peuplement via champ Supabase si besoin (infra prête)
 
 ### Phase 4 — Croissance (mois 4–12)
 

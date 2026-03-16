@@ -12,7 +12,20 @@
       "Bash(wsl ls:*)",
       "Bash(powershell.exe -NoProfile -Command \"Get-ChildItem ''c:\\\\Users\\\\flore\\\\OneDrive\\\\POIVRON_ROUGE\\\\PIM\\\\MusicaDa2nda\\\\docs\\\\assets\\\\*.js'' | Sort-Object Length -Desc | ForEach-Object { Write-Host \\(''{0} : {1} KB'' -f $_Name, [math]::Round\\($_Length/1024,1\\)\\) }\")",
       "Bash(npx vitest run:*)",
-      "WebFetch(domain:www.googleapis.com)"
+      "WebFetch(domain:www.googleapis.com)",
+      "Bash(head -5 grep -n \"id=\"\"main\"\"\\\\|id=''main''\" /c/Users/flore/OneDrive/POIVRON_ROUGE/PIM/MusicaDa2nda/scripts/generate-stubs.cjs)",
+      "Bash(git tag:*)",
+      "WebFetch(domain:www.amusicadasegunda.com)",
+      "Bash(npm run build:seo:*)",
+      "Bash(gh run list:*)",
+      "Bash(git clone https://github.com/flambe02/seomachine.git)",
+      "Bash(npm run deploy)",
+      "Bash(wc -l c:/Users/flore/OneDrive/POIVRON_ROUGE/PIM/MusicaDa2nda/src/pages/*.jsx)",
+      "Bash(wc -l c:/Users/flore/OneDrive/POIVRON_ROUGE/PIM/MusicaDa2nda/scripts/seo-templates*.cjs)",
+      "Bash(node_modules/.bin/eslint src/components/HomeMobileImmersive.jsx --max-warnings=0 --rule 'no-console: off')",
+      "Bash(grep -r \"\"\"logo\"\"\" dist/index.html)",
+      "Bash(grep '\"\"logo\"\"' docs/index.html)",
+      "Bash(grep -n '\"\"logo\"\"\\\\|icon-512\\\\|Caipivara_transp' docs/index.html)"
     ]
   }
 }

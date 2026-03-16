@@ -624,6 +624,56 @@ ${catSongListHtml}
     }
   }
 
+  // ✅ SEO BRAND: Enrichir le contenu statique de la homepage pour le brand SERP
+  // Injecter chansons récentes + catégories dans div#root pour les crawlers sans JS
+  if (songs.length > 0 && fs.existsSync(indexHtmlPath)) {
+    const CATEGORY_LABELS = {
+      politica: 'Política', internacional: 'Internacional', cultura: 'Cultura',
+      policia: 'Polícia', midia: 'Mídia', esporte: 'Esporte',
+      energia: 'Energia', seguranca: 'Segurança', gastronomia: 'Gastronomia',
+      outros: 'Outros', saude: 'Saúde', tecnologia: 'Tecnologia',
+    };
+    const recentSongs = [...songs]
+      .sort((a, b) => new Date(b.datePublished || 0) - new Date(a.datePublished || 0))
+      .slice(0, 8);
+    const categoriesInHomepage = [...new Set(songs.map(s => s.category).filter(c => c && CATEGORY_LABELS[c]))];
+
+    const recentSongsHtml = recentSongs.map(s =>
+      `<li><a href="${siteUrl}/musica/${s.slug}/">${s.name}${s.subtitle ? ` — ${s.subtitle}` : ''}</a></li>`
+    ).join('\n        ');
+
+    const categoriesHtml = categoriesInHomepage.map(cat =>
+      `<a href="${siteUrl}/categoria/${cat}/">${CATEGORY_LABELS[cat]}</a>`
+    ).join(' · ');
+
+    const richStaticBody = `<main id="main" class="app-shell-fallback">
+        <h1>A Música da Segunda</h1>
+        <p>Nova música toda segunda-feira. Paródias musicais inteligentes sobre as notícias do Brasil, com humor, contexto e sátira musical. Mais de ${songs.length} paródias disponíveis.</p>
+        <nav aria-label="Navegar por tema">
+          <p style="font-size:0.9em;font-weight:bold;margin-bottom:0.25rem">Explorar por tema:</p>
+          <p>${categoriesHtml}</p>
+        </nav>
+        <section aria-label="Músicas recentes">
+          <p style="font-size:0.9em;font-weight:bold;margin:1rem 0 0.25rem">Músicas recentes:</p>
+          <ul style="list-style:disc;padding-left:1.2rem">
+        ${recentSongsHtml}
+          </ul>
+        </section>
+        <nav aria-label="Navegação principal" style="margin-top:1rem">
+          <a href="${siteUrl}/musica/">Ver todas as músicas</a> ·
+          <a href="${siteUrl}/sobre/">Sobre o projeto</a>
+        </nav>
+      </main>`;
+
+    let indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
+    indexHtml = indexHtml.replace(
+      /<main id="main" class="app-shell-fallback">[\s\S]*?<\/main>/,
+      richStaticBody
+    );
+    fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
+    console.log(`✅ Contenu statique homepage enrichi (${recentSongs.length} chansons récentes, ${categoriesInHomepage.length} catégories)`);
+  }
+
   console.log(`✅ Stubs enriquecidos em ${OUT} (static + songs JSON-LD).`);
 })();
 
