@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { generateSongData } from '@/lib/hashtagGenerator';
 import { sanitizeInput, sanitizeURL } from '@/lib/security';
 import { notifyAllSubscribers } from '@/lib/pushNotifications';
@@ -221,24 +221,39 @@ function extractShortsId(url = '') {
 
 // ─── Song Form ───────────────────────────────────────────────────────────────
 
-function SongForm({ initial, onSave, onCancel, isSaving, categories }) {
+function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onAutoSaveHashtags }) {
   const [form, setForm] = useState(() => ({
     ...EMPTY_FORM,
-    release_date: nextMonday(),
     ...initial,
+    release_date: initial?.release_date || nextMonday(),
     hashtags: Array.isArray(initial?.hashtags) ? initial.hashtags : [],
   }));
   const [showLyrics, setShowLyrics] = useState(!!initial?.lyrics);
+  const [hashtagInput, setHashtagInput] = useState('');
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
-  const handleGenerate = () => {
+  const addHashtag = () => {
+    const tag = hashtagInput.trim().replace(/^#+/, '').toLowerCase();
+    if (tag && !form.hashtags.includes(tag)) {
+      set('hashtags', [...form.hashtags, tag]);
+    }
+    setHashtagInput('');
+  };
+
+  const handleGenerate = async () => {
     if (!form.title && !form.description) return;
     const { category, hashtags } = generateSongData({
       title: form.title,
       description: form.description,
     });
     setForm(f => ({ ...f, category, hashtags }));
+    if (songId && onAutoSaveHashtags && hashtags.length > 0) {
+      setIsAutoSaving(true);
+      await onAutoSaveHashtags({ hashtags, category });
+      setIsAutoSaving(false);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -434,9 +449,10 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories }) {
             size="sm"
             variant="outline"
             onClick={handleGenerate}
+            disabled={isAutoSaving}
             className="gap-1 text-xs"
           >
-            <Zap size={12} /> Gerar
+            <Zap size={12} /> {isAutoSaving ? 'A guardar…' : songId ? 'Gerar e guardar' : 'Gerar'}
           </Button>
         </div>
 
@@ -476,8 +492,20 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories }) {
               </Badge>
             ))}
             {form.hashtags.length === 0 && (
-              <span className="text-xs text-gray-500">Clique em &quot;Gerar&quot; para gerar hashtags automaticamente</span>
+              <span className="text-xs text-gray-500">Clique em &quot;Gerar e guardar&quot; ou adicione manualmente</span>
             )}
+          </div>
+          <div className="flex gap-2 mt-2">
+            <Input
+              value={hashtagInput}
+              onChange={e => setHashtagInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addHashtag(); } }}
+              placeholder="#hashtag"
+              className="text-sm h-8"
+            />
+            <Button type="button" size="sm" variant="outline" onClick={addHashtag} className="h-8 px-3 gap-1 text-xs">
+              <Plus size={12} /> Adicionar
+            </Button>
           </div>
         </div>
       </div>
@@ -632,6 +660,7 @@ export default function AdminPage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [categories, setCategories] = useState(loadCategories);
   const [showSettings, setShowSettings] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'published' | 'draft'
 
   // ── Load ──
   const loadSongs = useCallback(async () => {
@@ -685,13 +714,20 @@ export default function AdminPage() {
   }, [checkScheduled]);
 
   // ── Filter ──
-  const filtered = search.trim()
-    ? songs.filter(s =>
-        s.title?.toLowerCase().includes(search.toLowerCase()) ||
-        s.description?.toLowerCase().includes(search.toLowerCase()) ||
-        s.category?.toLowerCase().includes(search.toLowerCase())
-      )
-    : songs;
+  const filtered = useMemo(() => {
+    let result = songs;
+    if (statusFilter === 'published') result = result.filter(s => s.status === 'published');
+    else if (statusFilter === 'draft') result = result.filter(s => s.status !== 'published');
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(s =>
+        s.title?.toLowerCase().includes(q) ||
+        s.description?.toLowerCase().includes(q) ||
+        s.category?.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [songs, statusFilter, search]);
 
   // ── Save (create or update) ──
   const handleSave = async (formData) => {
@@ -773,6 +809,21 @@ export default function AdminPage() {
     }
   };
 
+  // ── Auto-save hashtags (called from SongForm "Gerar e guardar") ──
+  const handleAutoSaveHashtags = useCallback(async ({ hashtags, category }) => {
+    if (!panel || panel === 'new') return;
+    const { error } = await supabase
+      .from('songs')
+      .update({ hashtags, category })
+      .eq('id', panel.id);
+    if (error) {
+      toast({ title: 'Erro ao guardar hashtags', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: '✅ Hashtags guardadas!' });
+      setSongs(prev => prev.map(s => s.id === panel.id ? { ...s, hashtags, category } : s));
+    }
+  }, [panel, toast]);
+
   // ── Category change (inline from SongRow) ──
   const handleCategoryChange = async (songId, newCategory) => {
     const { error } = await supabase.from('songs').update({ category: newCategory }).eq('id', songId);
@@ -823,30 +874,45 @@ export default function AdminPage() {
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
         {/* Toolbar */}
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <Input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Pesquisar título, descrição, categoria…"
-              className="pl-9"
-            />
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Pesquisar título, descrição, categoria…"
+                className="pl-9"
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={loadSongs}
+              title="Recarregar"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            </Button>
+            <Button
+              onClick={() => setPanel('new')}
+              className="gap-2 bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus size={16} /> Nova música
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={loadSongs}
-            title="Recarregar"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          </Button>
-          <Button
-            onClick={() => setPanel('new')}
-            className="gap-2 bg-purple-600 hover:bg-purple-700"
-          >
-            <Plus size={16} /> Nova música
-          </Button>
+          <div className="flex gap-1">
+            {[['all', `Todos (${songs.length})`], ['published', `Publicados (${published})`], ['draft', `Rascunhos (${drafts})`]].map(([v, l]) => (
+              <button
+                key={v}
+                onClick={() => setStatusFilter(v)}
+                className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                  statusFilter === v ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Settings panel */}
@@ -870,6 +936,8 @@ export default function AdminPage() {
               onCancel={() => setPanel(null)}
               isSaving={isSaving}
               categories={categories}
+              songId={panel === 'new' ? null : panel?.id}
+              onAutoSaveHashtags={panel !== 'new' ? handleAutoSaveHashtags : undefined}
             />
           </div>
         )}
