@@ -219,6 +219,64 @@ function extractShortsId(url = '') {
   return m ? m[1] : null;
 }
 
+function parseMissingColumn(error) {
+  const message = error?.message || error?.details || '';
+  const patterns = [
+    /Could not find the '([^']+)' column of 'songs' in the schema cache/i,
+    /column ['"]?([^'".\s]+)['"]? does not exist/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = message.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
+  return null;
+}
+
+function normalizeSongPayload(formData) {
+  const payload = Object.fromEntries(
+    Object.entries(formData).filter(([, value]) => value !== '' && !(Array.isArray(value) && value.length === 0))
+  );
+
+  if (payload.youtube_music_url && !payload.youtube_url) {
+    payload.youtube_url = payload.youtube_music_url;
+  }
+
+  return payload;
+}
+
+async function persistSongWithSchemaFallback({ panel, payload }) {
+  let nextPayload = { ...payload };
+  const removedColumns = [];
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const { data, error } = await (
+      panel === 'new'
+        ? supabase.from('songs').insert([nextPayload]).select().single()
+        : supabase.from('songs').update(nextPayload).eq('id', panel.id).select().single()
+    );
+
+    if (!error) {
+      return { data, removedColumns };
+    }
+
+    const missingColumn = parseMissingColumn(error);
+    if (!missingColumn || !(missingColumn in nextPayload)) {
+      throw error;
+    }
+
+    if (missingColumn === 'youtube_music_url' && !nextPayload.youtube_url && payload.youtube_music_url) {
+      nextPayload.youtube_url = payload.youtube_music_url;
+    }
+
+    delete nextPayload[missingColumn];
+    removedColumns.push(missingColumn);
+  }
+
+  throw new Error('Impossible de sauvegarder la chanson: trop de colonnes manquantes dans la table songs.');
+}
+
 // ─── Song Form ───────────────────────────────────────────────────────────────
 
 function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onAutoSaveHashtags }) {
@@ -735,23 +793,15 @@ export default function AdminPage() {
     try {
       const wasPublished = panel?.status === 'published';
       const becomesPublished = formData.status === 'published';
+      const toSave = normalizeSongPayload(formData);
+      const { removedColumns } = await persistSongWithSchemaFallback({ panel, payload: toSave });
 
-      // Strip empty strings and empty arrays so newly-added columns don't trigger
-      // "column not found in schema cache" errors if PostgREST cache is stale
-      const toSave = Object.fromEntries(
-        Object.entries(formData).filter(([, v]) => v !== '' && !(Array.isArray(v) && v.length === 0))
-      );
-
-      if (panel === 'new') {
-        const { error: insertErr } = await supabase.from('songs').insert([toSave]);
-        if (insertErr) throw insertErr;
-        toast({ title: '✅ Música criada!' });
-      } else {
-        const { error: updateErr } = await supabase.from('songs').update(toSave).eq('id', panel.id);
-        if (updateErr) throw updateErr;
-        toast({ title: '✅ Música actualizada!' });
-      }
-
+      toast({
+        title: panel === 'new' ? 'Musique creee' : 'Musique mise a jour',
+        description: removedColumns.length > 0
+          ? `Champs non enregistres dans Supabase: ${removedColumns.join(', ')}.`
+          : undefined,
+      });
       // Push notification when publishing for the first time
       if (!wasPublished && becomesPublished) {
         try {
@@ -1020,3 +1070,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
