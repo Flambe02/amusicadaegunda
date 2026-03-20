@@ -1,6 +1,6 @@
 export const BUILD_INFO = {
   "version": "2.0.12",
-  "commit": "cdf1908",
-  "generatedAt": "2026-03-20T18:26:35.228Z",
-  "buildId": "2.0.12-cdf1908-2026-03-20T18-26-35-228Z"
+  "commit": "95ba5c6",
+  "generatedAt": "2026-03-20T18:34:20.218Z",
+  "buildId": "2.0.12-95ba5c6-2026-03-20T18-34-20-218Z"
 };

@@ -15,6 +15,54 @@ let currentStorageMode = 'supabase';
 
 // ===== FORCER L'UTILISATION DE SUPABASE =====
 let useSupabase = true; // Forcer Supabase
+let staticSongsCache = null;
+
+const normalizeStaticSong = (song, index) => ({
+  id: song.id ?? `static-${index + 1}`,
+  slug: song.slug || null,
+  title: song.name || song.title || 'Sans titre',
+  artist: song.byArtist?.name || song.artist || 'A Musica da Segunda',
+  description: song.description || '',
+  lyrics: song.lyrics || '',
+  release_date: song.datePublished || song.release_date || null,
+  status: 'published',
+  cover_image: song.image || null,
+  youtube_music_url: song.youtube_music_url || null,
+  youtube_url: song.youtube_url || song.audioUrl || null,
+  spotify_url: song.audioUrl?.includes('spotify.com') ? song.audioUrl : null,
+  subtitle: song.subtitle || null,
+  category: song.category || null,
+  hashtags: Array.isArray(song.hashtags) ? song.hashtags : [],
+  created_at: song.datePublished || null,
+});
+
+async function loadStaticPublishedSongs() {
+  if (staticSongsCache) return staticSongsCache;
+
+  const response = await fetch('/content/songs.json', { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Impossible de charger content/songs.json (${response.status})`);
+  }
+
+  const payload = await response.json();
+  staticSongsCache = Array.isArray(payload)
+    ? payload.map((song, index) => normalizeStaticSong(song, index))
+    : [];
+
+  return staticSongsCache;
+}
+
+function sortSongs(songs, orderBy = '-release_date') {
+  const descending = String(orderBy || '').startsWith('-');
+  const key = String(orderBy || '-release_date').replace(/^[-+]/, '') || 'release_date';
+  const factor = descending ? -1 : 1;
+
+  return [...songs].sort((left, right) => {
+    const a = left?.[key] ?? '';
+    const b = right?.[key] ?? '';
+    return String(a).localeCompare(String(b)) * factor;
+  });
+}
 
 const detectStorageMode = async () => {
   try {
@@ -59,12 +107,21 @@ export const Song = {
         return songs;
       } else {
         devLog('⚠️ Aucune chanson trouvée dans Supabase');
-        return [];
+        const staticSongs = await loadStaticPublishedSongs();
+        const orderedStaticSongs = sortSongs(staticSongs, orderBy);
+        return limit ? orderedStaticSongs.slice(0, limit) : orderedStaticSongs;
       }
     } catch (error) {
       logger.error('Erro ao carregar músicas desde Supabase:', error);
       // Supabase-only: pas de fallback local
-      return [];
+      try {
+        const staticSongs = await loadStaticPublishedSongs();
+        const orderedStaticSongs = sortSongs(staticSongs, orderBy);
+        return limit ? orderedStaticSongs.slice(0, limit) : orderedStaticSongs;
+      } catch (staticError) {
+        logger.error('❌ Fallback statique indisponible:', staticError);
+        return [];
+      }
     }
   },
 
@@ -75,7 +132,13 @@ export const Song = {
       }
     } catch (error) {
       logger.error('Erro ao carregar música:', error);
-      return null;
+      try {
+        const staticSongs = await loadStaticPublishedSongs();
+        return staticSongs.find((song) => String(song.id) === String(id)) || null;
+      } catch (staticError) {
+        logger.error('Fallback statique indisponible:', staticError);
+        return null;
+      }
     }
   },
 
@@ -92,11 +155,18 @@ export const Song = {
       
       // Supabase-only: pas de fallback local
       devLog('⚠️ Supabase indisponible ou sans données');
-      return null;
+      const staticSongs = await loadStaticPublishedSongs();
+      return sortSongs(staticSongs, '-release_date')[0] || null;
       
     } catch (error) {
       logger.error('Erro ao carregar música atual:', error);
-      return null;
+      try {
+        const staticSongs = await loadStaticPublishedSongs();
+        return sortSongs(staticSongs, '-release_date')[0] || null;
+      } catch (staticError) {
+        logger.error('Fallback statique indisponible:', staticError);
+        return null;
+      }
     }
   },
 
@@ -225,11 +295,21 @@ export const Song = {
       if (useSupabase) {
         // ✅ OPTIMISÉ : Requête directe par slug au lieu de charger toute la table
         const song = await supabaseSongService.getBySlug(slug);
-        return song || null;
+        if (song) {
+          return song;
+        }
       }
+      const staticSongs = await loadStaticPublishedSongs();
+      return staticSongs.find((song) => song.slug === slug) || null;
     } catch (error) {
       logger.error('Erro ao carregar música por slug:', error);
-      throw error;
+      try {
+        const staticSongs = await loadStaticPublishedSongs();
+        return staticSongs.find((song) => song.slug === slug) || null;
+      } catch (staticError) {
+        logger.error('Fallback statique indisponible:', staticError);
+        throw error;
+      }
     }
   }
 };
