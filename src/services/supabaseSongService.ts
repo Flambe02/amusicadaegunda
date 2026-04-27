@@ -11,7 +11,6 @@ export async function listPublished() {
     .from('songs')
     .select('*')
     .eq('status', 'published')
-    .order('tiktok_publication_date', { ascending: false, nullsFirst: false })
     .order('release_date', { ascending: false, nullsFirst: false });
 }
 
@@ -21,7 +20,6 @@ export async function updateSong(id: number, updates: any) {
     ...rest,
     hashtags: Array.isArray(rest?.hashtags) ? rest.hashtags : null,
     release_date: toISO(rest?.release_date),
-    tiktok_publication_date: toISO(rest?.tiktok_publication_date),
   };
 
   const { data, error } = await supabase
@@ -52,7 +50,6 @@ export async function createSong(songData: any) {
     ...songData,
     hashtags: Array.isArray(songData?.hashtags) ? songData.hashtags : null,
     release_date: toISO(songData?.release_date),
-    tiktok_publication_date: toISO(songData?.tiktok_publication_date),
   };
 
   const { data, error } = await supabase

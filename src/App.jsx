@@ -4,23 +4,12 @@ import { Toaster } from "@/components/ui/toaster"
 // Garder un seul HelmetProvider à la racine évite la duplication de contextes
 import OfflineIndicator from "@/components/OfflineIndicator"
 import { lazy, Suspense, useEffect, useState } from 'react';
-import migrationService from '@/lib/migration';
 
 const PushCTA = lazy(() => import('@/components/PushCTA'));
 const InstallAppBanner = lazy(() => import('@/components/InstallAppBanner'));
-// MigrationStatus supprimé pour la production
 
 function App() {
   const [deferredUiReady, setDeferredUiReady] = useState(false);
-
-  // Exécuter la migration au démarrage de l'app
-  useEffect(() => {
-    let isMounted = true;
-    migrationService.execute().catch((error) => {
-      if (isMounted) console.error('❌ Erreur lors de la migration:', error);
-    });
-    return () => { isMounted = false; };
-  }, []);
 
   useEffect(() => {
     let timeoutId = null;

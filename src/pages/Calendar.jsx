@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import VisuallyHidden from "@/components/ui/VisuallyHidden";
 import SongPlayer from '../components/SongPlayer';
-import '../styles/tiktok-optimized.css';
 import { useSEO } from '../hooks/useSEO';
 import DesktopPageShell, { DesktopMetric, DesktopSurface } from '@/components/DesktopPageShell';
 

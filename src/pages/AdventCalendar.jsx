@@ -227,15 +227,10 @@ export default function AdventCalendar() {
     
     // Si pas de chanson mémorisée, en choisir une aléatoirement
     if (songs.length === 0) return null;
-    
-    // Filtrer seulement les chansons avec un ID TikTok
-    const songsWithTikTok = songs.filter(song => song.tiktok_video_id);
-    
-    if (songsWithTikTok.length === 0) return null;
-    
+
     // Choisir une chanson aléatoire
-    const randomIndex = Math.floor(Math.random() * songsWithTikTok.length);
-    const randomSong = songsWithTikTok[randomIndex];
+    const randomIndex = Math.floor(Math.random() * songs.length);
+    const randomSong = songs[randomIndex];
     
     // Créer la chanson pour ce jour
     const daySong = {
@@ -272,15 +267,16 @@ export default function AdventCalendar() {
   };
 
   const handleShareSong = (song) => {
+    const shareUrl = song.slug ? `${window.location.origin}/musica/${song.slug}` : window.location.href;
     if (navigator.share) {
       navigator.share({
         title: song.title,
         text: `Ouça ${song.title} por ${song.artist}`,
-        url: song.tiktok_url || window.location.href
+        url: shareUrl
       });
     } else {
       // Fallback pour copier le lien
-      navigator.clipboard.writeText(song.tiktok_url || window.location.href);
+      navigator.clipboard.writeText(shareUrl);
       alert('Link copiado para a área de transferência!');
     }
   };

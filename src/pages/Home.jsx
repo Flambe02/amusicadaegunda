@@ -34,7 +34,6 @@ import YouTubeEmbed from '@/components/YouTubeEmbed';
 
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import '../styles/tiktok-optimized.css';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';

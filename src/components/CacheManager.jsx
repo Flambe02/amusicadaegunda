@@ -219,7 +219,6 @@ export default function CacheManager({ className = "" }) {
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="text-xs text-gray-500 space-y-1">
             <p>• O cache melhora o desempenho e permite o uso offline</p>
-            <p>• A sincronização TikTok funciona em segundo plano</p>
             <p>• Limpar o cache libera espaço mas desacelera o carregamento</p>
           </div>
         </div>

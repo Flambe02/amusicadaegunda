@@ -19,8 +19,7 @@ const DEFAULT_SONGS = [
     "description": "A música \"O Croissant\" brinca com o cho",
     "release_date": "2025-02-03",
     "status": "published",
-    "genre": "Indie",
-    "tiktok_video_id": "sample_tiktok_1"
+    "genre": "Indie"
   },
   {
     "id": 2,
@@ -30,8 +29,7 @@ const DEFAULT_SONGS = [
     "description": "Confissões sobre a vida bancária e financeira",
     "release_date": "2025-08-25",
     "status": "published",
-    "genre": "Indie",
-    "tiktok_video_id": "sample_tiktok_2"
+    "genre": "Indie"
   },
   {
     "id": 3,
@@ -41,8 +39,7 @@ const DEFAULT_SONGS = [
     "description": "Celebrando as tradicionais festas juninas brasileiras",
     "release_date": "2025-06-30",
     "status": "published",
-    "genre": "Música Brasileira",
-    "tiktok_video_id": "sample_tiktok_3"
+    "genre": "Música Brasileira"
   },
   {
     "id": 4,
@@ -52,8 +49,7 @@ const DEFAULT_SONGS = [
     "description": "Uma ode ao café brasileiro e sua cultura",
     "release_date": "2025-07-14",
     "status": "published",
-    "genre": "Música Brasileira",
-    "tiktok_video_id": "sample_tiktok_4"
+    "genre": "Música Brasileira"
   }
 ];
 
@@ -82,35 +78,6 @@ export const localStorageService = {
   forceReset() {
     localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify([]));
     isDev && console.warn('🔄 localStorage réinitialisé - données Supabase uniquement');
-  },
-
-  // Nettoyer spécifiquement "Confissões Bancárias"
-  cleanConfissoesBancarias() {
-    try {
-      const songs = this.songs.getAll();
-      const cleanedSongs = songs.filter(song => 
-        song.title !== 'Confissões Bancárias' && 
-        song.tiktok_video_id !== '7540762684149517590'
-      );
-      
-      if (cleanedSongs.length !== songs.length) {
-        // Renuméroter les IDs
-        const renumberedSongs = cleanedSongs.map((song, index) => ({
-          ...song,
-          id: index + 1
-        }));
-        
-        localStorage.setItem(STORAGE_KEYS.SONGS, JSON.stringify(renumberedSongs));
-        isDev && console.warn(`🧹 "Confissões Bancárias" supprimée du localStorage. ${songs.length - cleanedSongs.length} chanson(s) nettoyée(s)`);
-        return true;
-      }
-      
-      isDev && console.warn('✅ localStorage déjà propre, aucune action nécessaire');
-      return false;
-    } catch (error) {
-      console.error('❌ Erreur lors du nettoyage:', error);
-      return false;
-    }
   },
 
   // ===== GESTION DES CHANSONS =====

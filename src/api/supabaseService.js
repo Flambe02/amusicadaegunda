@@ -323,31 +323,6 @@ export const supabaseSongService = {
     }
   },
 
-  // Trouver une chanson par son tiktok_video_id (déprécié, gardé pour compatibilité)
-  async getByTikTokId(tiktokVideoId) {
-    try {
-      if (!tiktokVideoId || !tiktokVideoId.trim()) {
-        return null;
-      }
-
-      const { data, error } = await supabase
-        .from(TABLES.SONGS)
-        .select('*')
-        .eq('tiktok_video_id', tiktokVideoId.trim())
-        .maybeSingle();
-
-      if (error) {
-        logger.error('❌ Erreur recherche par tiktok_video_id:', error);
-        return null;
-      }
-
-      return data;
-    } catch (error) {
-      logger.error('❌ Exception recherche par tiktok_video_id:', error);
-      return null;
-    }
-  },
-
   // Créer une nouvelle chanson
   async create(songData) {
     try {
@@ -439,17 +414,6 @@ export const supabaseSongService = {
         }
       }
       
-      // Vérifier aussi tiktok_video_id pour compatibilité (déprécié)
-      if (songData.tiktok_video_id && songData.tiktok_video_id.trim()) {
-        const existingSong = await this.getByTikTokId(songData.tiktok_video_id.trim());
-        if (existingSong) {
-          const error = new Error(`Une chanson avec cet ID TikTok existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
-          error.code = 'DUPLICATE_TIKTOK_ID';
-          error.existingSong = existingSong;
-          throw error;
-        }
-      }
-
       // Nettoyer et valider les données
       const cleanData = {
         title: songData.title?.trim(),
@@ -458,9 +422,6 @@ export const supabaseSongService = {
         lyrics: songData.lyrics?.trim(),
         release_date: songData.release_date,
         status: songData.status || 'draft',
-        tiktok_video_id: songData.tiktok_video_id?.trim(),
-        tiktok_url: songData.tiktok_url?.trim(),
-        tiktok_publication_date: songData.tiktok_publication_date,
         spotify_url: songData.spotify_url?.trim(),
         apple_music_url: songData.apple_music_url?.trim(),
         youtube_url: songData.youtube_url?.trim(),
@@ -513,19 +474,10 @@ export const supabaseSongService = {
               errorCode = 'DUPLICATE_YOUTUBE_URL';
             }
           }
-          
-          // Si c'est tiktok_video_id qui est en conflit
-          if (!existingSong && (conflictField.includes('tiktok') || cleanData.tiktok_video_id)) {
-            existingSong = await this.getByTikTokId(cleanData.tiktok_video_id || '');
-            if (existingSong) {
-              errorCode = 'DUPLICATE_TIKTOK_ID';
-            }
-          }
-          
+
           // Si on a trouvé la chanson existante
           if (existingSong) {
-            const platform = errorCode === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : 'ID TikTok';
-            const duplicateError = new Error(`Une chanson avec cette ${platform} existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+            const duplicateError = new Error(`Une chanson avec cette URL YouTube existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
             duplicateError.code = errorCode;
             duplicateError.existingSong = existingSong;
             throw duplicateError;
@@ -533,7 +485,7 @@ export const supabaseSongService = {
           
           // Si on n'a pas trouvé mais qu'il y a une erreur de duplicate key
           // C'est probablement une contrainte UNIQUE sur un autre champ
-          const duplicateError = new Error(`Une contrainte d'unicité empêche la création de cette chanson. Vérifiez que l'URL YouTube ou l'ID TikTok n'existe pas déjà.`);
+          const duplicateError = new Error(`Une contrainte d'unicité empêche la création de cette chanson. Vérifiez que l'URL YouTube n'existe pas déjà.`);
           duplicateError.code = 'DUPLICATE_KEY';
           duplicateError.originalError = error;
           duplicateError.conflictField = conflictField;
@@ -546,7 +498,7 @@ export const supabaseSongService = {
       return data
     } catch (error) {
       // Ne pas appeler handleSupabaseError si c'est déjà notre erreur personnalisée
-      if (error.code !== 'DUPLICATE_TIKTOK_ID' && error.code !== 'DUPLICATE_YOUTUBE_URL') {
+      if (error.code !== 'DUPLICATE_YOUTUBE_URL') {
         handleSupabaseError(error, 'Création chanson')
       }
       throw error
@@ -572,9 +524,6 @@ export const supabaseSongService = {
         if (updates[key] !== undefined) {
           if (key === 'hashtags') {
             cleanUpdates[key] = Array.isArray(updates[key]) ? updates[key] : []
-          } else if (key === 'tiktok_video_id' || key === 'tiktok_url') {
-            // Convertir les chaînes vides en null pour les champs TikTok
-            cleanUpdates[key] = (updates[key]?.trim() || null);
           } else {
             cleanUpdates[key] = updates[key]
           }
@@ -590,31 +539,6 @@ export const supabaseSongService = {
       }
 
       // Vérifier les doublons AVANT la mise à jour (seulement si la valeur change et n'est pas vide)
-      // Vérifier tiktok_video_id
-      if (cleanUpdates.tiktok_video_id !== undefined) {
-        // Normaliser : convertir chaînes vides en null
-        const newTikTokId = cleanUpdates.tiktok_video_id?.trim() || null;
-        const currentTikTokId = currentSong.tiktok_video_id?.trim() || null;
-        
-        // Ne vérifier que si :
-        // 1. La nouvelle valeur n'est pas vide/null
-        // 2. La valeur change réellement
-        if (newTikTokId && newTikTokId !== currentTikTokId) {
-          const existingSong = await this.getByTikTokId(newTikTokId);
-          // Comparer les IDs en les convertissant en nombres pour éviter les problèmes de type
-          const existingId = existingSong ? Number(existingSong.id) : null;
-          const currentId = Number(id);
-          
-          if (existingSong && existingId !== currentId) {
-            const error = new Error(`Une chanson avec cet ID TikTok existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
-            error.code = 'DUPLICATE_TIKTOK_ID';
-            error.existingSong = existingSong;
-            throw error;
-          }
-        }
-        // Si la nouvelle valeur est vide/null, ne pas vérifier les doublons (on peut mettre à null)
-      }
-
       // Vérifier youtube_url
       if (cleanUpdates.youtube_url !== undefined) {
         const newYouTubeUrl = cleanUpdates.youtube_url?.trim() || null;
@@ -669,33 +593,25 @@ export const supabaseSongService = {
           
           let existingSong = null;
           let errorCode = 'DUPLICATE_KEY';
-          
+
           // Essayer de trouver la chanson existante
-          if (conflictField.includes('tiktok') || cleanUpdates.tiktok_video_id) {
-            existingSong = await this.getByTikTokId(cleanUpdates.tiktok_video_id || '');
-            if (existingSong && existingSong.id !== id) {
-              errorCode = 'DUPLICATE_TIKTOK_ID';
-            }
-          }
-          
-          if (!existingSong && (conflictField.includes('youtube') || cleanUpdates.youtube_url)) {
+          if (conflictField.includes('youtube') || cleanUpdates.youtube_url) {
             existingSong = await this.getByYouTubeUrl(cleanUpdates.youtube_url || '');
             if (existingSong && existingSong.id !== id) {
               errorCode = 'DUPLICATE_YOUTUBE_URL';
             }
           }
-          
+
           // Si on a trouvé la chanson existante
           if (existingSong) {
-            const platform = errorCode === 'DUPLICATE_YOUTUBE_URL' ? 'URL YouTube' : 'ID TikTok';
-            const duplicateError = new Error(`Une chanson avec cette ${platform} existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
+            const duplicateError = new Error(`Une chanson avec cette URL YouTube existe déjà : "${existingSong.title}" (ID: ${existingSong.id})`);
             duplicateError.code = errorCode;
             duplicateError.existingSong = existingSong;
             throw duplicateError;
           }
-          
+
           // Si on n'a pas trouvé mais qu'il y a une erreur de duplicate key
-          const duplicateError = new Error(`Une contrainte d'unicité empêche la mise à jour de cette chanson. Vérifiez que l'URL YouTube ou l'ID TikTok n'existe pas déjà dans une autre chanson.`);
+          const duplicateError = new Error(`Une contrainte d'unicité empêche la mise à jour de cette chanson. Vérifiez que l'URL YouTube n'existe pas déjà dans une autre chanson.`);
           duplicateError.code = 'DUPLICATE_KEY';
           duplicateError.originalError = error;
           duplicateError.conflictField = conflictField;

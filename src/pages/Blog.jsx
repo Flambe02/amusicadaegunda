@@ -179,8 +179,8 @@ export default function Blog() {
     return monday;
   };
 
-  // Lancer la vidéo TikTok
-  const handlePlayTikTok = (song) => {
+  // Lancer la vidéo dans la modal
+  const handlePlayVideo = (song) => {
     setSelectedVideo(song);
     setShowVideoModal(true);
   };
@@ -361,9 +361,9 @@ export default function Blog() {
                           </Button>
                         </a>
                       ) : null}
-                      {song.tiktok_url ? (
+                      {(song.youtube_url || song.youtube_music_url) ? (
                         <Button
-                          onClick={() => handlePlayTikTok(song)}
+                          onClick={() => handlePlayVideo(song)}
                           variant="outline"
                           className="rounded-full border-white/12 bg-white/5 px-5 py-5 text-white hover:bg-white/10 hover:text-white"
                         >
@@ -401,7 +401,7 @@ export default function Blog() {
       </DesktopPageShell>
 
 
-      {/* ===== MODAL VIDÉO TIKTOK ===== */}
+      {/* ===== MODAL VIDÉO ===== */}
       {showVideoModal && selectedVideo && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">

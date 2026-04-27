@@ -49,7 +49,7 @@ export default function useServiceWorker() {
       swLog('Service Worker enregistre');
       return true;
     } catch (error) {
-      console.error('Erreur lors de l’enregistrement du Service Worker', error);
+      console.error('Erreur lors de lï¿½enregistrement du Service Worker', error);
       return false;
     }
   }, [isSupported]);
@@ -91,11 +91,6 @@ export default function useServiceWorker() {
       setIsSyncing(false);
     }
   }, [getCacheInfo, isSupported]);
-
-  const requestTikTokSync = useCallback(async () => {
-    swLog('Background Sync non implemente dans le Service Worker actuel.');
-    return false;
-  }, []);
 
   const forceUpdate = useCallback(async () => {
     const registration = swRegistration.current || (await refreshRegistration());
@@ -148,7 +143,6 @@ export default function useServiceWorker() {
     registerServiceWorker,
     clearCache,
     getCacheInfo,
-    requestTikTokSync,
     forceUpdate,
     getPerformanceStats,
     swRegistration: swRegistration.current,

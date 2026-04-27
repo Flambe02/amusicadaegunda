@@ -11,7 +11,6 @@ import YouTubePlayer from '../components/YouTubePlayer';
 import YouTubePlaylist from '../components/YouTubePlaylist';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import '../styles/tiktok-optimized.css';
 import { localStorageService } from '@/lib/localStorage';
 import { extractYouTubeId } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';

@@ -25,7 +25,6 @@ const Song = lazy(() => import('../pages/Song'));
 const Youtube = lazy(() => import('../pages/Youtube'));
 const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
-const TikTokDemo = lazy(() => import('../pages/TikTokDemo'));
 const SearchPage = lazy(() => import('../pages/Search'));
 const Categoria = lazy(() => import('../pages/Categoria'));
 const includeDebugRoutes = import.meta.env.DEV;
@@ -134,20 +133,6 @@ export const ROUTES = [
     name: 'Youtube',
     seo: null // Pages internes
   },
-  ...(includeDebugRoutes ? [
-    {
-      path: '/tiktokdemo',
-      component: TikTokDemo,
-      name: 'TikTokDemo',
-      seo: null // Pages de demo
-    },
-    {
-      path: '/tiktok/:id',
-      component: TikTokDemo,
-      name: 'TikTokDemo',
-      seo: null // Pages de demo
-    }
-  ] : []),
   {
     path: '/search',
     component: SearchPage,
@@ -193,11 +178,6 @@ export function getCurrentPage(url) {
   // Si on est sur la racine ou une URL vide, retourner Home
   if (!urlLastPart || urlLastPart === 'amusicadasegunda') {
     return 'Home';
-  }
-
-  // Gérer les routes TikTok avec paramètres
-  if (includeDebugRoutes && urlLastPart.startsWith('tiktok')) {
-    return 'TikTokDemo';
   }
 
   // Gérer les routes musica avec slug (ex: /musica/nobel-prize)

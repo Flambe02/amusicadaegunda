@@ -257,46 +257,6 @@
   }
 }
 
-/* TikTok Embed - Simplified and Stable */
-.tiktok-embed {
-  border-radius: 16px !important;
-  overflow: hidden !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* TikTok iframe styling */
-.tiktok-embed iframe {
-  border-radius: 16px !important;
-  border: none !important;
-  outline: none !important;
-}
-
-/* TikTok blockquote styling */
-.tiktok-embed blockquote {
-  border-radius: 16px !important;
-  border: none !important;
-  outline: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* TikTok section styling */
-.tiktok-embed section {
-  border-radius: 16px !important;
-  border: none !important;
-  outline: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* TikTok link styling */
-.tiktok-embed a {
-  border: none !important;
-  outline: none !important;
-  text-decoration: none !important;
-}
-
 /* Bottom Navigation - Glassmorphism et Safe Area */
   .safe-area-inset-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);

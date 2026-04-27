@@ -25,19 +25,7 @@ export const songSchema = z.object({
   release_date: z.string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida. Use o formato YYYY-MM-DD')
     .or(z.date()),
-  
-  tiktok_url: z.string()
-    .url('URL do TikTok inválida')
-    .or(z.literal(''))
-    .optional()
-    .nullable(),
-  
-  tiktok_video_id: z.string()
-    .regex(/^\d{15,20}$/, 'ID do TikTok inválido')
-    .or(z.literal(''))
-    .optional()
-    .nullable(),
-  
+
   youtube_url: z.string()
     .url('URL do YouTube inválida')
     .or(z.literal(''))
@@ -95,23 +83,6 @@ export const searchSchema = z.object({
     .max(100, 'A busca deve ter no máximo 100 caracteres')
     .trim(),
 });
-
-// TikTok URL validation
-export const tiktokUrlSchema = z.string()
-  .refine(
-    (url) => {
-      if (!url || url.trim() === '') return true;
-      const patterns = [
-        /tiktok\.com\/@[^/]+\/video\/\d+/,
-        /vm\.tiktok\.com\/[A-Za-z0-9]+/,
-        /^\d{15,20}$/,
-      ];
-      return patterns.some(pattern => pattern.test(url));
-    },
-    {
-      message: 'URL do TikTok inválida. Use: https://www.tiktok.com/@usuario/video/ID ou https://vm.tiktok.com/ID',
-    }
-  );
 
 // YouTube URL validation
 export const youtubeUrlSchema = z.string()

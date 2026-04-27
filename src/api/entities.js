@@ -179,15 +179,6 @@ export const Song = {
     }
   },
 
-  getByTikTokId: async (tiktokVideoId) => {
-    try {
-      return await supabaseSongService.getByTikTokId(tiktokVideoId);
-    } catch (error) {
-      logger.error('❌ Erreur recherche par tiktok_video_id:', error);
-      return null;
-    }
-  },
-
   create: async (songData) => {
     try {
       // Forcer l'utilisation de Supabase
