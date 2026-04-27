@@ -290,6 +290,16 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onA
   const [form, setForm] = useState(() => ({
     ...EMPTY_FORM,
     ...initial,
+    // Coerce nullable text columns to '' so controlled inputs and `.length` never crash
+    subtitle: initial?.subtitle ?? '',
+    spotify_url: initial?.spotify_url ?? '',
+    apple_music_url: initial?.apple_music_url ?? '',
+    youtube_url: initial?.youtube_url ?? '',
+    youtube_music_url: initial?.youtube_music_url ?? '',
+    cover_image: initial?.cover_image ?? '',
+    description: initial?.description ?? '',
+    lyrics: initial?.lyrics ?? '',
+    publish_at: initial?.publish_at ?? '',
     release_date: initial?.release_date || nextMonday(),
     hashtags: Array.isArray(initial?.hashtags) ? initial.hashtags : [],
   }));
