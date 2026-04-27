@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { generateSongData } from '@/lib/hashtagGenerator';
+import { generateSubtitle } from '@/lib/subtitleGenerator';
 import { sanitizeInput, sanitizeURL } from '@/lib/security';
 import { notifyAllSubscribers } from '@/lib/pushNotifications';
 import { supabase } from '@/lib/supabase';
@@ -10,6 +11,7 @@ import {
   Plus, Edit2, Trash2, Search, Save, X, Music,
   Hash, Zap, ExternalLink, RefreshCw, Eye,
   ChevronDown, ChevronUp, LogOut, Settings, GripVertical, Clock,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -192,9 +194,12 @@ function groupByYearMonth(songs) {
 
 const EMPTY_FORM = {
   title: '',
+  subtitle: '',            // SEO subtitle, ~40-80 chars (used in <title>, alt, JSON-LD)
   artist: 'A Música da Segunda',
   youtube_music_url: '',   // Shorts (embed principal)
   youtube_url: '',         // YouTube Music (fallback)
+  spotify_url: '',
+  apple_music_url: '',
   cover_image: '',
   release_date: '',
   status: 'draft',
@@ -205,6 +210,8 @@ const EMPTY_FORM = {
   slug: '',
   publish_at: '',          // Auto-publish datetime (ISO string or '')
 };
+
+const SUBTITLE_MAX_LEN = 100;
 
 function nextMonday() {
   const d = new Date();
@@ -289,6 +296,7 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onA
   const [showLyrics, setShowLyrics] = useState(!!initial?.lyrics);
   const [hashtagInput, setHashtagInput] = useState('');
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [isGeneratingSubtitle, setIsGeneratingSubtitle] = useState(false);
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }));
 
@@ -300,16 +308,44 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onA
     setHashtagInput('');
   };
 
+  const handleGenerateSubtitle = async () => {
+    if (!form.title && !form.description) return;
+    setIsGeneratingSubtitle(true);
+    try {
+      const { subtitle } = await generateSubtitle({
+        title: form.title,
+        description: form.description,
+      });
+      if (subtitle) set('subtitle', subtitle);
+    } finally {
+      setIsGeneratingSubtitle(false);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!form.title && !form.description) return;
     const { category, hashtags } = generateSongData({
       title: form.title,
       description: form.description,
     });
-    setForm(f => ({ ...f, category, hashtags }));
+    // Génère aussi le subtitle si vide (en parallèle)
+    let nextSubtitle = form.subtitle;
+    if (!form.subtitle?.trim()) {
+      setIsGeneratingSubtitle(true);
+      try {
+        const { subtitle } = await generateSubtitle({
+          title: form.title,
+          description: form.description,
+        });
+        if (subtitle) nextSubtitle = subtitle;
+      } finally {
+        setIsGeneratingSubtitle(false);
+      }
+    }
+    setForm(f => ({ ...f, category, hashtags, subtitle: nextSubtitle }));
     if (songId && onAutoSaveHashtags && hashtags.length > 0) {
       setIsAutoSaving(true);
-      await onAutoSaveHashtags({ hashtags, category });
+      await onAutoSaveHashtags({ hashtags, category, subtitle: nextSubtitle });
       setIsAutoSaving(false);
     }
   };
@@ -319,10 +355,13 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onA
     onSave({
       ...form,
       title: sanitizeInput(form.title),
+      subtitle: sanitizeInput(form.subtitle),
       description: sanitizeInput(form.description),
       lyrics: sanitizeInput(form.lyrics),
       youtube_music_url: sanitizeURL(form.youtube_music_url) || null,
       youtube_url: sanitizeURL(form.youtube_url) || null,
+      spotify_url: sanitizeURL(form.spotify_url) || null,
+      apple_music_url: sanitizeURL(form.apple_music_url) || null,
       cover_image: sanitizeURL(form.cover_image) || null,
       hashtags: Array.isArray(form.hashtags) ? form.hashtags : [],
     });
@@ -358,6 +397,37 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onA
         </div>
       </div>
 
+      {/* Subtitle (SEO) */}
+      <div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="subtitle">
+            Subtítulo <span className="text-xs text-gray-400">(SEO — usado em &lt;title&gt;, alt, JSON-LD)</span>
+          </Label>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleGenerateSubtitle}
+            disabled={isGeneratingSubtitle || (!form.title && !form.description)}
+            className="gap-1 text-xs h-7"
+          >
+            <Sparkles size={12} />
+            {isGeneratingSubtitle ? 'A gerar…' : 'Gerar com IA'}
+          </Button>
+        </div>
+        <Input
+          id="subtitle"
+          value={form.subtitle}
+          onChange={e => set('subtitle', e.target.value.slice(0, SUBTITLE_MAX_LEN))}
+          placeholder="Ex: O escândalo Vorcarô em paródia musical"
+          maxLength={SUBTITLE_MAX_LEN}
+          className="mt-1"
+        />
+        <p className={`text-xs mt-1 ${form.subtitle.length > SUBTITLE_MAX_LEN - 10 ? 'text-amber-400' : 'text-gray-500'}`}>
+          {form.subtitle.length}/{SUBTITLE_MAX_LEN}
+        </p>
+      </div>
+
       {/* YouTube URLs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
@@ -384,6 +454,34 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onA
             value={form.youtube_url}
             onChange={e => set('youtube_url', e.target.value)}
             placeholder="https://music.youtube.com/watch?v=..."
+            className="mt-1"
+          />
+        </div>
+      </div>
+
+      {/* Streaming platforms */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="spotify_url">
+            <span className="inline-flex items-center gap-1">🎧 Spotify URL</span>
+          </Label>
+          <Input
+            id="spotify_url"
+            value={form.spotify_url}
+            onChange={e => set('spotify_url', e.target.value)}
+            placeholder="https://open.spotify.com/track/..."
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="apple_music_url">
+            <span className="inline-flex items-center gap-1">🎵 Apple Music URL</span>
+          </Label>
+          <Input
+            id="apple_music_url"
+            value={form.apple_music_url}
+            onChange={e => set('apple_music_url', e.target.value)}
+            placeholder="https://music.apple.com/..."
             className="mt-1"
           />
         </div>
@@ -859,18 +957,20 @@ export default function AdminPage() {
     }
   };
 
-  // ── Auto-save hashtags (called from SongForm "Gerar e guardar") ──
-  const handleAutoSaveHashtags = useCallback(async ({ hashtags, category }) => {
+  // ── Auto-save hashtags + category + subtitle (called from SongForm "Gerar e guardar") ──
+  const handleAutoSaveHashtags = useCallback(async ({ hashtags, category, subtitle }) => {
     if (!panel || panel === 'new') return;
+    const update = { hashtags, category };
+    if (subtitle && subtitle !== panel.subtitle) update.subtitle = subtitle;
     const { error } = await supabase
       .from('songs')
-      .update({ hashtags, category })
+      .update(update)
       .eq('id', panel.id);
     if (error) {
-      toast({ title: 'Erro ao guardar hashtags', description: error.message, variant: 'destructive' });
+      toast({ title: 'Erro ao guardar', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: '✅ Hashtags guardadas!' });
-      setSongs(prev => prev.map(s => s.id === panel.id ? { ...s, hashtags, category } : s));
+      toast({ title: '✅ Guardado!' });
+      setSongs(prev => prev.map(s => s.id === panel.id ? { ...s, ...update } : s));
     }
   }, [panel, toast]);
 
