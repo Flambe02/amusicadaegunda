@@ -1,6 +1,6 @@
 export const CURRENT_SONG_ARTWORK = {
-  "slug": "esse-lugar-chama-ormuz",
-  "title": "Esse Lugar Chama Ormuz",
+  "slug": "6x1",
+  "title": "6x1",
   "path": "/images/current-song-thumb.webp",
   "width": 1280,
   "height": 720,
