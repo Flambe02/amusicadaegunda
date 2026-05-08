@@ -141,6 +141,11 @@ ${songListHtml}
       path: '/adventcalendar',
       title: 'Calendário do Advento - A Música da Segunda',
       description: 'Uma surpresa musical por dia no calendário do advento.'
+    },
+    {
+      path: '/privacy',
+      title: 'Política de Privacidade — A Música da Segunda',
+      description: 'Política de privacidade do A Música da Segunda: quais dados são coletados, como são protegidos e como solicitar a exclusão. Conformidade LGPD.'
     }
   ];
 
