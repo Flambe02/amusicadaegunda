@@ -12,12 +12,10 @@ build/
 android/
 ios/
 
-# Environment variables
+# Environment variables — match all .env* (.env, .env.local, .env.bak, .env.old, etc.)
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
 # IDE files
 .vscode/
