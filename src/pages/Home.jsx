@@ -29,7 +29,7 @@ import LyricsDialog from '../components/LyricsDialog';
 import LyricsDrawer from '../components/LyricsDrawer';
 import PlatformsDrawer from '../components/PlatformsDrawer';
 import HistoryDrawer from '../components/HistoryDrawer';
-import HomeMobileImmersive from '../components/HomeMobileImmersive';
+import { MobileHomeApp } from '@/components/mobile';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths, isSameMonth } from 'date-fns';
@@ -182,18 +182,28 @@ export default function Home() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
   const [displayedSong, setDisplayedSong] = useState(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false
+  );
   const [playerBarActive, setPlayerBarActive] = useState(false);
   const [playerBarPlaying, setPlayerBarPlaying] = useState(false);
   const playerIframeRef = useRef(null);
   const desktopHeroPlayerRef = useRef(null);
   const [desktopVideoResetKey, setDesktopVideoResetKey] = useState(0);
-  const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
   const [desktopVolume, setDesktopVolume] = useState(72);
   const [catalogMonthDate, setCatalogMonthDate] = useState(() => startOfMonth(new Date()));
 
   useEffect(() => {
     logger.debug('Home useEffect triggered');
     loadSongsData();
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+    updateViewport();
+    mediaQuery.addEventListener?.('change', updateViewport);
+    return () => mediaQuery.removeEventListener?.('change', updateViewport);
   }, []);
 
   useEffect(() => {
@@ -234,7 +244,6 @@ export default function Home() {
       if (fetchedCurrentSong) {
         setCurrentSong(fetchedCurrentSong);
         setDisplayedSong(fetchedCurrentSong);
-        setBackgroundImageLoaded(false);
         setIsLoading(false);
 
         saveLastSongSnapshot({
@@ -256,7 +265,6 @@ export default function Home() {
       if (resolvedCurrentSong) {
         setCurrentSong((previousSong) => previousSong || resolvedCurrentSong);
         setDisplayedSong((previousSong) => previousSong || resolvedCurrentSong);
-        setBackgroundImageLoaded(false);
         setIsLoading(false);
       }
 
@@ -291,8 +299,18 @@ export default function Home() {
     }
     logger.debug('handleReplaceVideo appelé avec:', song.title);
     setDisplayedSong(song);
-    setBackgroundImageLoaded(false);
     setVideoActivated(false);
+    setShowFullDescription(false);
+    setPlayerBarActive(false);
+    setPlayerBarPlaying(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleReplaceMobileVideo = useCallback((song) => {
+    if (!song) return;
+    logger.debug('handleReplaceMobileVideo appelé avec:', song.title);
+    setDisplayedSong(song);
+    setVideoActivated(true);
     setShowFullDescription(false);
     setPlayerBarActive(false);
     setPlayerBarPlaying(false);
@@ -321,6 +339,20 @@ export default function Home() {
     if (currentIndex > 0) {
       const nextSong = allSongs[currentIndex - 1]; // Plus récente
       handleReplaceVideo(nextSong, null);
+    }
+  };
+
+  const handlePreviousMobileSong = () => {
+    const currentIndex = getCurrentSongIndex();
+    if (currentIndex >= 0 && currentIndex < allSongs.length - 1) {
+      handleReplaceMobileVideo(allSongs[currentIndex + 1]);
+    }
+  };
+
+  const handleNextMobileSong = () => {
+    const currentIndex = getCurrentSongIndex();
+    if (currentIndex > 0) {
+      handleReplaceMobileVideo(allSongs[currentIndex - 1]);
     }
   };
 
@@ -823,7 +855,7 @@ export default function Home() {
                       useFacade
                       autoplayOnActivate
                       thumbnailQuality="hqdefault"
-                      forceActivated={videoActivated}
+                      forceActivated={!isMobileViewport && videoActivated}
                       shortMaxWidth={520}
                       playerStateRef={desktopHeroPlayerRef}
                       onActivatedChange={(activated) => {
@@ -1294,25 +1326,22 @@ export default function Home() {
         </>
       )}
 
-      {/* ===== LAYOUT MOBILE IMMERSIF: STYLE TIKTOK ===== */}
+      {/* ===== LAYOUT MOBILE APP-LIKE ===== */}
       <div className="lg:hidden h-full">
-        <HomeMobileImmersive
-          displayedSong={displayedSong}
-          videoActivated={videoActivated}
-          onVideoActivated={handleActivateMobileVideo}
-          onPreviousSong={handlePreviousSong}
-          onNextSong={handleNextSong}
-          canNavigatePrevious={canNavigatePrevious()}
-          canNavigateNext={canNavigateNext()}
-          songPosition={getCurrentSongIndex() + 1}
-          songTotal={allSongs.length}
+        <MobileHomeApp
+          currentSong={displayedSong}
+          videoActivated={isMobileViewport && videoActivated}
+          onListen={handleActivateMobileVideo}
+          onCloseVideo={() => setVideoActivated(false)}
           onShowPlatforms={() => setShowPlatformsDrawer(true)}
           onShowLyrics={() => handleShowLyrics(displayedSong)}
           onShareSong={() => handleShareSong(displayedSong)}
-          onShowHistory={() => setShowHistoryDrawer(true)}
+          onShare={() => handleShareSong(displayedSong)}
+          onPreviousSong={handlePreviousMobileSong}
+          onNextSong={handleNextMobileSong}
+          canNavigatePrevious={canNavigatePrevious()}
+          canNavigateNext={canNavigateNext()}
           heroArtwork={heroArtwork}
-          backgroundImageLoaded={backgroundImageLoaded}
-          setBackgroundImageLoaded={setBackgroundImageLoaded}
         />
       </div>
       <LyricsDrawer

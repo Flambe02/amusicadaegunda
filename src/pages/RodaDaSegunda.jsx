@@ -5,6 +5,7 @@ import { Music, ExternalLink, Play, Pause, Square } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { extractYouTubeId, titleToSlug } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MobileRoletaApp } from '@/components/mobile';
 
 const MONTHS_PT = [
   'Janeiro',
@@ -398,21 +399,12 @@ export default function RodaDaSegunda() {
   };
 
   return (
-    <div className="min-h-screen text-white lg:flex lg:min-h-[calc(100vh-2rem)] lg:flex-col">
-      <div className="px-4 pb-3 pt-4 text-center lg:hidden">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/65">
-          <Music className="h-3.5 w-3.5 text-[#FDE047]" />
-          A Roda de Segunda
-        </div>
-        <h1 className="mt-4 text-3xl font-black tracking-tight text-white lg:text-[3.25rem] lg:leading-none">
-          Descubra um mês ao acaso
-        </h1>
-        <p className="mt-2 text-sm text-white/58 lg:text-[15px]">
-          Gire a roda e revele uma música do acervo no mesmo universo visual da home.
-        </p>
+    <div className="h-full min-h-full text-white lg:flex lg:min-h-[calc(100vh-2rem)] lg:flex-col">
+      <div className="lg:hidden h-full min-h-full">
+        <MobileRoletaApp songs={songs} loading={loading} />
       </div>
 
-      <div className="mx-auto flex w-full max-w-7xl flex-col px-4 pb-12 lg:flex-1 lg:pb-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] xl:items-start xl:gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(400px,500px)]">
+      <div className="mx-auto hidden w-full max-w-7xl px-4 pb-12 lg:flex lg:flex-1 lg:flex-col lg:pb-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] xl:items-start xl:gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(400px,500px)]">
         <div className="flex min-w-0 flex-col items-center lg:justify-center lg:items-start">
           <div className="hidden lg:block">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-[11px] uppercase tracking-[0.28em] text-white/65">

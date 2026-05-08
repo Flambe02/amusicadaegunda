@@ -27,6 +27,7 @@ const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
 const SearchPage = lazy(() => import('../pages/Search'));
 const Categoria = lazy(() => import('../pages/Categoria'));
+const Privacy = lazy(() => import('../pages/Privacy'));
 const includeDebugRoutes = import.meta.env.DEV;
 
 /**
@@ -144,6 +145,16 @@ export const ROUTES = [
     component: Categoria,
     name: 'Categoria',
     seo: null // SEO dynamique basé sur la catégorie
+  },
+  {
+    path: '/privacy',
+    component: Privacy,
+    name: 'Privacy',
+    seo: {
+      title: 'Política de Privacidade — A Música da Segunda',
+      description: 'Política de privacidade do A Música da Segunda: quais dados são coletados, como são protegidos e como solicitar a exclusão.',
+      keywords: 'política de privacidade, privacidade, lgpd, a música da segunda'
+    }
   }
 ];
 

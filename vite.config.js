@@ -35,10 +35,6 @@ export default defineConfig(({ command, mode }) => ({
         // Résultat: 620KB monolithique → ~5 chunks parallèles (le plus gros ~200KB)
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // React core: react, react-dom, scheduler, react-router, helmet
-            if (id.includes('react-dom') || id.includes('/react/') || id.includes('react-router') || id.includes('react-helmet') || id.includes('scheduler')) {
-              return 'vendor-react';
-            }
             // Supabase client (~100KB, rarement mis à jour)
             if (id.includes('@supabase') || id.includes('supabase')) {
               return 'vendor-supabase';
@@ -54,8 +50,10 @@ export default defineConfig(({ command, mode }) => ({
             if (id.includes('framer-motion')) {
               return 'vendor-motion';
             }
-            // Tout le reste des node_modules (radix-ui, lucide, etc.)
-            return 'vendor-ui';
+            // React + Radix UI + lucide etc. groupés ensemble
+            // (Radix UI utilise React.forwardRef au top-level → split cross-chunk
+            // crashe sur Capacitor/WebView "Cannot read properties of undefined (reading 'forwardRef')")
+            return 'vendor-app';
           }
         },
         // Optimisation des noms de fichiers
