@@ -21,15 +21,17 @@ require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 
 const cfg = require('./seo.config.json');
 
-// Configuration Supabase
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+// Configuration Supabase — same legacy-JWT fallback as src/lib/supabase.js
+const PUBLISHABLE_KEY_FALLBACK = 'sb_publishable_qQqLLFjAv4sk3z2eQW0-sA_59XCpAKF';
+const SUPABASE_URL_FALLBACK = 'https://efnzmpzkzeuktqkghwfa.supabase.co';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Variables d\'environnement Supabase manquantes:');
-  console.error('   VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY sont obligatoires');
-  process.exit(1);
-}
+const envUrl = process.env.VITE_SUPABASE_URL;
+const envKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+const supabaseUrl = envUrl || SUPABASE_URL_FALLBACK;
+const supabaseAnonKey = (envKey && !envKey.startsWith('eyJ'))
+  ? envKey
+  : PUBLISHABLE_KEY_FALLBACK;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

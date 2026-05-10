@@ -10,14 +10,19 @@ const path = require('path');
 // Charger les variables d'environnement depuis .env
 require('dotenv').config();
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+// Public, RLS-protected publishable key. Mirrors src/lib/supabase.js fallback
+// so CI can still pull fresh Supabase data even when the GitHub secret holds
+// the rotated-out legacy JWT.
+const PUBLISHABLE_KEY_FALLBACK = 'sb_publishable_qQqLLFjAv4sk3z2eQW0-sA_59XCpAKF';
+const SUPABASE_URL_FALLBACK = 'https://efnzmpzkzeuktqkghwfa.supabase.co';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ AVERTISSEMENT: Variables VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquantes');
-  console.warn('ℹ️  Les stubs SEO seront générés avec les données existantes de content/songs.json');
-  process.exit(0); // Exit sans erreur pour ne pas bloquer le build
-}
+const envUrl = process.env.VITE_SUPABASE_URL;
+const envKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+const supabaseUrl = envUrl || SUPABASE_URL_FALLBACK;
+const supabaseAnonKey = (envKey && !envKey.startsWith('eyJ'))
+  ? envKey
+  : PUBLISHABLE_KEY_FALLBACK;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
