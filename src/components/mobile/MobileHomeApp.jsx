@@ -26,7 +26,7 @@ const CATEGORY_LABELS = {
 function formatSongDate(date) {
   if (!date) return 'Sem data';
   try {
-    return format(parseISO(date), 'dd MMM yyyy', { locale: ptBR });
+    return format(parseISO(date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   } catch {
     return 'Sem data';
   }
