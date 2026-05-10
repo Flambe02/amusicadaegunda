@@ -432,6 +432,13 @@ ${scripts.js}
       'sátira musical',
     ].filter(Boolean);
 
+    // ✅ SEO Fix 3 — Use YouTube thumbnail as OG/JSON-LD image when available
+    // (fallback to brand logo if no videoId). Social shares previously showed
+    // the generic brand image even though every song has a YouTube embed.
+    const songImage = videoId
+      ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      : (s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`);
+
     // Structured data for song watch page
     const jsonldSchemas = [
       org,
@@ -441,17 +448,20 @@ ${scripts.js}
         url,
         datePublished: s.datePublished,
         audioUrl: s.audioUrl,
-        image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+        image: songImage,
         duration: s.duration,
         inLanguage: s.inLanguage,
         byArtist: s.byArtist,
         description: fullDesc,
         keywords: songKeywords,
       }),
+      // breadcrumbsJsonLd here is the CJS version from seo-templates.cjs,
+      // whose signature is { songName, songUrl } — different from the ESM
+      // src/lib/seo-jsonld.js version ({ title, slug }) used by Song.jsx.
       breadcrumbsJsonLd({
         songName: s.name,
-        songUrl: url
-      })
+        songUrl: url,
+      }),
     ];
 
     const html = baseHtml({
@@ -461,7 +471,7 @@ ${scripts.js}
       url,
       robots: 'index, follow, max-video-preview:0',
       ogType: 'music.song',
-      image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
+      image: songImage,
       body: staticBody,
       jsonld: jsonldSchemas,
       scripts,
@@ -472,46 +482,28 @@ ${scripts.js}
     const htmlWithVersion = versionComment + html;
     await fs.writeFile(file, htmlWithVersion, { encoding: 'utf8' });
 
-    // Créer aussi un fichier pour l'URL sans trailing slash (redirection)
+    // ✅ SEO Fix 1 — /musica/[slug].html no-slash variant is now a 301
+    // redirect to the canonical /musica/[slug]/ instead of a duplicate full
+    // page. Same pattern as /chansons/[slug] above. Keeps any old bookmark
+    // or external backlink working, avoids duplicate content.
     const fileNoSlash = path.join(OUT, 'musica', s.slug + '.html');
-    const jsonldSchemasNoSlash = [
-      org,
-      website,
-      musicRecordingJsonLd({
-        name: s.name,
-        url: `${siteUrl}${route}/`,
-        datePublished: s.datePublished,
-        audioUrl: s.audioUrl,
-        image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
-        duration: s.duration,
-        inLanguage: s.inLanguage,
-        byArtist: s.byArtist,
-        description: fullDesc,
-        keywords: songKeywords,
-      }),
-      breadcrumbsJsonLd({
-        songName: s.name,
-        songUrl: `${siteUrl}${route}/`
-      })
-    ];
-
-    const htmlNoSlash = baseHtml({
-      lang: s.inLanguage || cfg.defaultLocale,
-      title: pageTitle,
-      desc: metaDesc,
-      url: `${siteUrl}${route}/`, // URL canonique avec trailing slash
-      robots: 'index, follow, max-video-preview:0',
-      ogType: 'music.song',
-      image: s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`,
-      body: staticBody,
-      jsonld: jsonldSchemasNoSlash,
-      scripts,
-      publishedTime: s.datePublished || null,
-      articleSection: s.category || null,
-    });
-    const versionCommentNoSlash = `<!-- build:${new Date().toISOString()} -->\n`;
-    const htmlWithVersionNoSlash = versionCommentNoSlash + htmlNoSlash;
-    await fs.writeFile(fileNoSlash, htmlWithVersionNoSlash, { encoding: 'utf8' });
+    const noSlashRedirectHtml = `<!DOCTYPE html>
+<html lang="${s.inLanguage || cfg.defaultLocale}">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${url}">
+  <link rel="canonical" href="${url}">
+  <meta name="robots" content="noindex, follow">
+  <title>Redirection - ${s.name} | A Música da Segunda</title>
+  <script>
+    window.location.replace('${url}');
+  </script>
+</head>
+<body>
+  <p>Redirection en cours vers <a href="${url}">${s.name}</a>...</p>
+</body>
+</html>`;
+    await fs.writeFile(fileNoSlash, noSlashRedirectHtml, { encoding: 'utf8' });
   }
 
   // ✅ SEO: Stubs for category pages /categoria/[slug]

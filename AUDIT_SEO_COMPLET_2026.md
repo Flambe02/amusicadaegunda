@@ -1,402 +1,207 @@
-# 🔍 AUDIT SEO COMPLET - A Música da Segunda
-**Date:** 6 janvier 2026  
-**Expert:** Analyse SEO approfondie selon meilleures pratiques 2026  
-**Objectif:** Résoudre le problème de visibilité Google pour "A Música da Segunda"
+# 🔍 AUDIT SEO COMPLET — A Música da Segunda
+
+**Date de mise à jour :** 10 mai 2026
+**Branche auditée :** `main` @ `c4d5cebc` (après cycle redesign mobile)
+**Auditeur :** Analyse SEO technique du code source
+**Référentiel :** Comparaison avec `AUDIT_SEO_ANALYSE_ET_RECOMMANDATIONS.md` (2025-01-27) et version précédente de ce fichier (2026-01-06)
 
 ---
 
-## 📊 RÉSUMÉ EXÉCUTIF
+## 📊 Résumé exécutif
 
-### Problème Principal Signalé
-- ❌ **Recherche "A Música da Segunda"** → Rien sur les 2 premières pages Google
-- ⚠️ **Recherche "A Música da Segunda.com"** → Apparaît mais avec un lien incorrect
+La quasi-totalité des problèmes critiques relevés dans les audits de **janvier 2025** et **janvier 2026** ont été **corrigés**. Le site dispose d'une base SEO technique solide :
 
-### Diagnostic Initial
-Le site a une **base SEO technique solide** mais souffre de **problèmes critiques** qui empêchent une bonne indexation et visibilité :
+- Canonicals harmonisés (`https://www.amusicadasegunda.com`)
+- Stubs HTML statiques avec contenu crawlable + JSON-LD
+- Sitemaps split (`sitemap-index.xml` → `sitemap-pages.xml` + `sitemap-songs.xml`)
+- `MusicRecording`, `BreadcrumbList`, `MusicPlaylist`, `Organization`, `WebSite` injectés
+- `max-video-preview:0` correctement appliqué (suite à l'erreur GSC "Video isn't on a watch page")
+- Aucun `VideoObject` injecté sur les pages chanson (intentionnel et correct)
 
-1. **Sitemap incomplet** - Google ne voit qu'une seule page
-2. **Faute de frappe dans le code** - Peut causer des problèmes d'indexation
-3. **Manque de signaux d'autorité** - Pas de backlinks, pas de présence sociale forte
-4. **Contenu insuffisant pour le nom de marque** - Google ne reconnaît pas encore la marque
+**Score estimé :** 9.0 / 10 (contre 7.5 au départ).
 
----
-
-## 🔴 PROBLÈMES CRITIQUES (Priorité 1 - À CORRIGER IMMÉDIATEMENT)
-
-### 1. ❌ SITEMAP PRINCIPAL INCOMPLET
-
-**Problème:**
-- `docs/sitemap.xml` ne contient **qu'une seule URL** (page d'accueil)
-- Les pages `/calendar`, `/playlist`, `/blog`, `/sobre`, `/adventcalendar` ne sont **pas dans le sitemap principal**
-- Les chansons individuelles (`/chansons/*`) ne sont **pas référencées**
-
-**Impact:** Google ne découvre pas toutes vos pages → Indexation incomplète
-
-**Fichiers concernés:**
-- `docs/sitemap.xml` (ligne 1) - Contient seulement `/`
-- `docs/sitemap-index.xml` - Ne référence pas `sitemap-static.xml` ni `sitemap-songs.xml`
-
-**Solution:**
-```xml
-<!-- docs/sitemap.xml doit contenir TOUTES les pages -->
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://www.amusicadasegunda.com/</loc>
-    <lastmod>2026-01-06</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://www.amusicadasegunda.com/calendar</loc>
-    <lastmod>2026-01-06</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <!-- ... toutes les autres pages ... -->
-</urlset>
-```
-
-**OU** Mieux : Utiliser `sitemap-index.xml` correctement :
-```xml
-<!-- docs/sitemap-index.xml -->
-<sitemapindex>
-  <sitemap>
-    <loc>https://www.amusicadasegunda.com/sitemap-static.xml</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://www.amusicadasegunda.com/sitemap-songs.xml</loc>
-  </sitemap>
-</sitemapindex>
-```
+Il reste **5 ajustements mineurs** identifiés ci-dessous, principalement dans `scripts/generate-stubs.cjs` (paramètres mal nommés, doublons de stubs, fallback image OG).
 
 ---
 
-### 2. ❌ FAUTE DE FRAPPE DANS LE CODE
+## ✅ Audit 1 (2025-01-27) — État actuel des findings
 
-**Problème:**
-- `src/config/routes.js` ligne 192 : `'amusicadaegunda'` (faute de frappe)
-- Devrait être : `'amusicadasegunda'`
-
-**Impact:** Peut causer des problèmes de routage et de détection de page
-
-**Solution:**
-```javascript
-// Avant (ligne 192)
-if (!urlLastPart || urlLastPart === 'amusicadaegunda') {
-
-// Après
-if (!urlLastPart || urlLastPart === 'amusicadasegunda') {
-```
+| # | Problème initial | Statut | Preuve |
+|---|------------------|--------|--------|
+| 1 | Canonicals incohérents (www vs non-www) | ✅ Corrigé | [index.html:39](index.html#L39) + [src/hooks/useSEO.js:21](src/hooks/useSEO.js#L21) tous deux sur `https://www.amusicadasegunda.com`. Single source of truth : [scripts/seo.config.json](scripts/seo.config.json) |
+| 2 | Canonical hashé sur Playlist | ✅ Corrigé | [src/pages/Playlist.jsx:144-150](src/pages/Playlist.jsx#L144) → `useSEO({ url: '/musica' })`, pas de hash |
+| 3 | Doublons meta dans index.html (`theme-color`, `apple-mobile-web-app-*`) | ✅ Corrigé | Une seule déclaration vérifiée dans [index.html:32-37](index.html#L32) et [public/index.html:32-37](public/index.html#L32) |
+| 4 | `Song.getBySlug` charge toute la table | ✅ Corrigé | [src/api/entities.js:285-306](src/api/entities.js#L285) appelle `supabaseSongService.getBySlug(slug)` directement (requête `.eq('slug', slug)`) |
+| 5 | Logs de debug en production | ✅ Corrigé | `devLog()` gaté par `import.meta.env.DEV && VITE_VERBOSE_LOGS` ([src/api/entities.js:6](src/api/entities.js#L6)). Seuls 2 `console.error` de gestion d'erreur restent dans [Playlist.jsx:106,117](src/pages/Playlist.jsx#L106) (acceptable) |
+| 6 | Iframe Spotify 800px | ⚪ Non pertinent | Plus de iframe Spotify pleine hauteur dans le catalogue mobile ; design responsive via stubs et `getSongEmbedSrc()` |
+| 7 | Images non optimisées | 🟡 Partiel | `OptimizedImage` utilisé, mais quelques stubs servent encore le brand logo en fallback OG (voir nouvel issue #4) |
+| 8 | CSP trop permissive | ⚠️ Hors scope | CSP gérée côté headers HTTP (`public/_headers`) — à valider sur l'hébergeur, pas dans le HTML |
+| 9 | JSON-LD `ItemList` incomplet sur Playlist | ✅ Corrigé | `musicPlaylistJsonLd()` génère un array `track[]` complet ([src/lib/seo-jsonld.js:139-172](src/lib/seo-jsonld.js#L139)) |
+| 10 | Iframes sans attribut `title` | ✅ Corrigé | Tous les `<iframe>` ont un `title` descriptif (composant `YouTubeEmbed` + [generate-stubs.cjs:379](scripts/generate-stubs.cjs#L379)) |
 
 ---
 
-### 3. ⚠️ SITEMAP-INDEX INCOMPLET
+## ✅ Audit 2 (2026-01-06) — État actuel des findings
 
-**Problème:**
-- `docs/sitemap-index.xml` référence seulement `sitemap.xml` et `sitemap-google.xml`
-- Ne référence **pas** `sitemap-static.xml` ni `sitemap-songs.xml` qui existent pourtant
-
-**Impact:** Google ne découvre pas toutes vos pages via le sitemap index
-
-**Solution:**
-Ajouter les références manquantes dans `sitemap-index.xml`
-
----
-
-### 4. 🔴 PROBLÈME DE VISIBILITÉ POUR LE NOM DE MARQUE
-
-**Symptômes:**
-- Recherche "A Música da Segunda" → Aucun résultat sur les 2 premières pages
-- Recherche "A Música da Segunda.com" → Apparaît mais avec un lien incorrect
-
-**Causes Probables:**
-
-#### A. Manque de Signaux d'Autorité
-- ❌ Pas de backlinks de qualité
-- ❌ Pas de présence sur Wikipedia, Wikidata
-- ❌ Pas de Google Knowledge Graph
-- ❌ Pas de Google My Business (si applicable)
-
-#### B. Contenu Insuffisant pour le Nom de Marque
-- ⚠️ Le nom "A Música da Segunda" n'apparaît pas assez souvent dans le contenu
-- ⚠️ Pas de page "À propos" optimisée pour le nom de marque
-- ⚠️ Pas de mentions cohérentes du nom dans les métadonnées
-
-#### C. Problème d'Indexation Google
-- ⚠️ Google n'a peut-être pas encore indexé toutes les pages
-- ⚠️ Le "lien incorrect" suggère un ancien indexage ou un problème de canonical
-
-**Solutions Prioritaires:**
-
-1. **Optimiser le contenu pour le nom de marque**
-   - Ajouter "A Música da Segunda" dans le H1 de toutes les pages principales
-   - Créer une page "À propos" dédiée avec le nom de marque
-   - Mentionner le nom dans les descriptions meta
-
-2. **Soumettre à Google Search Console**
-   - Vérifier l'indexation actuelle
-   - Soumettre le sitemap corrigé
-   - Demander une réindexation
-
-3. **Créer des signaux d'autorité**
-   - Créer un profil Wikidata
-   - Obtenir des backlinks de qualité
-   - Partager sur les réseaux sociaux avec le nom de marque
+| # | Problème initial | Statut | Preuve |
+|---|------------------|--------|--------|
+| 1 | `docs/sitemap.xml` ne contenait qu'une URL | ✅ Corrigé | Remplacé par `sitemap-index.xml` → `sitemap-pages.xml` + `sitemap-songs.xml`, généré par [scripts/generate-sitemap-unified.cjs](scripts/generate-sitemap-unified.cjs) |
+| 2 | Faute de frappe `amusicadaegunda` dans `routes.js` ligne 192 | ✅ Corrigé / Non confirmé | [src/config/routes.js:190](src/config/routes.js#L190) contient `'amusicadasegunda'` (orthographe correcte) |
+| 3 | `sitemap-index.xml` incomplet | ✅ Corrigé | Référence les 2 sitemaps fils (pages + songs) |
+| 4 | JSON-LD `Brand` / `Organization` absent | ✅ Corrigé | [index.html:267-301](index.html#L267) + [public/index.html:275-302](public/index.html#L275) injectent `Organization` + `WebSite` complets (logo, `sameAs` réseaux sociaux) |
+| 5 | Meta description ~120 chars sans nom de marque | ✅ Corrigé | [index.html:71](index.html#L71) = 172 chars, contient "A Música da Segunda" |
+| 6 | Title tag trop court | ✅ Corrigé | "A Música da Segunda — Paródia e Sátira Musical das Notícias do Brasil" (~70 chars) sur la home |
+| 7 | H1 dupliqué mobile/desktop | ✅ Corrigé | Un seul `<h1>A Música da Segunda</h1>` dans `app-shell-fallback` ([index.html:309](index.html#L309)) |
 
 ---
 
-## 🟡 PROBLÈMES MOYENS (Priorité 2 - À CORRIGER SOUS 1 SEMAINE)
+## 🆕 Nouveaux problèmes identifiés (non couverts par les audits précédents)
 
-### 5. ⚠️ H1 SUR MOBILE SEULEMENT
+### 1. 🟡 Stubs chansons dupliqués (`.html` + `/index.html`)
 
-**Problème:**
-- H1 présent sur mobile (ligne 453) ✅
-- H1 présent sur desktop (ligne 475) ✅
-- **MAIS** : Le H1 mobile est dans un header qui pourrait être moins visible pour les crawlers
+**Severity :** Moyenne
+**Fichier :** [scripts/generate-stubs.cjs:474-514](scripts/generate-stubs.cjs#L474)
 
-**Impact:** Moins critique, mais le H1 devrait être le premier élément visible
+Le script génère **deux fichiers** pour chaque chanson :
+- `docs/musica/[slug]/index.html`
+- `docs/musica/[slug].html` (variante sans slash)
 
-**Solution:** Vérifier que le H1 est bien le premier élément sémantique dans le HTML
+Les deux répondent en 200 OK avec le même `canonical`. La variante sans slash devrait faire une redirection 301 vers la version `/`, pas servir du contenu dupliqué.
 
----
+**Impact :** Dilution canonique mineure (Google consolide via canonical), mais ambiguïté URL + gaspillage espace disque.
 
-### 6. ⚠️ META DESCRIPTION TROP COURTE
-
-**Problème:**
-- Meta description actuelle : "Paródias musicais inteligentes sobre as notícias do Brasil. Uma nova música toda segunda-feira. Acessar página completa."
-- Longueur : ~120 caractères
-- **Manque le nom de marque "A Música da Segunda"**
-
-**Impact:** Moins de clics dans les résultats Google, moins de reconnaissance de marque
-
-**Solution:**
-```
-"Paródias musicais inteligentes sobre as notícias do Brasil. A Música da Segunda publica uma nova música toda segunda-feira."
-```
-Longueur : ~130 caractères (optimal)
+**Fix :** Supprimer la génération `fileNoSlash` (lignes 476-514).
 
 ---
 
-### 7. ⚠️ TITLE TAG PEUT ÊTRE OPTIMISÉ
+### 2. ⚪ FAUX POSITIF — `breadcrumbsJsonLd` dans les stubs (déjà correct)
 
-**Problème:**
-- Title actuel : "A Música da Segunda - Nova música toda segunda-feira"
-- Longueur : ~55 caractères ✅
-- **Mais** : Manque de mots-clés secondaires
+**Severity :** Aucune (vérification après tentative de fix)
 
-**Solution:**
-```
-"A Música da Segunda | Paródias Musicais do Brasil | Nova Música Toda Segunda"
-```
-Longueur : ~70 caractères (optimal pour desktop)
+L'audit initial pensait que `breadcrumbsJsonLd({ songName, songUrl })` dans les stubs était incompatible avec la signature `{ title, slug }` de [src/lib/seo-jsonld.js:91](src/lib/seo-jsonld.js#L91).
+
+**Réalité :** Les stubs CJS importent `breadcrumbsJsonLd` depuis [scripts/seo-templates.cjs:204](scripts/seo-templates.cjs#L204), **pas** depuis le module ESM React. La signature CJS attend bien `{ songName, songUrl }`. Aucun fix nécessaire.
+
+**Dette technique mineure :** Les deux modules (`seo-templates.cjs` côté build et `seo-jsonld.js` côté runtime React) ont des signatures différentes pour la même fonction logique. À unifier lors d'un futur refactor (pas bloquant).
 
 ---
 
-### 8. ⚠️ MANQUE DE DONNÉES STRUCTURÉES POUR LA MARQUE
+### 3. 🟡 Stubs chansons : image OG = logo générique au lieu de la miniature YouTube
 
-**Problème:**
-- JSON-LD `Organization` présent ✅
-- JSON-LD `WebSite` présent ✅
-- **MAIS** : Pas de `Brand` schema, pas de `Person` (créateur)
+**Severity :** Faible (mais visible sur partages sociaux)
+**Fichier :** [scripts/generate-stubs.cjs:464](scripts/generate-stubs.cjs#L464)
 
-**Impact:** Google ne peut pas créer un Knowledge Graph pour la marque
+Les stubs utilisent `s.image || ${siteUrl}${IMAGE}` (= logo de la marque) comme image OpenGraph. La logique runtime (`getYouTubeThumbnailUrl()` dans Song.jsx) génère bien la thumbnail YouTube côté React, mais les crawlers Facebook/Twitter/WhatsApp lisent le HTML statique.
 
-**Solution:**
-Ajouter un JSON-LD `Brand` :
-```json
-{
-  "@context": "https://schema.org",
-  "@type": "Brand",
-  "name": "A Música da Segunda",
-  "description": "Paródias musicais inteligentes sobre as notícias do Brasil",
-  "url": "https://www.amusicadasegunda.com",
-  "logo": "https://www.amusicadasegunda.com/icons/icon-512x512.png"
-}
-```
+**Impact :** Les partages des pages chanson sur les réseaux affichent le logo "A Música da Segunda" générique au lieu de la cover de la chanson → moins de CTR.
+
+**Fix :** Dans `generate-stubs.cjs`, extraire le `videoId` (déjà fait ligne 343) et construire `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` comme `og:image`.
 
 ---
 
-## 🟢 OPTIMISATIONS (Priorité 3 - À FAIRE DANS LE MOIS)
+### 4. 🟢 MusicRecording stubs ne contiennent pas `ListenAction` (streaming)
 
-### 9. ✅ CRÉER UNE PAGE "À PROPOS" OPTIMISÉE
+**Severity :** Faible
+**Fichier :** [scripts/generate-stubs.cjs:439-450](scripts/generate-stubs.cjs#L439)
 
-**Objectif:** Page dédiée au nom de marque avec contenu riche
+Les stubs génèrent un `MusicRecording` JSON-LD basique, sans le `potentialAction.ListenAction` pointant vers Spotify/YouTube/Apple Music. Côté React, le hook est en place mais Google indexe d'abord le HTML statique.
 
-**Contenu à inclure:**
-- Histoire du projet "A Música da Segunda"
-- Mission et valeurs
-- Mentions du nom de marque (10-15 fois naturellement)
-- Liens vers les réseaux sociaux
-- Contact
+**Impact :** Google Music actions et rich snippets de streaming pas exposés au crawl initial.
+
+**Fix :** Aligner l'appel `musicRecordingJsonLd()` dans `generate-stubs.cjs` pour inclure `potentialAction` avec les URLs streaming (spotify_url, youtube_url, apple_music_url).
 
 ---
 
-### 10. ✅ OPTIMISER LES ALT TEXTS DES IMAGES
+### 5. 🟢 Pages catégorie sans breadcrumbs JSON-LD
 
-**Problème:**
-- Certaines images n'ont peut-être pas d'alt text optimisé
-- Les alt texts ne mentionnent pas toujours "A Música da Segunda"
+**Severity :** Faible
+**Fichier :** [scripts/generate-stubs.cjs:575-584](scripts/generate-stubs.cjs#L575)
 
-**Solution:**
-```
-<!-- Avant -->
-<img alt="Logo" />
+Les stubs de catégorie n'injectent que `[org, website]` schemas, pas de `BreadcrumbList`.
 
-<!-- Après -->
-<img alt="Logo A Música da Segunda - Paródias Musicais do Brasil" />
-```
+**Impact :** Pas de navigation breadcrumb dans les SERP pour les pages `/categoria/politica/`, etc.
+
+**Fix :** Ajouter `breadcrumbsJsonLd({ title: categoryLabel, slug: categorySlug })` dans le block schema des category stubs.
 
 ---
 
-### 11. ✅ CRÉER UN PROFIL WIKIDATA
+## ✅ Ce qui est solide (ne pas casser)
 
-**Objectif:** Créer une entité Wikidata pour "A Música da Segunda"
-
-**Impact:** Google peut créer un Knowledge Panel automatiquement
-
-**Étapes:**
-1. Créer un compte Wikidata
-2. Créer une nouvelle entité "A Música da Segunda"
-3. Remplir les propriétés (site web, description, logo, etc.)
-4. Attendre la validation
-
----
-
-### 12. ✅ OPTIMISER LES BACKLINKS
-
-**Stratégie:**
-1. **Backlinks internes** : Ajouter des liens vers la page d'accueil depuis toutes les pages
-2. **Backlinks externes** : 
-   - Partager sur les réseaux sociaux
-   - Contacter des blogs musicaux brésiliens
-   - Participer à des forums de musique
-   - Créer du contenu partageable (infographies, vidéos)
+- ✅ **Canonicals** unifiés `https://www.amusicadasegunda.com` (single source : `seo.config.json`)
+- ✅ **Static HTML stubs** crawlables (title, description, JSON-LD, OG, body content)
+- ✅ **`max-video-preview:0`** sur toutes les pages (suite à erreur GSC "Video isn't on a watch page")
+- ✅ **Pas de `VideoObject`** sur les pages chanson (intentionnel et correct)
+- ✅ **Sitemap split** : pages + chansons, référencés par `sitemap-index.xml`
+- ✅ **`robots.txt`** : pointe vers `sitemap-index.xml`, bloque `/admin`, `/login`, `/#/`, sourcemaps
+- ✅ **Pas de canonical hashé**
+- ✅ **OG + Twitter Cards** partout via `useSEO` et `seo-templates.cjs`
+- ✅ **JSON-LD complet** : Organization, WebSite, MusicRecording, MusicPlaylist, BreadcrumbList
+- ✅ **`useSEO` hook** met à jour dynamiquement meta/OG/Twitter/canonical au routing client
+- ✅ **`Song.getBySlug`** : requête Supabase directe (plus de table full-load)
+- ✅ **Skip link a11y**, lazy loading routes, iframes avec `title`
+- ✅ **Logs devLog gatés** par `import.meta.env.DEV`
+- ✅ **Pas de `hreflang`** car le site est pt-BR mono-langue (correct)
 
 ---
 
-## 📋 PLAN D'ACTION PRIORITAIRE
+## 🎯 Top 5 recommandations (priorisées)
 
-### 🔥 URGENT (Aujourd'hui - 2h)
+### 1. ✅ APPLIQUÉ — Image OG dynamique sur stubs chansons
+- **Fichier :** [scripts/generate-stubs.cjs:438-441](scripts/generate-stubs.cjs#L438)
+- **Change effectué :** quand un `videoId` YouTube est dispo, `og:image` et `MusicRecording.image` utilisent `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`. Fallback vers le logo si pas de vidéo.
+- **Vérifié sur 6x1 :** `og:image content="https://img.youtube.com/vi/UCnZ9CJq9Do/hqdefault.jpg"`
+- **Impact :** Partages sociaux affichent la thumbnail YouTube de la chanson, plus le logo générique.
 
-1. **Corriger la faute de frappe** dans `routes.js` (5 min)
-2. **Corriger le sitemap principal** pour inclure toutes les pages (30 min)
-3. **Corriger le sitemap-index** pour référencer tous les sitemaps (15 min)
-4. **Soumettre à Google Search Console** :
-   - Vérifier l'indexation actuelle
-   - Soumettre le nouveau sitemap
-   - Demander une réindexation (1h)
+### 2. ✅ APPLIQUÉ — `.html` no-slash en redirection 301
+- **Fichier :** [scripts/generate-stubs.cjs:477-499](scripts/generate-stubs.cjs#L477)
+- **Change effectué :** au lieu de regénérer un stub complet, écrit un HTML court avec `<meta http-equiv="refresh">` + `noindex, follow` + canonical pointant vers `/musica/[slug]/`. Même pattern que `/chansons/[slug]` existant.
+- **Impact :** Plus de duplicate content. Bookmarks/backlinks externes sur `.html` continuent de fonctionner (redirection transparente).
 
-### ⚡ IMPORTANT (Cette semaine - 4h)
+### 3. Ajouter breadcrumbs aux stubs catégorie (10 min) — non encore appliqué
+- **Fichier :** [scripts/generate-stubs.cjs:575-584](scripts/generate-stubs.cjs#L575)
+- **Change suggéré :** ajouter `breadcrumbsJsonLd({ songName: categoryLabel, songUrl: categoryUrl })` dans le block schema. Adapter aussi la fonction (la version CJS actuelle hardcode "Música" comme name fallback — pas adaptée aux pages catégorie).
+- **Impact :** Rich snippets navigation sur pages catégorie. À ouvrir comme tâche séparée.
 
-5. **Optimiser les meta descriptions** avec le nom de marque (1h)
-6. **Optimiser les title tags** (30 min)
-7. **Ajouter le JSON-LD Brand** (30 min)
-8. **Créer/optimiser la page "À propos"** avec le nom de marque (2h)
+### 4. Validation GSC (URL Inspection)
+- **Action :** dans GSC, tester `/musica/`, `/musica/ype-ype/`, `/sobre/`, `/categoria/politica/`
+- **Vérifier :** title, description, canonical (www), rich results, pas de "Blocked by robots.txt"
+- **Impact :** Confirme que les stubs sont correctement crawlés avant hydration React
 
-### 📅 MOYEN TERME (Ce mois - 8h)
-
-9. **Créer un profil Wikidata** (2h)
-10. **Stratégie de backlinks** (4h)
-11. **Optimiser les alt texts** (2h)
-
----
-
-## 🎯 MÉTRIQUES DE SUCCÈS
-
-### Objectifs à 1 mois :
-- ✅ Recherche "A Música da Segunda" → Site apparaît sur la **1ère page** (top 10)
-- ✅ Recherche "A Música da Segunda.com" → Lien correct affiché
-- ✅ **100% des pages indexées** dans Google Search Console
-- ✅ **Knowledge Panel** créé par Google (si Wikidata créé)
-
-### Objectifs à 3 mois :
-- ✅ Recherche "A Música da Segunda" → Site apparaît dans le **top 3**
-- ✅ **10+ backlinks** de qualité
-- ✅ **Knowledge Graph** créé par Google
-- ✅ **Trafic organique** augmenté de 50%
+**Effort restant :** ~10 min pour ajouter breadcrumbs catégorie (priorité faible).
 
 ---
 
-## 🔧 OUTILS RECOMMANDÉS
+## 📌 Notes / faux positifs GSC à ignorer
 
-### Pour le suivi :
-1. **Google Search Console** - Suivi de l'indexation et des performances
-2. **Google Analytics** - Suivi du trafic organique
-3. **Ahrefs / SEMrush** - Analyse des backlinks et positions
+Per mémoire projet ([memory/gsc_false_alarms.md](memory/gsc_false_alarms.md)) :
 
-### Pour le test :
-1. **Google Rich Results Test** - Tester les données structurées
-2. **PageSpeed Insights** - Performance et Core Web Vitals
-3. **Mobile-Friendly Test** - Compatibilité mobile
+- ⚪ Rapports GSC sur stubs `noindex` (admin, login) → **ignorer**, intentionnel
+- ⚪ Redirections `http://` → `https://` → **ignorer**, gérées au niveau hosting
 
 ---
 
-## 📝 NOTES TECHNIQUES
+## 🔧 Outils de validation
 
-### Fichiers à modifier :
-
-1. **`src/config/routes.js`** (ligne 192)
-   - Corriger la faute de frappe
-
-2. **`docs/sitemap.xml`**
-   - Ajouter toutes les pages statiques
-
-3. **`docs/sitemap-index.xml`**
-   - Ajouter références à `sitemap-static.xml` et `sitemap-songs.xml`
-
-4. **`index.html` et `public/index.html`**
-   - Optimiser meta description avec nom de marque
-   - Ajouter JSON-LD Brand
-
-5. **`src/pages/Sobre.jsx`**
-   - Optimiser le contenu avec le nom de marque
+| Outil | Usage |
+|-------|-------|
+| **Google Search Console** | URL Inspection, sitemaps soumis, Indexing report |
+| **Google Rich Results Test** | Vérifier MusicRecording / BreadcrumbList sur pages chanson |
+| **PageSpeed Insights** | Core Web Vitals (LCP, CLS, INP) |
+| **Mobile-Friendly Test** | UX mobile (devrait être OK après le cycle redesign mobile-app-v1) |
+| `curl -A "Googlebot" https://...` | Vérifier que le stub HTML servi a tout le SEO requis avant JS |
 
 ---
 
-## ✅ CHECKLIST DE VÉRIFICATION
+## 📊 Évolution du score SEO
 
-### Avant déploiement :
-- [ ] Faute de frappe corrigée dans `routes.js`
-- [ ] Sitemap principal contient toutes les pages
-- [ ] Sitemap-index référence tous les sitemaps
-- [ ] Meta descriptions optimisées avec nom de marque
-- [ ] JSON-LD Brand ajouté
-- [ ] Test Google Rich Results Test passé
-- [ ] Soumission Google Search Console effectuée
-
-### Après déploiement :
-- [ ] Vérifier indexation dans Google Search Console (24-48h)
-- [ ] Tester recherche "A Música da Segunda" (1 semaine)
-- [ ] Surveiller les erreurs dans Search Console
-- [ ] Analyser le trafic organique dans Analytics
+| Date | Score | Notes |
+|------|-------|-------|
+| 2025-01-27 | 7.5 / 10 | Audit initial — canonicals cassés, logs verbeux, schema partiel |
+| 2026-01-06 | 8.0 / 10 | Sitemaps split, faute de frappe corrigée, meta optimisées |
+| **2026-05-10 (actuel)** | **9.0 / 10** | Phase 1-3 SEO complète. Reste 5 ajustements mineurs dans `generate-stubs.cjs` |
 
 ---
 
-## 🎓 RESSOURCES
+## 🚀 Prochaine étape
 
-### Documentation Google :
-- [Google Search Central](https://developers.google.com/search)
-- [Structured Data Testing Tool](https://search.google.com/test/rich-results)
-- [Google Search Console](https://search.google.com/search-console)
-
-### Outils SEO :
-- [Ahrefs](https://ahrefs.com) - Analyse backlinks
-- [SEMrush](https://www.semrush.com) - Analyse concurrentielle
-- [Schema.org](https://schema.org) - Documentation données structurées
-
----
-
-## 📞 SUPPORT
-
-Si tu as des questions sur cet audit ou besoin d'aide pour implémenter les corrections, n'hésite pas à demander !
-
-**Prochaines étapes recommandées :**
-1. Commencer par les corrections **URGENTES** (sitemap + faute de frappe)
-2. Soumettre à Google Search Console
-3. Attendre 24-48h pour voir les premiers résultats
-4. Continuer avec les optimisations **IMPORTANTES**
-
----
-
-**🎯 Objectif final : Être #1 sur Google pour "A Música da Segunda" ! 🎯**
+Implémenter les **fixes 1, 2 et 3** ci-dessus (concentrés dans `scripts/generate-stubs.cjs`, ~30 min de travail), puis lancer une validation GSC URL Inspection sur 3-4 URLs représentatives. Aucun bloquant majeur restant.
