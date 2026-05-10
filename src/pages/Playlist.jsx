@@ -289,7 +289,7 @@ export default function Playlist() {
 
       {/* Layout Mobile */}
       <div className="lg:hidden min-h-[calc(100dvh-72px)] bg-black px-4 pb-7 pt-4 text-white">
-        <section className="mx-auto flex w-full max-w-[390px] flex-col">
+        <section className="mx-auto flex w-full max-w-[390px] flex-col landscape:max-w-[860px]">
           <header className="mb-3 flex items-center justify-between">
             <h1 className="text-[22px] font-black leading-none tracking-[-0.01em] text-white">
               Últimas Segundas
@@ -303,7 +303,7 @@ export default function Playlist() {
             </button>
           </header>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2.5 landscape:grid landscape:grid-cols-2 landscape:gap-2.5 landscape:space-y-0">
             {songs.length === 0 ? (
               <div className="rounded-[14px] border border-white/10 bg-[#111111] p-5 text-center text-sm font-semibold text-white/60">
                 Carregando catálogo...
