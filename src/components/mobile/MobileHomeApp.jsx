@@ -167,7 +167,7 @@ export default function MobileHomeApp({
             />
 
             <div
-              className={`absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.05)_0%,rgba(0,0,0,0.16)_30%,rgba(0,0,0,0.54)_66%,rgba(0,0,0,0.96)_100%)] transition-opacity duration-200 ${
+              className={`absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.62)_28%,rgba(0,0,0,0.32)_55%,rgba(0,0,0,0.08)_100%)] transition-opacity duration-200 ${
                 hasSong && videoActivated ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}
             />
@@ -221,21 +221,15 @@ export default function MobileHomeApp({
             ) : null}
 
             <div
-              className={`absolute inset-x-3 top-3 transition-opacity duration-200 ${
+              className={`absolute inset-x-3 top-3 space-y-2 transition-opacity duration-200 ${
                 hasSong && videoActivated ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}
             >
               <AppChip variant="solid" className="min-h-6 px-2.5 text-[9px] tracking-[0.10em]">
                 MUSICA DA SEMANA
               </AppChip>
-            </div>
 
-            <div
-              className={`absolute inset-x-3 bottom-3 space-y-2 transition-opacity duration-200 ${
-                hasSong && videoActivated ? 'opacity-0 pointer-events-none' : 'opacity-100'
-              }`}
-            >
-              <h1 className="line-clamp-2 text-[2.6rem] font-black leading-[0.88] tracking-tight text-white drop-shadow-[0_4px_22px_rgba(0,0,0,0.72)]">
+              <h1 className="line-clamp-2 text-[2.4rem] font-black leading-[0.92] tracking-tight text-white drop-shadow-[0_4px_22px_rgba(0,0,0,0.72)]">
                 {currentSong?.title || '6x1'}
               </h1>
 
@@ -249,29 +243,25 @@ export default function MobileHomeApp({
               <p className="line-clamp-2 max-w-[72%] text-[11px] font-medium leading-4 text-white/82">
                 {getContextPreview(currentSong)}
               </p>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <AppButton size="md" onClick={onListen} disabled={!hasSong} className="min-h-10 justify-center px-3 text-xs">
+                  <Play className="h-4 w-4 fill-current" />
+                  Ouvir agora
+                </AppButton>
+                <AppButton
+                  variant="secondary"
+                  onClick={onShare}
+                  disabled={!hasSong}
+                  className="min-h-10 justify-center border-white/18 bg-black/56 px-3 text-xs"
+                >
+                  <Share2 className="h-4 w-4" />
+                  Compartilhar
+                </AppButton>
+              </div>
             </div>
           </div>
         </section>
-
-        <div
-          className={`grid grid-cols-2 gap-2 transition-opacity duration-200 ${
-            hasSong && videoActivated ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-        >
-          <AppButton size="md" onClick={onListen} disabled={!hasSong} className="min-h-11 justify-center px-3 text-xs">
-            <Play className="h-4 w-4 fill-current" />
-            Ouvir agora
-          </AppButton>
-          <AppButton
-            variant="secondary"
-            onClick={onShare}
-            disabled={!hasSong}
-            className="min-h-11 justify-center border-white/18 bg-black/56 px-3 text-xs"
-          >
-            <Share2 className="h-4 w-4" />
-            Compartilhar
-          </AppButton>
-        </div>
 
         <AppCard className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-3 rounded-[12px] p-3">
           <button
