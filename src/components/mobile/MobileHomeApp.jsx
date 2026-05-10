@@ -153,7 +153,7 @@ export default function MobileHomeApp({
       <main className="mx-auto flex w-full max-w-[390px] min-h-0 flex-1 flex-col gap-2.5">
         <section className="flex min-h-0 flex-1 flex-col">
           <div
-            className="relative flex min-h-[452px] w-full max-w-full flex-1 flex-col overflow-hidden rounded-[14px] border border-app-yellow/18 bg-app-charcoal shadow-[0_28px_80px_rgba(0,0,0,0.62)]"
+            className="relative flex min-h-[340px] w-full max-w-full flex-1 flex-col overflow-hidden rounded-[14px] border border-app-yellow/18 bg-app-charcoal shadow-[0_28px_80px_rgba(0,0,0,0.62)]"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
@@ -231,43 +231,47 @@ export default function MobileHomeApp({
             </div>
 
             <div
-              className={`absolute inset-x-3 bottom-10 space-y-2.5 transition-opacity duration-200 ${
+              className={`absolute inset-x-3 bottom-3 space-y-2 transition-opacity duration-200 ${
                 hasSong && videoActivated ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}
             >
-              <h1 className="line-clamp-2 text-[3.05rem] font-black leading-[0.86] tracking-tight text-white drop-shadow-[0_4px_22px_rgba(0,0,0,0.72)]">
+              <h1 className="line-clamp-2 text-[2.6rem] font-black leading-[0.88] tracking-tight text-white drop-shadow-[0_4px_22px_rgba(0,0,0,0.72)]">
                 {currentSong?.title || '6x1'}
               </h1>
 
-              <div className="flex flex-col items-start gap-1.5">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <AppChip variant="active" className="min-h-6 border-app-yellow/30 bg-black/42 px-2 text-[9px] normal-case tracking-normal">
                   {category}
                 </AppChip>
                 <span className="text-[11px] font-semibold text-white/78">{releaseDate}</span>
               </div>
 
-              <p className="line-clamp-3 max-w-[66%] text-[11px] font-medium leading-4 text-white/82">
+              <p className="line-clamp-2 max-w-[72%] text-[11px] font-medium leading-4 text-white/82">
                 {getContextPreview(currentSong)}
               </p>
-
-              <div className="grid grid-cols-1 gap-2 pr-[48%]">
-                <AppButton size="md" onClick={onListen} disabled={!hasSong} className="min-h-10 justify-start px-4 text-xs">
-                  <Play className="h-4 w-4 fill-current" />
-                  Ouvir agora
-                </AppButton>
-                <AppButton
-                  variant="secondary"
-                  onClick={onShare}
-                  disabled={!hasSong}
-                  className="min-h-10 justify-start border-white/18 bg-black/56 px-4 text-xs"
-                >
-                  <Share2 className="h-4 w-4" />
-                  Compartilhar
-                </AppButton>
-              </div>
             </div>
           </div>
         </section>
+
+        <div
+          className={`grid grid-cols-2 gap-2 transition-opacity duration-200 ${
+            hasSong && videoActivated ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+        >
+          <AppButton size="md" onClick={onListen} disabled={!hasSong} className="min-h-11 justify-center px-3 text-xs">
+            <Play className="h-4 w-4 fill-current" />
+            Ouvir agora
+          </AppButton>
+          <AppButton
+            variant="secondary"
+            onClick={onShare}
+            disabled={!hasSong}
+            className="min-h-11 justify-center border-white/18 bg-black/56 px-3 text-xs"
+          >
+            <Share2 className="h-4 w-4" />
+            Compartilhar
+          </AppButton>
+        </div>
 
         <AppCard className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-3 rounded-[12px] p-3">
           <button
