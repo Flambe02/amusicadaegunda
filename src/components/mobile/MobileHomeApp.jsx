@@ -194,28 +194,6 @@ export default function MobileHomeApp({
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <div className="absolute inset-x-3 bottom-3 z-30 space-y-1.5 rounded-[14px] bg-black/42 p-2 backdrop-blur-xl">
-                  <p className="text-[10px] font-semibold text-white/72">Ouça também em</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    <PlatformPill tone="spotify" href={currentSong?.spotify_url}>
-                      Spotify
-                    </PlatformPill>
-                    <PlatformPill tone="youtube" href={currentSong?.youtube_url || currentSong?.youtube_music_url}>
-                      YouTube
-                    </PlatformPill>
-                    <PlatformPill tone="apple" href={currentSong?.apple_music_url}>
-                      Apple Music
-                    </PlatformPill>
-                    <button
-                      type="button"
-                      onClick={onShowPlatforms}
-                      disabled={!hasSong}
-                      className="inline-flex min-h-8 items-center rounded-full border border-white/18 bg-black/40 px-3 text-[11px] font-black text-white/78 transition active:scale-[0.98] disabled:opacity-45"
-                    >
-                      Todas
-                    </button>
-                  </div>
-                </div>
               </div>
             ) : null}
 
@@ -287,29 +265,6 @@ export default function MobileHomeApp({
                   Compartilhar
                 </AppButton>
               </div>
-
-              <div className="space-y-1.5 pt-0.5">
-                <p className="text-[10px] font-semibold text-white/48">Ouça também em</p>
-                <div className="flex flex-wrap gap-1.5">
-                  <PlatformPill tone="spotify" href={currentSong?.spotify_url}>
-                    Spotify
-                  </PlatformPill>
-                  <PlatformPill tone="youtube" href={currentSong?.youtube_url || currentSong?.youtube_music_url}>
-                    YouTube
-                  </PlatformPill>
-                  <PlatformPill tone="apple" href={currentSong?.apple_music_url}>
-                    Apple Music
-                  </PlatformPill>
-                  <button
-                    type="button"
-                    onClick={onShowPlatforms}
-                    disabled={!hasSong}
-                    className="inline-flex min-h-8 items-center rounded-full border border-app-border bg-black/30 px-3 text-[11px] font-black text-app-muted transition active:scale-[0.98] disabled:opacity-45"
-                  >
-                    Todas
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -356,6 +311,27 @@ export default function MobileHomeApp({
             <SkipForward className="h-4 w-4" />
           </button>
         </AppCard>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p className="mr-1 text-[10px] font-semibold text-white/56">Ouça também em</p>
+          <PlatformPill tone="spotify" href={currentSong?.spotify_url}>
+            Spotify
+          </PlatformPill>
+          <PlatformPill tone="youtube" href={currentSong?.youtube_url || currentSong?.youtube_music_url}>
+            YouTube
+          </PlatformPill>
+          <PlatformPill tone="apple" href={currentSong?.apple_music_url}>
+            Apple Music
+          </PlatformPill>
+          <button
+            type="button"
+            onClick={onShowPlatforms}
+            disabled={!hasSong}
+            className="inline-flex min-h-8 items-center rounded-full border border-app-border bg-black/30 px-3 text-[11px] font-black text-app-muted transition active:scale-[0.98] disabled:opacity-45"
+          >
+            Todas
+          </button>
+        </div>
       </main>
     </div>
   );

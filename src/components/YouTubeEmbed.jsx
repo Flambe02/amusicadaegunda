@@ -89,9 +89,9 @@ export default function YouTubeEmbed({
   }, [youtubeMusicUrl, youtubeUrl]);
 
   useEffect(() => {
-    setActivated(false);
+    setActivated(Boolean(forceActivated));
     setIsMuted(startMuted);
-  }, [youtubeMusicUrl, youtubeUrl, preferWatchUrl]);
+  }, [youtubeMusicUrl, youtubeUrl, preferWatchUrl, forceActivated, startMuted]);
   const portraitFrameAspect = isShort ? '9/16' : '16/9';
   const shouldAutoplay = useFacade && activated && autoplayOnActivate;
   const autoplay = shouldAutoplay ? '&autoplay=1' : '';

@@ -1,11 +1,363 @@
-import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown, Facebook } from 'lucide-react';
-import { useState } from 'react';
+import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown, Facebook, Bell, Smile, Headphones, ExternalLink, Search as SearchIcon, X, Play, Pause } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import OptimizedImage from '../components/OptimizedImage';
 import { useSEO } from '../hooks/useSEO';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { BRAND_LOGO_MEDIUM } from '@/lib/imageAssets';
+import { Song } from '@/api/entities';
+import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
+
+function normalizeSearchText(value) {
+  return (value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function getMobileYouTubeId(song) {
+  return (
+    extractYouTubeId(song?.youtube_url) ||
+    extractYouTubeId(song?.youtube_music_url) ||
+    null
+  );
+}
+
+function getMobileSongArtwork(song) {
+  const ytId = getMobileYouTubeId(song);
+  return (
+    song?.cover_image ||
+    song?.thumbnail_url ||
+    (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : null) ||
+    getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault') ||
+    null
+  );
+}
+
+function MobileSongSearch() {
+  const [songs, setSongs] = useState([]);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState(null);
+  const [activeYtId, setActiveYtId] = useState(null);
+  const [playerState, setPlayerState] = useState('stopped');
+  const iframeRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    Song.list('-release_date')
+      .then((data) => {
+        if (!cancelled) setSongs(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setSongs([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const results = useMemo(() => {
+    const q = normalizeSearchText(query.trim());
+    if (!q) return songs.slice(0, 3);
+
+    return songs
+      .filter((song) => (
+        normalizeSearchText(song.title).includes(q) ||
+        normalizeSearchText(song.artist).includes(q) ||
+        normalizeSearchText(song.description).includes(q) ||
+        normalizeSearchText(song.category).includes(q)
+      ))
+      .slice(0, 5);
+  }, [query, songs]);
+
+  const sendYTCommand = (func) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func, args: [] }),
+      '*'
+    );
+  };
+
+  const attemptPlayCurrent = () => {
+    if (!activeYtId) return;
+    sendYTCommand('playVideo');
+    setPlayerState('playing');
+  };
+
+  useEffect(() => {
+    if (!activeYtId) return undefined;
+    const t1 = window.setTimeout(attemptPlayCurrent, 250);
+    const t2 = window.setTimeout(attemptPlayCurrent, 900);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [activeYtId]);
+
+  const handleTogglePlay = (song) => {
+    const ytId = getMobileYouTubeId(song);
+    if (!ytId) return;
+
+    if (activeId === song.id) {
+      if (playerState === 'playing') {
+        sendYTCommand('pauseVideo');
+        setPlayerState('paused');
+      } else {
+        sendYTCommand('playVideo');
+        setPlayerState('playing');
+      }
+      return;
+    }
+
+    setActiveId(song.id);
+    setActiveYtId(ytId);
+    setPlayerState('paused');
+  };
+
+  return (
+    <section className="relative mx-auto max-w-[430px] rounded-[22px] border border-white/10 bg-white/[0.055] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      {activeYtId ? (
+        <iframe
+          key={activeYtId}
+          ref={iframeRef}
+          src={`https://www.youtube-nocookie.com/embed/${activeYtId}?enablejsapi=1&autoplay=1&rel=0`}
+          title="player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          onLoad={attemptPlayCurrent}
+          className="fixed -left-[9999px] -top-[9999px] h-px w-px opacity-0"
+        />
+      ) : null}
+
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-app-yellow">Pesquisa</p>
+          <h2 className="mt-1 text-lg font-black text-white">Buscar musicas</h2>
+        </div>
+        <Music className="h-5 w-5 text-white/38" aria-hidden="true" />
+      </div>
+
+      <div className="relative">
+        <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Titulo, tema, palavra..."
+          className="min-h-12 w-full rounded-[16px] border border-white/10 bg-black/35 pl-10 pr-10 text-sm font-semibold text-white placeholder:text-white/32 focus:border-app-yellow/45 focus:outline-none"
+        />
+        {query ? (
+          <button
+            type="button"
+            onClick={() => setQuery('')}
+            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-white/45"
+            aria-label="Limpar pesquisa"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-3 space-y-2">
+        {loading ? (
+          <div className="py-5 text-center text-sm font-semibold text-white/42">Carregando catalogo...</div>
+        ) : results.length > 0 ? (
+          results.map((song) => {
+            const artwork = getMobileSongArtwork(song);
+            const slug = titleToSlug(song.title);
+            const isActive = activeId === song.id;
+            const isPlaying = isActive && playerState === 'playing';
+
+            return (
+              <article key={song.id} className="flex items-center gap-3 rounded-[16px] border border-white/8 bg-black/28 p-2.5">
+                <Link
+                  to={slug ? `/musica/${slug}/` : createPageUrl('Playlist')}
+                  className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-[12px] bg-white/8"
+                  aria-label={`Abrir ${song.title}`}
+                >
+                  {artwork ? (
+                    <img src={artwork} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center">
+                      <Music className="h-5 w-5 text-white/30" aria-hidden="true" />
+                    </span>
+                  )}
+                </Link>
+
+                <Link to={slug ? `/musica/${slug}/` : createPageUrl('Playlist')} className="min-w-0 flex-1 text-left">
+                  <h3 className="truncate text-sm font-black text-white">{song.title}</h3>
+                  <p className="mt-0.5 line-clamp-2 text-xs font-medium leading-4 text-white/50">
+                    {song.description || song.artist || 'A Musica da Segunda'}
+                  </p>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => handleTogglePlay(song)}
+                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition active:scale-95 ${
+                    isPlaying ? 'bg-app-yellow text-black' : 'bg-white/10 text-white'
+                  }`}
+                  aria-label={isPlaying ? 'Pausar musica' : 'Tocar musica'}
+                >
+                  {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
+                </button>
+              </article>
+            );
+          })
+        ) : (
+          <div className="py-5 text-center text-sm font-semibold text-white/42">Nenhuma musica encontrada.</div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MobileAboutExperience() {
+  const socialLinks = [
+    {
+      label: 'WhatsApp',
+      href: 'https://wa.me/?text=A%20M%C3%BAsica%20da%20Segunda%20-%20https%3A%2F%2Fwww.amusicadasegunda.com',
+      className: 'bg-green-500 text-white',
+      icon: MessageCircle,
+    },
+    {
+      label: 'Instagram',
+      href: 'https://www.instagram.com/a_musica_da_segunda/',
+      className: 'bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400 text-white',
+      icon: Instagram,
+    },
+    {
+      label: 'YouTube',
+      href: 'https://music.youtube.com/playlist?list=PLmoOyuQg7Y2QZKbcj20s7dcadsVx7WuWH',
+      className: 'bg-red-600 text-white',
+      icon: Youtube,
+    },
+    {
+      label: 'Spotify',
+      href: 'https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH?si=c32b67518b2a4817',
+      className: 'bg-emerald-500 text-black',
+      icon: Music,
+    },
+  ];
+
+  const pillars = [
+    {
+      icon: Music,
+      title: 'Nova musica toda semana',
+      text: 'Toda segunda tem lancamento.',
+    },
+    {
+      icon: Smile,
+      title: 'Humor com contexto',
+      text: 'Piadas inteligentes sobre o que importa.',
+    },
+    {
+      icon: Headphones,
+      title: 'Disponivel em varias plataformas',
+      text: 'Ouça onde e como quiser.',
+    },
+  ];
+
+  return (
+    <div className="lg:hidden relative min-h-full overflow-hidden bg-[radial-gradient(circle_at_50%_-10%,rgba(253,224,71,0.18),transparent_30%),linear-gradient(180deg,#050505_0%,#0d0d0d_48%,#050505_100%)] px-4 pb-6 pt-5 text-app-white">
+      <div className="pointer-events-none absolute -right-14 top-4 h-36 w-36 rounded-full bg-app-yellow/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-16 top-28 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[repeating-linear-gradient(135deg,rgba(253,224,71,0.08)_0px,rgba(253,224,71,0.08)_1px,transparent_1px,transparent_18px)] opacity-20" />
+
+      <section className="relative mx-auto flex min-h-[calc(100svh-6rem)] max-w-[430px] flex-col items-center justify-center py-5 text-center">
+        <div className="relative mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-app-yellow/35 bg-black shadow-[0_0_0_8px_rgba(253,224,71,0.05),0_24px_70px_rgba(0,0,0,0.62)]">
+          <div className="absolute inset-2 rounded-full border border-app-yellow/35" />
+          <OptimizedImage
+            src={BRAND_LOGO_MEDIUM}
+            alt="Logo A Musica da Segunda"
+            className="h-full w-full rounded-full object-cover"
+            loading="eager"
+          />
+        </div>
+
+        <p className="mb-3 text-[10px] font-black uppercase tracking-[0.26em] text-app-yellow">
+          Sobre o projeto
+        </p>
+        <h1 className="max-w-[12ch] text-[2.1rem] font-black leading-[0.98] tracking-normal text-white">
+          Toda segunda, o Brasil vira refrao.
+        </h1>
+        <p className="mt-4 max-w-[20rem] text-[14px] font-medium leading-6 text-white/68">
+          A Musica da Segunda transforma noticias, politica, cultura e caos do Brasil em parodias musicais cheias de humor e contexto.
+        </p>
+
+        <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
+          {pillars.map(({ icon: Icon, title, text }) => (
+            <article key={title} className="min-h-[116px] rounded-[18px] border border-white/10 bg-white/[0.055] px-2.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <div className="mx-auto mb-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-app-yellow ring-1 ring-app-yellow/20">
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <h2 className="text-[11px] font-black leading-tight text-white">
+                {title}
+              </h2>
+              <p className="mt-1.5 text-[10px] font-medium leading-[1.3] text-white/55">
+                {text}
+              </p>
+            </article>
+          ))}
+        </div>
+
+        <a
+          href="mailto:contact@amusicadasegunda.com?subject=Receber%20A%20M%C3%BAsica%20da%20Segunda"
+          className="mt-6 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-app-yellow px-5 text-sm font-black text-black shadow-[0_16px_38px_rgba(253,224,71,0.24)] transition active:scale-[0.98]"
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
+          Receber toda segunda
+        </a>
+
+        <div className="mt-5">
+          <p className="mb-3 text-xs font-semibold text-white/42">Nos acompanhe</p>
+          <div className="flex items-center justify-center gap-4">
+            {socialLinks.map(({ label, href, className, icon: Icon }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className={`flex h-11 w-11 items-center justify-center rounded-full shadow-[0_12px_28px_rgba(0,0,0,0.34)] transition active:scale-95 ${className}`}
+              >
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative mx-auto max-w-[430px] space-y-3 pb-2">
+        <MobileSongSearch />
+
+        <Link
+          to={createPageUrl('Playlist')}
+          className="flex items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.055] px-4 py-4 text-left transition active:scale-[0.99]"
+        >
+          <span>
+            <span className="block text-sm font-black text-white">Conheca o catalogo</span>
+            <span className="mt-1 block text-xs font-medium text-white/55">Todas as parodias em ordem cronologica.</span>
+          </span>
+          <ExternalLink className="h-5 w-5 flex-shrink-0 text-app-yellow" aria-hidden="true" />
+        </Link>
+
+        <Link
+          to={createPageUrl('Roda')}
+          className="flex items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.055] px-4 py-4 text-left transition active:scale-[0.99]"
+        >
+          <span>
+            <span className="block text-sm font-black text-white">Gire a roleta</span>
+            <span className="mt-1 block text-xs font-medium text-white/55">Descubra um tema e uma musica para ouvir agora.</span>
+          </span>
+          <ExternalLink className="h-5 w-5 flex-shrink-0 text-app-yellow" aria-hidden="true" />
+        </Link>
+      </section>
+    </div>
+  );
+}
 
 export default function Sobre() {
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
@@ -124,7 +476,9 @@ export default function Sobre() {
         </script>
 
       <div className="space-y-0">
-        <div className="desktop-about-shell mx-auto max-w-6xl p-4 lg:p-5 2xl:max-w-7xl">
+        <MobileAboutExperience />
+
+        <div className="desktop-about-shell mx-auto hidden max-w-6xl p-4 lg:block lg:p-5 2xl:max-w-7xl">
           {/* Hero */}
           <section className="glass-panel desktop-shell-gradient mb-6 overflow-hidden rounded-[36px] p-5 md:p-8">
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,360px)] xl:items-center">
@@ -518,7 +872,7 @@ export default function Sobre() {
               <a href="https://music.youtube.com/playlist?list=PLmoOyuQg7Y2QZKbcj20s7dcadsVx7WuWH" target="_blank" rel="noopener noreferrer" className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition-colors">
                 <Youtube className="w-6 h-6" />
               </a>
-              <a href="https://music.apple.com/us/artist/the-piment%C3%A3o-rouge-project/1791441717" target="_blank" rel="noopener noreferrer" className="bg-gradient-to-r from-pink-500 to-red-500 text-white p-3 rounded-full hover:opacity-80 transition-opacity">
+              <a href="https://music.apple.com/us/artist/a-m%C3%BAsica-da-segunda/1867784335" target="_blank" rel="noopener noreferrer" className="bg-gradient-to-r from-pink-500 to-red-500 text-white p-3 rounded-full hover:opacity-80 transition-opacity">
                 <Music className="w-6 h-6" />
               </a>
               <a href="https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH?si=c32b67518b2a4817" target="_blank" rel="noopener noreferrer" className="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 transition-colors">

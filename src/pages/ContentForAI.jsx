@@ -60,7 +60,7 @@ export default function ContentForAI() {
             instagram: "https://www.instagram.com/a_musica_da_segunda/",
             youtube: "https://music.youtube.com/playlist?list=PLmoOyuQg7Y2QZKbcj20s7dcadsVx7WuWH",
             spotify: "https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH",
-            appleMusic: "https://music.apple.com/us/artist/the-piment%C3%A3o-rouge-project/1791441717"
+            appleMusic: "https://music.apple.com/us/artist/a-m%C3%BAsica-da-segunda/1867784335"
           },
           contact: {
             email: "contact@amusicadasegunda.com"

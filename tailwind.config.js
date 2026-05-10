@@ -24,6 +24,17 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			app: {
+  				black: '#050505',
+  				charcoal: '#111111',
+  				surface: 'rgba(255,255,255,0.06)',
+  				'surface-strong': 'rgba(0,0,0,0.78)',
+  				border: 'rgba(255,255,255,0.12)',
+  				white: '#FFFFFF',
+  				muted: 'rgba(255,255,255,0.68)',
+  				subtle: 'rgba(255,255,255,0.42)',
+  				yellow: '#FDE047',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -96,6 +107,17 @@ module.exports = {
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
+  		},
+  		boxShadow: {
+  			'app-soft': '0 16px 40px rgba(0, 0, 0, 0.28)',
+  			'app-float': '0 24px 80px rgba(0, 0, 0, 0.45)',
+  			'app-nav': '0 -12px 32px rgba(0, 0, 0, 0.32)',
+  		},
+  		spacing: {
+  			'app-mobile-x': '1rem',
+  			'app-mobile-y': '0.875rem',
+  			'app-touch': '2.75rem',
+  			'app-bottom-nav': '4rem',
   		}
   	}
   },

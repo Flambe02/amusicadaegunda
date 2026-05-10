@@ -4,11 +4,108 @@ import { Helmet } from 'react-helmet-async';
 import { Song } from '@/api/entities';
 import { musicPlaylistJsonLd, injectJsonLd, removeJsonLd } from '../lib/seo-jsonld';
 import DesktopPageShell, { DesktopMetric, DesktopSurface } from '@/components/DesktopPageShell';
-import { Disc3, ExternalLink, Headphones, Sparkles } from 'lucide-react';
+import { CalendarDays, Disc3, ExternalLink, Headphones, MoreHorizontal, Pause, Play, Share2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { getYouTubeEmbedInfo, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+
+const CATEGORY_LABELS = {
+  politica: 'Politica',
+  bbb: 'BBB',
+  economia: 'Economia',
+  cultura: 'Cultura',
+  futebol: 'Futebol',
+  trabalho: 'Trabalho',
+  celebridades: 'Celebridades',
+  nostalgia: 'Nostalgia',
+  'caos nacional': 'Caos nacional',
+};
+
+function getCatalogDateParts(dateValue) {
+  if (!dateValue) {
+    return { day: '--', month: '---', year: '' };
+  }
+
+  const parsed = new Date(`${dateValue}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return { day: '--', month: '---', year: '' };
+  }
+
+  const month = new Intl.DateTimeFormat('pt-BR', { month: 'short' })
+    .format(parsed)
+    .replace('.', '')
+    .toUpperCase();
+
+  return {
+    day: new Intl.DateTimeFormat('pt-BR', { day: '2-digit' }).format(parsed),
+    month,
+    year: new Intl.DateTimeFormat('pt-BR', { year: 'numeric' }).format(parsed),
+  };
+}
+
+function getSongYouTubeUrl(song) {
+  return song?.youtube_music_url || song?.youtube_url || '';
+}
+
+function getSongPlayUrl(song) {
+  return song?.youtube_url || song?.youtube_music_url || '';
+}
+
+function getSongKey(song) {
+  return String(song?.id || song?.slug || song?.title || getSongPlayUrl(song));
+}
+
+function getSongEmbedSrc(song) {
+  const embedInfo = getYouTubeEmbedInfo(getSongPlayUrl(song));
+  if (!embedInfo?.id || embedInfo.type !== 'video') return '';
+
+  const origin = typeof window !== 'undefined'
+    ? `&origin=${encodeURIComponent(window.location.origin)}`
+    : '';
+
+  return `https://www.youtube.com/embed/${embedInfo.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1${origin}`;
+}
+
+function getSongThumb(song) {
+  const youtubeThumb = getYouTubeThumbnailUrl(getSongYouTubeUrl(song), 'hqdefault');
+  return youtubeThumb || song?.cover_image_url || song?.image_url || BRAND_SQUARE_MEDIUM;
+}
+
+function getSongCategory(song) {
+  const raw = song?.category || song?.theme || '';
+  const key = String(raw).toLowerCase();
+  return CATEGORY_LABELS[key] || raw || 'Música';
+}
+
+function getSongPath(song) {
+  const slug = song?.slug || titleToSlug(song?.title);
+  return slug ? `/musica/${slug}` : '/musica';
+}
 
 export default function Playlist() {
   const [songs, setSongs] = useState([]);
+  const [playingSongKey, setPlayingSongKey] = useState(null);
+
+  const handleShareSong = async (song) => {
+    const songUrl = getSongPlayUrl(song);
+    const pageUrl = `${window.location.origin}${getSongPath(song)}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: song?.title || 'A Música da Segunda',
+          text: song?.description || 'Ouça essa zoeira da segunda.',
+          url: songUrl || pageUrl,
+        });
+        return;
+      }
+
+      await navigator.clipboard?.writeText(songUrl || pageUrl);
+    } catch (error) {
+      console.warn('Share canceled or unavailable:', error);
+    }
+  };
 
   // Charger toutes les chansons pour le JSON-LD
   useEffect(() => {
@@ -191,21 +288,135 @@ export default function Playlist() {
       </div>
 
       {/* Layout Mobile */}
-      <div className="lg:hidden px-4 py-4">
-        <iframe
-          data-testid="embed-iframe"
-          src="https://open.spotify.com/embed/playlist/5z7Jan9yS1KRzwWEPYs4sH?utm_source=generator"
-          style={{
-            borderRadius: '16px',
-            width: '100%',
-            height: 'calc(100dvh - 160px)',
-          }}
-          frameBorder="0"
-          allowFullScreen=""
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-          title="Playlist Spotify - Música da Segunda"
-        />
+      <div className="lg:hidden min-h-[calc(100dvh-72px)] bg-black px-4 pb-7 pt-4 text-white">
+        <section className="mx-auto flex w-full max-w-[390px] flex-col">
+          <header className="mb-3 flex items-center justify-between">
+            <h1 className="text-[22px] font-black leading-none tracking-[-0.01em] text-white">
+              Últimas Segundas
+            </h1>
+            <button
+              type="button"
+              aria-label="Calendário"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/85"
+            >
+              <CalendarDays className="h-5 w-5" />
+            </button>
+          </header>
+
+          <div className="space-y-2.5">
+            {songs.length === 0 ? (
+              <div className="rounded-[14px] border border-white/10 bg-[#111111] p-5 text-center text-sm font-semibold text-white/60">
+                Carregando catálogo...
+              </div>
+            ) : (
+              songs.map((song) => {
+                const dateParts = getCatalogDateParts(song.release_date);
+                const playerSrc = getSongEmbedSrc(song);
+                const songKey = getSongKey(song);
+                const songPath = getSongPath(song);
+                const isPlaying = playingSongKey === songKey;
+
+                return (
+                  <article
+                    key={songKey}
+                    className="relative grid min-h-[118px] grid-cols-[36px_88px_minmax(0,1fr)] gap-2 rounded-[14px] border border-white/10 bg-[#121212] p-2 shadow-[0_12px_30px_rgba(0,0,0,0.32)]"
+                  >
+                    {isPlaying && playerSrc && (
+                      <iframe
+                        title={`Player ${song.title}`}
+                        src={playerSrc}
+                        allow="autoplay; encrypted-media"
+                        className="pointer-events-none absolute left-2 top-2 h-px w-px opacity-0"
+                      />
+                    )}
+
+                    <div className="flex flex-col items-center justify-center rounded-[10px] bg-white/[0.035] px-1 text-center">
+                      <span className="text-[20px] font-black leading-none text-white">
+                        {dateParts.day}
+                      </span>
+                      <span className="mt-1 text-[9px] font-black uppercase leading-none text-white/72">
+                        {dateParts.month}
+                      </span>
+                      <span className="mt-1 text-[9px] font-bold leading-none text-white/42">
+                        {dateParts.year}
+                      </span>
+                    </div>
+
+                    <Link
+                      to={songPath}
+                      aria-label={`Abrir ${song.title}`}
+                      className="relative overflow-hidden rounded-[10px] bg-white/5"
+                    >
+                      <img
+                        src={getSongThumb(song)}
+                        alt={song.title || 'Música da Segunda'}
+                        className="h-full min-h-[102px] w-full object-cover"
+                        loading="lazy"
+                      />
+                    </Link>
+
+                    <div className="flex min-w-0 flex-col py-0.5">
+                      <Link
+                        to={songPath}
+                        className="truncate text-[13px] font-black leading-tight text-white hover:text-[#FDE047]"
+                      >
+                        {song.title}
+                      </Link>
+                      <span className="mt-1 w-fit rounded-[5px] border border-[#FDE047]/35 bg-[#FDE047]/10 px-1.5 py-0.5 text-[9px] font-black leading-none text-[#FDE047]">
+                        {getSongCategory(song)}
+                      </span>
+                      <p className="mt-1.5 line-clamp-2 text-[11px] font-semibold leading-[1.25] text-white/66">
+                        {song.description || song.excerpt || 'A zoeira da semana em formato de musica.'}
+                      </p>
+
+                      <div className="mt-auto flex items-center gap-2 pt-2">
+                        {playerSrc ? (
+                          <button
+                            type="button"
+                            onClick={() => setPlayingSongKey(isPlaying ? null : songKey)}
+                            aria-label={isPlaying ? `Parar ${song.title}` : `Tocar video de ${song.title}`}
+                            className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
+                              isPlaying
+                                ? 'bg-white text-black'
+                                : 'bg-[#FDE047] text-black hover:bg-[#FDE047]/90'
+                            }`}
+                          >
+                            {isPlaying ? (
+                              <Pause className="h-4.5 w-4.5 fill-current" />
+                            ) : (
+                              <Play className="h-4.5 w-4.5 fill-current" />
+                            )}
+                          </button>
+                        ) : (
+                          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.04] text-white/30">
+                            <Play className="h-4.5 w-4.5" />
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleShareSong(song)}
+                          aria-label={`Compartilhar ${song.title}`}
+                          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.08] text-white transition hover:bg-white/15"
+                        >
+                          <Share2 className="h-4 w-4" />
+                        </button>
+
+                        <Link
+                          to={songPath}
+                          aria-label={`Mais detalhes de ${song.title}`}
+                          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/[0.08] text-white transition hover:bg-white/15"
+                        >
+                          <MoreHorizontal className="h-5 w-5" />
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })
+            )}
+          </div>
+        </section>
       </div>
     </>
   );

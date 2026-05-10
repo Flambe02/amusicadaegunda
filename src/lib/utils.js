@@ -40,10 +40,6 @@ export function getYouTubeEmbedInfo(url) {
 
   try {
     const lower = url.toLowerCase();
-    const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
-    if (listMatch) {
-      return { id: listMatch[1], type: 'playlist' };
-    }
 
     const videoId = extractYouTubeId(url);
     if (videoId) {
@@ -53,6 +49,11 @@ export function getYouTubeEmbedInfo(url) {
     if (lower.includes('music.youtube.com')) {
       const m = url.match(/[?&]v=([A-Za-z0-9_-]{11})/);
       if (m) return { id: m[1], type: 'video' };
+    }
+
+    const listMatch = url.match(/[?&]list=([A-Za-z0-9_-]+)/);
+    if (listMatch) {
+      return { id: listMatch[1], type: 'playlist' };
     }
 
     return null;

@@ -29,7 +29,7 @@ function FlipDigit({ value, label }) {
       >
         {/* Card face */}
         <div
-          className={`absolute inset-0 bg-[#1a2744] rounded-xl flex items-center justify-center shadow-lg transition-transform duration-[220ms] ease-in-out ${flipping ? 'scale-y-0' : 'scale-y-100'}`}
+          className={`absolute inset-0 bg-[#1a2744] rounded-xl flex items-center justify-center shadow-lg transition-transform [transition-duration:220ms] ease-in-out ${flipping ? 'scale-y-0' : 'scale-y-100'}`}
           style={{ transformOrigin: 'center', backfaceVisibility: 'hidden' }}
         >
           <span className="text-3xl font-black text-white tabular-nums leading-none">

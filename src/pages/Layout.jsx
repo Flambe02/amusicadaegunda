@@ -4,12 +4,14 @@ import { Suspense, lazy } from 'react';
 import { createPageUrl } from '@/utils';
 import {
   Home,
+  Library,
   Gift,
   Info,
   FileText,
-  Search
+  Search,
+  Shuffle
 } from 'lucide-react';
-import BottomNavigationModern from '@/components/BottomNavigationModern';
+import { AppBottomNav } from '@/components/mobile';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
@@ -55,10 +57,28 @@ function SidebarCountdown() {
   );
 }
 
+function getMobileActiveTab(pathname) {
+  if (pathname === '/roda') return 'roleta';
+  if (pathname === '/blog') return 'blog';
+  if (pathname === '/search') return 'pesquisa';
+  if (pathname === '/sobre') return 'sobre';
+  if (
+    pathname === '/musica' ||
+    pathname.startsWith('/musica/') ||
+    pathname === '/playlist' ||
+    pathname.startsWith('/chansons') ||
+    pathname.startsWith('/categoria/')
+  ) {
+    return 'catalogo';
+  }
+  return 'inicio';
+}
+
 export default function Layout({ children }) {
   const location = useLocation();
   const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
   const isHomePage = location.pathname === '/';
+  const isImmersiveMobilePage = isHomePage || location.pathname === '/sobre' || location.pathname === '/roda';
 
   const pageName = getCurrentPage(location.pathname);
   const seoData = getRouteSEO(pageName);
@@ -80,6 +100,24 @@ export default function Layout({ children }) {
     if (page.name === 'Início' && location.pathname === '/') return true;
     return location.pathname === page.url;
   };
+
+  const mobileNavItems = [
+    { value: 'inicio', label: 'Início', href: '/', icon: Home },
+    { value: 'catalogo', label: 'Catálogo', href: '/musica', icon: Library },
+    { value: 'roleta', label: 'Roleta', href: '/roda', icon: Shuffle },
+    {
+      value: 'menu',
+      label: 'Menu',
+      icon: Info,
+      menuItems: [
+        { value: 'inicio', label: 'Início', href: '/', icon: Home },
+        { value: 'roleta', label: 'Roda', href: '/roda', icon: Gift },
+        { value: 'blog', label: 'Blog', href: '/blog', icon: FileText },
+        { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
+        { value: 'sobre', label: 'Sobre', href: '/sobre', icon: Info },
+      ],
+    },
+  ];
 
   useEffect(() => {
     let timeoutId = null;
@@ -106,7 +144,7 @@ export default function Layout({ children }) {
       <div className="lg:hidden flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
-        <header className={`z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl${isHomePage ? ' hidden' : ''}`}>
+        <header className={`z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl${isImmersiveMobilePage ? ' hidden' : ''}`}>
           <div className="px-3 pb-2 pt-[max(env(safe-area-inset-top),0.35rem)]">
             <div className="flex min-h-[52px] items-center justify-between gap-2">
               {/* Left: Logo */}
@@ -138,12 +176,15 @@ export default function Layout({ children }) {
         </header>
 
         <main id="main-mobile" className="relative min-h-0 flex-1 overflow-hidden">
-          <div className={`min-h-0 h-full overscroll-behavior-contain pb-[88px] ${isHomePage ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          <div className={`min-h-0 h-full overflow-y-auto overscroll-behavior-contain${isImmersiveMobilePage ? '' : ' pb-[env(safe-area-inset-bottom)]'}`}>
             {children}
           </div>
         </main>
 
-        <BottomNavigationModern />
+        <AppBottomNav
+          items={mobileNavItems}
+          activeValue={getMobileActiveTab(location.pathname)}
+        />
       </div>
 
       <div className="hidden lg:block min-h-screen text-white">

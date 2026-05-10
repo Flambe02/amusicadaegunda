@@ -21,9 +21,9 @@ const parseOrderBy = (orderBy) => {
   return { column, ascending }
 }
 
-// Assume slug column exists by default.
-// Set VITE_SUPABASE_HAS_SLUG=false only for legacy instances before migration.
-let slugColumnSupported = import.meta.env?.VITE_SUPABASE_HAS_SLUG !== 'false'
+// Avoid probing the slug column unless the Supabase instance explicitly declares it.
+// Legacy instances without this column return a 400 before the JS fallback can run.
+let slugColumnSupported = import.meta.env?.VITE_SUPABASE_HAS_SLUG === 'true'
 
 // ===== SERVICE SUPABASE POUR LES CHANSONS =====
 export const supabaseSongService = {

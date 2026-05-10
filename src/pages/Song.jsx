@@ -10,16 +10,21 @@ import {
   Disc3,
   FileText,
   Sparkles,
+  Star,
   Play,
   Pause,
   Square,
   Search as SearchIcon,
+  ArrowLeft,
+  Share2,
+  ChevronDown,
+  MessageCircle,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import LyricsDialog from '@/components/LyricsDialog';
-import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
+import { extractYouTubeId, getYouTubeEmbedInfo, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
@@ -37,6 +42,15 @@ const CATEGORY_LABELS = {
   tecnologia: 'Tecnologia',
   gastronomia: 'Gastronomia',
 };
+
+function getYouTubeEmbedSrc(info, params = '') {
+  if (!info?.id) return null;
+  const base = 'https://www.youtube-nocookie.com/embed';
+  const query = params ? `?${params}` : '';
+  return info.type === 'playlist'
+    ? `${base}/videoseries?list=${info.id}${params ? `&${params}` : ''}`
+    : `${base}/${info.id}${query}`;
+}
 
 export default function SongPage() {
   const { slug: rawSlug } = useParams();
@@ -56,6 +70,8 @@ export default function SongPage() {
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [openMobilePanel, setOpenMobilePanel] = useState('contexto');
+  const [mobileVideoActive, setMobileVideoActive] = useState(false);
 
   // Mini player bar
   const playerIframeRef = useRef(null);
@@ -103,6 +119,7 @@ export default function SongPage() {
   // Reset player state on song change
   useEffect(() => {
     setVideoActivated(false);
+    setMobileVideoActive(false);
     setShowFullDescription(false);
     setPlayerBarActive(false);
     setPlayerBarPlaying(false);
@@ -158,8 +175,17 @@ export default function SongPage() {
     };
   }, [song, slug]);
 
-  // Player bar controls
-  const youtubeIdForPlayer = song ? extractYouTubeId(song.youtube_url || song.youtube_music_url) : null;
+  // Player controls:
+  // - yellow button/audio uses youtube_url first (YouTube Music audio/playlist)
+  // - video cover uses youtube_music_url first (short/video)
+  const youtubeAudioInfo = song
+    ? (getYouTubeEmbedInfo(song.youtube_url) || getYouTubeEmbedInfo(song.youtube_music_url))
+    : null;
+  const youtubeVideoInfo = song
+    ? (getYouTubeEmbedInfo(song.youtube_music_url) || getYouTubeEmbedInfo(song.youtube_url))
+    : null;
+  const youtubeAudioSrc = getYouTubeEmbedSrc(youtubeAudioInfo, 'enablejsapi=1&autoplay=1&rel=0&modestbranding=1');
+  const youtubeVideoSrc = getYouTubeEmbedSrc(youtubeVideoInfo, 'autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1');
   const sendPlayerCommand = (func) => {
     playerIframeRef.current?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func, args: [] }), '*'
@@ -171,13 +197,19 @@ export default function SongPage() {
     setPlayerBarPlaying(false);
   }, []);
   const handlePlayerPlay = () => {
-    if (!youtubeIdForPlayer) return;
+    if (!youtubeAudioSrc) return;
+    setMobileVideoActive(false);
     if (!playerBarActive) { setPlayerBarActive(true); setPlayerBarPlaying(true); }
     else if (playerBarPlaying) { sendPlayerCommand('pauseVideo'); setPlayerBarPlaying(false); }
     else { sendPlayerCommand('playVideo'); setPlayerBarPlaying(true); }
   };
   const handlePlayerStop = () => {
     stopPlayerBar();
+  };
+  const handleMobileVideoPlay = () => {
+    if (!youtubeVideoSrc) return;
+    stopPlayerBar();
+    setMobileVideoActive(true);
   };
 
   // Search
@@ -206,7 +238,10 @@ export default function SongPage() {
     navigate(`/musica/${targetSlug}`);
   };
 
-  const artwork = song?.cover_image ||
+  const hasGenericCover = song?.cover_image?.includes('/icons/') || song?.cover_image?.includes('icon-512');
+  const artwork = (!hasGenericCover && song?.cover_image) ||
+    song?.thumbnail_url ||
+    (youtubeVideoInfo?.type === 'video' ? `https://img.youtube.com/vi/${youtubeVideoInfo.id}/hqdefault.jpg` : null) ||
     getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault') ||
     BRAND_SQUARE_MEDIUM;
 
@@ -215,7 +250,7 @@ export default function SongPage() {
   );
 
   const hasVideo = Boolean(
-    song?.youtube_url?.trim() || song?.youtube_music_url?.trim()
+    youtubeVideoInfo || youtubeAudioInfo
   );
 
   const descriptionPreview = song?.description
@@ -224,6 +259,35 @@ export default function SongPage() {
   const formattedReleaseDate = song?.release_date
     ? format(parseISO(song.release_date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     : null;
+
+  const shareUrl = typeof window !== 'undefined'
+    ? window.location.href
+    : `https://www.amusicadasegunda.com${normalizedUrl}`;
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${song?.title || 'A Musica da Segunda'} - ${shareUrl}`)}`;
+  const mobilePanels = [
+    {
+      key: 'contexto',
+      icon: FileText,
+      title: 'Contexto',
+      subtitle: 'Entenda o assunto da semana',
+      content: descriptionPreview || song?.description || 'Sem contexto disponivel para esta musica.',
+    },
+    {
+      key: 'piada',
+      icon: Sparkles,
+      title: 'A piada da semana',
+      subtitle: 'O humor por tras da musica',
+      content: song?.subtitle || descriptionPreview || 'Uma parodia musical sobre a atualidade do Brasil.',
+    },
+    {
+      key: 'letra',
+      icon: Music,
+      title: 'Letra',
+      subtitle: 'Cante junto e compartilhe',
+      content: song?.lyrics?.trim() || 'Letra indisponivel para esta musica.',
+      action: song?.lyrics?.trim() ? () => setIsLyricsOpen(true) : null,
+    },
+  ];
 
   useEffect(() => {
     if (!song) return;
@@ -291,9 +355,20 @@ export default function SongPage() {
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
 
+      {playerBarActive && youtubeAudioSrc ? (
+        <iframe
+          ref={playerIframeRef}
+          src={youtubeAudioSrc}
+          className="fixed -left-[9999px] -top-[9999px] h-px w-px opacity-0"
+          allow="autoplay; encrypted-media"
+          title={`${song.title} audio`}
+          onLoad={() => sendPlayerCommand('playVideo')}
+        />
+      ) : null}
+
       <div className="space-y-4">
         {/* Search bar */}
-        <div className="relative max-w-md">
+        <div className="relative hidden max-w-md lg:block">
           <form onSubmit={(e) => { e.preventDefault(); if (searchSuggestions[0]) handleSearchNavigate(searchSuggestions[0]); else navigate('/search'); }}>
             <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/38" />
             <input
@@ -328,8 +403,119 @@ export default function SongPage() {
           )}
         </div>
 
+        {/* Mobile detail redesign */}
+        <section className="relative overflow-hidden bg-[linear-gradient(180deg,#050505_0%,#0b0b0b_48%,#050505_100%)] px-4 pb-4 pt-3 lg:hidden">
+          <div className="mb-3 flex items-center justify-between">
+            <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white/78" aria-label="Voltar">
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white/78" aria-label="Compartilhar">
+              <Share2 className="h-5 w-5" />
+            </a>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[18px] border border-white/10 bg-black shadow-[0_22px_60px_rgba(0,0,0,0.48)]">
+            <div className="aspect-video overflow-hidden">
+              {mobileVideoActive && youtubeVideoSrc ? (
+                <iframe
+                  src={youtubeVideoSrc}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={`${song.title} video`}
+                />
+              ) : (
+                <img src={artwork} alt={song.subtitle ? `Capa de "${song.title}" - ${song.subtitle}` : `Capa de "${song.title}"`} className="h-full w-full object-cover" loading="eager" />
+              )}
+            </div>
+            {!mobileVideoActive ? (
+              <button type="button" onClick={handleMobileVideoPlay} disabled={!youtubeVideoSrc} className="absolute inset-0 m-auto flex h-14 w-14 items-center justify-center rounded-full bg-black/62 text-white backdrop-blur-sm transition active:scale-95 disabled:opacity-50" aria-label="Tocar video">
+                <Play className="ml-1 h-7 w-7 fill-current" />
+              </button>
+            ) : null}
+          </div>
+
+          <div className="mt-4">
+            <div className="flex items-end gap-2">
+              <h1 className="text-[2rem] font-black leading-none text-white">{song.title}</h1>
+              {song.category && CATEGORY_LABELS[song.category] ? (
+                <Link to={`/categoria/${song.category}`} className="mb-1 rounded-md border border-app-yellow/35 bg-app-yellow/10 px-1.5 py-0.5 text-[10px] font-black text-app-yellow">
+                  {CATEGORY_LABELS[song.category]}
+                </Link>
+              ) : null}
+            </div>
+            {song.subtitle ? <p className="mt-2 text-sm font-medium leading-5 text-white/68">{song.subtitle}</p> : null}
+          </div>
+
+          <div className="mt-5 rounded-[18px] border border-white/10 bg-white/[0.045] px-4 py-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-app-yellow">Audio da musica</p>
+                <p className="mt-0.5 text-xs font-medium text-white/48">Controles do link YouTube Music</p>
+              </div>
+              {playerBarPlaying ? <span className="rounded-full bg-app-yellow/12 px-2.5 py-1 text-[10px] font-black text-app-yellow">Tocando</span> : null}
+            </div>
+            <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+              <button type="button" onClick={handlePlayerPlay} disabled={!youtubeAudioSrc} className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-full bg-app-yellow px-5 text-sm font-black text-black shadow-[0_0_32px_rgba(253,224,71,0.28)] transition active:scale-[0.98] disabled:opacity-50" aria-label={playerBarPlaying ? 'Pausar audio' : 'Tocar audio'}>
+                {playerBarPlaying ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
+                {playerBarPlaying ? 'Pausar audio' : 'Tocar audio'}
+              </button>
+              <button type="button" onClick={handlePlayerStop} disabled={!playerBarActive} className="inline-flex h-[54px] w-[54px] items-center justify-center rounded-full border border-white/12 bg-white/6 text-white/72 transition active:scale-95 disabled:opacity-35" aria-label="Parar audio">
+                <Square className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <p className="mb-2 text-xs font-semibold text-white/42">Ouvir em</p>
+            <div className="flex flex-wrap gap-2">
+              {song.spotify_url ? (
+                <a href={song.spotify_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 text-xs font-black text-emerald-400">
+                  <Disc3 className="h-3.5 w-3.5" /> Spotify
+                </a>
+              ) : null}
+              {song.youtube_url || song.youtube_music_url ? (
+                <a href={song.youtube_url || song.youtube_music_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-red-500/25 bg-red-500/12 px-3 text-xs font-black text-red-400">
+                  <Play className="h-3.5 w-3.5" /> YouTube
+                </a>
+              ) : null}
+              {song.apple_music_url ? (
+                <a href={song.apple_music_url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-pink-500/25 bg-pink-500/12 px-3 text-xs font-black text-pink-400">
+                  <Star className="h-3.5 w-3.5" /> Apple Music
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-[16px] border border-white/10 bg-white/[0.045]">
+            {mobilePanels.map(({ key, icon: Icon, title, subtitle, content, action }) => {
+              const open = openMobilePanel === key;
+              return (
+                <article key={key} className="border-b border-white/8 last:border-b-0">
+                  <button type="button" onClick={() => { if (action) action(); setOpenMobilePanel(open ? null : key); }} className="flex w-full items-center gap-3 px-3.5 py-3 text-left" aria-expanded={open}>
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-full ${key === 'piada' ? 'bg-app-yellow/12 text-app-yellow' : 'bg-white/8 text-white/72'}`}>
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-black text-white">{title}</span>
+                      <span className="block truncate text-xs font-medium text-white/52">{subtitle}</span>
+                    </span>
+                    <ChevronDown className={`h-4 w-4 text-white/42 transition ${open ? 'rotate-180' : ''}`} />
+                  </button>
+                  {open ? <div className="px-4 pb-3 text-sm leading-6 text-white/64"><p className="line-clamp-5 whitespace-pre-line">{content}</p></div> : null}
+                </article>
+              );
+            })}
+          </div>
+
+          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-4 flex min-h-[52px] w-full items-center justify-between rounded-[14px] bg-app-yellow px-4 text-sm font-black text-black shadow-[0_16px_38px_rgba(253,224,71,0.24)]">
+            <span className="inline-flex items-center gap-2"><MessageCircle className="h-5 w-5" />Mandar no grupo</span>
+            <ChevronDown className="-rotate-90 h-5 w-5" />
+          </a>
+        </section>
+
         {/* Mobile-first song experience */}
-        <section className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[32px] p-4 lg:hidden">
+        <section className="hidden">
           <div className="absolute inset-0 overflow-hidden">
             <img
               src={artwork}
@@ -762,17 +948,7 @@ export default function SongPage() {
               {/* Cover + hidden iframe + info */}
               <div className="flex min-w-0 flex-1 items-center gap-4">
                 <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/5">
-                  {playerBarActive && youtubeIdForPlayer ? (
-                    <iframe
-                      ref={playerIframeRef}
-                      src={`https://www.youtube-nocookie.com/embed/${youtubeIdForPlayer}?enablejsapi=1&autoplay=1&rel=0&modestbranding=1`}
-                      className="absolute inset-0 h-full w-full"
-                      allow="autoplay; encrypted-media"
-                      title={song.title}
-                    />
-                  ) : (
-                    <img src={artwork} alt="" aria-hidden="true" className="h-full w-full object-cover" loading="lazy" />
-                  )}
+                  <img src={artwork} alt="" aria-hidden="true" className="h-full w-full object-cover" loading="lazy" />
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-white">{song.title}</p>
@@ -784,7 +960,7 @@ export default function SongPage() {
               <div className="flex items-center justify-center gap-3">
                 <button
                   onClick={handlePlayerPlay}
-                  disabled={!youtubeIdForPlayer}
+                  disabled={!youtubeAudioSrc}
                   className="h-12 w-12 inline-flex items-center justify-center rounded-full bg-[#FDE047] text-black shadow-lg transition hover:scale-105 disabled:opacity-40"
                   aria-label={playerBarPlaying ? 'Pausar' : 'Tocar'}
                 >

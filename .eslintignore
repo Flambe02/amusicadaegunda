@@ -1,9 +1,0 @@
-node_modules
-dist
-docs
-build
-coverage
-supabase/functions/**/node_modules
-push-sender/node_modules
-*.min.js
-*.bundle.js

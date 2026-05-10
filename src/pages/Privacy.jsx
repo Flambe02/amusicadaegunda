@@ -1,6 +1,6 @@
 import { useSEO } from '../hooks/useSEO';
 
-const CONTACT_EMAIL = 'thepimentaorougecompany@gmail.com';
+const CONTACT_EMAIL = 'contact@musicadasegunda.com';
 const LAST_UPDATE = '7 de maio de 2026';
 
 export default function Privacy() {
