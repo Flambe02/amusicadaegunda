@@ -150,10 +150,10 @@ export default function MobileHomeApp({
         </button>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[390px] min-h-0 flex-1 flex-col gap-2.5">
+      <main className="mx-auto flex w-full max-w-[390px] min-h-0 flex-1 flex-col gap-2.5 landscape:max-w-[640px]">
         <section className="flex min-h-0 flex-1 flex-col">
           <div
-            className="relative flex min-h-[340px] w-full max-w-full flex-1 flex-col overflow-hidden rounded-[14px] border border-app-yellow/18 bg-app-charcoal shadow-[0_28px_80px_rgba(0,0,0,0.62)]"
+            className="relative flex min-h-[340px] w-full max-w-full flex-1 flex-col overflow-hidden rounded-[14px] border border-app-yellow/18 bg-app-charcoal shadow-[0_28px_80px_rgba(0,0,0,0.62)] landscape:min-h-[260px]"
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >

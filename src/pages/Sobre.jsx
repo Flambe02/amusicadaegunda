@@ -266,7 +266,7 @@ function MobileAboutExperience() {
       <div className="pointer-events-none absolute -left-16 top-28 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[repeating-linear-gradient(135deg,rgba(253,224,71,0.08)_0px,rgba(253,224,71,0.08)_1px,transparent_1px,transparent_18px)] opacity-20" />
 
-      <section className="relative mx-auto flex min-h-[calc(100svh-6rem)] max-w-[430px] flex-col items-center justify-center py-5 text-center">
+      <section className="relative mx-auto flex min-h-[calc(100svh-6rem)] max-w-[430px] flex-col items-center justify-center py-5 text-center landscape:min-h-0 landscape:max-w-[680px] landscape:py-6">
         <div className="relative mb-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border border-app-yellow/35 bg-black shadow-[0_0_0_8px_rgba(253,224,71,0.05),0_24px_70px_rgba(0,0,0,0.62)]">
           <div className="absolute inset-2 rounded-full border border-app-yellow/35" />
           <OptimizedImage
@@ -280,7 +280,7 @@ function MobileAboutExperience() {
         <p className="mb-3 text-[10px] font-black uppercase tracking-[0.26em] text-app-yellow">
           Sobre o projeto
         </p>
-        <h1 className="max-w-[12ch] text-[2.1rem] font-black leading-[0.98] tracking-normal text-white">
+        <h1 className="max-w-[12ch] text-[2.1rem] font-black leading-[0.98] tracking-normal text-white landscape:max-w-[28ch] landscape:text-[1.8rem]">
           Toda segunda, o Brasil vira refrao.
         </h1>
         <p className="mt-4 max-w-[20rem] text-[14px] font-medium leading-6 text-white/68">

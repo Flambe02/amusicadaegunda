@@ -165,7 +165,15 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
     const update = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      setSize(Math.max(246, Math.min(306, w - 54, Math.floor(h * 0.39))));
+      const isLandscape = w > h;
+      // In landscape on phones the vertical room is tiny, so allow the wheel
+      // to shrink further than the portrait minimum of 246 to keep the
+      // result card + spin button visible.
+      const minSize = isLandscape ? 180 : 246;
+      const heightBudget = isLandscape
+        ? Math.floor(h - 200) // leave room for header + button + result
+        : Math.floor(h * 0.39);
+      setSize(Math.max(minSize, Math.min(306, w - 54, heightBudget)));
     };
     update();
     window.addEventListener('resize', update);
@@ -320,12 +328,12 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
         />
       ) : null}
 
-      <div className="mx-auto flex w-full max-w-[390px] min-h-0 flex-1 flex-col justify-center gap-2">
+      <div className="mx-auto flex w-full max-w-[390px] flex-col gap-2 landscape:max-w-[760px] landscape:flex-row landscape:items-start landscape:gap-4">
       <header className="mb-2 flex min-h-10 items-center justify-center">
         <h1 className="text-[20px] font-black tracking-tight text-white">Roleta da Zoeira</h1>
       </header>
 
-      <div className="relative mx-auto flex flex-col items-center" style={{ width: size + 16 }}>
+      <div className="relative mx-auto flex flex-col items-center landscape:mx-0 landscape:flex-shrink-0" style={{ width: size + 16 }}>
         <div className="relative" style={{ width: size, height: size }}>
           <div
             className="absolute z-20"
@@ -391,7 +399,9 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
         </div>
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-[16px] border border-violet-300/18 bg-[linear-gradient(135deg,rgba(88,28,135,0.92),rgba(46,16,101,0.86))] shadow-[0_18px_45px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.12)]">
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+
+      <div className="mt-3 overflow-hidden rounded-[16px] border border-violet-300/18 bg-[linear-gradient(135deg,rgba(88,28,135,0.92),rgba(46,16,101,0.86))] shadow-[0_18px_45px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.12)] landscape:mt-0">
         {winner ? (
           <div className="grid min-h-[102px] grid-cols-[minmax(0,1fr)_92px] gap-3 p-3">
             <div className="flex min-w-0 flex-1 flex-col">
@@ -478,6 +488,7 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
           </div>
         </div>
       ) : null}
+      </div>
       </div>
     </div>
   );
