@@ -78,7 +78,7 @@ export default function Layout({ children }) {
   const location = useLocation();
   const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
   const isHomePage = location.pathname === '/';
-  const isImmersiveMobilePage = isHomePage || location.pathname === '/sobre' || location.pathname === '/roda';
+  const isImmersiveMobilePage = isHomePage || location.pathname === '/sobre';
 
   const pageName = getCurrentPage(location.pathname);
   const seoData = getRouteSEO(pageName);

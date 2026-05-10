@@ -323,14 +323,6 @@ export default function MobileHomeApp({
           <PlatformPill tone="apple" href={currentSong?.apple_music_url}>
             Apple Music
           </PlatformPill>
-          <button
-            type="button"
-            onClick={onShowPlatforms}
-            disabled={!hasSong}
-            className="inline-flex min-h-8 items-center rounded-full border border-app-border bg-black/30 px-3 text-[11px] font-black text-app-muted transition active:scale-[0.98] disabled:opacity-45"
-          >
-            Todas
-          </button>
         </div>
       </main>
     </div>

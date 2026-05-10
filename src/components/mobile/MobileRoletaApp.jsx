@@ -307,7 +307,7 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
   const arcStep = 360 / CATEGORIES.length;
 
   return (
-    <div className="min-h-full bg-[radial-gradient(circle_at_50%_0%,rgba(253,224,71,0.12),transparent_26%),linear-gradient(180deg,#050505_0%,#0b0b0b_46%,#050505_100%)] px-4 pb-4 pt-[max(env(safe-area-inset-top),0.75rem)] text-app-white">
+    <div className="flex h-full min-h-full flex-col bg-[radial-gradient(circle_at_50%_0%,rgba(253,224,71,0.12),transparent_26%),linear-gradient(180deg,#050505_0%,#0b0b0b_46%,#050505_100%)] px-4 pb-4 pt-[max(env(safe-area-inset-top),0.75rem)] text-app-white">
       {activeYtId ? (
         <iframe
           key={activeYtId}
@@ -320,16 +320,9 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
         />
       ) : null}
 
-      <div className="mx-auto flex w-full max-w-[390px] flex-col justify-center">
-      <header className="relative mb-2 flex min-h-10 items-center justify-center">
+      <div className="mx-auto flex w-full max-w-[390px] min-h-0 flex-1 flex-col justify-center gap-2">
+      <header className="mb-2 flex min-h-10 items-center justify-center">
         <h1 className="text-[20px] font-black tracking-tight text-white">Roleta da Zoeira</h1>
-        <button
-          type="button"
-          aria-label="Sobre a roleta"
-          className="absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-app-border bg-black/40 text-white/76 transition active:scale-95"
-        >
-          <Info className="h-4 w-4" />
-        </button>
       </header>
 
       <div className="relative mx-auto flex flex-col items-center" style={{ width: size + 16 }}>
