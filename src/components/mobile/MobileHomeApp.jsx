@@ -231,7 +231,7 @@ export default function MobileHomeApp({
             </div>
 
             <div
-              className={`absolute inset-x-3 bottom-3 space-y-2.5 transition-opacity duration-200 ${
+              className={`absolute inset-x-3 bottom-10 space-y-2.5 transition-opacity duration-200 ${
                 hasSong && videoActivated ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}
             >
