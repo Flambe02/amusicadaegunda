@@ -162,23 +162,48 @@ function getSlug(song) {
   return `song-${song.id}`;
 }
 
+function loadSongsFromJsonFallback() {
+  const jsonPath = path.join(process.cwd(), 'content', 'songs.json');
+  if (!fs.existsSync(jsonPath)) return null;
+  const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+  if (!Array.isArray(raw)) return null;
+  return raw.map((s, idx) => ({
+    id: s.id || idx,
+    title: s.title || s.name,
+    slug: s.slug,
+    release_date: s.release_date || s.datePublished,
+    updated_at: s.updated_at,
+    created_at: s.created_at,
+  }));
+}
+
 async function main() {
   console.log('🗺️  Génération unifiée des sitemaps SEO...\n');
-  
+
   try {
-    // Fetch songs from Supabase
+    let songs = null;
+
+    // Fetch songs from Supabase (with fallback to content/songs.json)
     console.log('📡 Récupération des chansons depuis Supabase...');
-    const { data: songs, error } = await supabase
-      .from('songs')
-      .select('id, title, release_date, updated_at, created_at')
-      .order('release_date', { ascending: false });
-    
-    if (error) {
-      throw new Error(`Erreur Supabase: ${error.message}`);
+    try {
+      const { data, error } = await supabase
+        .from('songs')
+        .select('id, title, release_date, updated_at, created_at')
+        .order('release_date', { ascending: false });
+      if (error) throw new Error(error.message);
+      songs = data;
+    } catch (err) {
+      console.warn(`⚠️  Supabase indisponible (${err.message}). Fallback sur content/songs.json...`);
+      songs = loadSongsFromJsonFallback();
+      if (!songs) {
+        throw new Error('Aucun fallback songs.json disponible');
+      }
+      console.log(`✅ Fallback: ${songs.length} chanson(s) chargée(s) depuis content/songs.json`);
     }
-    
+
     if (!songs || songs.length === 0) {
-      console.warn('⚠️  Aucune chanson trouvée dans Supabase');
+      console.warn('⚠️  Aucune chanson trouvée');
+      songs = [];
     } else {
       console.log(`✅ ${songs.length} chanson(s) récupérée(s)`);
     }
