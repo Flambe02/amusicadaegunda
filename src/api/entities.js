@@ -98,10 +98,11 @@ detectStorageMode().then(() => {
 // ===== ENTITÉS AVEC FALLBACK AUTOMATIQUE =====
 export const Song = {
   list: async (orderBy = '-release_date', limit = null) => {
+    const numericLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : null;
     try {
       // Forcer l'utilisation de Supabase
       devLog('☁️ Chargement depuis Supabase...');
-      const songs = await supabaseSongService.list(orderBy, limit);
+      const songs = await supabaseSongService.list(orderBy, numericLimit);
       if (songs && songs.length > 0) {
         devLog('✅ Chansons chargées depuis Supabase:', songs.length);
         return songs;
@@ -109,7 +110,7 @@ export const Song = {
         devLog('⚠️ Aucune chanson trouvée dans Supabase');
         const staticSongs = await loadStaticPublishedSongs();
         const orderedStaticSongs = sortSongs(staticSongs, orderBy);
-        return limit ? orderedStaticSongs.slice(0, limit) : orderedStaticSongs;
+        return numericLimit ? orderedStaticSongs.slice(0, numericLimit) : orderedStaticSongs;
       }
     } catch (error) {
       logger.error('Erro ao carregar músicas desde Supabase:', error);
@@ -117,7 +118,7 @@ export const Song = {
       try {
         const staticSongs = await loadStaticPublishedSongs();
         const orderedStaticSongs = sortSongs(staticSongs, orderBy);
-        return limit ? orderedStaticSongs.slice(0, limit) : orderedStaticSongs;
+        return numericLimit ? orderedStaticSongs.slice(0, numericLimit) : orderedStaticSongs;
       } catch (staticError) {
         logger.error('❌ Fallback statique indisponible:', staticError);
         return [];

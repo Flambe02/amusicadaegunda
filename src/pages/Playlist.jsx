@@ -111,7 +111,7 @@ export default function Playlist() {
   useEffect(() => {
     const loadSongs = async () => {
       try {
-        const allSongs = await Song.list('-release_date', 'published');
+        const allSongs = await Song.list('-release_date');
         setSongs(allSongs || []);
       } catch (error) {
         console.error('Error loading songs for playlist:', error);
