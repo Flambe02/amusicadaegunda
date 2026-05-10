@@ -1,14 +1,21 @@
 const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { createClient } from '@supabase/supabase-js'
 
-// Configuration Supabase - variables d'environnement obligatoires
-const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
+// Public, RLS-protected publishable key. Safe to ship — it is already in every
+// production bundle. Used as a fallback when CI builds with a rotated-out
+// legacy JWT (eyJ...) in VITE_SUPABASE_ANON_KEY so auth keeps working.
+const PUBLISHABLE_KEY_FALLBACK = 'sb_publishable_qQqLLFjAv4sk3z2eQW0-sA_59XCpAKF'
+const SUPABASE_URL_FALLBACK = 'https://efnzmpzkzeuktqkghwfa.supabase.co'
 
-// Vérification des variables d'environnement
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Variables d\'environnement Supabase manquantes: VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY sont obligatoires')
-}
+const envUrl = import.meta.env?.VITE_SUPABASE_URL
+const envKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
+
+const supabaseUrl = envUrl || SUPABASE_URL_FALLBACK
+// Legacy JWT anon keys (eyJ...) were disabled by Supabase. If the env key is
+// in that legacy shape, prefer the publishable fallback.
+const supabaseAnonKey = (envKey && !envKey.startsWith('eyJ'))
+  ? envKey
+  : PUBLISHABLE_KEY_FALLBACK
 
 // Client Supabase avec persistance de session.
 // Cache headers globaux retirés pour laisser le CDN/PostgREST gérer la cache policy.
