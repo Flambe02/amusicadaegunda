@@ -27,6 +27,18 @@ if (fs.existsSync(docsDir)) {
 console.log('📋 Copie des fichiers...');
 fs.cpSync(distDir, docsDir, { recursive: true });
 
+// Expose content/songs.json at /content/songs.json so the runtime fallback in
+// src/api/entities.js can hydrate when Supabase is unreachable (e.g. rotated key).
+const songsSrc = path.join(__dirname, '..', 'content', 'songs.json');
+if (fs.existsSync(songsSrc)) {
+  for (const targetDir of [distDir, docsDir]) {
+    const targetContentDir = path.join(targetDir, 'content');
+    fs.mkdirSync(targetContentDir, { recursive: true });
+    fs.copyFileSync(songsSrc, path.join(targetContentDir, 'songs.json'));
+  }
+  console.log('📋 content/songs.json copié dans dist/content/ et docs/content/ (runtime fallback)');
+}
+
 console.log('✅ Copie terminée ! docs/ est maintenant à jour.');
 console.log(`📊 Fichiers copiés depuis: ${distDir}`);
 console.log(`📊 Vers: ${docsDir}`);
