@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Bell, ChevronLeft, ChevronRight, Play, Share2, SkipBack, SkipForward } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -54,13 +54,17 @@ function getArtwork(song, fallback) {
   );
 }
 
-function getVideoBackdrop(song, fallback) {
-  if (!song) return fallback;
-  return (
-    getYouTubeThumbnailUrl(song.youtube_music_url || song.youtube_url, 'maxresdefault') ||
-    getYouTubeThumbnailUrl(song.youtube_music_url || song.youtube_url, 'hqdefault') ||
-    fallback
-  );
+function getVideoBackdropCandidates(song, fallback) {
+  if (!song) return { primary: fallback, fallback: null };
+  const musicVideoUrl = song.youtube_url || song.youtube_music_url;
+  const shortsUrl = song.youtube_music_url || song.youtube_url;
+  const musicHq = getYouTubeThumbnailUrl(musicVideoUrl, 'hqdefault');
+  const musicMax = getYouTubeThumbnailUrl(musicVideoUrl, 'maxresdefault');
+  const shortsHq = getYouTubeThumbnailUrl(shortsUrl, 'hqdefault');
+  return {
+    primary: musicMax || musicHq || shortsHq || fallback,
+    fallback: musicHq && musicMax ? musicHq : shortsHq || fallback,
+  };
 }
 
 function PlatformPill({ href, tone, children }) {
@@ -100,8 +104,24 @@ export default function MobileHomeApp({
   const hasSong = Boolean(currentSong);
   const category = getCategoryLabel(currentSong?.category);
   const releaseDate = formatSongDate(currentSong?.release_date);
-  const heroImage = getVideoBackdrop(currentSong, getArtwork(currentSong, heroArtwork));
+  const artworkFallback = getArtwork(currentSong, heroArtwork);
+  const heroCandidates = getVideoBackdropCandidates(currentSong, artworkFallback);
+  const [heroImage, setHeroImage] = useState(heroCandidates.primary);
+  const [heroErrored, setHeroErrored] = useState(false);
   const songSlug = currentSong?.slug || (currentSong?.title ? titleToSlug(currentSong.title) : null);
+
+  useEffect(() => {
+    setHeroImage(heroCandidates.primary);
+    setHeroErrored(false);
+  }, [heroCandidates.primary]);
+
+  const handleHeroError = () => {
+    if (heroErrored) return;
+    setHeroErrored(true);
+    if (heroCandidates.fallback && heroCandidates.fallback !== heroImage) {
+      setHeroImage(heroCandidates.fallback);
+    }
+  };
 
   const handleTouchStart = (event) => {
     const touch = event.touches?.[0];
@@ -164,6 +184,7 @@ export default function MobileHomeApp({
               width="720"
               height="980"
               loading="eager"
+              onError={handleHeroError}
             />
 
             <div
