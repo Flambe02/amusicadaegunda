@@ -47,8 +47,8 @@ jobs:
           echo "VITE_VAPID_KEY_VERSION=${{ secrets.VITE_VAPID_KEY_VERSION }}" >> .env
         shell: bash
         
-      - name: Build application
-        run: npm run build
+      - name: Build application and sync to docs/
+        run: npm run deploy
         env:
           # Forcer un rebuild complet sans cache
           NODE_ENV: production
