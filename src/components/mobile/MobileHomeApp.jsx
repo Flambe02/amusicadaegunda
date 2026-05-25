@@ -7,7 +7,7 @@ import AppButton from './AppButton';
 import AppCard from './AppCard';
 import AppChip from './AppChip';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
-import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
+import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import { getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 
 const CATEGORY_LABELS = {
@@ -54,17 +54,29 @@ function getArtwork(song, fallback) {
   );
 }
 
-function getVideoBackdropCandidates(song, fallback) {
-  if (!song) return { primary: fallback, fallback: null };
+// YouTube returns a 120x90 grey placeholder (with 200 OK) when a thumbnail
+// doesn't exist for the requested quality, so `onError` alone can't catch it.
+// We build an ordered chain and also reject any image that loads smaller than this.
+const YT_PLACEHOLDER_MAX_WIDTH = 200;
+
+function buildHeroThumbnailChain(song, fallback) {
+  if (!song) return fallback ? [fallback] : [];
   const musicVideoUrl = song.youtube_url || song.youtube_music_url;
   const shortsUrl = song.youtube_music_url || song.youtube_url;
-  const musicHq = getYouTubeThumbnailUrl(musicVideoUrl, 'hqdefault');
-  const musicMax = getYouTubeThumbnailUrl(musicVideoUrl, 'maxresdefault');
-  const shortsHq = getYouTubeThumbnailUrl(shortsUrl, 'hqdefault');
-  return {
-    primary: musicMax || musicHq || shortsHq || fallback,
-    fallback: musicHq && musicMax ? musicHq : shortsHq || fallback,
-  };
+  const candidates = [
+    getYouTubeThumbnailUrl(musicVideoUrl, 'maxresdefault'),
+    getYouTubeThumbnailUrl(musicVideoUrl, 'hqdefault'),
+    getYouTubeThumbnailUrl(shortsUrl, 'maxresdefault'),
+    getYouTubeThumbnailUrl(shortsUrl, 'hqdefault'),
+    fallback,
+    BRAND_SQUARE_MEDIUM,
+  ];
+  const seen = new Set();
+  return candidates.filter((url) => {
+    if (!url || seen.has(url)) return false;
+    seen.add(url);
+    return true;
+  });
 }
 
 function PlatformPill({ href, tone, children }) {
@@ -105,21 +117,27 @@ export default function MobileHomeApp({
   const category = getCategoryLabel(currentSong?.category);
   const releaseDate = formatSongDate(currentSong?.release_date);
   const artworkFallback = getArtwork(currentSong, heroArtwork);
-  const heroCandidates = getVideoBackdropCandidates(currentSong, artworkFallback);
-  const [heroImage, setHeroImage] = useState(heroCandidates.primary);
-  const [heroErrored, setHeroErrored] = useState(false);
+  const heroChain = buildHeroThumbnailChain(currentSong, artworkFallback);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const heroImage = heroChain[heroIndex] || artworkFallback;
   const songSlug = currentSong?.slug || (currentSong?.title ? titleToSlug(currentSong.title) : null);
 
   useEffect(() => {
-    setHeroImage(heroCandidates.primary);
-    setHeroErrored(false);
-  }, [heroCandidates.primary]);
+    setHeroIndex(0);
+  }, [heroChain[0]]);
+
+  const advanceHeroChain = () => {
+    setHeroIndex((current) => (current + 1 < heroChain.length ? current + 1 : current));
+  };
 
   const handleHeroError = () => {
-    if (heroErrored) return;
-    setHeroErrored(true);
-    if (heroCandidates.fallback && heroCandidates.fallback !== heroImage) {
-      setHeroImage(heroCandidates.fallback);
+    advanceHeroChain();
+  };
+
+  const handleHeroLoad = (event) => {
+    const naturalWidth = event?.currentTarget?.naturalWidth ?? 0;
+    if (naturalWidth > 0 && naturalWidth < YT_PLACEHOLDER_MAX_WIDTH) {
+      advanceHeroChain();
     }
   };
 
@@ -185,6 +203,7 @@ export default function MobileHomeApp({
               height="980"
               loading="eager"
               onError={handleHeroError}
+              onLoad={handleHeroLoad}
             />
 
             <div
