@@ -241,6 +241,41 @@ function parseMissingColumn(error) {
   return null;
 }
 
+// Translate raw Supabase/Postgres write errors into actionable French messages.
+// Returns null if there's nothing useful to say (caller falls back to raw message).
+function describeWriteError(error) {
+  if (!error) return null;
+  const code = error.code;
+  const msg = error.message || '';
+
+  // RLS / permission — almost always an expired session (auth.uid() null)
+  if (code === '42501' || /row-level security|permission denied/i.test(msg)) {
+    return 'Droits insuffisants ou session expirée. Reconnecte-toi (Sair puis login) et réessaie.';
+  }
+  // .single()/.maybeSingle() returned 0 rows → RLS USING blocked the row
+  if (code === 'PGRST116') {
+    return 'Aucune ligne enregistrée (session expirée ou droits RLS insuffisants). Reconnecte-toi puis réessaie.';
+  }
+  // UNIQUE violation — slug (titre) ou youtube_url en double
+  if (code === '23505' || /duplicate key/i.test(msg)) {
+    const field = msg.match(/Key \(([^)]+)\)/)?.[1] || '';
+    if (field.includes('slug')) return 'Une chanson avec ce titre existe déjà (slug en double). Modifie le titre.';
+    if (field.includes('youtube')) return 'Cette URL YouTube est déjà utilisée par une autre chanson.';
+    return 'Une contrainte d\'unicité empêche l\'enregistrement (titre ou URL en double).';
+  }
+  return msg || null;
+}
+
+// Verify there's a live session before a write so we surface a clear message
+// instead of a silent 0-row update when the access token has expired mid-session.
+async function ensureWritableSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error('Session expirée. Reconnecte-toi pour publier (Sair puis login).');
+  }
+  return session;
+}
+
 function normalizeSongPayload(formData) {
   const payload = Object.fromEntries(
     Object.entries(formData).filter(([, value]) => value !== '' && !(Array.isArray(value) && value.length === 0))
@@ -270,6 +305,14 @@ async function persistSongWithSchemaFallback({ panel, payload }) {
 
     const missingColumn = parseMissingColumn(error);
     if (!missingColumn || !(missingColumn in nextPayload)) {
+      // Not a recoverable missing-column error → surface a clear message
+      // (RLS/session, slug or youtube_url duplicate, etc.) instead of raw SQL.
+      const friendly = describeWriteError(error);
+      if (friendly && friendly !== error.message) {
+        const wrapped = new Error(friendly);
+        wrapped.cause = error;
+        throw wrapped;
+      }
       throw error;
     }
 
@@ -852,11 +895,14 @@ export default function AdminPage() {
       s => s.status === 'draft' && s.publish_at && s.publish_at <= now
     );
     for (const song of due) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('songs')
         .update({ status: 'published', publish_at: null })
-        .eq('id', song.id);
-      if (!error) {
+        .eq('id', song.id)
+        .select();
+      // Only celebrate if a row actually changed — a 0-row result means RLS
+      // blocked the write (expired session) and nothing was published.
+      if (!error && data && data.length > 0) {
         toast({ title: `✅ "${song.title}" publicada automaticamente!` });
         try {
           await notifyAllSubscribers({
@@ -865,6 +911,14 @@ export default function AdminPage() {
             url: song.slug ? `/musica/${song.slug}` : '/',
           });
         } catch { /* silent */ }
+      } else if (error || !data || data.length === 0) {
+        // Surfacing the failure avoids a silent loop where a scheduled song
+        // never goes live and the admin has no idea why.
+        toast({
+          title: `⚠️ "${song.title}" não foi publicada automaticamente`,
+          description: describeWriteError(error) || 'Sessão expirada ou direitos RLS — recarrega e reconecta-te.',
+          variant: 'destructive',
+        });
       }
     }
     if (due.length > 0) await loadSongs();
@@ -899,6 +953,7 @@ export default function AdminPage() {
   const handleSave = async (formData) => {
     setIsSaving(true);
     try {
+      await ensureWritableSession();
       const wasPublished = panel?.status === 'published';
       const becomesPublished = formData.status === 'published';
       const toSave = normalizeSongPayload(formData);
@@ -935,8 +990,16 @@ export default function AdminPage() {
   // ── Quick publish ──
   const handlePublish = async (song) => {
     try {
-      const { error } = await supabase.from('songs').update({ status: 'published' }).eq('id', song.id);
-      if (error) throw error;
+      await ensureWritableSession();
+      const { data, error } = await supabase
+        .from('songs')
+        .update({ status: 'published', publish_at: null })
+        .eq('id', song.id)
+        .select();
+      if (error) throw new Error(describeWriteError(error));
+      if (!data || data.length === 0) {
+        throw new Error('Publication non enregistrée (0 ligne). Session expirée ou droits RLS — reconnecte-toi puis réessaie.');
+      }
       try {
         await notifyAllSubscribers({
           title: '🎵 Nova Música da Segunda!',
@@ -972,12 +1035,17 @@ export default function AdminPage() {
     if (!panel || panel === 'new') return;
     const update = { hashtags, category };
     if (subtitle && subtitle !== panel.subtitle) update.subtitle = subtitle;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('songs')
       .update(update)
-      .eq('id', panel.id);
-    if (error) {
-      toast({ title: 'Erro ao guardar', description: error.message, variant: 'destructive' });
+      .eq('id', panel.id)
+      .select();
+    if (error || !data || data.length === 0) {
+      toast({
+        title: 'Erro ao guardar',
+        description: describeWriteError(error) || 'Nenhuma linha alterada — sessão expirada ou direitos RLS.',
+        variant: 'destructive',
+      });
     } else {
       toast({ title: '✅ Guardado!' });
       setSongs(prev => prev.map(s => s.id === panel.id ? { ...s, ...update } : s));
@@ -986,9 +1054,17 @@ export default function AdminPage() {
 
   // ── Category change (inline from SongRow) ──
   const handleCategoryChange = async (songId, newCategory) => {
-    const { error } = await supabase.from('songs').update({ category: newCategory }).eq('id', songId);
-    if (error) {
-      toast({ title: 'Erro ao mudar categoria', variant: 'destructive' });
+    const { data, error } = await supabase
+      .from('songs')
+      .update({ category: newCategory })
+      .eq('id', songId)
+      .select();
+    if (error || !data || data.length === 0) {
+      toast({
+        title: 'Erro ao mudar categoria',
+        description: describeWriteError(error) || 'Nenhuma linha alterada — sessão expirada ou direitos RLS.',
+        variant: 'destructive',
+      });
     } else {
       setSongs(prev => prev.map(s => s.id === songId ? { ...s, category: newCategory } : s));
     }
