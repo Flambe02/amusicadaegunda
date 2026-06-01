@@ -47,7 +47,10 @@ function getCategoryLabel(category) {
 function getArtwork(song, fallback) {
   if (!song) return fallback;
   return (
-    getYouTubeThumbnailUrl(song.youtube_url || song.youtube_music_url, 'hqdefault') ||
+    // Prioritise youtube_music_url (the Short) like <YouTubeEmbed> does — its
+    // thumbnail is the real video frame, whereas youtube_url (YouTube Music)
+    // often resolves to the generic "A Música da Segunda" cover art.
+    getYouTubeThumbnailUrl(song.youtube_music_url || song.youtube_url, 'hqdefault') ||
     song.cover_image ||
     song.thumbnail_url ||
     fallback
@@ -61,13 +64,17 @@ const YT_PLACEHOLDER_MAX_WIDTH = 200;
 
 function buildHeroThumbnailChain(song, fallback) {
   if (!song) return fallback ? [fallback] : [];
-  const musicVideoUrl = song.youtube_url || song.youtube_music_url;
+  // Match <YouTubeEmbed>/desktop priority: the Short (youtube_music_url) is the
+  // primary visual — its thumbnail is the real video frame and fits the portrait
+  // hero. youtube_url (YouTube Music) is the fallback; its art is often the
+  // generic brand cover, which is why mobile was showing the wrong image.
   const shortsUrl = song.youtube_music_url || song.youtube_url;
+  const musicVideoUrl = song.youtube_url || song.youtube_music_url;
   const candidates = [
-    getYouTubeThumbnailUrl(musicVideoUrl, 'maxresdefault'),
-    getYouTubeThumbnailUrl(musicVideoUrl, 'hqdefault'),
     getYouTubeThumbnailUrl(shortsUrl, 'maxresdefault'),
     getYouTubeThumbnailUrl(shortsUrl, 'hqdefault'),
+    getYouTubeThumbnailUrl(musicVideoUrl, 'maxresdefault'),
+    getYouTubeThumbnailUrl(musicVideoUrl, 'hqdefault'),
     fallback,
     BRAND_SQUARE_MEDIUM,
   ];
