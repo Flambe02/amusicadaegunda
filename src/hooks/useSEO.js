@@ -19,8 +19,9 @@ export function useSEO({
 }) {
   const siteName = 'A Música da Segunda';
   const siteUrl = 'https://www.amusicadasegunda.com';
-  // Harmonisé avec index.html pour cohérence SEO
-  const defaultImage = `${siteUrl}/icons/icon-512x512.png`;
+  // ✅ SEO: image sociale dédiée 1200x630 (cohérente avec index.html et les stubs)
+  // plutôt que le logo carré 512x512 — meilleur rendu des aperçus OG/Twitter.
+  const defaultImage = `${siteUrl}/images/og-social-1200x630.jpg`;
 
   // ✅ SEO: Si le title contient déjà un pipe, ne pas ajouter le siteName (évite répétition)
   const fullTitle = buildFullTitle(title, siteName);
@@ -102,7 +103,7 @@ export function useSEO({
           "url": siteUrl,
           "logo": {
             "@type": "ImageObject",
-            "url": defaultImage,
+            "url": `${siteUrl}/icons/icon-512x512.png`,
             "width": 512,
             "height": 512
           },

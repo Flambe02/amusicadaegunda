@@ -42,7 +42,7 @@ const staticPages = [
   { path: '/musica', priority: 0.9, changefreq: 'weekly' },
   { path: '/roda', priority: 0.8, changefreq: 'weekly' },
   { path: '/calendar', priority: 0.8, changefreq: 'weekly' },
-  { path: '/blog', priority: 0.8, changefreq: 'weekly' },
+  // ✅ /blog retiré : contenu dupliqué de /musica/[slug], désormais noindex,follow
   { path: '/sobre', priority: 0.7, changefreq: 'monthly' },
   { path: '/adventcalendar', priority: 0.8, changefreq: 'weekly' },
   // Category pages — only include categories with ≥2 songs (thin pages excluded)
@@ -55,6 +55,7 @@ const staticPages = [
   { path: '/categoria/midia', priority: 0.75, changefreq: 'weekly' },
   { path: '/categoria/esporte', priority: 0.7, changefreq: 'weekly' },
   { path: '/categoria/energia', priority: 0.7, changefreq: 'weekly' },
+  { path: '/categoria/economia', priority: 0.7, changefreq: 'weekly' },
   { path: '/categoria/seguranca', priority: 0.65, changefreq: 'monthly' },
   { path: '/categoria/gastronomia', priority: 0.65, changefreq: 'monthly' },
   { path: '/categoria/outros', priority: 0.6, changefreq: 'monthly' },

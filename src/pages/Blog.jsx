@@ -191,7 +191,10 @@ export default function Blog() {
     description: 'Histórias por trás de cada música publicada na A Música da Segunda. Descrições detalhadas e significado de cada canção.',
     keywords: 'blog musical, histórias de músicas, música da segunda, paródias musicais, descrições de canções',
     url: '/blog',
-    type: 'website'
+    type: 'website',
+    // ✅ SEO: contenu dupliqué de /musica/[slug] (mêmes descriptions) → noindex pour
+    // éviter la cannibalisation. La page reste navigable et les liens suivis (follow).
+    robots: 'noindex, follow',
   });
 
   const featuredSong = filteredSongs[0] || songs[0] || null;

@@ -20,6 +20,55 @@ const OUT = path.resolve('dist');
 const IMAGE = cfg.brand.logo || '/images/og-default.jpg';
 const siteUrl = cfg.siteUrl;
 
+// ✅ SEO: Image sociale dédiée 1200x630 (vs logo transparent inadapté pour OG/Twitter).
+// Utilisée comme og:image par défaut pour toutes les pages sans miniature propre.
+const OG_IMAGE = '/images/og-social-1200x630.jpg';
+const OG_IMAGE_W = 1200;
+const OG_IMAGE_H = 630;
+
+// ✅ Source unique des libellés/descriptions de catégories (inclut "economia").
+// Hoistée au niveau module pour être disponible dès la boucle des chansons.
+const CATEGORY_LABELS = {
+  internacional: 'Internacional',
+  midia: 'Mídia',
+  energia: 'Energia',
+  esporte: 'Esporte',
+  cultura: 'Cultura',
+  outros: 'Outros',
+  saude: 'Saúde',
+  policia: 'Polícia',
+  politica: 'Política',
+  seguranca: 'Segurança',
+  tecnologia: 'Tecnologia',
+  gastronomia: 'Gastronomia',
+  economia: 'Economia',
+};
+
+const CATEGORY_DESCRIPTIONS = {
+  internacional: 'Paródias sobre geopolítica, diplomacia e eventos fora do Brasil.',
+  midia: 'Sátiras sobre jornalismo, redes sociais e comunicação.',
+  energia: 'Músicas sobre crises energéticas, apagões e infraestrutura elétrica.',
+  esporte: 'Paródias do universo do esporte brasileiro e internacional.',
+  cultura: 'Sátiras sobre carnaval, entretenimento e vida cultural brasileira.',
+  outros: 'Músicas sobre temas variados do cotidiano.',
+  saude: 'Paródias sobre saúde pública, medicina e bem-estar.',
+  policia: 'Sátiras sobre segurança pública e casos policiais.',
+  politica: 'Músicas sobre política brasileira, eleições e mandatos.',
+  seguranca: 'Paródias sobre violência urbana e segurança pública.',
+  tecnologia: 'Sátiras sobre startups, inteligência artificial e inovação.',
+  gastronomia: 'Músicas sobre gastronomia, culinária e cultura alimentar.',
+  economia: 'Paródias sobre economia, inflação, preços, mercado e finanças do Brasil.',
+};
+
+// ✅ SEO: titre court et keyword-friendly (≤ ~60 c.) pour <title> et og:title.
+// Le sous-titre long (phrase descriptive) reste dans le <h1> et la description.
+function shortSongTitle(name, category) {
+  const cat = CATEGORY_LABELS[category];
+  return cat
+    ? `${name} — Paródia ${cat} | A Música da Segunda`
+    : `${name} — Paródia Musical | A Música da Segunda`;
+}
+
 // 🔧 Extraire les scripts React depuis dist/index.html
 function extractScriptsFromIndex() {
   const indexPath = path.resolve('dist', 'index.html');
@@ -93,7 +142,9 @@ ${songListHtml}
     desc: playlistDesc,
     url: playlistUrl,
     robots: 'index, follow, max-video-preview:0',
-    image: `${siteUrl}${IMAGE}`,
+    image: `${siteUrl}${OG_IMAGE}`,
+    imageWidth: OG_IMAGE_W,
+    imageHeight: OG_IMAGE_H,
     body: playlistBody,
     jsonld: [
       org,
@@ -187,13 +238,22 @@ ${songListHtml}
   <p><a href="${siteUrl}/" style="color: #2563eb;">← Voltar ao início</a></p>
 </div>`;
 
+    // ✅ SEO: /blog ré-affiche les mêmes descriptions que /musica/[slug] (contenu
+    // dupliqué, rendu client-side). On le rend noindex,follow pour éviter la
+    // cannibalisation, tout en gardant la page navigable pour les humains.
+    const pageRobots = page.path === '/blog'
+      ? 'noindex, follow'
+      : 'index, follow, max-video-preview:0';
+
     const pageHtml = baseHtml({
       lang: cfg.defaultLocale,
       title: page.title,
       desc: page.description,
       url: pageUrl,
-      robots: 'index, follow, max-video-preview:0',
-      image: `${siteUrl}${IMAGE}`,
+      robots: pageRobots,
+      image: `${siteUrl}${OG_IMAGE}`,
+      imageWidth: OG_IMAGE_W,
+      imageHeight: OG_IMAGE_H,
       body: pageBody,
       jsonld: [org, website],
       scripts
@@ -352,10 +412,8 @@ ${scripts.js}
     const fullDesc = s.description || `Letra, áudio e história de "${s.name}" — paródia musical da segunda.`;
     const metaDesc = fullDesc.length > 155 ? fullDesc.slice(0, 152).trimEnd() + '...' : fullDesc;
 
-    // ✅ SEO: Enriched title with subtitle
-    const pageTitle = s.subtitle
-      ? `${s.name} — ${s.subtitle} | A Música da Segunda`
-      : `${s.name} — A Música da Segunda`;
+    // ✅ SEO: titre court (≤ ~60 c.). Le sous-titre long reste dans le <h1>/contexte.
+    const pageTitle = shortSongTitle(s.name, s.category);
 
     // ✅ SEO: Subtitle block under H1
     const subtitleHtml = s.subtitle
@@ -435,9 +493,22 @@ ${scripts.js}
     // ✅ SEO Fix 3 — Use YouTube thumbnail as OG/JSON-LD image when available
     // (fallback to brand logo if no videoId). Social shares previously showed
     // the generic brand image even though every song has a YouTube embed.
-    const songImage = videoId
-      ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-      : (s.image ? `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}` : `${siteUrl}${IMAGE}`);
+    let songImage, songImageW, songImageH;
+    if (videoId) {
+      // Miniature YouTube hqdefault = 480x360 (dimensions honnêtes, vs 1200x630 erroné avant)
+      songImage = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      songImageW = 480;
+      songImageH = 360;
+    } else if (s.image) {
+      // Dimensions inconnues → on n'émet pas de og:image:width/height (évite une fausse valeur)
+      songImage = `${siteUrl}${s.image.startsWith('/') ? s.image : '/' + s.image}`;
+      songImageW = null;
+      songImageH = null;
+    } else {
+      songImage = `${siteUrl}${OG_IMAGE}`;
+      songImageW = OG_IMAGE_W;
+      songImageH = OG_IMAGE_H;
+    }
 
     // Structured data for song watch page
     const jsonldSchemas = [
@@ -472,6 +543,8 @@ ${scripts.js}
       robots: 'index, follow, max-video-preview:0',
       ogType: 'music.song',
       image: songImage,
+      imageWidth: songImageW,
+      imageHeight: songImageH,
       body: staticBody,
       jsonld: jsonldSchemas,
       scripts,
@@ -507,35 +580,7 @@ ${scripts.js}
   }
 
   // ✅ SEO: Stubs for category pages /categoria/[slug]
-  const CATEGORY_LABELS = {
-    internacional: 'Internacional',
-    midia: 'Mídia',
-    energia: 'Energia',
-    esporte: 'Esporte',
-    cultura: 'Cultura',
-    outros: 'Outros',
-    saude: 'Saúde',
-    policia: 'Polícia',
-    politica: 'Política',
-    seguranca: 'Segurança',
-    tecnologia: 'Tecnologia',
-    gastronomia: 'Gastronomia',
-  };
-
-  const CATEGORY_DESCRIPTIONS = {
-    internacional: 'Paródias sobre geopolítica, diplomacia e eventos fora do Brasil.',
-    midia: 'Sátiras sobre jornalismo, redes sociais e comunicação.',
-    energia: 'Músicas sobre crises energéticas, apagões e infraestrutura elétrica.',
-    esporte: 'Paródias do universo do esporte brasileiro e internacional.',
-    cultura: 'Sátiras sobre carnaval, entretenimento e vida cultural brasileira.',
-    outros: 'Músicas sobre temas variados do cotidiano.',
-    saude: 'Paródias sobre saúde pública, medicina e bem-estar.',
-    policia: 'Sátiras sobre segurança pública e casos policiais.',
-    politica: 'Músicas sobre política brasileira, eleições e mandatos.',
-    seguranca: 'Paródias sobre violência urbana e segurança pública.',
-    tecnologia: 'Sátiras sobre startups, inteligência artificial e inovação.',
-    gastronomia: 'Músicas sobre gastronomia, culinária e cultura alimentar.',
-  };
+  // (CATEGORY_LABELS / CATEGORY_DESCRIPTIONS sont définis au niveau module, inclut "economia")
 
   // Collect unique categories present in songs.json
   const categoriesInUse = [...new Set(songs.map(s => s.category).filter(Boolean))];
@@ -570,7 +615,9 @@ ${catSongListHtml}
       desc: catDesc,
       url: catUrl,
       robots: 'index, follow, max-video-preview:0',
-      image: `${siteUrl}${IMAGE}`,
+      image: `${siteUrl}${OG_IMAGE}`,
+      imageWidth: OG_IMAGE_W,
+      imageHeight: OG_IMAGE_H,
       body: catBody,
       jsonld: [org, website],
       scripts
@@ -624,12 +671,7 @@ ${catSongListHtml}
   // ✅ SEO BRAND: Enrichir le contenu statique de la homepage pour le brand SERP
   // Injecter chansons récentes + catégories dans div#root pour les crawlers sans JS
   if (songs.length > 0 && fs.existsSync(indexHtmlPath)) {
-    const CATEGORY_LABELS = {
-      politica: 'Política', internacional: 'Internacional', cultura: 'Cultura',
-      policia: 'Polícia', midia: 'Mídia', esporte: 'Esporte',
-      energia: 'Energia', seguranca: 'Segurança', gastronomia: 'Gastronomia',
-      outros: 'Outros', saude: 'Saúde', tecnologia: 'Tecnologia',
-    };
+    // CATEGORY_LABELS défini au niveau module (inclut "economia")
     const recentSongs = [...songs]
       .sort((a, b) => new Date(b.datePublished || 0) - new Date(a.datePublished || 0))
       .slice(0, 8);

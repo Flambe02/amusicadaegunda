@@ -41,6 +41,7 @@ const CATEGORY_LABELS = {
   seguranca: 'Segurança',
   tecnologia: 'Tecnologia',
   gastronomia: 'Gastronomia',
+  economia: 'Economia',
 };
 
 function getYouTubeEmbedSrc(info, params = '') {
@@ -132,8 +133,12 @@ export default function SongPage() {
   const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}/` : '/musica/';
   const shouldNoindex = !isLoading && errorType === 'invalid_slug';
 
+  // ✅ SEO: titre court et keyword-friendly, aligné sur les stubs (generate-stubs.cjs).
+  // Le sous-titre long (phrase) reste affiché dans le <h1>/contexte, pas dans le <title>.
   const seoTitle = song
-    ? (song.subtitle ? `${song.title} — ${song.subtitle} | A Música da Segunda` : `${song.title} — A Música da Segunda`)
+    ? (CATEGORY_LABELS[song.category]
+        ? `${song.title} — Paródia ${CATEGORY_LABELS[song.category]} | A Música da Segunda`
+        : `${song.title} — Paródia Musical | A Música da Segunda`)
     : slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda';
   const seoDescription = song?.description
     ? (song.description.length > 155 ? song.description.slice(0, 152).trimEnd() + '...' : song.description)
