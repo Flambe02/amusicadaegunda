@@ -4,7 +4,7 @@
     <loc>https://www.amusicadasegunda.com/musica/2025-retro/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/50-por-cento/</loc>
@@ -22,19 +22,19 @@
     <loc>https://www.amusicadasegunda.com/musica/amor-de-churrasco/</loc>
     <lastmod>2026-04-27</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/apagao-nao-e-refrao/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/artemis-2/</loc>
-    <lastmod>2026-04-27</lastmod>
+    <lastmod>2026-06-29</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/as-festas-juninas/</loc>
@@ -46,7 +46,7 @@
     <loc>https://www.amusicadasegunda.com/musica/banco-master/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/bbb26-ana-paula-renault/</loc>
@@ -58,7 +58,7 @@
     <loc>https://www.amusicadasegunda.com/musica/biografia-de-uma-tornozeleira/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/bonner-sai/</loc>
@@ -91,22 +91,40 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.amusicadasegunda.com/musica/como-e-grande-meu-amor-pelo-zelle/</loc>
+    <lastmod>2026-06-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://www.amusicadasegunda.com/musica/confissoes-bancarias/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://www.amusicadasegunda.com/musica/dark-horse-do-brasil/</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://www.amusicadasegunda.com/musica/datafolha-quaest/</loc>
     <lastmod>2026-04-27</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/debaixo-da-pia/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.amusicadasegunda.com/musica/doze-no-bolo-trinta-e-sete-no-papel/</loc>
+    <lastmod>2026-06-26</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/enel-nao-e-humano-e-jesus-cristo/</loc>
@@ -124,11 +142,17 @@
     <loc>https://www.amusicadasegunda.com/musica/esse-lugar-chama-ormuz/</loc>
     <lastmod>2026-03-16</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/eu-sou-um-ovo/</loc>
     <lastmod>2026-04-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.amusicadasegunda.com/musica/gelo-gelo/</loc>
+    <lastmod>2026-05-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -154,13 +178,25 @@
     <loc>https://www.amusicadasegunda.com/musica/ja-e-natal/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.amusicadasegunda.com/musica/jogador-home-office/</loc>
+    <lastmod>2026-06-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/maduro/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.amusicadasegunda.com/musica/messi-e-o-melhor-yo-no-falei/</loc>
+    <lastmod>2026-06-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/nobel-prize/</loc>
@@ -214,7 +250,7 @@
     <loc>https://www.amusicadasegunda.com/musica/po-ancelotti-e-eu/</loc>
     <lastmod>2026-04-27</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/prisao-domiciliar/</loc>
@@ -238,25 +274,31 @@
     <loc>https://www.amusicadasegunda.com/musica/sinfonia-do-vorcaro/</loc>
     <lastmod>2026-03-16</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/sorteio-da-copa/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/ta-caro-nao-abastece-mais/</loc>
     <lastmod>2026-04-27</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/ta-na-hora-do-acordo-chegar/</loc>
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.amusicadasegunda.com/musica/terrorista-e-o-caramba/</loc>
+    <lastmod>2026-06-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://www.amusicadasegunda.com/musica/uber/</loc>
@@ -281,5 +323,11 @@
     <lastmod>2026-03-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.amusicadasegunda.com/musica/ype-ype/</loc>
+    <lastmod>2026-05-17</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
 </urlset>
