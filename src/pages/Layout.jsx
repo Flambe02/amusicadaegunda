@@ -279,6 +279,11 @@ export default function Layout({ children }) {
               <p className="text-center text-[11px] uppercase tracking-[0.24em] text-white/38">
                 (c) 2026 A Musica da Segunda. The Pimentao Rouge Project.
               </p>
+              <p className="mt-2 text-center text-[11px] uppercase tracking-[0.24em]">
+                <Link to="/privacy" className="text-white/38 transition-colors hover:text-white/70">
+                  Política de Privacidade
+                </Link>
+              </p>
             </div>
           </footer>
         </div>
