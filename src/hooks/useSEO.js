@@ -109,7 +109,10 @@ export function useSEO({
           },
           "sameAs": [
             "https://www.tiktok.com/@amusicadasegunda",
-            "https://open.spotify.com/user/amusicadasegunda"
+            "https://www.youtube.com/@amusicadasegunda",
+            "https://www.youtube.com/channel/UCrkmgvYXtZznqvZNtIKZdaQ",
+            "https://open.spotify.com/user/amusicadasegunda",
+            "https://www.wikidata.org/wiki/Q140379813"
           ]
         },
         "mainEntityOfPage": {
