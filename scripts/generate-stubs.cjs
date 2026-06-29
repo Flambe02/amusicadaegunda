@@ -69,6 +69,34 @@ function shortSongTitle(name, category) {
     : `${name} — Paródia Musical | A Música da Segunda`;
 }
 
+// ✅ SEO: stub de redirection (meta-refresh + canonical + JS) — GitHub Pages ne
+// supporte pas les 301 server-side, c'est le mécanisme retenu pour les redirections.
+function redirectStubHtml(targetUrl, label) {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=${targetUrl}">
+  <link rel="canonical" href="${targetUrl}">
+  <meta name="robots" content="noindex, follow">
+  <title>Redirection - A Música da Segunda</title>
+  <script>
+    window.location.replace('${targetUrl}');
+  </script>
+</head>
+<body>
+  <p>Redirection en cours vers <a href="${targetUrl}">${label}</a>...</p>
+</body>
+</html>`;
+}
+
+// ✅ SEO: anciennes URLs / slugs malformés repérés dans Google Search Console.
+// Chaque entrée génère un stub de redirection vers la bonne URL (évite les 404).
+const LEGACY_REDIRECTS = [
+  // Slug malformé (tiret final) — la bonne page est ta-na-hora-do-acordo-chegar
+  { from: 'musica/ta-na-hora-do-acordo-chegar-', to: '/musica/ta-na-hora-do-acordo-chegar/' },
+];
+
 // 🔧 Extraire les scripts React depuis dist/index.html
 function extractScriptsFromIndex() {
   const indexPath = path.resolve('dist', 'index.html');
@@ -197,6 +225,13 @@ ${songListHtml}
       path: '/privacy',
       title: 'Política de Privacidade — A Música da Segunda',
       description: 'Política de privacidade do A Música da Segunda: quais dados são coletados, como são protegidos e como solicitar a exclusão. Conformidade LGPD.'
+    },
+    {
+      // ✅ SEO: /search est une route SPA (recherche désactivée). Stub 200 + noindex
+      // pour supprimer le 404 GSC sans casser la fonctionnalité côté React.
+      path: '/search',
+      title: 'Buscar Músicas — A Música da Segunda',
+      description: 'Busque entre todas as paródias musicais de A Música da Segunda.'
     }
   ];
 
@@ -239,9 +274,9 @@ ${songListHtml}
 </div>`;
 
     // ✅ SEO: /blog ré-affiche les mêmes descriptions que /musica/[slug] (contenu
-    // dupliqué, rendu client-side). On le rend noindex,follow pour éviter la
-    // cannibalisation, tout en gardant la page navigable pour les humains.
-    const pageRobots = page.path === '/blog'
+    // dupliqué) ; /search est une route utilitaire (recherche désactivée).
+    // Les deux en noindex,follow : page navigable mais pas indexée.
+    const pageRobots = (page.path === '/blog' || page.path === '/search')
       ? 'noindex, follow'
       : 'index, follow, max-video-preview:0';
 
@@ -629,6 +664,30 @@ ${catSongListHtml}
     await fs.writeFile(catFile, `<!-- build:${new Date().toISOString()} -->\n` + catHtml, { encoding: 'utf8' });
   }
   console.log(`✅ Stubs /categoria/[slug] créés (${categoriesInUse.length} catégories)`);
+
+  // ✅ SEO: Catégories connues mais sans chanson (ex. /categoria/saude) → stub de
+  // redirection 301 vers /musica/ pour supprimer les 404 GSC. Couvre aussi toute
+  // catégorie qui se viderait à l'avenir.
+  const emptyCategories = Object.keys(CATEGORY_LABELS).filter(c => !categoriesInUse.includes(c));
+  for (const catSlug of emptyCategories) {
+    const catDir = path.join(OUT, 'categoria', catSlug);
+    await fs.ensureDir(catDir);
+    const catFile = path.join(catDir, 'index.html');
+    const target = `${siteUrl}/musica/`;
+    const html = redirectStubHtml(target, 'todas as músicas');
+    await fs.writeFile(catFile, `<!-- build:${new Date().toISOString()} -->\n` + html, { encoding: 'utf8' });
+  }
+  console.log(`✅ Stubs /categoria/[slug] vides → redirection /musica/ (${emptyCategories.length} : ${emptyCategories.join(', ') || 'aucune'})`);
+
+  // ✅ SEO: Redirections d'anciennes URLs / slugs malformés (liste GSC) → bonne page.
+  for (const r of LEGACY_REDIRECTS) {
+    const dir = path.join(OUT, r.from);
+    await fs.ensureDir(dir);
+    const file = path.join(dir, 'index.html');
+    const html = redirectStubHtml(`${siteUrl}${r.to}`, 'a página correta');
+    await fs.writeFile(file, `<!-- build:${new Date().toISOString()} -->\n` + html, { encoding: 'utf8' });
+  }
+  console.log(`✅ Stubs de redirection legacy/malformés créés (${LEGACY_REDIRECTS.length})`);
 
   // ✅ LCP FIX: Injecter le preload de la miniature courante dans dist/index.html.
   // On privilégie une copie same-origin générée au build pour éviter une dépendance
