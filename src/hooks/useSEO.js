@@ -63,8 +63,9 @@ export function useSEO({
 
       // Mise à jour des métadonnées de base
       updateMetaTag('name', 'description', fullDescription);
-      updateMetaTag('name', 'keywords', fullKeywords);
-      
+      // ✅ SEO: meta keywords volontairement NON injecté (ignoré par Google, obsolète).
+      // fullKeywords reste dans le tableau de deps pour compat, mais n'écrit plus de balise.
+
       // ✅ SEO: Directive robots (permet max-video-preview:0 pour désactiver l'indexation vidéo)
       updateMetaTag('name', 'robots', robots);
 
@@ -112,6 +113,7 @@ export function useSEO({
             "https://www.youtube.com/@amusicadasegunda",
             "https://www.youtube.com/channel/UCrkmgvYXtZznqvZNtIKZdaQ",
             "https://open.spotify.com/user/amusicadasegunda",
+            "https://www.facebook.com/amusicadasegunda",
             "https://www.wikidata.org/wiki/Q140379813"
           ]
         },

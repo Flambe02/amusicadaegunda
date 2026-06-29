@@ -526,7 +526,7 @@ export default function Home() {
     title: 'A Musica da Segunda | Parodias Musicais e Humor Inteligente',
     description: 'A Musica da Segunda - Nova musica toda segunda-feira! Parodias musicais inteligentes sobre as noticias do Brasil. Descubra humor e musica para sua semana.',
     keywords: 'musica da segunda, parodias musicais, noticias do brasil, musica brasileira, descoberta musical, nova musica toda segunda, parodias inteligentes',
-    image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/icons/icon-512x512.png',
+    image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/images/og-social-1200x630.jpg',
     url: '/',
     type: 'website',
     // SEO fix: disable video indexing on homepage.
