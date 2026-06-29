@@ -113,7 +113,7 @@ export function useSEO({
             "https://www.youtube.com/@amusicadasegunda",
             "https://www.youtube.com/channel/UCrkmgvYXtZznqvZNtIKZdaQ",
             "https://open.spotify.com/user/amusicadasegunda",
-            "https://www.facebook.com/amusicadasegunda",
+            "https://www.facebook.com/musicadasegunda",
             "https://www.wikidata.org/wiki/Q140379813"
           ]
         },
