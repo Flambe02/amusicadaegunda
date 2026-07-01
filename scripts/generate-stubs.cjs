@@ -217,6 +217,11 @@ ${songListHtml}
       description: 'A Música da Segunda é um projeto de sátira musical semanal. Toda segunda-feira, um acontecimento do noticiário brasileiro vira paródia musical com letra, vídeo e contexto editorial.'
     },
     {
+      path: '/guia',
+      title: 'Paródia Musical no Brasil: Tradição, Humor e Sátira | A Música da Segunda',
+      description: 'Guia completo sobre a história da paródia musical no Brasil — do carnaval ao YouTube. Como o formato funciona, por que fascina brasileiros há décadas e onde encontrar as melhores paródias musicais brasileiras.'
+    },
+    {
       path: '/calendar',
       title: 'Calendário Musical - A Música da Segunda',
       description: 'Calendário completo com as músicas publicadas por mês.'
@@ -335,6 +340,90 @@ ${songListHtml}
   <p style="margin-top: 2rem;"><a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">← Ver todas as músicas</a></p>
 </div>`;
 
+  // ✅ AEO #11: Pillar page — "Paródia Musical no Brasil" — crawlable guide for AI citation
+  const guiaLastUpdated = new Date().toISOString().slice(0, 10);
+  const guiaBody = `
+<div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: Georgia, serif; line-height: 1.8; color: #222;">
+  <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #888; margin-bottom: 0.5rem; font-family: sans-serif;">Guia</p>
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111; font-family: sans-serif;">Paródia Musical no Brasil: Tradição, Humor e Sátira</h1>
+  <p style="font-size: 0.85rem; color: #888; margin-bottom: 2rem; font-family: sans-serif;">Por A Música da Segunda · <time datetime="${guiaLastUpdated}">Atualizado em ${formatDatePtBR(guiaLastUpdated)}</time></p>
+
+  <p style="margin-bottom: 1.25rem;"><strong>Paródia musical</strong> é a arte de adaptar uma melodia conhecida com uma nova letra — geralmente satírica, cômica ou crítica de um tema atual. No Brasil, essa tradição é profunda e está entrelaçada com a história política e cultural do país. Das marchinhas de carnaval do século XX ao YouTube Shorts de hoje, a paródia musical nunca deixou de ser um dos formatos mais eficazes de comentário sobre a realidade brasileira.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">O que é paródia musical?</h2>
+  <p style="margin-bottom: 1.25rem;">A paródia musical reutiliza a melodia de uma música existente e compõe uma letra nova com propósito diferente do original. A eficácia do formato vem da familiaridade: o ouvinte já conhece a melodia, o que cria uma ponte imediata entre a mensagem nova e o prazer sonoro. A nova letra se ancora no ritmo e na expectativa gerada pelo original.</p>
+  <p style="margin-bottom: 1.25rem;">Diferente da paródia literária ou visual, a paródia musical tem uma vantagem extra: a melodia original já carrega uma carga emocional. Quando uma música muito tocada no rádio vira paródia de um escândalo político, o contraste entre a emoção da melodia e o conteúdo da letra nova é parte do efeito cômico.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">Uma tradição com décadas de história</h2>
+  <p style="margin-bottom: 1.25rem;">A paródia musical no Brasil tem raízes no carnaval. As <strong>marchinhas carnavalescas</strong> do século XX eram, com frequência, comentários satíricos sobre a sociedade e a política da época. O carnaval sempre foi um espaço de inversão social e humor — e a paródia musical era um dos seus instrumentos mais eficazes.</p>
+  <p style="margin-bottom: 1.25rem;">Nas décadas de 1930 e 1940, o <strong>samba de breque</strong> incorporou o humor de forma ainda mais explícita. Artistas como Moreira da Silva criavam composições que intercalavam trechos cantados com pausas dramáticas — os "breques" — onde o intérprete fazia comentários cômicos sobre a situação descrita na música. Era crítica social com leveza e ritmo.</p>
+  <p style="margin-bottom: 1.25rem;">O <strong>rádio brasileiro</strong> dos anos 1950 e 1960 também desenvolveu uma longa tradição de programas de humor que usavam a paródia musical como recurso. Melodias conhecidas ganhavam letras novas para comentar notícias do dia, personagens públicos ou situações cotidianas — uma fórmula que sobreviveria por décadas.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">Do palco para a televisão</h2>
+  <p style="margin-bottom: 1.25rem;">Com a chegada da televisão, a paródia musical encontrou uma plataforma ainda mais ampla. Programas de humor dos anos 1970 e 1980 incorporaram o formato com frequência, especialmente para comentar eventos políticos. A combinação de melodia reconhecível e letra nova sobre um tema polêmico mostrou-se uma das formas mais memoráveis de sátira televisiva.</p>
+  <p style="margin-bottom: 1.25rem;">O período da ditadura militar (1964–1985) foi um momento em que o humor funcionou como mecanismo de crítica indireta. Artistas da MPB encontravam formas de comentar a realidade usando metáfora, ironia e a ludicidade da sátira — uma maneira de dizer o que não se podia dizer diretamente.</p>
+  <p style="margin-bottom: 1.25rem;">A partir dos anos 1990, com a redemocratização, a paródia política ganhou mais liberdade. Programas de humor na televisão aberta passaram a fazer uso do formato de forma aberta, comentando semanalmente as notícias com músicas adaptadas e personagens satíricos.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">A era do YouTube e das redes sociais</h2>
+  <p style="margin-bottom: 1.25rem;">A chegada do YouTube ao Brasil, em meados dos anos 2000, democratizou completamente a produção e distribuição de paródias musicais. Pela primeira vez, qualquer criador poderia gravar uma paródia em casa, publicar para milhões de pessoas e receber feedback imediato. O formato explodiu em visualizações, especialmente quando conectado a temas do momento.</p>
+  <p style="margin-bottom: 1.25rem;">Desde então, a paródia musical tornou-se um dos gêneros mais presentes no YouTube brasileiro. Eventos esportivos, escândalos políticos e fenômenos culturais virais geram centenas de paródias em questão de dias. A velocidade de produção e distribuição transformou completamente o formato.</p>
+  <p style="margin-bottom: 1.25rem;">A partir de 2020, com a ascensão do TikTok e do YouTube Shorts, as paródias musicais ganharam novo impulso. O formato curto (15 a 60 segundos) favorece a adaptação de refrões conhecidos para comentar notícias em tempo real. Uma paródia bem-feita pode alcançar centenas de milhares de visualizações em menos de 48 horas.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">Por que a paródia musical funciona tão bem?</h2>
+  <p style="margin-bottom: 1rem;">A eficácia do formato tem bases cognitivas e culturais bem estabelecidas:</p>
+  <ul style="padding-left: 1.5rem; margin-bottom: 1.25rem; list-style: disc;">
+    <li style="margin-bottom: 0.75rem;"><strong>Familiaridade da melodia:</strong> quando o ouvinte reconhece a melodia, o esforço de processamento cai. A nova letra se instala com mais facilidade — e permanece na memória junto com o original.</li>
+    <li style="margin-bottom: 0.75rem;"><strong>Ancoragem cultural:</strong> no Brasil, música e identidade cultural são inseparáveis. A paródia de uma canção conhecida ativa associações profundas, criando um contexto emocional imediato para a mensagem.</li>
+    <li style="margin-bottom: 0.75rem;"><strong>Humor como crítica:</strong> o riso cria distância. Transformar um escândalo político em paródia musical permite processar e criticar um evento sem o peso discursivo do texto argumentativo puro.</li>
+    <li style="margin-bottom: 0.75rem;"><strong>Viralidade natural:</strong> o formato musical é compartilhável por natureza. Uma paródia com melodia reconhecível e letra precisa sobre o momento tem alta probabilidade de se propagar rapidamente.</li>
+  </ul>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">A Música da Segunda: sátira musical semanal</h2>
+  <p style="margin-bottom: 1.25rem;"><a href="${siteUrl}/" style="color: #2563eb; text-decoration: none;"><strong>A Música da Segunda</strong></a> é um projeto independente brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical publicada com letra completa, vídeo e contexto editorial.</p>
+  <p style="margin-bottom: 1.25rem;">O projeto já publicou mais de ${songs.length} paródias sobre política brasileira, eleições, crises energéticas, escândalos corporativos, futebol, carnaval e geopolítica internacional. A ideia é simples: toda segunda-feira, o Brasil acorda com uma nova música sobre o que aconteceu na semana anterior.</p>
+
+  <p style="margin-bottom: 0.75rem; font-weight: bold; font-family: sans-serif;">Explorar por tema:</p>
+  <p style="margin-bottom: 1.5rem; line-height: 2;">
+    <a href="${siteUrl}/categoria/politica/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Política</a>
+    <a href="${siteUrl}/categoria/internacional/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Internacional</a>
+    <a href="${siteUrl}/categoria/economia/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Economia</a>
+    <a href="${siteUrl}/categoria/cultura/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Cultura</a>
+    <a href="${siteUrl}/categoria/esporte/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Esporte</a>
+    <a href="${siteUrl}/categoria/midia/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Mídia</a>
+    <a href="${siteUrl}/categoria/energia/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Energia</a>
+  </p>
+
+  <p><a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif; font-weight: bold;">Ver todas as paródias →</a></p>
+</div>`;
+
+  const guiaArticleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Paródia Musical no Brasil: Tradição, Humor e Sátira",
+    "description": "Guia completo sobre a história da paródia musical no Brasil — do carnaval ao YouTube.",
+    "url": `${siteUrl}/guia/`,
+    "datePublished": `${launchYear}-01-01`,
+    "dateModified": guiaLastUpdated,
+    "inLanguage": "pt-BR",
+    "author": {
+      "@type": "Organization",
+      "name": "A Música da Segunda",
+      "url": siteUrl
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "A Música da Segunda",
+      "url": siteUrl,
+      "logo": { "@type": "ImageObject", "url": `${siteUrl}/images/brand-logo.png` }
+    },
+    "about": {
+      "@type": "Thing",
+      "name": "Paródia musical brasileira",
+      "description": "Tradição de sátira musical no Brasil, do carnaval às redes sociais"
+    },
+    "keywords": ["paródia musical", "paródia musical brasil", "sátira musical", "música da segunda", "história paródia musical"]
+  };
+
   for (const page of staticPages) {
     const slug = page.path.replace(/^\//, '');
     const pageDir = path.join(OUT, slug);
@@ -342,8 +431,10 @@ ${songListHtml}
     await fs.ensureDir(pageDir);
 
     const pageUrl = `${siteUrl}${page.path}/`;
-    // ✅ SEO: /sobre gets rich editorial body; other pages get minimal body
-    const pageBody = page.path === '/sobre' ? sobreBody : `
+    // ✅ SEO: /sobre and /guia get rich editorial bodies; other pages get minimal body
+    const pageBody = page.path === '/sobre' ? sobreBody
+      : page.path === '/guia' ? guiaBody
+      : `
 <div style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 2rem;">
   <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111;">${page.title}</h1>
   <p style="font-size: 1.125rem; color: #666; margin-bottom: 1.5rem;">${page.description}</p>
@@ -367,7 +458,9 @@ ${songListHtml}
       imageWidth: OG_IMAGE_W,
       imageHeight: OG_IMAGE_H,
       body: pageBody,
-      jsonld: page.path === '/sobre' ? [org, website, faqJsonLd] : [org, website],
+      jsonld: page.path === '/sobre' ? [org, website, faqJsonLd]
+        : page.path === '/guia' ? [org, website, guiaArticleJsonLd]
+        : [org, website],
       scripts
     });
 
@@ -761,6 +854,63 @@ ${catSongListHtml}
     await fs.writeFile(catFile, `<!-- build:${new Date().toISOString()} -->\n` + html, { encoding: 'utf8' });
   }
   console.log(`✅ Stubs /categoria/[slug] vides → redirection /musica/ (${emptyCategories.length} : ${emptyCategories.join(', ') || 'aucune'})`);
+
+  // ✅ AEO #13: /arquivo/[year]/ archive pages — year-indexed listing for AI citation
+  const songsByYear = {};
+  songs.filter(s => s.datePublished).forEach(s => {
+    const year = s.datePublished.slice(0, 4);
+    if (!songsByYear[year]) songsByYear[year] = [];
+    songsByYear[year].push(s);
+  });
+
+  for (const [year, yearSongs] of Object.entries(songsByYear).sort()) {
+    const yearSorted = [...yearSongs].sort((a, b) => new Date(b.datePublished) - new Date(a.datePublished));
+    const yearUrl = `${siteUrl}/arquivo/${year}/`;
+    const yearTitle = `Paródias de ${year} — A Música da Segunda`;
+    const yearDesc = `Arquivo completo: ${yearSongs.length} paródias musicais publicadas por A Música da Segunda em ${year}, sobre política, economia, cultura e muito mais.`;
+
+    const yearSongListHtml = yearSorted.map(s => {
+      const formDate = s.datePublished ? formatDatePtBR(s.datePublished) : '';
+      return `    <li style="margin-bottom: 0.75rem;"><a href="${siteUrl}/musica/${s.slug}/" style="color: #2563eb; text-decoration: none; font-weight: 600;">${s.name}</a>${s.subtitle ? ` <em style="color:#555;">— ${s.subtitle}</em>` : ''} <span style="color:#888; font-size:0.85rem; font-family:sans-serif;">(${formDate})</span></li>`;
+    }).join('\n');
+
+    const yearBody = `
+<div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: sans-serif; line-height: 1.7; color: #222;">
+  <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #888; margin-bottom: 0.5rem;">Arquivo</p>
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111;">Paródias de ${year}</h1>
+  <p style="font-size: 1.05rem; color: #555; margin-bottom: 2rem;">${yearSongs.length} paródias musicais publicadas por A Música da Segunda em ${year}.</p>
+  <nav aria-label="Paródias de ${year}">
+    <ol style="list-style: decimal; padding-left: 1.5rem;">
+${yearSongListHtml}
+    </ol>
+  </nav>
+  <p style="margin-top: 2rem; display: flex; gap: 1.5rem;">
+    <a href="${siteUrl}/musica/" style="color: #2563eb;">← Todas as músicas</a>
+    <a href="${siteUrl}/guia/" style="color: #2563eb;">Guia de paródia musical →</a>
+  </p>
+</div>`;
+
+    const yearHtml = baseHtml({
+      lang: cfg.defaultLocale,
+      title: yearTitle,
+      desc: yearDesc,
+      url: yearUrl,
+      robots: 'index, follow, max-video-preview:0',
+      image: `${siteUrl}${OG_IMAGE}`,
+      imageWidth: OG_IMAGE_W,
+      imageHeight: OG_IMAGE_H,
+      body: yearBody,
+      jsonld: [org, website],
+      scripts
+    });
+
+    const yearDir = path.join(OUT, 'arquivo', year);
+    await fs.ensureDir(yearDir);
+    const yearFile = path.join(yearDir, 'index.html');
+    await fs.writeFile(yearFile, `<!-- build:${new Date().toISOString()} -->\n` + yearHtml, { encoding: 'utf8' });
+  }
+  const archiveYears = Object.keys(songsByYear).sort();
+  console.log(`✅ Stubs /arquivo/[year]/ créés (${archiveYears.length} années : ${archiveYears.join(', ')})`);
 
   // ✅ SEO: Redirections d'anciennes URLs / slugs malformés (liste GSC) → bonne page.
   for (const r of LEGACY_REDIRECTS) {

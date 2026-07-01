@@ -44,6 +44,7 @@ const staticPages = [
   { path: '/calendar', priority: 0.8, changefreq: 'weekly' },
   // ✅ /blog retiré : contenu dupliqué de /musica/[slug], désormais noindex,follow
   { path: '/sobre', priority: 0.7, changefreq: 'monthly' },
+  { path: '/guia', priority: 0.8, changefreq: 'monthly' },
   { path: '/adventcalendar', priority: 0.8, changefreq: 'weekly' },
   // Category pages — only include categories with ≥2 songs (thin pages excluded)
   // Managed dynamically: categories with 1 song (outros, seguranca, gastronomia) get lower priority
@@ -221,13 +222,27 @@ async function main() {
       changefreq: page.changefreq,
       priority: page.priority
     }));
-    
+
+    // ✅ AEO #13: Add /arquivo/[year]/ archive pages dynamically from songs
+    const currentYear = new Date().getFullYear().toString();
+    const yearsInData = [...new Set(
+      songs.map(s => (s.release_date || s.datePublished || '').slice(0, 4)).filter(y => /^\d{4}$/.test(y))
+    )];
+    for (const year of yearsInData) {
+      staticUrls.push({
+        loc: `${cfg.siteUrl}/arquivo/${year}`,
+        lastmod: now,
+        changefreq: year === currentYear ? 'monthly' : 'yearly',
+        priority: 0.65
+      });
+    }
+
     // Deduplicate (shouldn't be needed for static, but safe)
     const deduplicatedStatic = deduplicateUrls(staticUrls);
     const staticXml = generateSitemapXML(deduplicatedStatic);
     const staticFile = path.join(process.cwd(), 'public', 'sitemap-pages.xml');
     await fs.writeFile(staticFile, staticXml, 'utf8');
-    console.log(`✅ ${staticFile} généré (${deduplicatedStatic.length} pages statiques)`);
+    console.log(`✅ ${staticFile} généré (${deduplicatedStatic.length} pages statiques, dont ${yearsInData.length} archives /arquivo/)`);
     
     // 2. Generate songs sitemap
     console.log('\n🎵 Génération du sitemap des chansons...');

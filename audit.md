@@ -81,18 +81,40 @@ Générer dans le pipeline de stubs. Accélère la découverte des nouvelles cha
 
 ## Priorité 3 — Contenu (Phase 4 orientée IA)
 
-### 11. Page pilier "définitive" — *effort : demi-journée*
-**"Paródia musical no Brasil: história e guia"**
-- Les guides définitifs = ~27 % des citations IA
-- Y intégrer stats sourcées + citations d'experts (+37–40 % de boost mesuré)
-- Seul type de contenu pouvant faire du site LA source sur le sujet (les pages chanson individuelles ne le peuvent pas)
+### 11. ~~Page pilier "Paródia Musical no Brasil"~~ ✅ FAIT (2026-07-01)
+- URL : `https://www.amusicadasegunda.com/guia/`
+- Stub statique : ~1 000 mots pt-BR (histoire marchinha → samba de breque → télévision → YouTube → Shorts)
+- Article JSON-LD avec `dateModified`, `author`, `keywords`
+- Composant React `src/pages/Guia.jsx`
+- Route `/guia` ajoutée dans `routes.js`
+- Ajouté au sitemap (priorité 0.8, mensuel)
+- Ajouté dans `llms.txt`
 
-### 12. Capitaliser sur l'actualité — *effort : éditorial continu*
-Les pages chanson sont du commentaire original d'événements ("escala 6x1", PEC 221/19…) — exactement ce que Perplexity cite sur les requêtes fraîches.
-- Toujours mettre le nom de l'événement dans title/H2/subtitle dès la publication du lundi
+### 12. Capitaliser sur l'actualité — *éditorial continu*
 
-### 13. `/arquivo/` par année — *effort : moyen, priorité basse*
-Déjà identifié en Phase 4. Utile mais derrière tout le reste.
+**Formule de publication recommandée pour chaque lundi :**
+
+| Champ | Format recommandé |
+|-------|-------------------|
+| **Titre de la page** | `{Nom événement} — {Angle satirique} \| A Música da Segunda` |
+| **H1** (champ `name` en base) | Le titre complet avec le nom de l'événement |
+| **Subtitle** | `Paródia sobre {Descrição do evento em 1 linha}` |
+| **Description** (champ `description`) | 2-3 phrases : événement + angle + ce qu'on entend dans la musique |
+| **Slug** | `{nom-evenement-sans-acentos}` — le slug doit contenir le nom de l'événement |
+
+**Exemples de bons titres :**
+- `Escala 6x1 — A jornada que não para | A Música da Segunda`
+- `PEC 221 — Direitos na guilhotina | A Música da Segunda`
+- `Copa do Mundo 2026 — Gol ou vexame? | A Música da Segunda`
+
+**Pourquoi ça marche :** Perplexity et Google AI Overviews citent massivement le contenu qui contient le nom exact d'un événement frais. Une page avec "PEC 221" dans le titre et le slug sera trouvée par les IA qui cherchent des sources sur "PEC 221" dans les 48 h suivant la publication.
+
+### 13. ~~`/arquivo/` par année~~ ✅ FAIT (2026-07-01)
+- Stubs générés dynamiquement depuis `songs.json` dans `generate-stubs.cjs`
+- 2 pages créées : `/arquivo/2025/` (28 paródias) et `/arquivo/2026/` (27 paródias)
+- Liste ordonnée par date décroissante avec titre, sous-titre et date visible
+- Ajoutées au sitemap (priorité 0.65, annuel pour 2025 / mensuel pour 2026)
+- Ajoutées dans `llms.txt`
 
 ---
 
@@ -112,11 +134,11 @@ Tout l'éditorial doit rester ancré sur ces termes pt-BR (déjà le cas).
 
 | Étape | Action | Statut |
 |-------|--------|--------|
-| 1 | Bing IndexNow | ✅ FAIT |
-| 2 | llms.txt + FAQPage /sobre + E-E-A-T + date visible + RSS | TODO |
-| 3 | Profils Letras.mus.br + Vagalume + descriptions YouTube | TODO |
-| 4 | Couverture presse → Wikipédia | Long terme |
-| 5 | Page pilier "Paródia musical no Brasil" | Long terme |
+| 1 | Bing IndexNow | ✅ FAIT (2026-07-01) |
+| 2 | llms.txt + FAQPage /sobre + E-E-A-T + date visible + RSS | ✅ FAIT (2026-07-01) |
+| 3 | Page pilier /guia + archives /arquivo/[year]/ | ✅ FAIT (2026-07-01) |
+| 4 | Profils Letras.mus.br + Vagalume + descriptions YouTube | TODO (manuel) |
+| 5 | Couverture presse → Wikipédia | Long terme |
 
 ---
 

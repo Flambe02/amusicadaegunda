@@ -27,6 +27,7 @@ const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
 const SearchPage = lazy(() => import('../pages/Search'));
 const Categoria = lazy(() => import('../pages/Categoria'));
+const Guia = lazy(() => import('../pages/Guia'));
 const Privacy = lazy(() => import('../pages/Privacy'));
 const includeDebugRoutes = import.meta.env.DEV;
 
@@ -145,6 +146,22 @@ export const ROUTES = [
     component: Categoria,
     name: 'Categoria',
     seo: null // SEO dynamique basé sur la catégorie
+  },
+  {
+    path: '/guia',
+    component: Guia,
+    name: 'Guia',
+    seo: {
+      title: 'Paródia Musical no Brasil: Tradição, Humor e Sátira | A Música da Segunda',
+      description: 'Guia completo sobre a história da paródia musical no Brasil — do carnaval ao YouTube.',
+      keywords: 'paródia musical brasil, história paródia musical, sátira musical brasileira'
+    }
+  },
+  {
+    path: '/arquivo/:year',
+    component: Playlist,
+    name: 'Arquivo',
+    seo: null
   },
   {
     path: '/privacy',
