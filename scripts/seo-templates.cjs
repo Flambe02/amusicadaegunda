@@ -56,6 +56,9 @@ ${articleSection ? `<meta property="article:section" content="${escape(articleSe
 <meta name="twitter:description" content="${escape(desc)}"/>
 ${image ? `<meta name="twitter:image" content="${image}"/>` : ''}
 
+<!-- RSS -->
+<link rel="alternate" type="application/rss+xml" title="A Música da Segunda — Paródias Musicais" href="https://www.amusicadasegunda.com/feed.xml"/>
+
 ${jsonld.map(obj => `<script type="application/ld+json">\n${json(obj)}\n</script>`).join('\n')}
 
 ${scripts.css ? scripts.css : ''}

@@ -16,6 +16,13 @@ const cfg = require('./seo.config.json');
 const songsPath = path.resolve('content', 'songs.json');
 const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, 'utf8')) : [];
 
+// Derive launch year dynamically from earliest datePublished
+const launchYear = songs.reduce((min, s) => {
+  if (!s.datePublished) return min;
+  const y = new Date(s.datePublished + 'T12:00:00Z').getFullYear();
+  return y < min ? y : min;
+}, new Date().getFullYear());
+
 const OUT = path.resolve('dist');
 const IMAGE = cfg.brand.logo || '/images/og-default.jpg';
 const siteUrl = cfg.siteUrl;
@@ -67,6 +74,14 @@ function shortSongTitle(name, category) {
   return cat
     ? `${name} — Paródia ${cat} | A Música da Segunda`
     : `${name} — Paródia Musical | A Música da Segunda`;
+}
+
+// Format a YYYY-MM-DD date in Brazilian Portuguese ("3 de julho de 2025")
+function formatDatePtBR(dateStr) {
+  if (!dateStr) return null;
+  const months = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const d = new Date(dateStr + 'T12:00:00Z');
+  return `${d.getUTCDate()} de ${months[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
 }
 
 // ✅ SEO: stub de redirection (meta-refresh + canonical + JS) — GitHub Pages ne
@@ -235,13 +250,53 @@ ${songListHtml}
     }
   ];
 
-  // ✅ SEO: Rich static body for /sobre (crawlable without JS)
+  // ✅ AEO: FAQPage JSON-LD for /sobre — most extractable format for AI engines
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "O que é A Música da Segunda?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `A Música da Segunda é um projeto brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um evento do noticiário brasileiro é transformado em paródia musical — com letra, vídeo e contexto editorial. Mais de ${songs.length} paródias publicadas.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Quando sai música nova?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Uma nova paródia musical é publicada toda segunda-feira. A música aborda o tema mais relevante do noticiário brasileiro da semana."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Quem faz as paródias?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A Música da Segunda é um projeto independente de sátira musical brasileiro. As paródias são criadas por uma equipe editorial que acompanha as notícias da semana e transforma os eventos em músicas com letra, vídeo e contexto."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Onde ouvir as músicas?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "As músicas estão disponíveis no site amusicadasegunda.com, no Spotify, no Apple Music, no YouTube Music e no YouTube (Shorts). Cada página traz o vídeo, a letra completa e o contexto da notícia que inspirou a paródia."
+        }
+      }
+    ]
+  };
+
+  // ✅ SEO/AEO: Rich static body for /sobre — E-E-A-T + visible FAQ (crawlable without JS)
   const sobreBody = `
 <div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: Georgia, serif; line-height: 1.8; color: #222;">
   <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem; color: #111;">A Música da Segunda</h1>
   <p style="font-size: 1.05rem; color: #666; font-style: italic; margin-bottom: 2rem;">Paródia e sátira musical das notícias do Brasil, publicada toda segunda-feira.</p>
 
-  <p style="margin-bottom: 1.25rem;">A Música da Segunda é um projeto de sátira musical semanal. Toda semana, um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical publicada às segundas-feiras.</p>
+  <p style="margin-bottom: 1.25rem;">A Música da Segunda é um projeto independente brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical. O projeto já publicou <strong>${songs.length} paródias</strong>, disponíveis no site, no Spotify, no Apple Music e no YouTube.</p>
 
   <p style="margin-bottom: 1.25rem;">O projeto surgiu da ideia de que o humor é uma das formas mais eficazes de processar e comentar a realidade. Em vez de um artigo ou uma thread, a sátira vem em forma de música: com letra, melodia e um ponto de vista bem claro sobre o que está acontecendo no Brasil.</p>
 
@@ -254,6 +309,28 @@ ${songListHtml}
 
   <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Temas</h2>
   <p style="margin-bottom: 1.25rem;">O projeto já publicou paródias sobre política brasileira, economia, energia elétrica, futebol, carnaval, geopolítica internacional, escândalos corporativos, cultura popular e muito mais. Cada semana é uma surpresa — e uma nova janela de humor sobre a realidade.</p>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Perguntas frequentes</h2>
+
+  <div style="margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">O que é A Música da Segunda?</h3>
+    <p style="margin: 0;">A Música da Segunda é um projeto brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um evento do noticiário brasileiro é transformado em paródia musical — com letra, vídeo e contexto editorial. São mais de ${songs.length} paródias publicadas.</p>
+  </div>
+
+  <div style="margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">Quando sai música nova?</h3>
+    <p style="margin: 0;">Uma nova paródia musical é publicada toda segunda-feira. A música aborda o tema mais relevante do noticiário brasileiro da semana anterior.</p>
+  </div>
+
+  <div style="margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">Quem faz as paródias?</h3>
+    <p style="margin: 0;">A Música da Segunda é um projeto independente de sátira musical brasileiro. As paródias são criadas por uma equipe editorial que acompanha as notícias da semana e transforma os eventos em músicas com letra, vídeo e contexto — sem filtro, com humor.</p>
+  </div>
+
+  <div style="margin-bottom: 1.5rem;">
+    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">Onde ouvir as músicas?</h3>
+    <p style="margin: 0;">As músicas estão disponíveis no site <a href="${siteUrl}/musica/" style="color: #2563eb;">amusicadasegunda.com</a>, no Spotify, no Apple Music, no YouTube Music e no YouTube (Shorts). Cada página traz o vídeo, a letra completa e o contexto da notícia.</p>
+  </div>
 
   <p style="margin-top: 2rem;"><a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">← Ver todas as músicas</a></p>
 </div>`;
@@ -290,7 +367,7 @@ ${songListHtml}
       imageWidth: OG_IMAGE_W,
       imageHeight: OG_IMAGE_H,
       body: pageBody,
-      jsonld: [org, website],
+      jsonld: page.path === '/sobre' ? [org, website, faqJsonLd] : [org, website],
       scripts
     });
 
@@ -455,6 +532,12 @@ ${scripts.js}
       ? `\n  <p style="font-size: 1.1rem; color: #555; margin-top: 0.35rem; margin-bottom: 1.5rem; font-style: italic;">${s.subtitle}</p>`
       : '';
 
+    // ✅ AEO: Visible publish date — AI engines prefer visibly dated content (freshness signal)
+    const formattedDate = s.datePublished ? formatDatePtBR(s.datePublished) : null;
+    const dateHtml = formattedDate
+      ? `\n  <p style="font-size: 0.85rem; color: #888; margin-bottom: 1.5rem; font-family: sans-serif;"><time datetime="${s.datePublished}">Publicado em ${formattedDate}</time></p>`
+      : '';
+
     // ✅ SEO: Context block — full description visible for crawlers (not truncated)
     const contextHtml = fullDesc ? `
   <div style="margin-bottom: 2rem; padding: 1.25rem 1.5rem; background: #f5f5f5; border-left: 4px solid #222; border-radius: 0.5rem;">
@@ -507,7 +590,7 @@ ${scripts.js}
 
     const staticBody = `
 <div class="container mx-auto px-4 py-8" style="max-width: 1200px;">
-  <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.25rem; color: #111;">${s.name}</h1>${subtitleHtml}
+  <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.25rem; color: #111;">${s.name}</h1>${subtitleHtml}${dateHtml}
   ${contextHtml}
   ${videoEmbedHtml}
   ${lyricsHtml}
@@ -771,6 +854,48 @@ ${catSongListHtml}
     fs.writeFileSync(indexHtmlPath, indexHtml, 'utf8');
     console.log(`✅ Contenu statique homepage enrichi (${recentSongs.length} chansons récentes, ${categoriesInHomepage.length} catégories)`);
   }
+
+  // ✅ AEO: RSS feed — accelerates discovery by Google and Perplexity (favors fresh content)
+  const rssItems = [...songs]
+    .filter(s => s.datePublished)
+    .sort((a, b) => new Date(b.datePublished) - new Date(a.datePublished))
+    .slice(0, 50)
+    .map(s => {
+      const songUrl = `${siteUrl}/musica/${s.slug}/`;
+      const pubDate = new Date(s.datePublished + 'T12:00:00Z').toUTCString();
+      const desc = (s.description || `Paródia musical sobre "${s.name}" — A Música da Segunda.`)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const title = s.name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const category = s.category ? `\n    <category>${s.category}</category>` : '';
+      return `  <item>
+    <title>${title}</title>
+    <link>${songUrl}</link>
+    <guid isPermaLink="true">${songUrl}</guid>
+    <pubDate>${pubDate}</pubDate>
+    <description>${desc}</description>${category}
+    <author>contato@amusicadasegunda.com (A Música da Segunda)</author>
+  </item>`;
+    }).join('\n');
+
+  const rssFeed = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>A Música da Segunda — Paródias Musicais</title>
+    <link>${siteUrl}/</link>
+    <description>Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira.</description>
+    <language>pt-BR</language>
+    <atom:link href="${siteUrl}/feed.xml" rel="self" type="application/rss+xml"/>
+    <copyright>© ${new Date().getFullYear()} A Música da Segunda</copyright>
+    <ttl>10080</ttl>
+${rssItems}
+  </channel>
+</rss>`;
+
+  const rssPath = path.join(OUT, 'feed.xml');
+  await fs.writeFile(rssPath, rssFeed, { encoding: 'utf8' });
+  // Also write to public/ so it persists across vite rebuilds
+  await fs.writeFile(path.resolve('public', 'feed.xml'), rssFeed, { encoding: 'utf8' });
+  console.log(`✅ RSS feed généré (${rssItems.split('<item>').length - 1} chansons) → ${rssPath}`);
 
   console.log(`✅ Stubs enriquecidos em ${OUT} (static + songs JSON-LD).`);
 })();
