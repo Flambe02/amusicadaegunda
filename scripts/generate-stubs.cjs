@@ -337,7 +337,10 @@ ${songListHtml}
     <p style="margin: 0;">As músicas estão disponíveis no site <a href="${siteUrl}/musica/" style="color: #2563eb;">amusicadasegunda.com</a>, no Spotify, no Apple Music, no YouTube Music e no YouTube (Shorts). Cada página traz o vídeo, a letra completa e o contexto da notícia.</p>
   </div>
 
-  <p style="margin-top: 2rem;"><a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">← Ver todas as músicas</a></p>
+  <p style="margin-top: 2rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+    <a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">← Ver todas as músicas</a>
+    <a href="${siteUrl}/guia/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">Guia: paródia musical no Brasil →</a>
+  </p>
 </div>`;
 
   // ✅ AEO #11: Pillar page — "Paródia Musical no Brasil" — crawlable guide for AI citation
@@ -817,7 +820,10 @@ ${scripts.js}
 ${catSongListHtml}
     </ol>
   </nav>
-  <p style="margin-top: 2rem;"><a href="${siteUrl}/musica/" style="color: #2563eb;">← Todas as músicas</a></p>
+  <p style="margin-top: 2rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+    <a href="${siteUrl}/musica/" style="color: #2563eb;">← Todas as músicas</a>
+    <a href="${siteUrl}/guia/" style="color: #2563eb;">Guia da paródia musical →</a>
+  </p>
 </div>`;
 
     const catHtml = baseHtml({
@@ -977,6 +983,9 @@ ${yearSongListHtml}
       `<a href="${siteUrl}/categoria/${cat}/">${CATEGORY_LABELS[cat]}</a>`
     ).join(' · ');
 
+    // Latest year that actually has an /arquivo/ stub (avoids a dead link in January)
+    const latestArchiveYear = archiveYears.length > 0 ? archiveYears[archiveYears.length - 1] : null;
+
     const richStaticBody = `<main id="main" class="app-shell-fallback">
         <h1>A Música da Segunda</h1>
         <p>Nova música toda segunda-feira. Paródias musicais inteligentes sobre as notícias do Brasil, com humor, contexto e sátira musical. Mais de ${songs.length} paródias disponíveis.</p>
@@ -993,6 +1002,8 @@ ${yearSongListHtml}
         <nav aria-label="Navegação principal" style="margin-top:1rem">
           <a href="${siteUrl}/musica/">Ver todas as músicas</a> ·
           <a href="${siteUrl}/sobre/">Sobre o projeto</a>
+          · <a href="${siteUrl}/guia/">Guia da paródia musical no Brasil</a>${latestArchiveYear ? `
+          · <a href="${siteUrl}/arquivo/${latestArchiveYear}/">Arquivo ${latestArchiveYear}</a>` : ''}
         </nav>
       </main>`;
 
