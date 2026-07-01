@@ -8,8 +8,15 @@ https://www.amusicadasegunda.com/
 ## Sobre o projeto
 https://www.amusicadasegunda.com/sobre/
 
+## Guia de paródia musical no Brasil
+https://www.amusicadasegunda.com/guia/
+
 ## Todas as músicas
 https://www.amusicadasegunda.com/musica/
+
+## Arquivo por ano
+- 2025: https://www.amusicadasegunda.com/arquivo/2025/
+- 2026: https://www.amusicadasegunda.com/arquivo/2026/
 
 ## Categorias temáticas
 - Política: https://www.amusicadasegunda.com/categoria/politica/
