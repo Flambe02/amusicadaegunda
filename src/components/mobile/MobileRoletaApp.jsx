@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Info,
+  Globe,
   Landmark,
   Tv,
   BarChart3,
-  Star,
-  Briefcase,
-  Flame,
   BookOpen,
+  Shield,
+  UtensilsCrossed,
+  Zap,
   Image as ImageIcon,
   Shuffle,
   RefreshCw,
@@ -33,19 +33,20 @@ function SoccerBallIcon({ className }) {
 }
 
 const CATEGORIES = [
-  { key: 'politica', label: 'Política', color: '#6D28D9', Icon: Landmark },
-  { key: 'futebol', label: 'Futebol', color: '#16A34A', Icon: SoccerBallIcon },
-  { key: 'bbb', label: 'BBB', color: '#DC2626', Icon: Tv },
-  { key: 'economia', label: 'Economia', color: '#0F766E', Icon: BarChart3 },
-  { key: 'celebridades', label: 'Celebridades', color: '#7C3AED', Icon: Star },
-  { key: 'trabalho', label: 'Trabalho', color: '#9F1239', Icon: Briefcase },
-  { key: 'caos-nacional', label: 'Caos nacional', color: '#F97316', Icon: Flame },
-  { key: 'cultura', label: 'Cultura', color: '#EAB308', Icon: BookOpen },
-  { key: 'nostalgia', label: 'Nostalgia', color: '#EA580C', Icon: ImageIcon },
+  { key: 'politica',      label: 'Política',      color: '#6D28D9', Icon: Landmark },
+  { key: 'esporte',       label: 'Esporte',        color: '#16A34A', Icon: SoccerBallIcon },
+  { key: 'internacional', label: 'Internacional',  color: '#0EA5E9', Icon: Globe },
+  { key: 'midia',         label: 'Mídia',          color: '#DC2626', Icon: Tv },
+  { key: 'economia',      label: 'Economia',       color: '#0F766E', Icon: BarChart3 },
+  { key: 'cultura',       label: 'Cultura',        color: '#EAB308', Icon: BookOpen },
+  { key: 'policia',       label: 'Polícia',        color: '#9F1239', Icon: Shield },
+  { key: 'gastronomia',   label: 'Gastronomia',    color: '#F97316', Icon: UtensilsCrossed },
+  { key: 'energia',       label: 'Energia',        color: '#F59E0B', Icon: Zap },
 ];
 
 const CATEGORY_ALIASES = {
-  outros: 'celebridades',
+  seguranca: 'policia',
+  outros: 'cultura',
   brasil: 'politica',
   atualidade: 'politica',
 };

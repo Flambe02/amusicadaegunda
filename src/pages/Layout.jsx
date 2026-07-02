@@ -90,6 +90,7 @@ export default function Layout({ children }) {
 
   const pages = [
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
+    { name: 'Catálogo', url: createPageUrl('Musica'), icon: Library },
     { name: 'Roda', url: createPageUrl('Roda'), icon: Gift },
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Pesquisa', url: createPageUrl('Search'), icon: Search },
@@ -98,6 +99,7 @@ export default function Layout({ children }) {
 
   const isActive = (page) => {
     if (page.name === 'Início' && location.pathname === '/') return true;
+    if (page.name === 'Catálogo' && (location.pathname === '/musica' || location.pathname.startsWith('/musica/'))) return true;
     return location.pathname === page.url;
   };
 
