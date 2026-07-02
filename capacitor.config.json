@@ -11,7 +11,8 @@
     "preferredContentMode": "mobile"
   },
   "android": {
-    "backgroundColor": "#000000"
+    "backgroundColor": "#000000",
+    "adjustMarginsForEdgeToEdge": "auto"
   },
   "plugins": {
     "SplashScreen": {

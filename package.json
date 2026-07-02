@@ -50,7 +50,7 @@
     "optimize:brand-images": "node scripts/optimize-brand-images.cjs"
   },
   "dependencies": {
-    "@capacitor/core": "^8.2.0",
+    "@capacitor/core": "^8.4.1",
     "@capacitor/splash-screen": "^8.0.1",
     "@hookform/resolvers": "^4.1.2",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -104,9 +104,9 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.2.0",
+    "@capacitor/android": "^8.4.1",
     "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^8.3.1",
+    "@capacitor/cli": "^8.4.1",
     "@eslint/js": "^9.19.0",
     "@flydotio/dockerfile": "^0.7.8",
     "@playwright/test": "^1.56.1",
