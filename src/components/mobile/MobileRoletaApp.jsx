@@ -1,67 +1,26 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Globe,
-  Landmark,
-  Tv,
-  BarChart3,
-  BookOpen,
-  Shield,
-  UtensilsCrossed,
-  Zap,
-  Image as ImageIcon,
-  Shuffle,
-  RefreshCw,
-  Play,
-  Pause,
-} from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RefreshCw, Play, Pause } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import AppButton from './AppButton';
-import { getYouTubeThumbnailUrl, extractYouTubeId, titleToSlug } from '@/lib/utils';
+import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 
-function SoccerBallIcon({ className }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <polygon points="12,7 15,9.5 14,13 10,13 9,9.5" fill="currentColor" stroke="none" />
-      <line x1="12" y1="3" x2="12" y2="7" />
-      <line x1="14" y1="13" x2="17.5" y2="14.5" />
-      <line x1="10" y1="13" x2="6.5" y2="14.5" />
-      <line x1="9" y1="9.5" x2="5" y2="9" />
-      <line x1="15" y1="9.5" x2="19" y2="9" />
-    </svg>
-  );
-}
-
-const CATEGORIES = [
-  { key: 'politica',      label: 'Política',      color: '#6D28D9', Icon: Landmark },
-  { key: 'esporte',       label: 'Esporte',        color: '#16A34A', Icon: SoccerBallIcon },
-  { key: 'internacional', label: 'Internacional',  color: '#0EA5E9', Icon: Globe },
-  { key: 'midia',         label: 'Mídia',          color: '#DC2626', Icon: Tv },
-  { key: 'economia',      label: 'Economia',       color: '#0F766E', Icon: BarChart3 },
-  { key: 'cultura',       label: 'Cultura',        color: '#EAB308', Icon: BookOpen },
-  { key: 'policia',       label: 'Polícia',        color: '#9F1239', Icon: Shield },
-  { key: 'gastronomia',   label: 'Gastronomia',    color: '#F97316', Icon: UtensilsCrossed },
-  { key: 'energia',       label: 'Energia',        color: '#F59E0B', Icon: Zap },
+const MONTHS = [
+  { index: 0,  abbr: 'JAN', name: 'Janeiro',    color: '#DC2626' },
+  { index: 1,  abbr: 'FEV', name: 'Fevereiro',   color: '#7C3AED' },
+  { index: 2,  abbr: 'MAR', name: 'Março',       color: '#EA580C' },
+  { index: 3,  abbr: 'ABR', name: 'Abril',       color: '#059669' },
+  { index: 4,  abbr: 'MAI', name: 'Maio',        color: '#2563EB' },
+  { index: 5,  abbr: 'JUN', name: 'Junho',       color: '#B45309' },
+  { index: 6,  abbr: 'JUL', name: 'Julho',       color: '#6D28D9' },
+  { index: 7,  abbr: 'AGO', name: 'Agosto',      color: '#15803D' },
+  { index: 8,  abbr: 'SET', name: 'Setembro',    color: '#0369A1' },
+  { index: 9,  abbr: 'OUT', name: 'Outubro',     color: '#D97706' },
+  { index: 10, abbr: 'NOV', name: 'Novembro',    color: '#0D9488' },
+  { index: 11, abbr: 'DEZ', name: 'Dezembro',    color: '#E11D48' },
 ];
 
-const CATEGORY_ALIASES = {
-  seguranca: 'policia',
-  outros: 'cultura',
-  brasil: 'politica',
-  atualidade: 'politica',
-};
-
-function normalizeCategoryKey(raw) {
-  if (!raw) return null;
-  const lower = String(raw).toLowerCase().trim();
-  if (CATEGORIES.find((c) => c.key === lower)) return lower;
-  if (CATEGORY_ALIASES[lower]) return CATEGORY_ALIASES[lower];
-  return null;
-}
-
-function drawWheel(canvas, size) {
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
+function drawPremiumWheel(canvas, size, rotation) {
+  if (!canvas || size <= 0) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
   canvas.width = size * dpr;
   canvas.height = size * dpr;
   canvas.style.width = `${size}px`;
@@ -69,112 +28,126 @@ function drawWheel(canvas, size) {
 
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
-
-  const cx = size / 2;
-  const radius = cx - 4;
-  const arc = (2 * Math.PI) / CATEGORIES.length;
-
   ctx.clearRect(0, 0, size, size);
 
-  CATEGORIES.forEach(({ color }, index) => {
-    const startAngle = -Math.PI / 2 - arc / 2 + index * arc;
-    const endAngle = startAngle + arc;
+  const cx = size / 2;
+  const n = MONTHS.length;
+  const arc = (2 * Math.PI) / n;
+  const outerR = cx - 14;
 
-    const gradient = ctx.createRadialGradient(cx, cx, radius * 0.18, cx, cx, radius);
-    gradient.addColorStop(0, color);
-    gradient.addColorStop(1, `${color}d8`);
+  MONTHS.forEach(({ abbr, color }, i) => {
+    const start = rotation + i * arc;
+    const end = start + arc;
+    const mid = start + arc / 2;
 
     ctx.beginPath();
     ctx.moveTo(cx, cx);
-    ctx.arc(cx, cx, radius, startAngle, endAngle);
+    ctx.arc(cx, cx, outerR, start, end);
     ctx.closePath();
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = color;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(0,0,0,0.38)';
+    ctx.lineWidth = 1.5;
     ctx.stroke();
+
+    ctx.save();
+    ctx.translate(cx, cx);
+    ctx.rotate(mid);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 ${Math.round(size * 0.057)}px -apple-system, BlinkMacSystemFont, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 3;
+    ctx.fillText(abbr, outerR * 0.67, 0);
+    ctx.shadowBlur = 0;
+    ctx.restore();
   });
 
+  // Gold outer rim
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cx, radius, 0, 2 * Math.PI);
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-  ctx.lineWidth = 2;
+  ctx.arc(cx, cx, outerR + 1, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 5;
+  ctx.shadowColor = '#FDE047';
+  ctx.shadowBlur = 18;
   ctx.stroke();
-}
+  ctx.restore();
 
-function getMobileYouTubeId(song) {
-  return extractYouTubeId(song?.youtube_url) || null;
-}
+  // Gold rim dots
+  const dotCount = 24;
+  const dotRingR = outerR + 10;
+  for (let i = 0; i < dotCount; i++) {
+    const ang = (i / dotCount) * 2 * Math.PI - Math.PI / 2;
+    const dx = cx + Math.cos(ang) * dotRingR;
+    const dy = cx + Math.sin(ang) * dotRingR;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(dx, dy, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FDE047';
+    ctx.shadowColor = '#FACC15';
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.restore();
+  }
 
-function getArtworkYouTubeId(song) {
-  return (
-    extractYouTubeId(song?.youtube_music_url) ||
-    extractYouTubeId(song?.youtube_url) ||
-    null
-  );
-}
+  // Center hub
+  const hubR = Math.round(outerR * 0.215);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cx, hubR + 5, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#FDE047';
+  ctx.shadowBlur = 14;
+  ctx.stroke();
+  ctx.restore();
 
-function getSongArtwork(song) {
-  if (!song) return null;
-  const artworkYtId = getArtworkYouTubeId(song);
-  const videoThumb = artworkYtId ? `https://img.youtube.com/vi/${artworkYtId}/maxresdefault.jpg` : null;
-  const genericCover = song.cover_image?.includes('/icons/') || song.cover_image?.includes('icon-512');
-  return (
-    videoThumb ||
-    getYouTubeThumbnailUrl(song.youtube_music_url || song.youtube_url, 'maxresdefault') ||
-    getYouTubeThumbnailUrl(song.youtube_music_url || song.youtube_url, 'hqdefault') ||
-    (!genericCover && song.cover_image) ||
-    song.thumbnail_url ||
-    null
-  );
-}
+  ctx.beginPath();
+  ctx.arc(cx, cx, hubR, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0A0A0A';
+  ctx.fill();
 
-function PlatformPill({ href, tone, children }) {
-  const toneClass = {
-    spotify: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
-    youtube: 'border-red-500/25 bg-red-500/10 text-red-300',
-    apple: 'border-pink-500/25 bg-pink-500/10 text-pink-300',
-  }[tone] || 'border-white/12 bg-white/[0.06] text-white/82';
+  ctx.save();
+  ctx.fillStyle = '#FACC15';
+  ctx.shadowColor = '#FDE047';
+  ctx.shadowBlur = 6;
+  ctx.font = `bold ${Math.round(hubR * 0.82)}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('♪', cx, cx - Math.round(hubR * 0.12));
+  ctx.restore();
 
-  if (!href) return null;
-
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={`inline-flex min-h-9 items-center rounded-full border px-3 text-[11px] font-black ${toneClass}`}
-    >
-      {children}
-    </a>
-  );
+  ctx.fillStyle = '#FACC15';
+  ctx.font = `700 ${Math.round(hubR * 0.32)}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('SEGUNDA', cx, cx + Math.round(hubR * 0.55));
 }
 
 export default function MobileRoletaApp({ songs = [], loading = false }) {
   const [winner, setWinner] = useState(null);
   const [spinning, setSpinning] = useState(false);
-  const [size, setSize] = useState(292);
+  const [wheelSize, setWheelSize] = useState(304);
   const [activeYtId, setActiveYtId] = useState(null);
   const [playerState, setPlayerState] = useState('stopped');
+  const [resultVisible, setResultVisible] = useState(false);
   const canvasRef = useRef(null);
   const iframeRef = useRef(null);
-  const wheelInnerRef = useRef(null);
   const rotationRef = useRef(0);
   const animRef = useRef(null);
+  const resultRef = useRef(null);
 
   useEffect(() => {
     const update = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
-      const isLandscape = w > h;
-      // In landscape on phones the vertical room is tiny, so allow the wheel
-      // to shrink further than the portrait minimum of 246 to keep the
-      // result card + spin button visible.
-      const minSize = isLandscape ? 180 : 246;
-      const heightBudget = isLandscape
-        ? Math.floor(h - 200) // leave room for header + button + result
-        : Math.floor(h * 0.39);
-      setSize(Math.max(minSize, Math.min(306, w - 54, heightBudget)));
+      if (w > h) {
+        setWheelSize(Math.max(160, Math.min(230, h - 160)));
+      } else {
+        setWheelSize(Math.max(260, Math.min(340, w - 32, Math.floor(h * 0.43))));
+      }
     };
     update();
     window.addEventListener('resize', update);
@@ -182,315 +155,339 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
   }, []);
 
   useEffect(() => {
-    drawWheel(canvasRef.current, size);
-  }, [size]);
+    drawPremiumWheel(canvasRef.current, wheelSize, rotationRef.current);
+  }, [wheelSize]);
 
-  useEffect(() => {
-    return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
-    };
+  useEffect(() => () => { if (animRef.current) cancelAnimationFrame(animRef.current); }, []);
+
+  const sendYT = useCallback((fn) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: fn, args: [] }), '*'
+    );
   }, []);
 
-  const sendYTCommand = (func) => {
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ event: 'command', func, args: [] }),
-      '*'
-    );
-  };
-
-  const attemptPlayCurrent = () => {
-    if (!activeYtId) return;
-    sendYTCommand('playVideo');
-    setPlayerState('playing');
-  };
-
   useEffect(() => {
-    if (!activeYtId) return undefined;
-    const t1 = window.setTimeout(attemptPlayCurrent, 250);
-    const t2 = window.setTimeout(attemptPlayCurrent, 900);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-    };
-  }, [activeYtId]);
+    if (!activeYtId) return;
+    const t1 = setTimeout(() => sendYT('playVideo'), 300);
+    const t2 = setTimeout(() => sendYT('playVideo'), 1000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [activeYtId, sendYT]);
 
-  const songsByCategory = useMemo(() => {
+  const songsByMonth = useMemo(() => {
     const map = {};
-    songs.forEach((song) => {
-      const key = normalizeCategoryKey(song.category);
-      if (!key) return;
-      if (!map[key]) map[key] = [];
-      map[key].push(song);
+    songs.forEach((s) => {
+      if (s.release_date) {
+        const m = new Date(s.release_date).getMonth();
+        if (!map[m]) map[m] = [];
+        map[m].push(s);
+      }
     });
     return map;
   }, [songs]);
 
-  const populatedCategories = useMemo(
-    () => CATEGORIES.filter((c) => (songsByCategory[c.key] || []).length > 0),
-    [songsByCategory]
+  const populatedMonths = useMemo(
+    () => MONTHS.filter((m) => (songsByMonth[m.index] || []).length > 0),
+    [songsByMonth]
   );
 
-  const setWheelTransform = (rad) => {
-    if (wheelInnerRef.current) {
-      wheelInnerRef.current.style.setProperty('--wheel-rot', `${rad}rad`);
-    }
-  };
-
   const spin = () => {
-    if (spinning || loading || populatedCategories.length === 0) return;
-    if (navigator.vibrate) navigator.vibrate(30);
+    if (spinning || loading || populatedMonths.length === 0) return;
+    if (navigator.vibrate) navigator.vibrate([15]);
     setWinner(null);
+    setResultVisible(false);
+    setActiveYtId(null);
+    setPlayerState('stopped');
     setSpinning(true);
 
-    const target = populatedCategories[Math.floor(Math.random() * populatedCategories.length)];
-    const targetIndex = CATEGORIES.findIndex((c) => c.key === target.key);
-    const arc = (2 * Math.PI) / CATEGORIES.length;
-    // Pointer at top (-π/2). Slice center is at -π/2 + index*arc (after our offset).
-    // We want wheel rotation so that targetIndex's center ends up at the pointer angle.
-    // Slice center (in wheel-local) = index * arc. Pointer angle (world) = -π/2.
-    // We rotate wheel by R, so slice world angle = local + R = -π/2.
-    // R = -π/2 - index*arc.
-    const targetBaseRot = -targetIndex * arc;
-    const current = rotationRef.current;
-    const baseTurns = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
-    let delta = targetBaseRot - (current % (2 * Math.PI));
+    const target = populatedMonths[Math.floor(Math.random() * populatedMonths.length)];
+    const arc = (2 * Math.PI) / MONTHS.length;
+    const targetBaseRot = -Math.PI / 2 - target.index * arc - arc / 2;
+    const cur = rotationRef.current;
+    const turns = (5 + Math.floor(Math.random() * 3)) * 2 * Math.PI;
+    let delta = targetBaseRot - (cur % (2 * Math.PI));
     if (delta <= 0) delta += 2 * Math.PI;
-    const finalRot = current + baseTurns + delta;
+    const finalRot = cur + turns + delta;
+    const dur = 3800;
+    const t0 = performance.now();
+    const ease = (t) => 1 - Math.pow(1 - t, 4);
 
-    const duration = 4000;
-    const startTime = performance.now();
-    const easeOut = (t) => 1 - Math.pow(1 - t, 4);
-
-    const animate = (now) => {
-      const t = Math.min((now - startTime) / duration, 1);
-      const rad = current + (finalRot - current) * easeOut(t);
-      rotationRef.current = rad;
-      setWheelTransform(rad);
-
-      if (t < 1) {
-        animRef.current = requestAnimationFrame(animate);
-        return;
-      }
+    const step = (now) => {
+      const t = Math.min((now - t0) / dur, 1);
+      const rot = cur + (finalRot - cur) * ease(t);
+      rotationRef.current = rot;
+      drawPremiumWheel(canvasRef.current, wheelSize, rot);
+      if (t < 1) { animRef.current = requestAnimationFrame(step); return; }
 
       rotationRef.current = finalRot;
-      const pool = songsByCategory[target.key] || [];
+      const pool = songsByMonth[target.index] || [];
       const song = pool[Math.floor(Math.random() * pool.length)];
       if (song) {
-        setWinner({ category: target, song });
-        setActiveYtId(null);
-        setPlayerState('stopped');
+        setWinner({ month: target, song });
+        setTimeout(() => {
+          setResultVisible(true);
+          setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+        }, 250);
+      } else {
+        setWinner({ month: target, song: null });
+        setTimeout(() => setResultVisible(true), 250);
       }
       setSpinning(false);
     };
-
-    animRef.current = requestAnimationFrame(animate);
+    animRef.current = requestAnimationFrame(step);
   };
 
-  const winnerArtwork = getSongArtwork(winner?.song);
-  const winnerYtId = getMobileYouTubeId(winner?.song);
-  const isWinnerPlaying = winnerYtId && activeYtId === winnerYtId && playerState === 'playing';
-  const winnerSongSlug = winner?.song?.slug || titleToSlug(winner?.song?.title);
-  const winnerSongPath = winnerSongSlug ? `/musica/${winnerSongSlug}` : '/musica';
-  const winnerYouTubeUrl = winner?.song?.youtube_url || winner?.song?.youtube_music_url;
+  const wc = winner?.month?.color ?? '#FACC15';
+  const songYtId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
+  const songSlug = winner?.song?.slug || (winner?.song?.title ? titleToSlug(winner.song.title) : null);
+  const artwork = winner?.song
+    ? (getYouTubeThumbnailUrl(winner.song.youtube_music_url || winner.song.youtube_url, 'maxresdefault') ||
+       getYouTubeThumbnailUrl(winner.song.youtube_music_url || winner.song.youtube_url, 'hqdefault') ||
+       winner.song.thumbnail_url || null)
+    : null;
+  const isPlaying = songYtId && activeYtId === songYtId && playerState === 'playing';
+  const winnerYear = winner?.song?.release_date ? new Date(winner.song.release_date).getFullYear() : null;
 
-  const toggleWinnerPlayback = () => {
-    if (!winnerYtId) return;
-
-    if (activeYtId === winnerYtId) {
-      if (playerState === 'playing') {
-        sendYTCommand('pauseVideo');
-        setPlayerState('paused');
-      } else {
-        sendYTCommand('playVideo');
-        setPlayerState('playing');
-      }
-      return;
+  const togglePlay = () => {
+    if (!songYtId) return;
+    if (activeYtId === songYtId) {
+      if (playerState === 'playing') { sendYT('pauseVideo'); setPlayerState('paused'); }
+      else { sendYT('playVideo'); setPlayerState('playing'); }
+    } else {
+      setActiveYtId(songYtId);
+      setPlayerState('paused');
     }
-
-    setActiveYtId(winnerYtId);
-    setPlayerState('paused');
   };
-
-  const radius = size / 2;
-  const iconRadius = radius * 0.62;
-  const arcStep = 360 / CATEGORIES.length;
 
   return (
-    <div className="flex h-full min-h-full flex-col bg-[radial-gradient(circle_at_50%_0%,rgba(253,224,71,0.12),transparent_26%),linear-gradient(180deg,#050505_0%,#0b0b0b_46%,#050505_100%)] px-4 pb-4 pt-[max(env(safe-area-inset-top),0.75rem)] text-app-white">
-      {activeYtId ? (
+    <div
+      className="flex min-h-full flex-col overflow-x-hidden overflow-y-auto text-white"
+      style={{ background: 'radial-gradient(ellipse 100% 55% at 50% -5%, rgba(109,40,217,0.22) 0%, transparent 60%), #060608' }}
+    >
+      {activeYtId && (
         <iframe
           key={activeYtId}
           ref={iframeRef}
           src={`https://www.youtube-nocookie.com/embed/${activeYtId}?enablejsapi=1&autoplay=1&rel=0`}
           title="player roleta"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          onLoad={attemptPlayCurrent}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media"
           className="fixed -left-[9999px] -top-[9999px] h-px w-px opacity-0"
         />
-      ) : null}
+      )}
 
-      <div className="mx-auto flex w-full max-w-[390px] flex-col gap-2 landscape:max-w-[760px] landscape:flex-row landscape:items-start landscape:gap-4">
-      <header className="mb-2 flex min-h-10 items-center justify-center">
-        <h1 className="text-[20px] font-black tracking-tight text-white">Roleta da Zoeira</h1>
-      </header>
-
-      <div className="relative mx-auto flex flex-col items-center landscape:mx-0 landscape:flex-shrink-0" style={{ width: size + 16 }}>
-        <div className="relative" style={{ width: size, height: size }}>
-          <div
-            className="absolute z-20"
-            style={{ top: -8, left: '50%', transform: 'translateX(-50%)' }}
-            aria-hidden="true"
-          >
-            <svg width="22" height="20" viewBox="0 0 22 20">
-              <polygon points="11,18 1,2 21,2" fill="#FACC15" stroke="#0a0a0a" strokeWidth="1.5" />
-            </svg>
-          </div>
-
-          <div
-            ref={wheelInnerRef}
-            className="absolute inset-0"
-            style={{
-              transformOrigin: 'center',
-              willChange: 'transform',
-              transform: 'rotate(var(--wheel-rot, 0rad))',
-              '--wheel-rot': '0rad',
-            }}
-          >
-            <canvas
-              ref={canvasRef}
-              onClick={spin}
-              className="block cursor-pointer rounded-full"
-              style={{ touchAction: 'manipulation' }}
-              aria-label="Roleta de categorias"
-            />
-            {CATEGORIES.map(({ key, label, Icon }, index) => {
-              const angle = (index * arcStep - 90) * (Math.PI / 180);
-              const x = radius + Math.cos(angle) * iconRadius;
-              const y = radius + Math.sin(angle) * iconRadius;
-              return (
-                <div
-                  key={key}
-                  className="pointer-events-none absolute flex flex-col items-center text-white"
-                  style={{
-                    left: x,
-                    top: y,
-                    transform:
-                      'translate(-50%, -50%) rotate(calc(var(--wheel-rot, 0rad) * -1))',
-                    width: 62,
-                  }}
-                >
-                  <Icon className="h-5 w-5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]" />
-                  <span className="mt-1 text-center text-[9px] font-bold leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">
-                    {label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          <button
-            type="button"
-            onClick={spin}
-            disabled={spinning || loading}
-            aria-label="Girar"
-            className="absolute left-1/2 top-1/2 z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-app-yellow text-black shadow-app-soft ring-4 ring-black/40 transition active:scale-95 disabled:opacity-70"
-          >
-            <Shuffle className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-
-      <div className="mt-3 overflow-hidden rounded-[16px] border border-violet-300/18 bg-[linear-gradient(135deg,rgba(88,28,135,0.92),rgba(46,16,101,0.86))] shadow-[0_18px_45px_rgba(0,0,0,0.38),inset_0_1px_0_rgba(255,255,255,0.12)] landscape:mt-0">
-        {winner ? (
-          <div className="grid min-h-[102px] grid-cols-[minmax(0,1fr)_92px] gap-3 p-3">
-            <div className="flex min-w-0 flex-1 flex-col">
-              <p className="text-[11px] font-semibold text-white/62">
-                Caiu em
-              </p>
-              <h2 className="mt-0.5 text-[21px] font-black leading-tight text-white">
-                {winner.category.label}
-              </h2>
-              <p className="mt-2 text-[11px] font-semibold text-white/62">
-                Nossa sugestão pra você:
-              </p>
-              <h3 className="mt-0.5 line-clamp-2 max-w-full text-left text-[19px] font-black leading-tight text-white">
-                {winner.song?.title}
-              </h3>
-
-            </div>
-            <button
-              type="button"
-              onClick={toggleWinnerPlayback}
-              disabled={!winnerYtId}
-              className="relative h-[92px] w-[92px] overflow-hidden rounded-[12px] bg-black/25 transition active:scale-95 disabled:opacity-85"
-              aria-label={isWinnerPlaying ? 'Pausar musica sorteada' : 'Ouvir musica sorteada'}
-            >
-              {winnerArtwork ? (
-                <img
-                  src={winnerArtwork}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  width="92"
-                  height="92"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-white/35">
-                  <ImageIcon className="h-8 w-8" aria-hidden="true" />
-                </div>
-              )}
-              <span className="absolute inset-0 flex items-center justify-center bg-black/20">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-app-yellow text-black shadow-[0_8px_24px_rgba(253,224,71,0.35)] backdrop-blur-sm">
-                  {isWinnerPlaying ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5" />}
-                </span>
+      {/* Hero — título + capybara */}
+      <div className="relative z-10 flex-shrink-0 px-5 pt-3">
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-[0.35em] text-white/30">
+              A Música da Segunda
+            </p>
+            <h1 className="mt-0.5 font-black leading-[0.88] tracking-tight">
+              <span className="block text-white" style={{ fontSize: 'clamp(1.9rem,9vw,2.5rem)' }}>
+                Roda dos
               </span>
-            </button>
+              <span className="block text-[#FACC15]" style={{ fontSize: 'clamp(2.3rem,11.5vw,3rem)' }}>
+                Meses
+              </span>
+            </h1>
+            <p className="mt-1.5 text-[11.5px] leading-snug text-white/45">
+              Gire a roda e descubra uma{' '}
+              <span className="font-semibold text-[#FACC15]/70">música</span> do acervo.
+            </p>
           </div>
-        ) : (
-          <div className="px-4 py-5 text-center text-sm text-app-muted">
-            {loading ? 'Carregando músicas…' : 'Toca em "Girar a roleta" para sortear.'}
-          </div>
-        )}
+
+          {!winner && (
+            <div className="relative w-[80px] flex-shrink-0 landscape:hidden">
+              <div className="absolute right-[82px] top-2 z-10 w-[80px] rounded-[12px] rounded-br-none bg-[#FACC15] px-2 py-1.5 shadow-lg">
+                <p className="text-[8px] font-black leading-tight text-black">
+                  Gira aí. O mês escolhe a vergonha.
+                </p>
+              </div>
+              <img
+                src="/images/Caipivara_pied_transparent.png"
+                alt=""
+                width="80"
+                className="relative z-20 drop-shadow-lg"
+                loading="eager"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      <AppButton
-        size="lg"
-        onClick={spin}
-        disabled={spinning || loading || populatedCategories.length === 0}
-        className="mt-3 min-h-[52px] w-full gap-2 rounded-full text-base"
-      >
-        <RefreshCw className={`h-5 w-5 ${spinning ? 'animate-spin' : ''}`} />
-        {loading ? 'Carregando...' : spinning ? 'Girando…' : 'Girar a roleta'}
-      </AppButton>
+      {/* Wheel */}
+      <div className="relative flex flex-shrink-0 flex-col items-center py-2 landscape:py-1">
+        {/* Purple glow */}
+        <div
+          className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            width: wheelSize + 44,
+            height: wheelSize + 44,
+            background: 'radial-gradient(circle, rgba(109,40,217,0.3) 0%, transparent 70%)',
+            filter: 'blur(10px)',
+          }}
+        />
 
-      {winner?.song ? (
-        <div className="mt-4 border-t border-white/10 pt-4">
-          <p className="mb-2 text-[11px] font-black text-white">
-            Ouça também em
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <PlatformPill tone="spotify" href={winner.song.spotify_url}>
-              Spotify
-            </PlatformPill>
-            <PlatformPill tone="youtube" href={winnerYouTubeUrl}>
-              YouTube
-            </PlatformPill>
-            <PlatformPill tone="apple" href={winner.song.apple_music_url}>
-              Apple Music
-            </PlatformPill>
-            <Link
-              to={winnerSongPath}
-              className="inline-flex min-h-9 items-center rounded-full border border-white/12 bg-white/[0.06] px-3 text-[11px] font-black text-white/86"
-            >
-              Detalhes
-            </Link>
+        {/* Pointer */}
+        <div className="relative z-20" style={{ marginBottom: -3 }}>
+          <svg width="22" height="18" viewBox="0 0 22 18">
+            <polygon
+              points="11,17 1,1 21,1"
+              fill="#FACC15"
+              style={{ filter: 'drop-shadow(0 0 6px #FACC15) drop-shadow(0 0 12px rgba(250,204,21,0.55))' }}
+            />
+          </svg>
+        </div>
+
+        {/* Canvas */}
+        <canvas
+          ref={canvasRef}
+          onClick={!spinning ? spin : undefined}
+          className="relative z-10 block rounded-full"
+          style={{ width: wheelSize, height: wheelSize, cursor: spinning ? 'wait' : 'pointer' }}
+        />
+      </div>
+
+      {/* Spin button */}
+      <div className="flex-shrink-0 px-5 pb-3 pt-1">
+        <button
+          type="button"
+          onClick={spin}
+          disabled={spinning || loading || populatedMonths.length === 0}
+          className="flex w-full items-center justify-center gap-2.5 rounded-full bg-[#FACC15] font-black text-black transition-all active:scale-[0.97] disabled:opacity-55 landscape:py-2.5"
+          style={{
+            minHeight: 52,
+            fontSize: '0.97rem',
+            letterSpacing: '0.04em',
+            boxShadow: spinning ? 'none' : '0 6px 28px rgba(250,204,21,0.28), 0 2px 8px rgba(0,0,0,0.5)',
+          }}
+        >
+          <RefreshCw className={`h-[17px] w-[17px] ${spinning ? 'animate-spin' : ''}`} />
+          {loading ? 'Carregando...' : spinning ? 'Girando…' : 'GIRAR A RODA'}
+        </button>
+      </div>
+
+      {/* Result card */}
+      {winner && (
+        <div
+          ref={resultRef}
+          className="mx-4 mb-5 overflow-hidden rounded-[18px] border transition-all duration-500"
+          style={{
+            background: `linear-gradient(145deg, ${wc}18 0%, rgba(10,10,14,0.97) 55%)`,
+            borderColor: `${wc}45`,
+            opacity: resultVisible ? 1 : 0,
+            transform: resultVisible ? 'translateY(0)' : 'translateY(14px)',
+          }}
+        >
+          <div className="p-4">
+            {/* Month badge */}
+            <div className="mb-3 flex items-center gap-2">
+              <span
+                className="inline-flex items-center rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest"
+                style={{ backgroundColor: `${wc}20`, color: wc, border: `1px solid ${wc}40` }}
+              >
+                {winner.month.name}
+              </span>
+              <span className="text-[11px] text-white/35">Mês sorteado</span>
+            </div>
+
+            {winner.song ? (
+              <>
+                <div className="flex items-start gap-3">
+                  {/* Artwork / play */}
+                  <div className="relative h-[68px] w-[68px] flex-shrink-0 overflow-hidden rounded-xl bg-white/5">
+                    {artwork ? (
+                      <img src={artwork} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-2xl" style={{ color: wc }}>♪</div>
+                    )}
+                    {songYtId && (
+                      <button
+                        type="button"
+                        onClick={togglePlay}
+                        className="absolute inset-0 flex items-center justify-center bg-black/25 backdrop-blur-[2px] transition-colors hover:bg-black/40"
+                        aria-label={isPlaying ? 'Pausar' : 'Tocar'}
+                      >
+                        <span
+                          className="flex h-8 w-8 items-center justify-center rounded-full text-black"
+                          style={{ backgroundColor: wc }}
+                        >
+                          {isPlaying
+                            ? <Pause className="h-3.5 w-3.5" />
+                            : <Play className="ml-0.5 h-3.5 w-3.5" />}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-medium text-white/38">A música escolhida foi:</p>
+                    <p className="mt-0.5 line-clamp-2 text-[15px] font-black leading-tight text-white">
+                      {winner.song.title}
+                    </p>
+                    {winner.song.description && (
+                      <p className="mt-1 line-clamp-2 text-[10.5px] leading-snug text-white/40">
+                        {winner.song.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="mt-3.5 flex flex-wrap gap-1.5">
+                  {(winner.song.youtube_url || winner.song.youtube_music_url) && (
+                    <a
+                      href={winner.song.youtube_url || winner.song.youtube_music_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-8 items-center gap-1 rounded-full px-3.5 text-[11px] font-black text-black"
+                      style={{ backgroundColor: wc }}
+                    >
+                      Ouvir agora
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={spin}
+                    disabled={spinning}
+                    className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3.5 text-[11px] font-black text-white/75 transition-all active:scale-95 disabled:opacity-50"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Girar de novo
+                  </button>
+                  {songSlug && (
+                    <Link
+                      to={`/musica/${songSlug}`}
+                      className="inline-flex min-h-8 items-center rounded-full border border-white/10 bg-white/[0.05] px-3.5 text-[11px] font-black text-white/75"
+                    >
+                      Ver detalhes
+                    </Link>
+                  )}
+                  {winnerYear && (
+                    <Link
+                      to={`/arquivo/${winnerYear}`}
+                      className="inline-flex min-h-8 items-center rounded-full border border-white/10 bg-white/[0.05] px-3.5 text-[11px] font-black text-white/75"
+                    >
+                      Músicas de {winnerYear}
+                    </Link>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="py-2">
+                <p className="text-sm text-white/45">
+                  Nenhuma música encontrada para {winner.month.name}.
+                </p>
+                <button
+                  type="button"
+                  onClick={spin}
+                  className="mt-3 inline-flex min-h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3.5 text-[11px] font-black text-white/75"
+                >
+                  <RefreshCw className="h-3 w-3" /> Girar de novo
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      ) : null}
-      </div>
-      </div>
+      )}
     </div>
   );
 }
