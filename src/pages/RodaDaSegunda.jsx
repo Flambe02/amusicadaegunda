@@ -7,35 +7,25 @@ import { extractYouTubeId, titleToSlug } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MobileRoletaApp } from '@/components/mobile';
 
-const MONTHS_PT = [
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-  'Outubro',
-  'Novembro',
-  'Dezembro',
+const CATEGORIES = [
+  { key: 'politica',      label: 'Política',      abbr: 'Polít',  color: '#6D28D9' },
+  { key: 'esporte',       label: 'Esporte',        abbr: 'Espor',  color: '#16A34A' },
+  { key: 'internacional', label: 'Internacional',  abbr: 'Inter',  color: '#0EA5E9' },
+  { key: 'midia',         label: 'Mídia',          abbr: 'Mídia',  color: '#DC2626' },
+  { key: 'economia',      label: 'Economia',       abbr: 'Econ',   color: '#0F766E' },
+  { key: 'cultura',       label: 'Cultura',        abbr: 'Cultu',  color: '#EAB308' },
+  { key: 'policia',       label: 'Polícia',        abbr: 'Políc',  color: '#9F1239' },
+  { key: 'gastronomia',   label: 'Gastronomia',    abbr: 'Gast',   color: '#F97316' },
+  { key: 'energia',       label: 'Energia',        abbr: 'Energ',  color: '#F59E0B' },
 ];
 
-const MONTH_COLORS = [
-  '#3B82F6',
-  '#6366F1',
-  '#EC4899',
-  '#F97316',
-  '#10B981',
-  '#EAB308',
-  '#F59E0B',
-  '#EF4444',
-  '#8B5CF6',
-  '#14B8A6',
-  '#06B6D4',
-  '#F43F5E',
-];
+function normalizeCategoryKey(raw) {
+  if (!raw) return null;
+  const lower = String(raw).toLowerCase().trim();
+  const aliases = { seguranca: 'policia', outros: 'cultura', brasil: 'politica', atualidade: 'politica' };
+  if (CATEGORIES.find((c) => c.key === lower)) return lower;
+  return aliases[lower] || null;
+}
 
 function drawWheel(canvas, segments, rotation) {
   if (!canvas || segments.length === 0) return;
@@ -161,28 +151,27 @@ export default function RodaDaSegunda() {
 
   const showDesktopMascot = viewportSize.width >= 1280 && viewportSize.height >= 700;
 
-  const songsByMonth = useMemo(() => {
+  const songsByCategory = useMemo(() => {
     const map = {};
     songs.forEach((song) => {
-      if (song.release_date) {
-        const month = new Date(song.release_date).getMonth();
-        if (!map[month]) map[month] = [];
-        map[month].push(song);
-      }
+      const key = normalizeCategoryKey(song.category);
+      if (!key) return;
+      if (!map[key]) map[key] = [];
+      map[key].push(song);
     });
     return map;
   }, [songs]);
 
   const segments = useMemo(
     () =>
-      MONTHS_PT.map((name, index) => ({
-        label: name.slice(0, 3),
-        fullName: name,
-        color: MONTH_COLORS[index],
-        monthIndex: index,
-        count: (songsByMonth[index] || []).length,
+      CATEGORIES.map(({ key, label, abbr, color }) => ({
+        label: abbr,
+        fullName: label,
+        color,
+        categoryKey: key,
+        count: (songsByCategory[key] || []).length,
       })),
-    [songsByMonth]
+    [songsByCategory]
   );
 
   useEffect(() => {
@@ -217,8 +206,9 @@ export default function RodaDaSegunda() {
     }
 
     const target = available[Math.floor(Math.random() * available.length)];
-    const arc = (2 * Math.PI) / 12;
-    const targetBaseRot = -Math.PI / 2 - target.monthIndex * arc - arc / 2;
+    const arc = (2 * Math.PI) / CATEGORIES.length;
+    const targetIndex = CATEGORIES.findIndex((c) => c.key === target.categoryKey);
+    const targetBaseRot = -Math.PI / 2 - targetIndex * arc - arc / 2;
     let delta = targetBaseRot - (currentRotRef.current % (2 * Math.PI));
     if (delta <= 0) delta += 2 * Math.PI;
 
@@ -241,8 +231,8 @@ export default function RodaDaSegunda() {
       }
 
       currentRotRef.current = finalRot;
-      const monthSongs = songsByMonth[target.monthIndex] || [];
-      const song = monthSongs[Math.floor(Math.random() * monthSongs.length)];
+      const categorySongs = songsByCategory[target.categoryKey] || [];
+      const song = categorySongs[Math.floor(Math.random() * categorySongs.length)];
 
       if (!song) {
         setWinner(null);
@@ -250,7 +240,7 @@ export default function RodaDaSegunda() {
         return;
       }
 
-      setWinner({ monthName: target.fullName, monthColor: target.color, song });
+      setWinner({ categoryLabel: target.fullName, categoryColor: target.color, song });
       setSpinning(false);
     };
 
@@ -409,13 +399,13 @@ export default function RodaDaSegunda() {
           <div className="hidden lg:block">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-[11px] uppercase tracking-[0.28em] text-white/65">
               <Music className="h-3.5 w-3.5 text-[#FDE047]" />
-              A Roda de Segunda
+              A Roleta da Segunda
             </div>
             <h1 className="mt-5 max-w-[11ch] text-[clamp(2.4rem,3.9vw,4.6rem)] font-black leading-[0.92] tracking-tight text-white">
-              Descubra um mês ao acaso
+              Descubra sua próxima paródia
             </h1>
             <p className="mt-3 max-w-xl text-[clamp(0.95rem,1.2vw,1.0625rem)] leading-7 text-white/60">
-              Gire a roda e revele uma música do acervo no mesmo universo visual da home.
+              Gire a roleta e descubra uma paródia da categoria sorteada.
             </p>
 
           </div>
@@ -446,7 +436,7 @@ export default function RodaDaSegunda() {
                 disabled={spinning || loading}
                 className="hidden rounded-full bg-[#FDE047] px-8 py-4 text-base font-black text-black shadow-lg transition-all hover:scale-105 hover:bg-[#fde047]/90 disabled:scale-100 disabled:opacity-60 xl:inline-flex"
               >
-                {loading ? 'Carregando...' : spinning ? '⏳ Girando...' : 'Girar a Roda!'}
+                {loading ? 'Carregando...' : spinning ? '⏳ Girando...' : 'Girar a Roleta!'}
               </Button>
             </div>
 
@@ -458,7 +448,7 @@ export default function RodaDaSegunda() {
               disabled={spinning || loading}
               className="mt-4 rounded-full bg-[#FDE047] px-7 py-4 text-sm font-black text-black shadow-lg transition-all hover:scale-105 hover:bg-[#fde047]/90 disabled:scale-100 disabled:opacity-60 xl:hidden"
             >
-              {loading ? 'Carregando...' : spinning ? '⏳ Girando...' : 'Girar a Roda!'}
+              {loading ? 'Carregando...' : spinning ? '⏳ Girando...' : 'Girar a Roleta!'}
             </Button>
           </div>
         </div>
@@ -481,27 +471,27 @@ export default function RodaDaSegunda() {
                 <div
                   className="glass-panel overflow-hidden rounded-[32px] border border-white/10 px-5 py-5"
                   style={{
-                    boxShadow: `0 0 0 1px ${winner.monthColor}66 inset`,
+                    boxShadow: `0 0 0 1px ${winner.categoryColor}66 inset`,
                   }}
                 >
                 <div
                   className="mb-5 rounded-[24px] border px-5 py-4 text-white"
                   style={{
-                    borderColor: `${winner.monthColor}40`,
-                    backgroundColor: `${winner.monthColor}18`,
+                    borderColor: `${winner.categoryColor}40`,
+                    backgroundColor: `${winner.categoryColor}18`,
                   }}
                 >
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-75">Mês sorteado</p>
-                  <h2 className="mt-1 text-2xl font-black" style={{ color: winner.monthColor }}>{winner.monthName}</h2>
+                  <p className="text-xs font-bold uppercase tracking-widest opacity-75">Categoria sorteada</p>
+                  <h2 className="mt-1 text-2xl font-black" style={{ color: winner.categoryColor }}>{winner.categoryLabel}</h2>
                 </div>
 
                 <div>
                   <div className="mb-4 flex items-center gap-3">
                     <div
                       className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl"
-                      style={{ backgroundColor: `${winner.monthColor}22` }}
+                      style={{ backgroundColor: `${winner.categoryColor}22` }}
                     >
-                      <Music className="h-6 w-6" style={{ color: winner.monthColor }} />
+                      <Music className="h-6 w-6" style={{ color: winner.categoryColor }} />
                     </div>
 
                     <div className="min-w-0 flex-1">
@@ -515,7 +505,7 @@ export default function RodaDaSegunda() {
                             to={`/musica/${songSlug}`}
                             title="Ver página da música"
                             className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white transition-all hover:scale-110"
-                            style={{ borderColor: winner.monthColor, color: winner.monthColor }}
+                            style={{ borderColor: winner.categoryColor, color: winner.categoryColor }}
                           >
                             <ExternalLink className="h-4 w-4" />
                           </Link>
@@ -523,7 +513,7 @@ export default function RodaDaSegunda() {
                       </div>
                       {winner.song?.artist && <p className="text-sm text-white/55">{winner.song.artist}</p>}
                       {winner.song?.release_date && (
-                        <p className="mt-0.5 text-xs font-medium" style={{ color: `${winner.monthColor}bb` }}>
+                        <p className="mt-0.5 text-xs font-medium" style={{ color: `${winner.categoryColor}bb` }}>
                           📅{' '}
                           {new Date(`${winner.song.release_date}T12:00:00`).toLocaleDateString('pt-BR', {
                             day: 'numeric',
@@ -563,12 +553,12 @@ export default function RodaDaSegunda() {
 
                       <div
                         className="mb-4 flex items-center gap-3 rounded-2xl border border-white/8 px-4 py-3"
-                        style={{ backgroundColor: `${winner.monthColor}12` }}
+                        style={{ backgroundColor: `${winner.categoryColor}12` }}
                       >
                         <button
                           onClick={playerState === 'playing' ? handlePause : handlePlay}
                           className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md transition-all hover:scale-110"
-                          style={{ backgroundColor: winner.monthColor }}
+                          style={{ backgroundColor: winner.categoryColor }}
                           aria-label={playerState === 'playing' ? 'Pausar' : 'Tocar'}
                         >
                           {playerState === 'playing' ? (
@@ -581,7 +571,7 @@ export default function RodaDaSegunda() {
                         <button
                           onClick={handleStop}
                           className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white transition-all hover:scale-110"
-                          style={{ borderColor: winner.monthColor, color: winner.monthColor }}
+                          style={{ borderColor: winner.categoryColor, color: winner.categoryColor }}
                           aria-label="Parar"
                         >
                           <Square className="h-3 w-3" />
@@ -595,7 +585,7 @@ export default function RodaDaSegunda() {
                                   key={index}
                                   className="block w-[3px] rounded-full"
                                   style={{
-                                    backgroundColor: winner.monthColor,
+                                    backgroundColor: winner.categoryColor,
                                     height: `${8 + index * 4}px`,
                                     animation: `bounce ${0.6 + index * 0.1}s ease-in-out infinite alternate`,
                                     animationDelay: `${index * 0.1}s`,
@@ -604,7 +594,7 @@ export default function RodaDaSegunda() {
                               ))}
                             </span>
                           )}
-                          <span className="truncate text-sm font-semibold" style={{ color: winner.monthColor }}>
+                          <span className="truncate text-sm font-semibold" style={{ color: winner.categoryColor }}>
                             {playerState === 'playing'
                               ? 'A tocar...'
                               : playerState === 'paused'
@@ -620,13 +610,13 @@ export default function RodaDaSegunda() {
                     <div
                       className="mb-4 rounded-2xl border px-4 py-4"
                       style={{
-                        borderColor: `${winner.monthColor}33`,
-                        backgroundColor: `${winner.monthColor}0d`,
+                        borderColor: `${winner.categoryColor}33`,
+                        backgroundColor: `${winner.categoryColor}0d`,
                       }}
                     >
                       <p
                         className="mb-2 text-xs font-semibold uppercase tracking-widest"
-                        style={{ color: winner.monthColor }}
+                        style={{ color: winner.categoryColor }}
                       >
                         Sobre esta música
                       </p>
@@ -643,7 +633,7 @@ export default function RodaDaSegunda() {
                             type="button"
                             onClick={() => setIsDescriptionExpanded((prev) => !prev)}
                             className="text-sm font-semibold underline underline-offset-2"
-                            style={{ color: winner.monthColor }}
+                            style={{ color: winner.categoryColor }}
                           >
                             {isDescriptionExpanded ? 'Ver menos' : 'Ler mais'}
                           </button>
@@ -652,7 +642,7 @@ export default function RodaDaSegunda() {
                               type="button"
                               onClick={() => setIsDescriptionDialogOpen(true)}
                               className="hidden text-sm font-semibold underline underline-offset-2 md:inline-block"
-                              style={{ color: winner.monthColor }}
+                              style={{ color: winner.categoryColor }}
                             >
                               Ver letras
                             </button>
