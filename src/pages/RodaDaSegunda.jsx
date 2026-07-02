@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Song } from '@/api/entities';
-import { Music, ExternalLink, Play, Pause, Square, RefreshCw } from 'lucide-react';
+import { ExternalLink, Play, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { extractYouTubeId, titleToSlug } from '@/lib/utils';
 import { MobileRoletaApp } from '@/components/mobile';
@@ -125,20 +125,11 @@ function drawPremiumWheel(canvas, size, rotation) {
   ctx.fillText('SEGUNDA', cx, cx + Math.round(hubR * 0.55));
 }
 
-function SpotifyIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.84-.179-.84-.66 0-.419.34-.78.78-.66 4.56.96 7.8 1.44 10.98 2.34.42.12.66.54.54.96zm1.44-3.3c-.3.42-.84.6-1.32.42-3.24-1.98-8.16-2.58-11.94-1.38-.48.12-1.02-.12-1.14-.6-.12-.48.12-1.02.6-1.14 4.2-1.26 9.6-.66 13.2 1.62.42.18.6.78.42 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.3c-.6.18-1.2-.18-1.38-.72-.18-.6.18-1.2.72-1.38 4.26-1.26 11.28-1.02 15.72 1.62.54.3.72 1.02.42 1.56-.3.54-1.02.72-1.56.42z" />
-    </svg>
-  );
-}
-
 export default function RodaDaSegunda() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState(null);
-  const [playerState, setPlayerState] = useState('stopped');
   const [resultVisible, setResultVisible] = useState(false);
   const [viewportSize, setViewportSize] = useState(() => ({
     width: typeof window !== 'undefined' ? window.innerWidth : 1440,
@@ -148,8 +139,6 @@ export default function RodaDaSegunda() {
   const currentRotRef = useRef(0);
   const animRef = useRef(null);
   const iframeRef = useRef(null);
-  const playbackStartedRef = useRef(false);
-  const autoplayFallbackRef = useRef(null);
 
   useEffect(() => {
     const handleResize = () => setViewportSize({ width: window.innerWidth, height: window.innerHeight });
@@ -161,13 +150,12 @@ export default function RodaDaSegunda() {
     const { width, height } = viewportSize;
     if (width < 640) return Math.max(260, Math.min(320, width - 40));
     if (width < 1024) return Math.max(280, Math.min(340, width - 72));
-    const compact = width < 1500;
-    const byHeight = Math.floor(height * (compact ? 0.38 : 0.44));
-    const byWidth = Math.floor((width - 320) * (compact ? 0.24 : 0.20));
-    return Math.max(260, Math.min(compact ? 360 : 420, byHeight, byWidth));
+    // desktop: sidebar 260px + padding 64px + right col + gap 48px
+    const rightCol = width < 1400 ? 400 : width < 1800 ? 460 : 520;
+    const leftCol = width - 260 - 64 - rightCol - 48;
+    const byHeight = Math.floor(height * 0.54);
+    return Math.max(300, Math.min(500, leftCol - 40, byHeight));
   }, [viewportSize]);
-
-  const showMascot = viewportSize.width >= 1280 && viewportSize.height >= 700;
 
   useEffect(() => {
     Song.list('-release_date').then((data) => { setSongs(data || []); setLoading(false); });
@@ -193,7 +181,6 @@ export default function RodaDaSegunda() {
 
   const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
   const songSlug = winner?.song?.slug || (winner?.song?.title ? titleToSlug(winner.song.title) : null);
-  const winnerYear = winner?.song?.release_date ? new Date(winner.song.release_date).getFullYear() : null;
   const wc = winner?.monthColor ?? '#FACC15';
 
   const sendYTCommand = (func) => {
@@ -201,40 +188,6 @@ export default function RodaDaSegunda() {
       JSON.stringify({ event: 'command', func, args: [] }), '*'
     );
   };
-
-  useEffect(() => {
-    if (!youtubeId) {
-      setPlayerState('stopped');
-      playbackStartedRef.current = false;
-      if (autoplayFallbackRef.current) { clearTimeout(autoplayFallbackRef.current); autoplayFallbackRef.current = null; }
-      return;
-    }
-    setPlayerState('playing');
-    playbackStartedRef.current = false;
-    autoplayFallbackRef.current = setTimeout(() => {
-      if (!playbackStartedRef.current) setPlayerState('paused');
-    }, 1500);
-    return () => { if (autoplayFallbackRef.current) { clearTimeout(autoplayFallbackRef.current); autoplayFallbackRef.current = null; } };
-  }, [youtubeId]);
-
-  useEffect(() => {
-    if (!youtubeId) return;
-    const handle = (event) => {
-      if (event.source !== iframeRef.current?.contentWindow) return;
-      let p = event.data;
-      if (typeof p === 'string') { try { p = JSON.parse(p); } catch { return; } }
-      if (!p || typeof p !== 'object') return;
-      let state = null;
-      if (p.event === 'onStateChange') state = p.info;
-      else if (p.event === 'infoDelivery' && typeof p.info?.playerState === 'number') state = p.info.playerState;
-      if (typeof state !== 'number') return;
-      if (state === 1) { playbackStartedRef.current = true; setPlayerState('playing'); }
-      else if (state === 2) setPlayerState('paused');
-      else if (state === 0) setPlayerState('stopped');
-    };
-    window.addEventListener('message', handle);
-    return () => window.removeEventListener('message', handle);
-  }, [youtubeId]);
 
   const spin = () => {
     if (spinning || loading) return;
@@ -267,7 +220,7 @@ export default function RodaDaSegunda() {
       const pool = songsByMonth[target.index] || [];
       const song = pool[Math.floor(Math.random() * pool.length)];
       if (song) {
-        setWinner({ monthName: target.name, monthColor: target.color, song });
+        setWinner({ month: target, monthName: target.name, monthColor: target.color, song });
         setTimeout(() => setResultVisible(true), 250);
       }
       setSpinning(false);
@@ -276,13 +229,6 @@ export default function RodaDaSegunda() {
   };
 
   const rodaMascot = '/images/Caipivara_pied_transparent.png';
-  const description = winner?.song?.description?.trim() || '';
-
-  const streamingButtons = [
-    winner?.song?.spotify_url ? { key: 'spotify', href: winner.song.spotify_url, label: 'Spotify', bg: '#1DB954', icon: <SpotifyIcon /> } : null,
-    winner?.song?.youtube_url ? { key: 'youtube', href: winner.song.youtube_url, label: 'YouTube', bg: '#FF0000', icon: <Music className="h-4 w-4" aria-hidden="true" /> } : null,
-    winner?.song?.apple_music_url ? { key: 'apple', href: winner.song.apple_music_url, label: 'Apple Music', bg: '#FC3C44', icon: <Music className="h-4 w-4" aria-hidden="true" /> } : null,
-  ].filter(Boolean);
 
   return (
     <div className="min-h-full text-white">
@@ -293,74 +239,84 @@ export default function RodaDaSegunda() {
 
       {/* Desktop */}
       <div
-        className="hidden lg:flex min-h-[calc(100vh-2rem)] flex-col"
-        style={{ background: 'radial-gradient(ellipse 70% 50% at 30% -10%, rgba(109,40,217,0.18) 0%, transparent 55%)' }}
+        className="hidden lg:flex min-h-screen"
+        style={{ background: 'radial-gradient(ellipse 90% 60% at 15% 20%, rgba(109,40,217,0.14) 0%, transparent 55%)' }}
       >
-        <div className="mx-auto w-full max-w-7xl flex flex-1 px-4 pb-8 pt-6 gap-10 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(360px,440px)] xl:items-start xl:gap-12 2xl:grid-cols-[minmax(0,1fr)_minmax(420px,500px)]">
-
-          {/* Left — title + wheel + button */}
-          <div className="flex flex-col items-center lg:items-start gap-0">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-[10px] uppercase tracking-[0.28em] text-white/55">
-              <Music className="h-3.5 w-3.5 text-[#FACC15]" aria-hidden="true" />
-              A Música da Segunda
-            </div>
-
-            {/* Title */}
-            <h1 className="mt-4 font-black leading-[0.88] tracking-tight">
-              <span className="block text-white" style={{ fontSize: 'clamp(2.8rem,4.5vw,5.5rem)' }}>Roda dos</span>
-              <span className="block text-[#FACC15]" style={{ fontSize: 'clamp(3.2rem,5.5vw,6.5rem)' }}>Meses</span>
+        <div
+          className="w-full max-w-7xl mx-auto px-8 pb-10 pt-8 grid items-start gap-8 xl:gap-12"
+          style={{
+            gridTemplateColumns: `1fr ${
+              viewportSize.width < 1400 ? '400px' : viewportSize.width < 1800 ? '460px' : '520px'
+            }`,
+          }}
+        >
+          {/* LEFT — title + wheel + button */}
+          <div className="flex flex-col">
+            <h1 className="font-black leading-[0.88] tracking-tight">
+              <span className="block text-white" style={{ fontSize: 'clamp(2.8rem,3.8vw,5rem)' }}>
+                Roda dos
+              </span>
+              <span className="block text-[#FACC15]" style={{ fontSize: 'clamp(3.5rem,4.8vw,6.5rem)' }}>
+                Meses
+              </span>
             </h1>
-            <p className="mt-3 text-[clamp(0.9rem,1.1vw,1rem)] text-white/45">
-              Gire a roda e descubra uma{' '}
-              <span className="font-semibold text-[#FACC15]/70">música</span> do acervo.
+            <p className="mt-2 text-sm xl:text-base text-white/45">
+              Gire a roda e descubra uma música do acervo.
             </p>
 
             {/* Wheel + button */}
-            <div className="mt-8 flex w-full flex-col items-center gap-5">
-              <div className="glass-panel relative flex flex-col items-center rounded-[32px] px-6 pt-6 pb-5"
-                style={{ boxShadow: '0 0 60px rgba(109,40,217,0.15), 0 0 120px rgba(109,40,217,0.06)' }}>
-
-                {/* Purple glow */}
-                <div className="pointer-events-none absolute inset-0 rounded-[32px]"
-                  style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(109,40,217,0.12) 0%, transparent 70%)' }} />
-
-                {/* Pointer */}
-                <div className="relative z-10" style={{ marginBottom: -4 }}>
-                  <svg width="26" height="22" viewBox="0 0 26 22">
-                    <polygon points="13,20 1,1 25,1" fill="#FACC15"
-                      style={{ filter: 'drop-shadow(0 0 8px #FACC15) drop-shadow(0 0 16px rgba(250,204,21,0.5))' }} />
+            <div className="mt-8 flex flex-col items-center">
+              <div className="relative flex flex-col items-center">
+                {/* Purple glow ring */}
+                <div
+                  className="pointer-events-none absolute left-1/2 -translate-x-1/2"
+                  style={{
+                    top: 26,
+                    width: CANVAS_SIZE + 36,
+                    height: CANVAS_SIZE + 36,
+                    borderRadius: '50%',
+                    boxShadow:
+                      '0 0 0 3px rgba(167,139,250,0.5), 0 0 55px 20px rgba(139,92,246,0.45), 0 0 110px 45px rgba(109,40,217,0.22)',
+                  }}
+                />
+                {/* Pointer triangle */}
+                <div className="relative z-10" style={{ marginBottom: -6 }}>
+                  <svg width="34" height="30" viewBox="0 0 34 30">
+                    <polygon
+                      points="17,28 1,1 33,1"
+                      fill="#FACC15"
+                      style={{
+                        filter:
+                          'drop-shadow(0 0 10px #FACC15) drop-shadow(0 0 22px rgba(250,204,21,0.7))',
+                      }}
+                    />
                   </svg>
                 </div>
-
                 {/* Canvas */}
                 <canvas
                   ref={canvasRef}
                   onClick={!spinning ? spin : undefined}
                   className="relative z-10 block rounded-full"
-                  style={{ width: CANVAS_SIZE, height: CANVAS_SIZE, cursor: spinning ? 'wait' : 'pointer' }}
+                  style={{
+                    width: CANVAS_SIZE,
+                    height: CANVAS_SIZE,
+                    cursor: spinning ? 'wait' : 'pointer',
+                  }}
                 />
-
-                {/* Spin button inside card — wide screens */}
-                <button
-                  type="button"
-                  onClick={spin}
-                  disabled={spinning || loading}
-                  className="mt-5 hidden xl:flex items-center justify-center gap-2.5 rounded-full bg-[#FACC15] px-10 py-4 font-black text-black text-base transition-all hover:scale-[1.03] active:scale-[0.97] disabled:opacity-60 disabled:scale-100"
-                  style={{ boxShadow: spinning ? 'none' : '0 8px 30px rgba(250,204,21,0.3)' }}
-                >
-                  <RefreshCw className={`h-5 w-5 ${spinning ? 'animate-spin' : ''}`} />
-                  {loading ? 'Carregando...' : spinning ? 'Girando…' : 'GIRAR A RODA'}
-                </button>
               </div>
 
-              {/* Spin button below card — smaller lg screens */}
+              {/* Spin button */}
               <button
                 type="button"
                 onClick={spin}
                 disabled={spinning || loading}
-                className="xl:hidden flex items-center justify-center gap-2.5 rounded-full bg-[#FACC15] px-10 py-4 font-black text-black text-base transition-all hover:scale-[1.03] active:scale-[0.97] disabled:opacity-60"
-                style={{ boxShadow: spinning ? 'none' : '0 8px 30px rgba(250,204,21,0.3)' }}
+                className="mt-7 flex items-center justify-center gap-3 rounded-full bg-[#FACC15] font-black text-black text-lg transition-all hover:scale-[1.03] active:scale-[0.97] disabled:opacity-60 disabled:scale-100"
+                style={{
+                  width: CANVAS_SIZE,
+                  paddingTop: '1rem',
+                  paddingBottom: '1rem',
+                  boxShadow: spinning ? 'none' : '0 8px 32px rgba(250,204,21,0.35)',
+                }}
               >
                 <RefreshCw className={`h-5 w-5 ${spinning ? 'animate-spin' : ''}`} />
                 {loading ? 'Carregando...' : spinning ? 'Girando…' : 'GIRAR A RODA'}
@@ -368,153 +324,136 @@ export default function RodaDaSegunda() {
             </div>
           </div>
 
-          {/* Right — mascot or result */}
-          <div className="relative xl:min-h-[560px] xl:self-stretch">
-            <div className="flex h-full flex-col xl:sticky xl:top-4">
-
-              {/* Mascot (before spin) */}
-              {!winner && !spinning && showMascot && (
-                <div className="pointer-events-none flex flex-1 flex-col items-center justify-end gap-4 px-4 pb-4 pt-8">
-                  <div className="relative">
-                    <div className="absolute -left-24 top-8 z-10 w-[110px] rounded-2xl rounded-br-none bg-[#FACC15] px-3 py-2 shadow-xl">
-                      <p className="text-[10px] font-black leading-tight text-black">
-                        Gira aí. O mês escolhe a vergonha.
-                      </p>
-                    </div>
-                    <img
-                      src={rodaMascot}
-                      alt="Capivara A Música da Segunda"
-                      className="max-h-[440px] w-auto drop-shadow-[0_24px_60px_rgba(0,0,0,0.45)] 2xl:max-h-[500px]"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Result card */}
-              {winner && (
-                <div
-                  className="overflow-hidden rounded-[28px] border transition-all duration-500 xl:mt-2"
-                  style={{
-                    background: `linear-gradient(145deg, ${wc}18 0%, rgba(10,10,16,0.97) 55%)`,
-                    borderColor: `${wc}40`,
-                    boxShadow: `0 0 0 1px ${wc}22 inset, 0 24px 60px rgba(0,0,0,0.4)`,
-                    opacity: resultVisible ? 1 : 0,
-                    transform: resultVisible ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.98)',
-                  }}
-                >
-                  {/* Month badge */}
-                  <div className="px-6 pt-5 pb-4 border-b border-white/[0.06]"
-                    style={{ background: `linear-gradient(135deg, ${wc}18, ${wc}08)` }}>
-                    <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">Mês sorteado</p>
-                    <h2 className="mt-1 text-3xl font-black" style={{ color: wc }}>{winner.monthName}</h2>
-                  </div>
-
-                  <div className="px-6 py-5 space-y-4">
-                    {/* Song info */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl"
-                        style={{ backgroundColor: `${wc}20` }}>
-                        <Music className="h-6 w-6" style={{ color: wc }} aria-hidden="true" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-white/38">Música sorteada</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <h3 className="truncate text-xl font-black text-white">{winner.song?.title}</h3>
-                          {songSlug && (
-                            <Link to={`/musica/${songSlug}`}
-                              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white transition-all hover:scale-110"
-                              style={{ borderColor: wc, color: wc }}
-                              aria-label="Ver página da música">
-                              <ExternalLink className="h-4 w-4" />
-                            </Link>
-                          )}
-                        </div>
-                        {winner.song?.release_date && (
-                          <p className="mt-0.5 text-xs font-medium" style={{ color: `${wc}aa` }}>
-                            {new Date(`${winner.song.release_date}T12:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* YT player controls */}
-                    {!youtubeId && winner.song?.youtube_url && (
-                      <div className="flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/45">
-                        <span>⚠️</span><span>Player indisponível — use o botão YouTube abaixo.</span>
-                      </div>
-                    )}
-                    {youtubeId && (
-                      <>
-                        <iframe
-                          ref={iframeRef}
-                          src={`https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&rel=0`}
-                          title={winner.song?.title}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          onLoad={() => sendYTCommand('playVideo')}
-                          style={{ position: 'fixed', top: '-9999px', left: '-9999px', width: '1px', height: '1px', opacity: 0, pointerEvents: 'none' }}
-                        />
-                        <div className="flex items-center gap-3 rounded-2xl border border-white/8 px-4 py-3"
-                          style={{ backgroundColor: `${wc}10` }}>
-                          <button type="button"
-                            onClick={() => { sendYTCommand(playerState === 'playing' ? 'pauseVideo' : 'playVideo'); setPlayerState(playerState === 'playing' ? 'paused' : 'playing'); }}
-                            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md transition-all hover:scale-110"
-                            style={{ backgroundColor: wc }}
-                            aria-label={playerState === 'playing' ? 'Pausar' : 'Tocar'}>
-                            {playerState === 'playing' ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
-                          </button>
-                          <button type="button"
-                            onClick={() => { sendYTCommand('stopVideo'); setPlayerState('stopped'); }}
-                            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white transition-all hover:scale-110"
-                            style={{ borderColor: wc, color: wc }}
-                            aria-label="Parar">
-                            <Square className="h-3 w-3" />
-                          </button>
-                          <span className="truncate text-sm font-semibold" style={{ color: wc }}>
-                            {playerState === 'playing' ? 'A tocar…' : playerState === 'paused' ? '⏸ Pausado' : '⏹ Parado'}
-                          </span>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Description */}
-                    {description && (
-                      <div className="rounded-2xl border px-4 py-3"
-                        style={{ borderColor: `${wc}28`, backgroundColor: `${wc}0a` }}>
-                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: wc }}>
-                          Sobre esta música
-                        </p>
-                        <p className="line-clamp-4 text-sm leading-6 text-white/65">{description}</p>
-                      </div>
-                    )}
-
-                    {/* Action buttons */}
-                    <div className="flex flex-wrap gap-2">
-                      {streamingButtons.map((btn) => (
-                        <a key={btn.key} href={btn.href} target="_blank" rel="noopener noreferrer"
-                          aria-label={btn.label} title={btn.label}
-                          className="inline-flex h-10 min-w-[44px] items-center justify-center gap-2 rounded-2xl px-4 text-xs font-bold text-white shadow-lg transition-all hover:scale-105"
-                          style={{ backgroundColor: btn.bg }}>
-                          {btn.icon}
-                          <span className="hidden sm:inline">{btn.label}</span>
-                        </a>
-                      ))}
-                      <button type="button" onClick={spin} disabled={spinning}
-                        className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-xs font-bold text-white/70 transition-all hover:bg-white/10 disabled:opacity-50">
-                        <RefreshCw className={`h-3.5 w-3.5 ${spinning ? 'animate-spin' : ''}`} />
-                        Girar de novo
-                      </button>
-                      {winnerYear && (
-                        <Link to={`/arquivo/${winnerYear}`}
-                          className="inline-flex h-10 items-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-xs font-bold text-white/70 transition-all hover:bg-white/10">
-                          Músicas de {winnerYear}
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+          {/* RIGHT — capybara + result card */}
+          <div className="flex flex-col items-center gap-5 xl:sticky xl:top-6 pt-2 xl:pt-4">
+            {/* Capybara with speech bubble */}
+            <div className="relative w-full flex flex-col items-center">
+              <div
+                className="absolute z-10 top-2 left-2 xl:left-4 rounded-2xl rounded-bl-none bg-[#FACC15] px-4 py-3 shadow-xl"
+                style={{ maxWidth: 180 }}
+              >
+                <p className="text-sm font-black leading-snug text-black">
+                  Gira aí. O mês escolhe a vergonha.
+                </p>
+              </div>
+              <img
+                src={rodaMascot}
+                alt="Capivara A Música da Segunda"
+                className="w-full max-w-[300px] xl:max-w-[370px] 2xl:max-w-[430px] mt-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                loading="lazy"
+              />
             </div>
+
+            {/* Result card — ÚLTIMO GIRO */}
+            {winner && (
+              <div
+                className="w-full overflow-hidden rounded-[20px] border transition-all duration-500"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(18,18,28,0.98) 0%, rgba(12,12,20,0.99) 100%)',
+                  borderColor: `${wc}35`,
+                  boxShadow: `0 0 0 1px ${wc}14 inset, 0 20px 50px rgba(0,0,0,0.3)`,
+                  opacity: resultVisible ? 1 : 0,
+                  transform: resultVisible ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.98)',
+                }}
+              >
+                {/* Hidden iframe for audio autoplay */}
+                {youtubeId && (
+                  <iframe
+                    ref={iframeRef}
+                    src={`https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&rel=0`}
+                    title={winner.song?.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    onLoad={() => sendYTCommand('playVideo')}
+                    style={{
+                      position: 'fixed',
+                      top: '-9999px',
+                      left: '-9999px',
+                      width: '1px',
+                      height: '1px',
+                      opacity: 0,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+
+                {/* Card header label */}
+                <div className="px-4 pt-3 pb-0.5">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.32em] text-white/30">
+                    Último Giro
+                  </p>
+                </div>
+
+                {/* Main row: badge + info + play */}
+                <div className="flex items-center gap-3 px-4 pb-4 pt-2">
+                  {/* Month badge with day number */}
+                  <div
+                    className="flex h-[62px] w-[52px] flex-shrink-0 flex-col items-center justify-center rounded-xl"
+                    style={{ backgroundColor: wc }}
+                  >
+                    <span className="text-[10px] font-bold text-white/80 leading-none">
+                      {winner.month?.abbr ?? ''}
+                    </span>
+                    <span
+                      className="font-black text-white leading-none mt-0.5"
+                      style={{ fontSize: '1.75rem' }}
+                    >
+                      {winner.song?.release_date
+                        ? new Date(`${winner.song.release_date}T12:00:00`).getDate()
+                        : ''}
+                    </span>
+                  </div>
+
+                  {/* Text info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
+                      Mês sorteado
+                    </p>
+                    <p className="text-base font-black leading-tight mt-0.5" style={{ color: wc }}>
+                      {winner.monthName}
+                    </p>
+                    <p className="text-xs text-white/45 leading-snug mt-1">
+                      Confira a música que o mês escolheu para você.
+                    </p>
+                  </div>
+
+                  {/* Play / YouTube link */}
+                  {winner.song?.youtube_url && (
+                    <a
+                      href={winner.song.youtube_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Ouvir no YouTube"
+                      className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95"
+                      style={{ backgroundColor: '#FACC15' }}
+                    >
+                      <Play className="h-5 w-5 text-black ml-0.5" />
+                    </a>
+                  )}
+                </div>
+
+                {/* Bottom action links */}
+                <div className="flex gap-2 border-t border-white/[0.06] px-4 py-3">
+                  {songSlug && (
+                    <Link
+                      to={`/musica/${songSlug}`}
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white/80"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Ver música
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={spin}
+                    disabled={spinning}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/55 transition-all hover:bg-white/10 hover:text-white/80 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${spinning ? 'animate-spin' : ''}`} />
+                    Girar de novo
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
