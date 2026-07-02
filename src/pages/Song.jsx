@@ -201,6 +201,37 @@ export default function SongPage() {
     setPlayerBarActive(false);
     setPlayerBarPlaying(false);
   }, []);
+  // The YT player API inside the iframe is not ready at onLoad time — a single
+  // playVideo command gets lost. Retry while playback is expected.
+  useEffect(() => {
+    if (!playerBarActive || !playerBarPlaying) return;
+    const timers = [350, 900, 1800].map((ms) =>
+      setTimeout(() => {
+        playerIframeRef.current?.contentWindow?.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+        );
+      }, ms)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [playerBarActive, playerBarPlaying]);
+  // Sync playerBarPlaying with the real player state so the UI never lies
+  useEffect(() => {
+    if (!playerBarActive) return;
+    const handle = (event) => {
+      if (event.source !== playerIframeRef.current?.contentWindow) return;
+      let p = event.data;
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch { return; } }
+      if (!p || typeof p !== 'object') return;
+      let state = null;
+      if (p.event === 'onStateChange') state = p.info;
+      else if (p.event === 'infoDelivery' && typeof p.info?.playerState === 'number') state = p.info.playerState;
+      if (typeof state !== 'number') return;
+      if (state === 1) setPlayerBarPlaying(true);
+      else if (state === 2 || state === 0) setPlayerBarPlaying(false);
+    };
+    window.addEventListener('message', handle);
+    return () => window.removeEventListener('message', handle);
+  }, [playerBarActive]);
   const handlePlayerPlay = () => {
     if (!youtubeAudioSrc) return;
     setMobileVideoActive(false);
