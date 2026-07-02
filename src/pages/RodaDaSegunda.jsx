@@ -333,7 +333,7 @@ export default function RodaDaSegunda() {
                 style={{ maxWidth: 180 }}
               >
                 <p className="text-sm font-black leading-snug text-black">
-                  Gira aí. O mês escolhe a vergonha.
+                  Gira aí. o mês escolhe a vergonha.
                 </p>
               </div>
               <img
@@ -408,12 +408,17 @@ export default function RodaDaSegunda() {
                     <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
                       Mês sorteado
                     </p>
-                    <p className="text-base font-black leading-tight mt-0.5" style={{ color: wc }}>
+                    <p className="text-sm font-black leading-tight mt-0.5" style={{ color: wc }}>
                       {winner.monthName}
                     </p>
-                    <p className="text-xs text-white/45 leading-snug mt-1">
-                      Confira a música que o mês escolheu para você.
+                    <p className="mt-1 truncate text-base font-black text-white leading-tight">
+                      {winner.song?.title}
                     </p>
+                    {winner.song?.release_date && (
+                      <p className="mt-0.5 text-[10px] text-white/35">
+                        {new Date(`${winner.song.release_date}T12:00:00`).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                    )}
                   </div>
 
                   {/* Play / YouTube link */}
