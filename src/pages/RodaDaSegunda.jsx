@@ -1,94 +1,128 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Song } from '@/api/entities';
-import { Button } from '@/components/ui/button';
-import { Music, ExternalLink, Play, Pause, Square } from 'lucide-react';
+import { Music, ExternalLink, Play, Pause, Square, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { extractYouTubeId, titleToSlug } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MobileRoletaApp } from '@/components/mobile';
 
-const CATEGORIES = [
-  { key: 'politica',      label: 'Política',      abbr: 'Polít',  color: '#6D28D9' },
-  { key: 'esporte',       label: 'Esporte',        abbr: 'Espor',  color: '#16A34A' },
-  { key: 'internacional', label: 'Internacional',  abbr: 'Inter',  color: '#0EA5E9' },
-  { key: 'midia',         label: 'Mídia',          abbr: 'Mídia',  color: '#DC2626' },
-  { key: 'economia',      label: 'Economia',       abbr: 'Econ',   color: '#0F766E' },
-  { key: 'cultura',       label: 'Cultura',        abbr: 'Cultu',  color: '#EAB308' },
-  { key: 'policia',       label: 'Polícia',        abbr: 'Políc',  color: '#9F1239' },
-  { key: 'gastronomia',   label: 'Gastronomia',    abbr: 'Gast',   color: '#F97316' },
-  { key: 'energia',       label: 'Energia',        abbr: 'Energ',  color: '#F59E0B' },
+const MONTHS = [
+  { index: 0,  abbr: 'JAN', name: 'Janeiro',    color: '#DC2626' },
+  { index: 1,  abbr: 'FEV', name: 'Fevereiro',   color: '#7C3AED' },
+  { index: 2,  abbr: 'MAR', name: 'Março',       color: '#EA580C' },
+  { index: 3,  abbr: 'ABR', name: 'Abril',       color: '#059669' },
+  { index: 4,  abbr: 'MAI', name: 'Maio',        color: '#2563EB' },
+  { index: 5,  abbr: 'JUN', name: 'Junho',       color: '#B45309' },
+  { index: 6,  abbr: 'JUL', name: 'Julho',       color: '#6D28D9' },
+  { index: 7,  abbr: 'AGO', name: 'Agosto',      color: '#15803D' },
+  { index: 8,  abbr: 'SET', name: 'Setembro',    color: '#0369A1' },
+  { index: 9,  abbr: 'OUT', name: 'Outubro',     color: '#D97706' },
+  { index: 10, abbr: 'NOV', name: 'Novembro',    color: '#0D9488' },
+  { index: 11, abbr: 'DEZ', name: 'Dezembro',    color: '#E11D48' },
 ];
 
-function normalizeCategoryKey(raw) {
-  if (!raw) return null;
-  const lower = String(raw).toLowerCase().trim();
-  const aliases = { seguranca: 'policia', outros: 'cultura', brasil: 'politica', atualidade: 'politica' };
-  if (CATEGORIES.find((c) => c.key === lower)) return lower;
-  return aliases[lower] || null;
-}
-
-function drawWheel(canvas, segments, rotation) {
-  if (!canvas || segments.length === 0) return;
+function drawPremiumWheel(canvas, size, rotation) {
+  if (!canvas || size <= 0) return;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
 
   const ctx = canvas.getContext('2d');
-  const size = canvas.width;
-  const cx = size / 2;
-  const radius = cx - 8;
-  const arc = (2 * Math.PI) / segments.length;
-
+  ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, size, size);
 
-  ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.2)';
-  ctx.shadowBlur = 20;
-  ctx.beginPath();
-  ctx.arc(cx, cx, radius, 0, 2 * Math.PI);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.restore();
+  const cx = size / 2;
+  const n = MONTHS.length;
+  const arc = (2 * Math.PI) / n;
+  const outerR = cx - 14;
 
-  segments.forEach(({ label, color }, index) => {
-    const startAngle = rotation + index * arc;
-    const endAngle = startAngle + arc;
-
-    const gradient = ctx.createRadialGradient(cx, cx, radius * 0.25, cx, cx, radius);
-    gradient.addColorStop(0, `${color}dd`);
-    gradient.addColorStop(1, color);
+  MONTHS.forEach(({ abbr, color }, i) => {
+    const start = rotation + i * arc;
+    const end = start + arc;
+    const mid = start + arc / 2;
 
     ctx.beginPath();
     ctx.moveTo(cx, cx);
-    ctx.arc(cx, cx, radius, startAngle, endAngle);
+    ctx.arc(cx, cx, outerR, start, end);
     ctx.closePath();
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = color;
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.38)';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
     ctx.save();
     ctx.translate(cx, cx);
-    ctx.rotate(startAngle + arc / 2);
+    ctx.rotate(mid);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `900 ${Math.round(size * 0.057)}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px system-ui, sans-serif';
-    ctx.shadowColor = 'rgba(0,0,0,0.55)';
-    ctx.shadowBlur = 4;
-    ctx.fillText(label, radius * 0.65, 5);
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 3;
+    ctx.fillText(abbr, outerR * 0.67, 0);
+    ctx.shadowBlur = 0;
     ctx.restore();
   });
 
+  ctx.save();
   ctx.beginPath();
-  ctx.arc(cx, cx, 30, 0, 2 * Math.PI);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.strokeStyle = '#ddd';
-  ctx.lineWidth = 2;
+  ctx.arc(cx, cx, outerR + 1, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 5;
+  ctx.shadowColor = '#FDE047';
+  ctx.shadowBlur = 18;
   ctx.stroke();
-  ctx.fillStyle = '#32a2dc';
-  ctx.font = '18px system-ui';
+  ctx.restore();
+
+  const dotCount = 24;
+  const dotRingR = outerR + 10;
+  for (let i = 0; i < dotCount; i++) {
+    const ang = (i / dotCount) * 2 * Math.PI - Math.PI / 2;
+    const dx = cx + Math.cos(ang) * dotRingR;
+    const dy = cx + Math.sin(ang) * dotRingR;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(dx, dy, 4, 0, 2 * Math.PI);
+    ctx.fillStyle = '#FDE047';
+    ctx.shadowColor = '#FACC15';
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const hubR = Math.round(outerR * 0.215);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cx, hubR + 5, 0, 2 * Math.PI);
+  ctx.strokeStyle = '#FACC15';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#FDE047';
+  ctx.shadowBlur = 14;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(cx, cx, hubR, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0A0A0A';
+  ctx.fill();
+
+  ctx.save();
+  ctx.fillStyle = '#FACC15';
+  ctx.shadowColor = '#FDE047';
+  ctx.shadowBlur = 6;
+  ctx.font = `bold ${Math.round(hubR * 0.82)}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('🎵', cx, cx);
+  ctx.fillText('♪', cx, cx - Math.round(hubR * 0.12));
+  ctx.restore();
+
+  ctx.fillStyle = '#FACC15';
+  ctx.font = `700 ${Math.round(hubR * 0.32)}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('SEGUNDA', cx, cx + Math.round(hubR * 0.55));
 }
 
 function SpotifyIcon() {
@@ -99,22 +133,13 @@ function SpotifyIcon() {
   );
 }
 
-function YoutubeIcon() {
-  return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  );
-}
-
 export default function RodaDaSegunda() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState(null);
   const [playerState, setPlayerState] = useState('stopped');
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
+  const [resultVisible, setResultVisible] = useState(false);
   const [viewportSize, setViewportSize] = useState(() => ({
     width: typeof window !== 'undefined' ? window.innerWidth : 1440,
     height: typeof window !== 'undefined' ? window.innerHeight : 900,
@@ -123,99 +148,110 @@ export default function RodaDaSegunda() {
   const currentRotRef = useRef(0);
   const animRef = useRef(null);
   const iframeRef = useRef(null);
-  const autoplayFallbackTimerRef = useRef(null);
   const playbackStartedRef = useRef(false);
+  const autoplayFallbackRef = useRef(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      setViewportSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
+    const handleResize = () => setViewportSize({ width: window.innerWidth, height: window.innerHeight });
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const CANVAS_SIZE = useMemo(() => {
-    if (viewportSize.width < 640) return Math.max(260, Math.min(320, viewportSize.width - 40));
-    if (viewportSize.width < 1024) return Math.max(280, Math.min(340, viewportSize.width - 72));
+    const { width, height } = viewportSize;
+    if (width < 640) return Math.max(260, Math.min(320, width - 40));
+    if (width < 1024) return Math.max(280, Math.min(340, width - 72));
+    const rightCol = width < 1400 ? 400 : width < 1800 ? 460 : 520;
+    const leftCol = width - 260 - 64 - rightCol - 48;
+    const byHeight = Math.floor(height * 0.54);
+    return Math.max(300, Math.min(500, leftCol - 40, byHeight));
+  }, [viewportSize]);
 
-    const compactDesktop = viewportSize.width < 1500;
-    const basedOnHeight = Math.floor(viewportSize.height * (compactDesktop ? 0.26 : 0.32));
-    const basedOnWidth = Math.floor((viewportSize.width - 320) * (compactDesktop ? 0.18 : 0.16));
+  useEffect(() => {
+    Song.list('-release_date').then((data) => { setSongs(data || []); setLoading(false); });
+  }, []);
 
-    return Math.max(240, Math.min(compactDesktop ? 310 : 360, basedOnHeight, basedOnWidth));
-  }, [viewportSize.height, viewportSize.width]);
+  useEffect(() => {
+    drawPremiumWheel(canvasRef.current, CANVAS_SIZE, currentRotRef.current);
+  }, [CANVAS_SIZE]);
 
-  const showDesktopMascot = viewportSize.width >= 1280 && viewportSize.height >= 700;
+  useEffect(() => () => { if (animRef.current) cancelAnimationFrame(animRef.current); }, []);
 
-  const songsByCategory = useMemo(() => {
+  const songsByMonth = useMemo(() => {
     const map = {};
     songs.forEach((song) => {
-      const key = normalizeCategoryKey(song.category);
-      if (!key) return;
-      if (!map[key]) map[key] = [];
-      map[key].push(song);
+      if (song.release_date) {
+        const m = new Date(song.release_date).getMonth();
+        if (!map[m]) map[m] = [];
+        map[m].push(song);
+      }
     });
     return map;
   }, [songs]);
 
-  const segments = useMemo(
-    () =>
-      CATEGORIES.map(({ key, label, abbr, color }) => ({
-        label: abbr,
-        fullName: label,
-        color,
-        categoryKey: key,
-        count: (songsByCategory[key] || []).length,
-      })),
-    [songsByCategory]
-  );
+  const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
+  // Use slug from DB directly; fall back to titleToSlug only if absent
+  const songSlug = winner?.song?.slug || (winner?.song?.title ? titleToSlug(winner.song.title) : null);
+  const winnerYear = winner?.song?.release_date ? new Date(winner.song.release_date).getFullYear() : null;
+  const wc = winner?.monthColor ?? '#FACC15';
+
+  const sendYTCommand = (func) => {
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func, args: [] }), '*'
+    );
+  };
 
   useEffect(() => {
-    Song.list('-release_date').then((data) => {
-      setSongs(data || []);
-      setLoading(false);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (segments.length > 0) {
-      drawWheel(canvasRef.current, segments, currentRotRef.current);
+    if (!youtubeId) {
+      setPlayerState('stopped');
+      playbackStartedRef.current = false;
+      if (autoplayFallbackRef.current) { clearTimeout(autoplayFallbackRef.current); autoplayFallbackRef.current = null; }
+      return;
     }
-  }, [segments]);
+    setPlayerState('playing');
+    playbackStartedRef.current = false;
+    autoplayFallbackRef.current = setTimeout(() => {
+      if (!playbackStartedRef.current) setPlayerState('paused');
+    }, 1500);
+    return () => { if (autoplayFallbackRef.current) { clearTimeout(autoplayFallbackRef.current); autoplayFallbackRef.current = null; } };
+  }, [youtubeId]);
 
   useEffect(() => {
-    return () => {
-      if (animRef.current) cancelAnimationFrame(animRef.current);
+    if (!youtubeId) return;
+    const handle = (event) => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      let p = event.data;
+      if (typeof p === 'string') { try { p = JSON.parse(p); } catch { return; } }
+      if (!p || typeof p !== 'object') return;
+      let state = null;
+      if (p.event === 'onStateChange') state = p.info;
+      else if (p.event === 'infoDelivery' && typeof p.info?.playerState === 'number') state = p.info.playerState;
+      if (typeof state !== 'number') return;
+      if (state === 1) { playbackStartedRef.current = true; setPlayerState('playing'); }
+      else if (state === 2) setPlayerState('paused');
+      else if (state === 0) setPlayerState('stopped');
     };
-  }, []);
+    window.addEventListener('message', handle);
+    return () => window.removeEventListener('message', handle);
+  }, [youtubeId]);
 
   const spin = () => {
     if (spinning || loading) return;
-
     setWinner(null);
+    setResultVisible(false);
     setSpinning(true);
 
-    const available = segments.filter((segment) => segment.count > 0);
-    if (available.length === 0) {
-      setSpinning(false);
-      return;
-    }
+    const available = MONTHS.filter((m) => (songsByMonth[m.index] || []).length > 0);
+    if (available.length === 0) { setSpinning(false); return; }
 
     const target = available[Math.floor(Math.random() * available.length)];
-    const arc = (2 * Math.PI) / CATEGORIES.length;
-    const targetIndex = CATEGORIES.findIndex((c) => c.key === target.categoryKey);
-    const targetBaseRot = -Math.PI / 2 - targetIndex * arc - arc / 2;
+    const arc = (2 * Math.PI) / MONTHS.length;
+    const targetBaseRot = -Math.PI / 2 - target.index * arc - arc / 2;
     let delta = targetBaseRot - (currentRotRef.current % (2 * Math.PI));
     if (delta <= 0) delta += 2 * Math.PI;
+    const finalRot = currentRotRef.current + (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI + delta;
 
-    const finalRot =
-      currentRotRef.current + (6 + Math.floor(Math.random() * 4)) * 2 * Math.PI + delta;
-
-    const duration = 4500;
+    const duration = 4200;
     const startRot = currentRotRef.current;
     const startTime = performance.now();
     const easeOut = (t) => 1 - Math.pow(1 - t, 4);
@@ -223,315 +259,210 @@ export default function RodaDaSegunda() {
     const animate = (now) => {
       const t = Math.min((now - startTime) / duration, 1);
       currentRotRef.current = startRot + (finalRot - startRot) * easeOut(t);
-      drawWheel(canvasRef.current, segments, currentRotRef.current);
-
-      if (t < 1) {
-        animRef.current = requestAnimationFrame(animate);
-        return;
-      }
+      drawPremiumWheel(canvasRef.current, CANVAS_SIZE, currentRotRef.current);
+      if (t < 1) { animRef.current = requestAnimationFrame(animate); return; }
 
       currentRotRef.current = finalRot;
-      const categorySongs = songsByCategory[target.categoryKey] || [];
-      const song = categorySongs[Math.floor(Math.random() * categorySongs.length)];
-
-      if (!song) {
-        setWinner(null);
-        setSpinning(false);
-        return;
+      const pool = songsByMonth[target.index] || [];
+      const song = pool[Math.floor(Math.random() * pool.length)];
+      if (song) {
+        setWinner({ month: target, monthName: target.name, monthColor: target.color, song });
+        setTimeout(() => setResultVisible(true), 250);
       }
-
-      setWinner({ categoryLabel: target.fullName, categoryColor: target.color, song });
       setSpinning(false);
     };
-
     animRef.current = requestAnimationFrame(animate);
   };
 
-  const youtubeId = winner?.song ? extractYouTubeId(winner.song.youtube_url) : null;
-  const songSlug = winner?.song?.slug || (winner?.song?.title ? titleToSlug(winner.song.title) : null);
-  const description = winner?.song?.description?.trim() || '';
-  const hasDescription = Boolean(description);
-  const hasLongDescription = description.length > 220;
   const rodaMascot = '/images/Caipivara_pied_transparent.png';
+  const description = winner?.song?.description?.trim() || '';
 
   const streamingButtons = [
-    winner?.song?.spotify_url
-      ? {
-          key: 'spotify',
-          href: winner.song.spotify_url,
-          label: 'Spotify',
-          className: 'bg-[#1DB954] hover:bg-[#1ed760]',
-          icon: <SpotifyIcon />,
-        }
-      : null,
-    winner?.song?.youtube_url
-      ? {
-          key: 'youtube',
-          href: winner.song.youtube_url,
-          label: 'YouTube',
-          className: 'bg-[#FF0000] hover:bg-[#cc0000]',
-          icon: <YoutubeIcon />,
-        }
-      : null,
-    winner?.song?.apple_music_url
-      ? {
-          key: 'apple',
-          href: winner.song.apple_music_url,
-          label: 'Apple Music',
-          className: 'bg-gradient-to-r from-[#FA233B] to-[#FB5C74] hover:opacity-90',
-          icon: <Music className="h-4 w-4" aria-hidden="true" />,
-        }
-      : null,
+    winner?.song?.spotify_url ? { key: 'spotify', href: winner.song.spotify_url, label: 'Spotify', bg: '#1DB954', icon: <SpotifyIcon /> } : null,
+    winner?.song?.youtube_url ? { key: 'youtube', href: winner.song.youtube_url, label: 'YouTube Music', bg: '#FF0000', icon: <Music className="h-4 w-4" aria-hidden="true" /> } : null,
+    winner?.song?.apple_music_url ? { key: 'apple', href: winner.song.apple_music_url, label: 'Apple Music', bg: '#FC3C44', icon: <Music className="h-4 w-4" aria-hidden="true" /> } : null,
   ].filter(Boolean);
 
-  const sendYTCommand = (func) => {
-    iframeRef.current?.contentWindow?.postMessage(
-      JSON.stringify({ event: 'command', func, args: [] }),
-      '*'
-    );
-  };
-
-  const attemptAutoplay = () => {
-    if (!youtubeId) return;
-    sendYTCommand('playVideo');
-  };
-
-  useEffect(() => {
-    if (!youtubeId) {
-      setPlayerState('stopped');
-      playbackStartedRef.current = false;
-      if (autoplayFallbackTimerRef.current) {
-        clearTimeout(autoplayFallbackTimerRef.current);
-        autoplayFallbackTimerRef.current = null;
-      }
-      return;
-    }
-
-    setPlayerState('playing');
-    playbackStartedRef.current = false;
-
-    autoplayFallbackTimerRef.current = setTimeout(() => {
-      if (!playbackStartedRef.current) {
-        setPlayerState('paused');
-      }
-    }, 1500);
-
-    return () => {
-      if (autoplayFallbackTimerRef.current) {
-        clearTimeout(autoplayFallbackTimerRef.current);
-        autoplayFallbackTimerRef.current = null;
-      }
-    };
-  }, [youtubeId]);
-
-  useEffect(() => {
-    setIsDescriptionExpanded(false);
-    setIsDescriptionDialogOpen(false);
-  }, [winner?.song?.id]);
-
-  useEffect(() => {
-    if (!youtubeId) return undefined;
-
-    const handlePlayerMessage = (event) => {
-      if (event.source !== iframeRef.current?.contentWindow) return;
-
-      let payload = event.data;
-      if (typeof payload === 'string') {
-        try {
-          payload = JSON.parse(payload);
-        } catch {
-          return;
-        }
-      }
-
-      if (!payload || typeof payload !== 'object') return;
-
-      let state = null;
-      if (payload.event === 'onStateChange') {
-        state = payload.info;
-      } else if (
-        payload.event === 'infoDelivery' &&
-        payload.info &&
-        typeof payload.info.playerState === 'number'
-      ) {
-        state = payload.info.playerState;
-      }
-
-      if (typeof state !== 'number') return;
-
-      if (state === 1) {
-        playbackStartedRef.current = true;
-        setPlayerState('playing');
-      } else if (state === 2) {
-        setPlayerState('paused');
-      } else if (state === 0) {
-        setPlayerState('stopped');
-      }
-    };
-
-    window.addEventListener('message', handlePlayerMessage);
-    return () => window.removeEventListener('message', handlePlayerMessage);
-  }, [youtubeId]);
-
-  const handlePlay = () => {
-    sendYTCommand('playVideo');
-    setPlayerState('playing');
-  };
-
-  const handlePause = () => {
-    sendYTCommand('pauseVideo');
-    setPlayerState('paused');
-  };
-
-  const handleStop = () => {
-    sendYTCommand('stopVideo');
-    setPlayerState('stopped');
-  };
-
   return (
-    <div className="h-full min-h-full text-white lg:flex lg:min-h-[calc(100vh-2rem)] lg:flex-col">
+    <div className="min-h-full text-white">
+      {/* Mobile */}
       <div className="lg:hidden h-full min-h-full">
         <MobileRoletaApp songs={songs} loading={loading} />
       </div>
 
-      <div className="mx-auto hidden w-full max-w-7xl px-4 pb-12 lg:flex lg:flex-1 lg:flex-col lg:pb-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] xl:items-start xl:gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(400px,500px)]">
-        <div className="flex min-w-0 flex-col items-center lg:justify-center lg:items-start">
-          <div className="hidden lg:block">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-[11px] uppercase tracking-[0.28em] text-white/65">
-              <Music className="h-3.5 w-3.5 text-[#FDE047]" />
-              A Roleta da Segunda
-            </div>
-            <h1 className="mt-5 max-w-[11ch] text-[clamp(2.4rem,3.9vw,4.6rem)] font-black leading-[0.92] tracking-tight text-white">
-              Descubra sua próxima paródia
+      {/* Desktop */}
+      <div
+        className="hidden lg:flex min-h-screen"
+        style={{ background: 'radial-gradient(ellipse 90% 60% at 15% 20%, rgba(109,40,217,0.14) 0%, transparent 55%)' }}
+      >
+        <div
+          className="w-full max-w-7xl mx-auto px-8 pb-10 pt-8 grid items-start gap-8 xl:gap-12"
+          style={{
+            gridTemplateColumns: `1fr ${
+              viewportSize.width < 1400 ? '400px' : viewportSize.width < 1800 ? '460px' : '520px'
+            }`,
+          }}
+        >
+          {/* LEFT — title + wheel + button */}
+          <div className="flex flex-col">
+            <h1 className="font-black leading-[0.88] tracking-tight">
+              <span className="block text-white" style={{ fontSize: 'clamp(2.8rem,3.8vw,5rem)' }}>
+                Roda dos
+              </span>
+              <span className="block text-[#FACC15]" style={{ fontSize: 'clamp(3.5rem,4.8vw,6.5rem)' }}>
+                Meses
+              </span>
             </h1>
-            <p className="mt-3 max-w-xl text-[clamp(0.95rem,1.2vw,1.0625rem)] leading-7 text-white/60">
-              Gire a roleta e descubra uma paródia da categoria sorteada.
+            <p className="mt-2 text-sm xl:text-base text-white/45">
+              Gire a roda e descubra uma música do acervo.
             </p>
 
-          </div>
-
-          <div className="mt-0 flex w-full max-w-[680px] flex-col items-center flex-shrink-0 lg:mt-6 lg:glass-panel lg:rounded-[32px] lg:p-5">
-            <div className="flex w-full flex-col items-center gap-4 xl:flex-row xl:items-center xl:justify-center xl:gap-6">
-              <div className="relative shrink-0" style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}>
-                <div className="absolute z-10" style={{ top: -14, left: '50%', transform: 'translateX(-50%)' }}>
-                  <svg width="28" height="22" viewBox="0 0 28 22">
-                    <polygon points="14,20 2,0 26,0" fill="#1a1a2e" stroke="white" strokeWidth="2" />
+            {/* Wheel + button */}
+            <div className="mt-8 flex flex-col items-center">
+              <div className="relative flex flex-col items-center">
+                {/* Purple glow ring */}
+                <div
+                  className="pointer-events-none absolute left-1/2 -translate-x-1/2"
+                  style={{
+                    top: 26,
+                    width: CANVAS_SIZE + 36,
+                    height: CANVAS_SIZE + 36,
+                    borderRadius: '50%',
+                    boxShadow:
+                      '0 0 0 3px rgba(167,139,250,0.5), 0 0 55px 20px rgba(139,92,246,0.45), 0 0 110px 45px rgba(109,40,217,0.22)',
+                  }}
+                />
+                {/* Pointer triangle */}
+                <div className="relative z-10" style={{ marginBottom: -6 }}>
+                  <svg width="34" height="30" viewBox="0 0 34 30">
+                    <polygon
+                      points="17,28 1,1 33,1"
+                      fill="#FACC15"
+                      style={{ filter: 'drop-shadow(0 0 10px #FACC15) drop-shadow(0 0 22px rgba(250,204,21,0.7))' }}
+                    />
                   </svg>
                 </div>
+                {/* Canvas */}
                 <canvas
                   ref={canvasRef}
-                  width={CANVAS_SIZE}
-                  height={CANVAS_SIZE}
-                  className="block cursor-pointer rounded-full"
-                  style={{ width: CANVAS_SIZE, height: CANVAS_SIZE, touchAction: 'manipulation' }}
-                  onClick={spin}
+                  onClick={!spinning ? spin : undefined}
+                  className="relative z-10 block rounded-full"
+                  style={{ width: CANVAS_SIZE, height: CANVAS_SIZE, cursor: spinning ? 'wait' : 'pointer' }}
                 />
               </div>
 
-              <Button
-                onClick={() => {
-                  if (navigator.vibrate) navigator.vibrate(50);
-                  spin();
-                }}
+              {/* Spin button */}
+              <button
+                type="button"
+                onClick={spin}
                 disabled={spinning || loading}
-                className="hidden rounded-full bg-[#FDE047] px-8 py-4 text-base font-black text-black shadow-lg transition-all hover:scale-105 hover:bg-[#fde047]/90 disabled:scale-100 disabled:opacity-60 xl:inline-flex"
+                className="mt-7 flex items-center justify-center gap-3 rounded-full bg-[#FACC15] font-black text-black text-lg transition-all hover:scale-[1.03] active:scale-[0.97] disabled:opacity-60 disabled:scale-100"
+                style={{
+                  width: CANVAS_SIZE,
+                  paddingTop: '1rem',
+                  paddingBottom: '1rem',
+                  boxShadow: spinning ? 'none' : '0 8px 32px rgba(250,204,21,0.35)',
+                }}
               >
-                {loading ? 'Carregando...' : spinning ? '⏳ Girando...' : 'Girar a Roleta!'}
-              </Button>
+                <RefreshCw className={`h-5 w-5 ${spinning ? 'animate-spin' : ''}`} />
+                {loading ? 'Carregando...' : spinning ? 'Girando…' : 'GIRAR A RODA'}
+              </button>
             </div>
-
-            <Button
-              onClick={() => {
-                if (navigator.vibrate) navigator.vibrate(50);
-                spin();
-              }}
-              disabled={spinning || loading}
-              className="mt-4 rounded-full bg-[#FDE047] px-7 py-4 text-sm font-black text-black shadow-lg transition-all hover:scale-105 hover:bg-[#fde047]/90 disabled:scale-100 disabled:opacity-60 xl:hidden"
-            >
-              {loading ? 'Carregando...' : spinning ? '⏳ Girando...' : 'Girar a Roleta!'}
-            </Button>
           </div>
-        </div>
 
-        <div className="relative mt-8 w-full xl:mt-0 xl:min-h-[560px] xl:self-stretch">
-          <div className="flex h-full flex-col gap-6 overflow-visible xl:sticky xl:top-4">
-            {!winner && !spinning && showDesktopMascot && (
-              <div className="pointer-events-none hidden min-h-[420px] xl:flex items-end justify-center px-6 pb-2 pt-6">
+          {/* RIGHT — capybara (before spin) or full result card (after spin) */}
+          <div className="flex flex-col items-center gap-5 xl:sticky xl:top-6 pt-2 xl:pt-4">
+
+            {/* Capybara — always visible before spin, hidden after */}
+            {!winner && (
+              <div className="relative w-full flex flex-col items-center">
+                <div
+                  className="absolute z-10 top-2 left-2 xl:left-4 rounded-2xl rounded-bl-none bg-[#FACC15] px-4 py-3 shadow-xl"
+                  style={{ maxWidth: 180 }}
+                >
+                  <p className="text-sm font-black leading-snug text-black">
+                    Gira aí. o mês escolhe a vergonha.
+                  </p>
+                </div>
                 <img
                   src={rodaMascot}
                   alt="Capivara A Música da Segunda"
-                  className="max-h-[460px] w-auto object-contain drop-shadow-[0_28px_70px_rgba(0,0,0,0.38)] 2xl:max-h-[520px]"
+                  className="w-full max-w-[300px] xl:max-w-[370px] 2xl:max-w-[430px] mt-2 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                   loading="lazy"
                 />
               </div>
             )}
 
-            {winner && !spinning && (
-              <div className="space-y-5 xl:pt-1">
+            {/* Full result card — visible after spin */}
+            {winner && (
+              <div
+                className="w-full overflow-hidden rounded-[28px] border transition-all duration-500"
+                style={{
+                  background: `linear-gradient(145deg, ${wc}18 0%, rgba(10,10,16,0.97) 55%)`,
+                  borderColor: `${wc}40`,
+                  boxShadow: `0 0 0 1px ${wc}22 inset, 0 24px 60px rgba(0,0,0,0.4)`,
+                  opacity: resultVisible ? 1 : 0,
+                  transform: resultVisible ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.98)',
+                }}
+              >
+                {/* Month header */}
                 <div
-                  className="glass-panel overflow-hidden rounded-[32px] border border-white/10 px-5 py-5"
-                  style={{
-                    boxShadow: `0 0 0 1px ${winner.categoryColor}66 inset`,
-                  }}
+                  className="px-6 pt-5 pb-4 border-b border-white/[0.06]"
+                  style={{ background: `linear-gradient(135deg, ${wc}18, ${wc}08)` }}
                 >
-                <div
-                  className="mb-5 rounded-[24px] border px-5 py-4 text-white"
-                  style={{
-                    borderColor: `${winner.categoryColor}40`,
-                    backgroundColor: `${winner.categoryColor}18`,
-                  }}
-                >
-                  <p className="text-xs font-bold uppercase tracking-widest opacity-75">Categoria sorteada</p>
-                  <h2 className="mt-1 text-2xl font-black" style={{ color: winner.categoryColor }}>{winner.categoryLabel}</h2>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/40">
+                    Mês sorteado
+                  </p>
+                  <h2 className="mt-1 text-3xl font-black" style={{ color: wc }}>
+                    {winner.monthName}
+                  </h2>
                 </div>
 
-                <div>
-                  <div className="mb-4 flex items-center gap-3">
+                <div className="px-6 py-5 space-y-4">
+                  {/* Song info */}
+                  <div className="flex items-center gap-3">
                     <div
                       className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl"
-                      style={{ backgroundColor: `${winner.categoryColor}22` }}
+                      style={{ backgroundColor: `${wc}20` }}
                     >
-                      <Music className="h-6 w-6" style={{ color: winner.categoryColor }} />
+                      <Music className="h-6 w-6" style={{ color: wc }} aria-hidden="true" />
                     </div>
-
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold uppercase tracking-widest text-white/40">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-white/38">
                         Música sorteada
                       </p>
-                      <div className="flex items-center gap-2">
-                        <h3 className="truncate text-xl font-black text-white">{winner.song?.title}</h3>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <h3 className="truncate text-xl font-black text-white">
+                          {winner.song?.title}
+                        </h3>
                         {songSlug && (
                           <Link
                             to={`/musica/${songSlug}`}
-                            title="Ver página da música"
                             className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white transition-all hover:scale-110"
-                            style={{ borderColor: winner.categoryColor, color: winner.categoryColor }}
+                            style={{ borderColor: wc, color: wc }}
+                            aria-label="Ver página da música"
                           >
                             <ExternalLink className="h-4 w-4" />
                           </Link>
                         )}
                       </div>
-                      {winner.song?.artist && <p className="text-sm text-white/55">{winner.song.artist}</p>}
                       {winner.song?.release_date && (
-                        <p className="mt-0.5 text-xs font-medium" style={{ color: `${winner.categoryColor}bb` }}>
-                          📅{' '}
+                        <p className="mt-0.5 text-xs font-medium" style={{ color: `${wc}aa` }}>
                           {new Date(`${winner.song.release_date}T12:00:00`).toLocaleDateString('pt-BR', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
+                            day: 'numeric', month: 'long', year: 'numeric',
                           })}
                         </p>
                       )}
                     </div>
                   </div>
 
+                  {/* YT player */}
                   {!youtubeId && winner.song?.youtube_url && (
-                    <div className="mb-4 flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/55">
+                    <div className="flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm text-white/45">
                       <span>⚠️</span>
-                      <span>Player indisponível para esta música. Use o atalho YouTube abaixo.</span>
+                      <span>Player indisponível — use o botão YouTube abaixo.</span>
                     </div>
                   )}
-
                   {youtubeId && (
                     <>
                       <iframe
@@ -539,163 +470,109 @@ export default function RodaDaSegunda() {
                         src={`https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&rel=0`}
                         title={winner.song?.title}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        onLoad={attemptAutoplay}
+                        onLoad={() => sendYTCommand('playVideo')}
                         style={{
-                          position: 'fixed',
-                          top: '-9999px',
-                          left: '-9999px',
-                          width: '1px',
-                          height: '1px',
-                          opacity: 0,
-                          pointerEvents: 'none',
+                          position: 'fixed', top: '-9999px', left: '-9999px',
+                          width: '1px', height: '1px', opacity: 0, pointerEvents: 'none',
                         }}
                       />
-
                       <div
-                        className="mb-4 flex items-center gap-3 rounded-2xl border border-white/8 px-4 py-3"
-                        style={{ backgroundColor: `${winner.categoryColor}12` }}
+                        className="flex items-center gap-3 rounded-2xl border border-white/8 px-4 py-3"
+                        style={{ backgroundColor: `${wc}10` }}
                       >
                         <button
-                          onClick={playerState === 'playing' ? handlePause : handlePlay}
+                          type="button"
+                          onClick={() => {
+                            sendYTCommand(playerState === 'playing' ? 'pauseVideo' : 'playVideo');
+                            setPlayerState(playerState === 'playing' ? 'paused' : 'playing');
+                          }}
                           className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-white shadow-md transition-all hover:scale-110"
-                          style={{ backgroundColor: winner.categoryColor }}
+                          style={{ backgroundColor: wc }}
                           aria-label={playerState === 'playing' ? 'Pausar' : 'Tocar'}
                         >
-                          {playerState === 'playing' ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="ml-0.5 h-4 w-4" />
-                          )}
+                          {playerState === 'playing'
+                            ? <Pause className="h-4 w-4" />
+                            : <Play className="ml-0.5 h-4 w-4" />}
                         </button>
-
                         <button
-                          onClick={handleStop}
+                          type="button"
+                          onClick={() => { sendYTCommand('stopVideo'); setPlayerState('stopped'); }}
                           className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 bg-white transition-all hover:scale-110"
-                          style={{ borderColor: winner.categoryColor, color: winner.categoryColor }}
+                          style={{ borderColor: wc, color: wc }}
                           aria-label="Parar"
                         >
                           <Square className="h-3 w-3" />
                         </button>
-
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          {playerState === 'playing' && (
-                            <span className="flex flex-shrink-0 items-end gap-[3px]" aria-hidden="true">
-                              {[1, 2, 3, 4].map((index) => (
-                                <span
-                                  key={index}
-                                  className="block w-[3px] rounded-full"
-                                  style={{
-                                    backgroundColor: winner.categoryColor,
-                                    height: `${8 + index * 4}px`,
-                                    animation: `bounce ${0.6 + index * 0.1}s ease-in-out infinite alternate`,
-                                    animationDelay: `${index * 0.1}s`,
-                                  }}
-                                />
-                              ))}
-                            </span>
-                          )}
-                          <span className="truncate text-sm font-semibold" style={{ color: winner.categoryColor }}>
-                            {playerState === 'playing'
-                              ? 'A tocar...'
-                              : playerState === 'paused'
-                                ? '⏸ Pausado'
-                                : '⏹ Parado'}
-                          </span>
-                        </div>
+                        <span className="truncate text-sm font-semibold" style={{ color: wc }}>
+                          {playerState === 'playing' ? 'A tocar…' : playerState === 'paused' ? '⏸ Pausado' : '⏹ Parado'}
+                        </span>
                       </div>
                     </>
                   )}
 
-                  {hasDescription && (
+                  {/* Description */}
+                  {description && (
                     <div
-                      className="mb-4 rounded-2xl border px-4 py-4"
-                      style={{
-                        borderColor: `${winner.categoryColor}33`,
-                        backgroundColor: `${winner.categoryColor}0d`,
-                      }}
+                      className="rounded-2xl border px-4 py-3"
+                      style={{ borderColor: `${wc}28`, backgroundColor: `${wc}0a` }}
                     >
-                      <p
-                        className="mb-2 text-xs font-semibold uppercase tracking-widest"
-                        style={{ color: winner.categoryColor }}
-                      >
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest" style={{ color: wc }}>
                         Sobre esta música
                       </p>
-                      <p
-                        className={`text-sm leading-7 text-white/72 ${
-                          !isDescriptionExpanded ? 'line-clamp-3' : ''
-                        }`}
-                      >
-                        {description}
-                      </p>
-                      {hasLongDescription && (
-                        <div className="mt-3 flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setIsDescriptionExpanded((prev) => !prev)}
-                            className="text-sm font-semibold underline underline-offset-2"
-                            style={{ color: winner.categoryColor }}
-                          >
-                            {isDescriptionExpanded ? 'Ver menos' : 'Ler mais'}
-                          </button>
-                          {winner?.song?.lyrics?.trim() && (
-                            <button
-                              type="button"
-                              onClick={() => setIsDescriptionDialogOpen(true)}
-                              className="hidden text-sm font-semibold underline underline-offset-2 md:inline-block"
-                              style={{ color: winner.categoryColor }}
-                            >
-                              Ver letras
-                            </button>
-                          )}
-                        </div>
-                      )}
+                      <p className="line-clamp-4 text-sm leading-6 text-white/65">{description}</p>
                     </div>
                   )}
 
-                  {streamingButtons.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {streamingButtons.map((button) => (
-                        <a
-                          key={button.key}
-                          href={button.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={button.label}
-                          title={button.label}
-                          className={`inline-flex h-11 min-w-[46px] items-center justify-center rounded-2xl px-3 text-white shadow-lg transition-all hover:scale-105 ${button.className}`}
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            {button.icon}
-                            <span className="hidden text-xs font-bold sm:inline">{button.label}</span>
-                          </span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  {/* Action buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    {streamingButtons.map((btn) => (
+                      <a
+                        key={btn.key}
+                        href={btn.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={btn.label}
+                        title={btn.label}
+                        className="inline-flex h-10 min-w-[44px] items-center justify-center gap-2 rounded-2xl px-4 text-xs font-bold text-white shadow-lg transition-all hover:scale-105"
+                        style={{ backgroundColor: btn.bg }}
+                      >
+                        {btn.icon}
+                        <span className="hidden sm:inline">{btn.label}</span>
+                      </a>
+                    ))}
+                    {songSlug && (
+                      <Link
+                        to={`/musica/${songSlug}`}
+                        className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-xs font-bold text-white/70 transition-all hover:bg-white/10"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Ver ficha
+                      </Link>
+                    )}
+                    <button
+                      type="button"
+                      onClick={spin}
+                      disabled={spinning}
+                      className="inline-flex h-10 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-xs font-bold text-white/70 transition-all hover:bg-white/10 disabled:opacity-50"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${spinning ? 'animate-spin' : ''}`} />
+                      Girar de novo
+                    </button>
+                    {winnerYear && (
+                      <Link
+                        to={`/arquivo/${winnerYear}`}
+                        className="inline-flex h-10 items-center rounded-2xl border border-white/10 bg-white/[0.05] px-4 text-xs font-bold text-white/70 transition-all hover:bg-white/10"
+                      >
+                        Músicas de {winnerYear}
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
-
-      <Dialog open={isDescriptionDialogOpen} onOpenChange={setIsDescriptionDialogOpen}>
-        <DialogContent className="glass-panel border-white/10 bg-[#111111]/95 text-white sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black text-white">
-              {winner?.song?.lyrics?.trim() ? 'Letras da música' : 'Sobre esta música'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[60vh] overflow-y-auto pr-1">
-            <p className="whitespace-pre-wrap text-sm leading-7 text-white/72">
-              {winner?.song?.lyrics?.trim()
-                ? winner.song.lyrics
-                : description || 'Sem descrição disponível para esta música.'}
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
