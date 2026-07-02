@@ -60,5 +60,6 @@ push-sender/.env
 # NEVER delete these files - they contain custom domain configuration
 !docs/CNAME
 !public/CNAME
-# Android signing key (never commit)
-android.keystore
+# Android signing keys (never commit)
+*.keystore
+*.jks
