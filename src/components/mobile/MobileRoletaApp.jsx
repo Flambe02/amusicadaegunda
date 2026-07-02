@@ -166,6 +166,13 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
     );
   }, []);
 
+  // Auto-start playback when a winner is determined
+  useEffect(() => {
+    if (!winner?.song) { setActiveYtId(null); setPlayerState('stopped'); return; }
+    const id = extractYouTubeId(winner.song.youtube_url);
+    if (id) { setActiveYtId(id); setPlayerState('playing'); }
+  }, [winner]);
+
   useEffect(() => {
     if (!activeYtId) return;
     const t1 = setTimeout(() => sendYT('playVideo'), 300);
@@ -254,7 +261,7 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
       else { sendYT('playVideo'); setPlayerState('playing'); }
     } else {
       setActiveYtId(songYtId);
-      setPlayerState('paused');
+      setPlayerState('playing');
     }
   };
 
