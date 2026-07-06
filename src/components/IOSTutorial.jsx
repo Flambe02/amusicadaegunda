@@ -173,7 +173,7 @@ export default function IOSTutorial({ onShowVisualGuide }) {
       </div>
 
       {/* Banner contextuel en bas */}
-      <div className="fixed bottom-20 left-4 right-4 z-40 lg:hidden">
+      <div className="fixed bottom-20 left-4 right-4 z-40 md:hidden">
         <div className="bg-blue-600 text-white rounded-2xl p-4 shadow-lg border border-blue-500/20">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">

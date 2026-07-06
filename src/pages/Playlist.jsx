@@ -326,7 +326,7 @@ export default function Playlist() {
       </div>
 
       {/* Layout Mobile */}
-      <div className="lg:hidden min-h-[calc(100dvh-72px)] bg-black px-4 pb-7 pt-4 text-white">
+      <div className="md:hidden min-h-[calc(100dvh-72px)] bg-black px-4 pb-7 pt-4 text-white">
         <section className="mx-auto flex w-full max-w-[390px] flex-col landscape:max-w-[860px]">
           <header className="mb-3 flex items-center justify-between">
             <h1 className="text-[22px] font-black leading-none tracking-[-0.01em] text-white">

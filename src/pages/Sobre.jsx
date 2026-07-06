@@ -261,7 +261,7 @@ function MobileAboutExperience() {
   ];
 
   return (
-    <div className="lg:hidden relative min-h-full overflow-hidden bg-[radial-gradient(circle_at_50%_-10%,rgba(253,224,71,0.18),transparent_30%),linear-gradient(180deg,#050505_0%,#0d0d0d_48%,#050505_100%)] px-4 pb-6 pt-5 text-app-white">
+    <div className="md:hidden relative min-h-full overflow-hidden bg-[radial-gradient(circle_at_50%_-10%,rgba(253,224,71,0.18),transparent_30%),linear-gradient(180deg,#050505_0%,#0d0d0d_48%,#050505_100%)] px-4 pb-6 pt-5 text-app-white">
       <div className="pointer-events-none absolute -right-14 top-4 h-36 w-36 rounded-full bg-app-yellow/10 blur-3xl" />
       <div className="pointer-events-none absolute -left-16 top-28 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[repeating-linear-gradient(135deg,rgba(253,224,71,0.08)_0px,rgba(253,224,71,0.08)_1px,transparent_1px,transparent_18px)] opacity-20" />

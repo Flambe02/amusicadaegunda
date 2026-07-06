@@ -143,7 +143,7 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <div className="lg:hidden flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
+      <div className="md:hidden flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
         <header className={`z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl${isImmersiveMobilePage ? ' hidden' : ''}`}>
@@ -189,11 +189,11 @@ export default function Layout({ children }) {
         />
       </div>
 
-      <div className="hidden lg:block min-h-screen text-white">
+      <div className="hidden md:block min-h-screen text-white">
         <a href="#main-desktop" className="skip-link">Ir para o conteudo</a>
 
         {/* Desktop sidebar shell */}
-        <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-[260px] p-4">
+        <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[260px] p-4">
           <div className="glass-panel desktop-shell-gradient relative flex h-full w-full flex-col overflow-hidden rounded-[30px] px-5 py-6">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.2),_transparent_65%)]" />
 
@@ -269,7 +269,7 @@ export default function Layout({ children }) {
         </aside>
 
         {/* Desktop content area */}
-        <div className="relative min-h-screen lg:ml-[260px]">
+        <div className="relative min-h-screen md:ml-[260px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(253,224,71,0.08),_transparent_18%),radial-gradient(circle_at_85%_10%,_rgba(255,255,255,0.06),_transparent_20%)]" />
 
           <main id="main-desktop" className="relative z-10 min-h-screen px-6 pb-32 pt-4 xl:px-8 2xl:px-10">

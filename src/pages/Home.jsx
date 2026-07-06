@@ -183,7 +183,7 @@ export default function Home() {
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
   const [displayedSong, setDisplayedSong] = useState(null);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia('(max-width: 1023px)').matches : false
+    typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false
   );
   const [playerBarActive, setPlayerBarActive] = useState(false);
   const [playerBarPlaying, setPlayerBarPlaying] = useState(false);
@@ -199,7 +199,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 1023px)');
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
     const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
     updateViewport();
     mediaQuery.addEventListener?.('change', updateViewport);
@@ -377,7 +377,7 @@ export default function Home() {
     setSelectedSongForDialog(song);
     // Sur mobile, utiliser le drawer ; sur desktop, utiliser le dialog
     // matchMedia est plus fiable que window.innerWidth (gère zoom, device-pixel-ratio, CSS breakpoints)
-    const isMobile = window.matchMedia('(max-width: 1023px)').matches;
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
     if (isMobile) {
       setShowLyricsDrawer(true);
     } else {
@@ -549,12 +549,12 @@ export default function Home() {
         </Helmet>
 
         {/* Mobile skeleton */}
-        <div className="lg:hidden flex items-center justify-center py-32">
+        <div className="md:hidden flex items-center justify-center py-32">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white/60" />
         </div>
 
         {/* Desktop skeleton — mirrors the real hero layout */}
-        <div className="hidden lg:block space-y-8 animate-pulse">
+        <div className="hidden md:block space-y-8 animate-pulse">
           <div className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8 min-h-[460px] xl:min-h-[500px]">
             <div className="grid items-start gap-6 lg:grid-cols-[1fr_minmax(0,260px)] xl:grid-cols-[1fr_minmax(0,330px)] 2xl:grid-cols-[1fr_minmax(0,410px)]">
               {/* Left column skeleton */}
@@ -653,7 +653,7 @@ export default function Home() {
       </div>
     
       {/* Desktop app shell: hero + grid + player */}
-      <div className="hidden lg:block space-y-8">
+      <div className="hidden md:block space-y-8">
         {/* Desktop hero section */}
         <section className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8 min-h-[460px] xl:min-h-[500px]">
           <div className="absolute inset-0 overflow-hidden">
@@ -1176,7 +1176,7 @@ export default function Home() {
       </div>
     
       {/* ===== LAYOUT DESKTOP: VIDEO YOUTUBE + MUSICAS DO MES ===== */}
-      <div className="hidden lg:grid-cols-2 lg:gap-8 lg:mt-8">
+      <div className="hidden md:grid-cols-2 lg:gap-8 lg:mt-8">
         {/* ===== COLONNE GAUCHE: VIDEO YOUTUBE ===== */}
         <div className="space-y-6 relative">
           {displayedSong ? (
@@ -1327,7 +1327,7 @@ export default function Home() {
       )}
 
       {/* ===== LAYOUT MOBILE APP-LIKE ===== */}
-      <div className="lg:hidden h-full">
+      <div className="md:hidden h-full">
         <MobileHomeApp
           currentSong={displayedSong}
           videoActivated={isMobileViewport && videoActivated}

@@ -353,7 +353,7 @@ export default function Youtube() {
   return (
     <div className="p-5 max-w-md mx-auto md:max-w-2xl lg:max-w-4xl">
       {/* Header Mobile uniquement */}
-      <div className="lg:hidden text-center mb-8">
+      <div className="md:hidden text-center mb-8">
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
             <img 
@@ -375,7 +375,7 @@ export default function Youtube() {
       </div>
     
       {/* ===== LAYOUT DESKTOP: VIDÉO YOUTUBE + MÚSICAS DO MÊS ===== */}
-      <div className="hidden lg:grid lg:grid-cols-2 lg:gap-8 lg:mt-8">
+      <div className="hidden md:grid lg:grid-cols-2 lg:gap-8 lg:mt-8">
         {/* ===== COLONNE GAUCHE: VIDÉO YOUTUBE ===== */}
         <div className="space-y-6">
           {displayedSong ? (
@@ -516,7 +516,7 @@ export default function Youtube() {
       </div>
 
       {/* ===== LAYOUT MOBILE: DISPOSITION VERTICALE TRADITIONNELLE ===== */}
-      <div className="lg:hidden">
+      <div className="md:hidden">
         {displayedSong ? (
           <div className="mb-6">
             {/* Version YouTube pour mobile */}

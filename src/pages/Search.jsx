@@ -339,7 +339,7 @@ export default function SearchPage() {
 
   const handleOpenLyrics = (song) => {
     setSelectedLyricsSong(song);
-    if (window.matchMedia('(max-width: 1023px)').matches) {
+    if (window.matchMedia('(max-width: 767px)').matches) {
       setShowLyricsDrawer(true);
     } else {
       setShowLyricsDialog(true);

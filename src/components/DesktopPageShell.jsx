@@ -32,7 +32,7 @@ export default function DesktopPageShell({
   className,
 }) {
   return (
-    <div className={cn('hidden lg:block space-y-8', className)}>
+    <div className={cn('hidden md:block space-y-8', className)}>
       <DesktopSurface className="desktop-shell-gradient overflow-hidden">
         <div className="grid gap-8 2xl:grid-cols-[minmax(0,1.4fr)_340px]">
           <div className="space-y-6">

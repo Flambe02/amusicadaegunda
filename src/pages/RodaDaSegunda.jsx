@@ -160,7 +160,7 @@ export default function RodaDaSegunda() {
   const CANVAS_SIZE = useMemo(() => {
     const { width, height } = viewportSize;
     if (width < 640) return Math.max(260, Math.min(320, width - 40));
-    if (width < 1024) return Math.max(280, Math.min(340, width - 72));
+    if (width < 768) return Math.max(280, Math.min(340, width - 72));
     const rightCol = width < 1400 ? 400 : width < 1800 ? 460 : 520;
     const leftCol = width - 260 - 64 - rightCol - 48;
     const byHeight = Math.floor(height * 0.54);
@@ -286,13 +286,13 @@ export default function RodaDaSegunda() {
   return (
     <div className="min-h-full text-white">
       {/* Mobile */}
-      <div className="lg:hidden h-full min-h-full">
+      <div className="md:hidden h-full min-h-full">
         <MobileRoletaApp songs={songs} loading={loading} />
       </div>
 
       {/* Desktop */}
       <div
-        className="hidden lg:flex min-h-screen"
+        className="hidden md:flex min-h-screen"
         style={{ background: 'radial-gradient(ellipse 90% 60% at 15% 20%, rgba(109,40,217,0.14) 0%, transparent 55%)' }}
       >
         <div

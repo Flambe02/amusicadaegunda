@@ -535,7 +535,7 @@ export default function Calendar() {
       </div>
 
       {/* Layout Mobile - Version originale avec scroll interne */}
-      <div className="lg:hidden h-full overflow-y-auto pb-24">
+      <div className="md:hidden h-full overflow-y-auto pb-24">
         <div className="p-5 max-w-md mx-auto">
           {/* Header Mobile - Compact */}
           <div className="text-center mb-4">

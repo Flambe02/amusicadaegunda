@@ -440,7 +440,7 @@ export default function SongPage() {
         </div>
 
         {/* Mobile detail redesign */}
-        <section className="relative overflow-hidden bg-[linear-gradient(180deg,#050505_0%,#0b0b0b_48%,#050505_100%)] px-4 pb-4 pt-3 lg:hidden">
+        <section className="relative overflow-hidden bg-[linear-gradient(180deg,#050505_0%,#0b0b0b_48%,#050505_100%)] px-4 pb-4 pt-3 md:hidden">
           <div className="mb-3 flex items-center justify-between">
             <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white/78" aria-label="Voltar">
               <ArrowLeft className="h-5 w-5" />
@@ -720,7 +720,7 @@ export default function SongPage() {
 
         {/* Related songs — mobile */}
         {relatedSongs.length > 0 && (
-          <section className="lg:hidden glass-panel rounded-[24px] p-4">
+          <section className="md:hidden glass-panel rounded-[24px] p-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">
                 Mais sobre{' '}
@@ -942,7 +942,7 @@ export default function SongPage() {
 
         {/* Related songs section (desktop) — same category cluster */}
         {relatedSongs.length > 0 && (
-          <section className="hidden lg:block glass-panel rounded-[28px] p-6 xl:p-8">
+          <section className="hidden md:block glass-panel rounded-[28px] p-6 xl:p-8">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-base font-bold text-white">
                 Outras músicas sobre{' '}
@@ -978,7 +978,7 @@ export default function SongPage() {
         )}
 
         {/* Sticky bottom player bar (desktop) */}
-        <div className="sticky bottom-4 z-30 hidden lg:block">
+        <div className="sticky bottom-4 z-30 hidden md:block">
           <div className="glass-panel rounded-[30px] px-6 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
             <div className="flex items-center gap-6">
               {/* Cover + hidden iframe + info */}
