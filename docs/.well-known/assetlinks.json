@@ -12,7 +12,8 @@
       "namespace": "android_app",
       "package_name": "com.amusicadasegunda.app",
       "sha256_cert_fingerprints": [
-        "TO_BE_REPLACED_AFTER_SIGNING_APK"
+        "63:5D:B9:59:3C:92:54:16:E1:CB:4F:FF:51:35:A6:19:16:EB:E6:5C:92:98:64:B5:75:54:60:59:B8:C5:FC:8D",
+        "4E:AC:2F:AA:CC:74:54:C2:6D:BB:61:B8:A4:7A:2B:63:9F:52:76:BE:D1:C4:AB:86:07:46:A3:8F:CB:C1:2D:43"
       ]
     }
   }
