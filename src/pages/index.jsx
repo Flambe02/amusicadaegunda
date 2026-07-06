@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParam
 import { Suspense, useEffect, useRef } from 'react';
 import { ROUTES } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useDeepLinks } from '@/utils/deepLinks';
 
 // Export PAGES pour backward compatibility avec Layout.jsx
 export { PAGES } from '@/config/routes';
@@ -28,6 +29,14 @@ function AuthHashHandler() {
     return null;
 }
 
+// Android App Links : route l'app en interne quand Android/le widget ouvre
+// une URL https://(www.)amusicadasegunda.com/... (voir src/utils/deepLinks.js).
+function DeepLinkHandler() {
+    const navigate = useNavigate();
+    useDeepLinks(navigate);
+    return null;
+}
+
 // Create a wrapper component that uses useLocation inside the Router context
 function PagesContent() {
     const location = useLocation();
@@ -49,6 +58,7 @@ function PagesContent() {
     return (
         <Layout>
             <AuthHashHandler />
+            <DeepLinkHandler />
             {/* ✅ PERFORMANCE: Suspense pour gérer le lazy loading des routes */}
             <Suspense fallback={<LoadingSpinner />}>
                 <Routes>

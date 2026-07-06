@@ -166,19 +166,43 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
     );
   }, []);
 
-  // Auto-start playback when a winner is determined
+  // Winner → on PRÉ-MONTE le player (iframe caché) mais on N'affirme PAS qu'il
+  // joue : iOS/PWA bloque l'autoplay audio hors geste utilisateur. On laisse donc
+  // l'état sur 'paused' (bouton Play) → le 1er tap envoie playVideo DANS le geste,
+  // sur un iframe déjà chargé = lecture fiable au 1er coup (avant, il fallait
+  // Pause puis Play). Le listener onStateChange ci-dessous rebascule sur 'playing'
+  // là où l'autoplay est autorisé (Android/desktop).
   useEffect(() => {
     if (!winner?.song) { setActiveYtId(null); setPlayerState('stopped'); return; }
     const id = extractYouTubeId(winner.song.youtube_url);
-    if (id) { setActiveYtId(id); setPlayerState('playing'); }
+    if (id) { setActiveYtId(id); setPlayerState('paused'); }
   }, [winner]);
 
+  // Tente l'autoplay (autorisé sur Android/desktop, ignoré silencieusement sur iOS).
   useEffect(() => {
     if (!activeYtId) return;
     const t1 = setTimeout(() => sendYT('playVideo'), 300);
     const t2 = setTimeout(() => sendYT('playVideo'), 1000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [activeYtId, sendYT]);
+
+  // Synchronise l'état réel du player (postMessage YouTube IFrame API) pour que
+  // le bouton reflète la lecture même quand l'autoplay démarre tout seul.
+  useEffect(() => {
+    if (!activeYtId) return undefined;
+    const onMessage = (event) => {
+      if (iframeRef.current && event.source !== iframeRef.current.contentWindow) return;
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data?.event === 'onStateChange') {
+          if (data.info === 1) setPlayerState('playing');
+          else if (data.info === 2 || data.info === 0) setPlayerState('paused');
+        }
+      } catch {}
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [activeYtId]);
 
   const songsByMonth = useMemo(() => {
     const map = {};
@@ -274,7 +298,7 @@ export default function MobileRoletaApp({ songs = [], loading = false }) {
         <iframe
           key={activeYtId}
           ref={iframeRef}
-          src={`https://www.youtube-nocookie.com/embed/${activeYtId}?enablejsapi=1&autoplay=1&rel=0`}
+          src={`https://www.youtube-nocookie.com/embed/${activeYtId}?enablejsapi=1&autoplay=1&playsinline=1&rel=0`}
           title="player roleta"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media"
           className="fixed -left-[9999px] -top-[9999px] h-px w-px opacity-0"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
 import { Song } from '@/api/entities';
@@ -56,15 +56,15 @@ function getSongKey(song) {
   return String(song?.id || song?.slug || song?.title || getSongPlayUrl(song));
 }
 
-function getSongEmbedSrc(song) {
-  const embedInfo = getYouTubeEmbedInfo(getSongPlayUrl(song));
-  if (!embedInfo?.id || embedInfo.type !== 'video') return '';
-
-  const origin = typeof window !== 'undefined'
-    ? `&origin=${encodeURIComponent(window.location.origin)}`
-    : '';
-
-  return `https://www.youtube.com/embed/${embedInfo.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1${origin}`;
+// Résout un ID de vidéo YouTube JOUABLE pour une chanson.
+// On teste youtube_url puis youtube_music_url et on ne garde qu'un embed de type
+// `video` (une playlist music.youtube n'expose pas d'ID lisible via l'API).
+function getSongVideoId(song) {
+  for (const url of [getSongPlayUrl(song), song?.youtube_music_url]) {
+    const info = getYouTubeEmbedInfo(url || '');
+    if (info?.type === 'video' && info.id) return info.id;
+  }
+  return null;
 }
 
 function getSongThumb(song) {
@@ -86,6 +86,44 @@ function getSongPath(song) {
 export default function Playlist() {
   const [songs, setSongs] = useState([]);
   const [playingSongKey, setPlayingSongKey] = useState(null);
+  const [isPaused, setIsPaused] = useState(false);
+  const playerRef = useRef(null);
+
+  const sendPlayerCommand = (func, args = []) => {
+    playerRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func, args }),
+      '*'
+    );
+  };
+
+  // IMPORTANT (iOS/PWA) : la lecture doit partir d'un geste utilisateur sur un
+  // player DÉJÀ chargé. On garde donc un unique iframe persistant (préchargé) et
+  // on lui envoie loadVideoById/playVideo directement dans le onClick du tap.
+  // Un iframe créé au moment du tap avec autoplay=1 est bloqué par iOS.
+  const handleTogglePlay = (song, songKey) => {
+    const videoId = getSongVideoId(song);
+    if (!videoId) return;
+    if (playingSongKey === songKey) {
+      if (isPaused) {
+        sendPlayerCommand('playVideo');
+        setIsPaused(false);
+      } else {
+        sendPlayerCommand('pauseVideo');
+        setIsPaused(true);
+      }
+      return;
+    }
+    sendPlayerCommand('loadVideoById', [videoId]);
+    setPlayingSongKey(songKey);
+    setIsPaused(false);
+  };
+
+  // Premier ID jouable du catalogue : sert à initialiser le player persistant
+  // (l'API JS de l'iframe devient prête bien avant le premier tap utilisateur).
+  const firstPlayableId = songs.map(getSongVideoId).find(Boolean) || null;
+  const playerOrigin = typeof window !== 'undefined'
+    ? `&origin=${encodeURIComponent(window.location.origin)}`
+    : '';
 
   const handleShareSong = async (song) => {
     const songUrl = getSongPlayUrl(song);
@@ -311,25 +349,17 @@ export default function Playlist() {
             ) : (
               songs.map((song) => {
                 const dateParts = getCatalogDateParts(song.release_date);
-                const playerSrc = getSongEmbedSrc(song);
+                const videoId = getSongVideoId(song);
                 const songKey = getSongKey(song);
                 const songPath = getSongPath(song);
-                const isPlaying = playingSongKey === songKey;
+                const isActive = playingSongKey === songKey;
+                const isPlaying = isActive && !isPaused;
 
                 return (
                   <article
                     key={songKey}
                     className="relative grid min-h-[118px] grid-cols-[36px_88px_minmax(0,1fr)] gap-2 rounded-[14px] border border-white/10 bg-[#121212] p-2 shadow-[0_12px_30px_rgba(0,0,0,0.32)]"
                   >
-                    {isPlaying && playerSrc && (
-                      <iframe
-                        title={`Player ${song.title}`}
-                        src={playerSrc}
-                        allow="autoplay; encrypted-media"
-                        className="pointer-events-none absolute left-2 top-2 h-px w-px opacity-0"
-                      />
-                    )}
-
                     <div className="flex flex-col items-center justify-center rounded-[10px] bg-white/[0.035] px-1 text-center">
                       <span className="text-[20px] font-black leading-none text-white">
                         {dateParts.day}
@@ -370,11 +400,11 @@ export default function Playlist() {
                       </p>
 
                       <div className="mt-auto flex items-center gap-2 pt-2">
-                        {playerSrc ? (
+                        {videoId ? (
                           <button
                             type="button"
-                            onClick={() => setPlayingSongKey(isPlaying ? null : songKey)}
-                            aria-label={isPlaying ? `Parar ${song.title}` : `Tocar video de ${song.title}`}
+                            onClick={() => handleTogglePlay(song, songKey)}
+                            aria-label={isPlaying ? `Pausar ${song.title}` : `Tocar video de ${song.title}`}
                             className={`flex h-11 w-11 items-center justify-center rounded-full transition ${
                               isPlaying
                                 ? 'bg-white text-black'
@@ -416,6 +446,21 @@ export default function Playlist() {
               })
             )}
           </div>
+
+          {/* Player audio persistant (unique). Préchargé et caché : la lecture est
+              déclenchée dans le geste du tap (loadVideoById/playVideo) — seul moyen
+              fiable de jouer le son sur iOS/PWA. */}
+          {firstPlayableId && (
+            <iframe
+              ref={playerRef}
+              title="Player de áudio"
+              src={`https://www.youtube-nocookie.com/embed/${firstPlayableId}?enablejsapi=1&playsinline=1&controls=0&rel=0${playerOrigin}`}
+              allow="autoplay; encrypted-media"
+              className="pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
+              aria-hidden="true"
+              tabIndex={-1}
+            />
+          )}
         </section>
       </div>
     </>
