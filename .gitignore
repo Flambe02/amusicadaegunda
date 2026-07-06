@@ -10,7 +10,10 @@ build/
 
 # Capacitor native platforms
 android/
-ios/
+ios/App/Pods/
+ios/App/output/
+ios/App/DerivedData/
+ios/.build/
 
 # Environment variables — match all .env* (.env, .env.local, .env.bak, .env.old, etc.)
 .env
