@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
  * Android App Links / deep linking.
@@ -20,6 +20,13 @@ const ALLOWED_HOSTS = new Set([
   'www.amusicadasegunda.com',
   'amusicadasegunda.com',
 ]);
+
+// ⚠️ PIÈGE (fixé 2026-07-08) : `App.getLaunchUrl()` retourne l'URL de lancement
+// pour TOUTE la durée de vie de l'app. Si on la relit après une navigation, elle
+// renvoie encore l'URL du widget → l'utilisateur est ramené de force sur la page
+// d'origine à chaque changement d'onglet (bug "coincé sur Catálogo"). On la traite
+// donc UNE SEULE FOIS par session, via ce garde module-level.
+let launchUrlHandled = false;
 
 /**
  * Extrait le chemin interne (pathname + search + hash) d'une URL de deep link,
@@ -51,6 +58,12 @@ export function resolveDeepLinkPath(rawUrl) {
  * @param {(to: string, opts?: object) => void} navigate  react-router navigate
  */
 export function useDeepLinks(navigate) {
+  // `navigate` change d'identité à chaque navigation (React Router 7). On le
+  // garde dans une ref pour que l'effet ci-dessous NE dépende PAS de lui et ne
+  // se relance donc jamais (sinon getLaunchUrl est relu → boucle de renavigation).
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
   useEffect(() => {
     let removeListener = null;
     let cancelled = false;
@@ -70,10 +83,10 @@ export function useDeepLinks(navigate) {
 
       const handleUrl = (url) => {
         const path = resolveDeepLinkPath(url);
-        if (path) navigate(path);
+        if (path) navigateRef.current(path);
       };
 
-      // 1) App déjà lancée puis re-ouverte via un lien.
+      // 1) App déjà lancée puis re-ouverte via un lien (widget, App Link…).
       const handle = await App.addListener('appUrlOpen', (event) => {
         handleUrl(event?.url);
       });
@@ -83,12 +96,15 @@ export function useDeepLinks(navigate) {
       }
       removeListener = () => handle.remove();
 
-      // 2) App démarrée à froid depuis un lien : récupère l'URL de lancement.
-      try {
-        const launch = await App.getLaunchUrl();
-        if (!cancelled && launch?.url) handleUrl(launch.url);
-      } catch {
-        // getLaunchUrl indisponible : ignoré.
+      // 2) App démarrée à froid depuis un lien : une seule fois par session.
+      if (!launchUrlHandled) {
+        launchUrlHandled = true;
+        try {
+          const launch = await App.getLaunchUrl();
+          if (!cancelled && launch?.url) handleUrl(launch.url);
+        } catch {
+          // getLaunchUrl indisponible : ignoré.
+        }
       }
     })();
 
@@ -96,5 +112,5 @@ export function useDeepLinks(navigate) {
       cancelled = true;
       if (removeListener) removeListener();
     };
-  }, [navigate]);
+  }, []);  
 }
