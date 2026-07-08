@@ -25,10 +25,20 @@
   font-weight: 600;
 }
 
-/* Focus visible amélioré */
+/* Focus visible amélioré — anneau marque (jaune) visible à distance TV / D-pad.
+   Ne s'affiche qu'au focus clavier/télécommande (:focus-visible), jamais à la souris. */
 :focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.7);
+  outline: 3px solid #050505;          /* liseré sombre = contraste sur fond clair */
+  outline-offset: 0;
+  box-shadow: 0 0 0 5px #FACC15, 0 0 0 8px rgba(0, 0, 0, 0.55);
+  border-radius: 6px;
+}
+
+/* Android TV / Google TV : anneau encore plus large (distance de visionnage).
+   Activé si une détection native pose html[data-device="tv"] (Phase 2). */
+html[data-device="tv"] :focus-visible {
+  box-shadow: 0 0 0 7px #FACC15, 0 0 0 11px rgba(0, 0, 0, 0.6);
+  scroll-margin: 12vh 8vw; /* garde l'élément focalisé loin des bords TV */
 }
 
 /* Respect des préférences de mouvement réduit */
@@ -48,9 +58,12 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid #2563eb;
+textarea:focus-visible,
+[tabindex]:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid #050505;
   outline-offset: 2px;
+  box-shadow: 0 0 0 5px #FACC15, 0 0 0 8px rgba(0, 0, 0, 0.55);
 }
 
 /* Taille minimale des cibles tactiles */
