@@ -4,12 +4,24 @@ import { Toaster } from "@/components/ui/toaster"
 // Garder un seul HelmetProvider à la racine évite la duplication de contextes
 import OfflineIndicator from "@/components/OfflineIndicator"
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { hideNativeSplash } from '@/utils/splash';
 
 const PushCTA = lazy(() => import('@/components/PushCTA'));
 const InstallAppBanner = lazy(() => import('@/components/InstallAppBanner'));
 
 function App() {
   const [deferredUiReady, setDeferredUiReady] = useState(false);
+
+  // Masque le splash natif dès que le 1er contenu a peint (double rAF = au moins
+  // une frame rendue). Évite l'écran noir de la WebView au cold start via widget/
+  // deep link, où /musica/:slug (lazy + fetch) mettait > 1500ms à s'afficher.
+  // minShowMs = 500 pour ne pas faire flasher le splash sur un démarrage rapide.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => { hideNativeSplash({ minShowMs: 500 }); });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   useEffect(() => {
     let timeoutId = null;

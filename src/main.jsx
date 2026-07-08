@@ -45,18 +45,9 @@ try {
   }
 }
 
-// Splash screen Capacitor: launchAutoHide ne se déclenche pas toujours sur Android 12+,
-// donc on appelle SplashScreen.hide() manuellement après un délai minimum de 1500ms.
-const hideSplashScreen = async () => {
-  try {
-    const { Capacitor } = await import('@capacitor/core')
-    if (Capacitor.isNativePlatform?.()) {
-      const { SplashScreen } = await import('@capacitor/splash-screen')
-      await new Promise((r) => setTimeout(r, 1500))
-      await SplashScreen.hide({ fadeOutDuration: 300 })
-    }
-  } catch {
-    // Ignore les erreurs en mode web
-  }
-}
-hideSplashScreen()
+// Splash screen Capacitor : masqué par App.jsx dès que le 1er contenu React est
+// peint (évite l'écran noir de la WebView au cold start via deep link). Ici on ne
+// garde qu'un FILET DE SÉCURITÉ : si React ne monte jamais (erreur fatale), on
+// masque quand même le splash au bout de 5s pour ne pas le laisser figé.
+import { hideNativeSplash } from '@/utils/splash'
+setTimeout(() => { hideNativeSplash() }, 5000)
