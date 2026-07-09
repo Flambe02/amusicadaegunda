@@ -8,10 +8,12 @@ import {
   Gift,
   Info,
   FileText,
+  Mic,
   Search,
   Shuffle
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
+import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
@@ -58,6 +60,7 @@ function SidebarCountdown() {
 }
 
 function getMobileActiveTab(pathname) {
+  if (pathname === '/karaoke') return 'karaoke';
   if (pathname === '/roda') return 'roleta';
   if (pathname === '/blog') return 'blog';
   if (pathname === '/search') return 'pesquisa';
@@ -91,6 +94,7 @@ export default function Layout({ children }) {
   const pages = [
     { name: 'Início', url: createPageUrl('Home'), icon: Home },
     { name: 'Catálogo', url: createPageUrl('Musica'), icon: Library },
+    { name: 'Karaokê', url: createPageUrl('Karaoke'), icon: Mic },
     { name: 'Roda', url: createPageUrl('Roda'), icon: Gift },
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Pesquisa', url: createPageUrl('Search'), icon: Search },
@@ -106,6 +110,7 @@ export default function Layout({ children }) {
   const mobileNavItems = [
     { value: 'inicio', label: 'Início', href: '/', icon: Home },
     { value: 'catalogo', label: 'Catálogo', href: '/musica', icon: Library },
+    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: CapivaraMicIcon, featured: true },
     { value: 'roleta', label: 'Roleta', href: '/roda', icon: Shuffle },
     {
       value: 'menu',

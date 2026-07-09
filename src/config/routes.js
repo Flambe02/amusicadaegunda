@@ -26,6 +26,7 @@ const Youtube = lazy(() => import('../pages/Youtube'));
 const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
 const SearchPage = lazy(() => import('../pages/Search'));
+const Karaoke = lazy(() => import('../pages/Karaoke'));
 const Categoria = lazy(() => import('../pages/Categoria'));
 const Guia = lazy(() => import('../pages/Guia'));
 const Privacy = lazy(() => import('../pages/Privacy'));
@@ -140,6 +141,12 @@ export const ROUTES = [
     component: SearchPage,
     name: 'Search',
     seo: null // noindex géré dans le composant
+  },
+  {
+    path: '/karaoke',
+    component: Karaoke,
+    name: 'Karaoke',
+    seo: null // SEO géré via useSEO dans Karaoke.jsx
   },
   {
     path: '/categoria/:slug',

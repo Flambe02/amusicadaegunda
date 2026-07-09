@@ -41,6 +41,7 @@ const staticPages = [
   { path: '/', priority: 1.0, changefreq: 'daily' },
   { path: '/musica', priority: 0.9, changefreq: 'weekly' },
   { path: '/roda', priority: 0.8, changefreq: 'weekly' },
+  { path: '/karaoke', priority: 0.8, changefreq: 'weekly' },
   { path: '/calendar', priority: 0.8, changefreq: 'weekly' },
   // ✅ /blog retiré : contenu dupliqué de /musica/[slug], désormais noindex,follow
   { path: '/sobre', priority: 0.7, changefreq: 'monthly' },

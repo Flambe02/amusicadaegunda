@@ -19,11 +19,13 @@ import {
   Share2,
   ChevronDown,
   MessageCircle,
+  Mic,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import LyricsDialog from '@/components/LyricsDialog';
+import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import { extractYouTubeId, getYouTubeEmbedInfo, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
@@ -69,6 +71,7 @@ export default function SongPage() {
   const [videoActivated, setVideoActivated] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
+  const [isKaraokeOpen, setIsKaraokeOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [openMobilePanel, setOpenMobilePanel] = useState('contexto');
@@ -124,6 +127,7 @@ export default function SongPage() {
     setShowFullDescription(false);
     setPlayerBarActive(false);
     setPlayerBarPlaying(false);
+    setIsKaraokeOpen(false);
   }, [slug]);
 
   useEffect(() => {
@@ -287,6 +291,11 @@ export default function SongPage() {
 
   const hasVideo = Boolean(
     youtubeVideoInfo || youtubeAudioInfo
+  );
+
+  // Karaoké dispo si la chanson a un LRC synchronisé + un lien vidéo exploitable.
+  const hasKaraoke = Boolean(
+    song?.lrc_content && (youtubeAudioInfo || youtubeVideoInfo)
   );
 
   const descriptionPreview = song?.description
@@ -500,6 +509,19 @@ export default function SongPage() {
                 <Square className="h-4 w-4" />
               </button>
             </div>
+            {hasKaraoke ? (
+              <button
+                type="button"
+                onClick={() => { stopPlayerBar(); setIsKaraokeOpen(true); }}
+                className="mt-3 inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full border border-app-yellow/40 bg-app-yellow/10 px-5 text-sm font-black text-app-yellow transition active:scale-[0.98]"
+              >
+                <Mic className="h-5 w-5" /> Cantar (Karaokê)
+              </button>
+            ) : song?.lyrics?.trim() ? (
+              <p className="mt-3 text-center text-[11px] font-medium text-white/38">
+                🎤 Karaokê sincronizado em breve
+              </p>
+            ) : null}
           </div>
 
           <div className="mt-3">
@@ -873,9 +895,9 @@ export default function SongPage() {
                 </div>
               )}
 
-              {/* Play button */}
+              {/* Play + Karaoke buttons */}
               {hasVideo && (
-                <div className="pt-1">
+                <div className="flex flex-wrap items-center gap-3 pt-1">
                   <button
                     onClick={handlePlayerPlay}
                     className="inline-flex items-center gap-2.5 rounded-full bg-[#FDE047] px-6 py-3 text-sm font-bold text-black transition hover:bg-[#fde047]/90"
@@ -884,6 +906,15 @@ export default function SongPage() {
                     {playerBarPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}
                     {playerBarPlaying ? 'Pausar' : 'Ouvir agora'}
                   </button>
+                  {hasKaraoke && (
+                    <button
+                      onClick={() => { stopPlayerBar(); setIsKaraokeOpen(true); }}
+                      className="inline-flex items-center gap-2.5 rounded-full border border-app-yellow/40 bg-app-yellow/10 px-6 py-3 text-sm font-bold text-app-yellow transition hover:bg-app-yellow/20"
+                      aria-label="Abrir karaokê"
+                    >
+                      <Mic className="h-4 w-4" /> Cantar (Karaokê)
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1024,6 +1055,10 @@ export default function SongPage() {
         song={song}
         title={`Letras — ${song.title}`}
       />
+
+      {isKaraokeOpen && hasKaraoke && (
+        <KaraokePlayer song={song} onClose={() => setIsKaraokeOpen(false)} />
+      )}
     </>
   );
 }

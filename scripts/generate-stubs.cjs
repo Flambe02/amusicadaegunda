@@ -237,6 +237,11 @@ ${songListHtml}
       description: 'Gire a roda e descubra uma música aleatória do projeto.'
     },
     {
+      path: '/karaoke',
+      title: 'Karaokê — Cante as Paródias com Letra Sincronizada | A Música da Segunda',
+      description: 'Modo karaokê oficial de A Música da Segunda: cante as paródias musicais da semana com letra sincronizada na tela. No celular, no computador ou na TV.'
+    },
+    {
       path: '/adventcalendar',
       title: 'Calendário do Advento - A Música da Segunda',
       description: 'Uma surpresa musical por dia no calendário do advento.'

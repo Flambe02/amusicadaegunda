@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Menu, Search, Shuffle } from 'lucide-react';
+import { Home, Menu, Mic, Search, Shuffle } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import MenuDrawerModern from './MenuDrawerModern';
 
@@ -21,6 +21,7 @@ export default function BottomNavigationModern() {
 
   const items = [
     { name: 'Home', url: createPageUrl('Home'), icon: Home, isLink: true },
+    { name: 'Karaokê', url: createPageUrl('Karaoke'), icon: Mic, isLink: true },
     { name: 'Pesquisa', url: createPageUrl('Search'), icon: Search, isLink: true },
     { name: 'Roda', url: createPageUrl('Roda'), icon: Shuffle, isLink: true },
     { name: 'Menu', url: '#', icon: Menu, isLink: false },

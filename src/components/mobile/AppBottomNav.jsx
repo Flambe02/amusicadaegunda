@@ -7,6 +7,22 @@ export default function AppBottomNav({ items = [], activeValue }) {
   const renderItemContent = (item, isActive) => {
     const Icon = item.icon;
     const colorClass = isActive ? 'text-app-yellow' : 'text-white/55';
+    // Item mis en avant (ex. Karaokê) : plus gros, dans une pastille surélevée qui
+    // déborde vers le haut de la barre (façon bouton central).
+    if (item.featured) {
+      return (
+        <>
+          <span
+            className={`-mt-7 flex h-16 w-16 items-center justify-center rounded-full border-2 bg-app-charcoal shadow-[0_8px_24px_rgba(0,0,0,0.55)] transition ${
+              isActive ? 'border-app-yellow' : 'border-white/15'
+            }`}
+          >
+            {Icon ? <Icon className="h-[52px] w-[52px]" aria-hidden="true" /> : null}
+          </span>
+          <span className={`mt-0.5 text-[10px] font-semibold ${colorClass}`}>{item.label}</span>
+        </>
+      );
+    }
     return (
       <>
         {Icon ? <Icon className={`h-5 w-5 ${colorClass}`} aria-hidden="true" /> : null}
@@ -20,7 +36,10 @@ export default function AppBottomNav({ items = [], activeValue }) {
   return (
     <>
       <nav className="z-40 flex-shrink-0 border-t border-app-border bg-app-surface-strong backdrop-blur-2xl pb-[env(safe-area-inset-bottom)] shadow-app-nav">
-        <ul className={`grid grid-cols-${items.length || 4} gap-1 px-2 pt-2 pb-1`}>
+        <ul
+          className="grid gap-1 px-2 pt-2 pb-1"
+          style={{ gridTemplateColumns: `repeat(${items.length || 4}, minmax(0, 1fr))` }}
+        >
           {items.map((item) => {
             const isActive = item.value === activeValue;
             const sharedClass =

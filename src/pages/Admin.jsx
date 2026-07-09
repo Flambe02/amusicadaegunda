@@ -11,8 +11,9 @@ import {
   Plus, Edit2, Trash2, Search, Save, X, Music,
   Hash, Zap, ExternalLink, RefreshCw, Eye,
   ChevronDown, ChevronUp, LogOut, Settings, GripVertical, Clock,
-  Sparkles,
+  Sparkles, Mic,
 } from 'lucide-react';
+import KaraokeSyncTool from '@/components/karaoke/KaraokeSyncTool';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -735,9 +736,11 @@ function SongForm({ initial, onSave, onCancel, isSaving, categories, songId, onA
 
 // ─── Song Row ────────────────────────────────────────────────────────────────
 
-function SongRow({ song, onEdit, onDelete, onPublish, onCategoryChange, categories }) {
+function SongRow({ song, onEdit, onDelete, onPublish, onCategoryChange, onKaraoke, categories }) {
   const [showCatPicker, setShowCatPicker] = useState(false);
   const isPublished = song.status === 'published';
+  const hasLyrics = Boolean(song.lyrics?.trim());
+  const isSynced = Boolean(song.lrc_content);
 
   const handleCategorySelect = (value) => {
     setShowCatPicker(false);
@@ -808,6 +811,20 @@ function SongRow({ song, onEdit, onDelete, onPublish, onCategoryChange, categori
         </span>
       )}
 
+      {/* Karaoke sync indicator */}
+      {hasLyrics && (
+        <span
+          title={isSynced ? 'Karaokê sincronizado' : 'Letra por sincronizar'}
+          className={`hidden sm:inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold flex-shrink-0 ${
+            isSynced
+              ? 'border-app-yellow/30 bg-app-yellow/10 text-app-yellow'
+              : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+          }`}
+        >
+          <Mic size={11} /> {isSynced ? 'Karaokê' : 'Sync'}
+        </span>
+      )}
+
       {/* Status badge */}
       <Badge
         variant={isPublished ? 'default' : 'secondary'}
@@ -818,6 +835,19 @@ function SongRow({ song, onEdit, onDelete, onPublish, onCategoryChange, categori
 
       {/* Actions */}
       <div className="flex items-center gap-1 flex-shrink-0">
+        {hasLyrics && (
+          <button
+            onClick={() => onKaraoke(song)}
+            title={isSynced ? 'Reeditar sincronização karaokê' : 'Sincronizar karaokê'}
+            className={`p-1.5 rounded transition-colors ${
+              isSynced
+                ? 'text-app-yellow/80 hover:bg-app-yellow/15 hover:text-app-yellow'
+                : 'text-gray-400 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <Mic size={14} />
+          </button>
+        )}
         {!isPublished && (
           <button
             onClick={() => onPublish(song)}
@@ -870,6 +900,7 @@ export default function AdminPage() {
   const [categories, setCategories] = useState(loadCategories);
   const [showSettings, setShowSettings] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'published' | 'draft'
+  const [karaokeSong, setKaraokeSong] = useState(null); // song being synced, or null
 
   // ── Load ──
   const loadSongs = useCallback(async () => {
@@ -1163,9 +1194,20 @@ export default function AdminPage() {
         {/* Form panel (create / edit) */}
         {panel !== null && (
           <div className="border border-white/10 rounded-xl bg-gray-900 p-6">
-            <h2 className="text-base font-semibold mb-5">
-              {panel === 'new' ? '➕ Nova música' : `✏️ Editar — ${panel.title}`}
-            </h2>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-semibold">
+                {panel === 'new' ? '➕ Nova música' : `✏️ Editar — ${panel.title}`}
+              </h2>
+              {panel !== 'new' && panel?.lyrics?.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setKaraokeSong(panel)}
+                  className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-semibold text-purple-300 hover:bg-purple-500/20 transition-colors"
+                >
+                  <Mic size={13} /> Sincronizar karaokê
+                </button>
+              )}
+            </div>
             <SongForm
               initial={panel === 'new' ? null : panel}
               onSave={handleSave}
@@ -1224,6 +1266,7 @@ export default function AdminPage() {
                             onDelete={s => setConfirmDelete(s)}
                             onPublish={handlePublish}
                             onCategoryChange={handleCategoryChange}
+                            onKaraoke={s => setKaraokeSong(s)}
                           />
                         ))}
                       </div>
@@ -1235,6 +1278,18 @@ export default function AdminPage() {
           </div>
         )}
       </main>
+
+      {/* Karaoke sync tool (fullscreen overlay) */}
+      {karaokeSong && (
+        <KaraokeSyncTool
+          key={karaokeSong.id}
+          song={karaokeSong}
+          onClose={() => setKaraokeSong(null)}
+          onSaved={(updated) => {
+            setSongs(prev => prev.map(s => s.id === updated.id ? { ...s, ...updated } : s));
+          }}
+        />
+      )}
 
       {/* Delete confirmation modal */}
       {confirmDelete && (

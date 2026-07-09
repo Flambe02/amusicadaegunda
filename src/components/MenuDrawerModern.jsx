@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FileText, Home, Info, Search, Shuffle } from 'lucide-react';
+import { FileText, Home, Info, Mic, Search, Shuffle } from 'lucide-react';
 import {
   Drawer,
   DrawerContent,
@@ -13,6 +13,12 @@ export default function MenuDrawerModern({ open, onOpenChange }) {
       url: createPageUrl('Home'),
       icon: Home,
       description: 'Voltar para a musica da semana',
+    },
+    {
+      name: 'Karaokê',
+      url: createPageUrl('Karaoke'),
+      icon: Mic,
+      description: 'Cantar as paródias com letra sincronizada',
     },
     {
       name: 'Roda',
