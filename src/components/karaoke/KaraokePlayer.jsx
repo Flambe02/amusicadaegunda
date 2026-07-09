@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft, Play, Pause, Music, Loader2, Settings2, Mic,
@@ -8,7 +8,11 @@ import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
 import { parseLrc } from '@/lib/lrc';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
+import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import '@/styles/karaoke.css';
+
+// Panneau d'options TV (D-pad) — lazy → chargé seulement en tvMode, hors bundle mobile.
+const KaraokeTvOptions = lazy(() => import('@/tv/KaraokeTvOptions'));
 
 const FALLBACK_LINE_DURATION_SEC = 4;
 const OPTS_KEY = 'karaoke-opts-v1';
@@ -68,7 +72,7 @@ async function translateText(text, target) {
  * dernière ligne démarrée ; le balayage se complète (100%) à la fin captée et la ligne
  * reste visible jusqu'à la suivante.
  */
-export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext, onEnded, handoff = false }) {
+export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null }) {
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
   const hostRef = useRef(null);
@@ -272,10 +276,32 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
     };
   }, [opts.energy, phase]);
 
+  // ── Barre de progression TV (mise à jour légère, mutation directe, sans re-render) ──
+  const tvProgressRef = useRef(null);
+  useEffect(() => {
+    if (!tvMode || !playerReady) return undefined;
+    const id = setInterval(() => {
+      const p = playerRef.current;
+      if (!p || !tvProgressRef.current) return;
+      try {
+        const d = p.getDuration?.() || 0;
+        const t = p.getCurrentTime?.() || 0;
+        tvProgressRef.current.style.width = d > 0 ? `${Math.min(100, (t / d) * 100)}%` : '0%';
+      } catch { /* ignore */ }
+    }, 250);
+    return () => clearInterval(id);
+  }, [tvMode, playerReady]);
+
   // ── Contrôles ──
   const seekTo = useCallback((t) => {
     try { playerRef.current?.seekTo?.(Math.max(0, t), true); } catch { /* ignore */ }
   }, []);
+  // Avance/recul relatif (±secondes) — utilisé par le D-pad en mode TV.
+  const seekBy = useCallback((delta) => {
+    const p = playerRef.current;
+    const cur = (typeof p?.getCurrentTime === 'function' ? p.getCurrentTime() : syncRef.current.t) || 0;
+    seekTo(cur + delta);
+  }, [seekTo]);
   const togglePlay = useCallback(() => {
     const p = playerRef.current;
     if (!p) return;
@@ -357,17 +383,40 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
   // ── Clavier / D-pad ──
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); handleClose(); }
+      // Panneau d'options ouvert (TV) : la nav spatiale gère les touches → on n'intercepte rien.
+      if (tvMode && showOpts) return;
+      // En mode TV, le Retour (Escape/back matériel) est géré par TvApp (adaptateur) →
+      // on ne double PAS la fermeture ici. En mobile/web, Escape ferme comme avant.
+      if (e.key === 'Escape') { if (!tvMode) { e.preventDefault(); handleClose(); } }
       else if (e.key === ' ' || e.key === 'k' || e.key === 'Enter') {
         if (e.key === 'Enter' && e.target?.tagName === 'BUTTON') return;
         e.preventDefault();
         if (phase === 'intro') { if (playerReady) handleStart(); } else togglePlay();
-      } else if (phase === 'live' && e.key === 'ArrowLeft') { e.preventDefault(); handleReverse(); }
-      else if (phase === 'live' && e.key === 'ArrowRight' && queueInfo && onNext) { e.preventDefault(); onNext(); }
+      } else if (tvMode && phase === 'live' && e.key === 'ArrowUp') {
+        e.preventDefault();
+        setShowOpts(true); // ▲ ouvre le panneau d'options
+      } else if (phase === 'live' && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (tvMode) seekBy(-10); else handleReverse();
+      } else if (phase === 'live' && e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (tvMode) seekBy(10); else if (queueInfo && onNext) onNext();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleClose, togglePlay, phase, playerReady, handleStart, handleReverse, queueInfo, onNext]);
+  }, [handleClose, togglePlay, phase, playerReady, handleStart, handleReverse, queueInfo, onNext, tvMode, seekBy, showOpts]);
+
+  // Intercepteur de Back (TV) : panneau ouvert → Back le referme (consomme) ; sinon
+  // laisse TvApp fermer le karaoké.
+  useEffect(() => {
+    if (!tvMode || !backInterceptorRef) return undefined;
+    backInterceptorRef.current = () => {
+      if (showOpts) { setShowOpts(false); return true; }
+      return false;
+    };
+    return () => { if (backInterceptorRef) backInterceptorRef.current = null; };
+  }, [tvMode, backInterceptorRef, showOpts]);
 
   // ── Auto-scroll ──
   const activeLineRef = useRef(null);
@@ -435,11 +484,16 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
 
       {/* Barre supérieure — padding haut = safe-area (sinon passe sous l'encoche/barre d'état) */}
       <header className="relative z-30 flex items-center gap-3 px-4 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)] md:px-6 md:pb-4 md:pt-[max(env(safe-area-inset-top),1rem)]">
-        <button type="button" onClick={handleClose}
-          className="karaoke-focusable flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white/85 transition hover:bg-white/10"
-          aria-label="Voltar">
-          <ArrowLeft className="h-5 w-5" /><span className="hidden sm:inline">Voltar</span>
-        </button>
+        {tvMode ? (
+          /* TV : chrome minimal — avatar mascotte + titre, pas de bouton Voltar (Retour télécommande). */
+          <img src={BRAND_SQUARE_SMALL} alt="" className="h-9 w-9 shrink-0 rounded-full border border-white/15 object-cover" />
+        ) : (
+          <button type="button" onClick={handleClose}
+            className="karaoke-focusable flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white/85 transition hover:bg-white/10"
+            aria-label="Voltar">
+            <ArrowLeft className="h-5 w-5" /><span className="hidden sm:inline">Voltar</span>
+          </button>
+        )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-white md:text-base">{song?.title}</p>
           <p className="truncate text-xs text-white/50">
@@ -447,7 +501,12 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
             {queueInfo && <span className="ml-2 text-app-yellow/70">· Fila {queueInfo.index + 1}/{queueInfo.total}</span>}
           </p>
         </div>
-        {phase === 'live' && (
+        {tvMode && phase === 'live' && !showOpts && (
+          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70">
+            <Settings2 className="h-4 w-4" /> ▲ Opções
+          </span>
+        )}
+        {phase === 'live' && !tvMode && (
           <div className="relative">
             <button type="button" onClick={() => setShowOpts((v) => !v)}
               className={`karaoke-focusable flex h-11 w-11 items-center justify-center rounded-full border transition ${
@@ -531,6 +590,14 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
         </div>
       ) : (
         <div className="relative flex-1 overflow-hidden">
+          {/* Fond artwork flouté (mode TV) — ambiance « scène », derrière les paroles */}
+          {tvMode && artwork && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center opacity-20 blur-2xl saturate-150"
+              style={{ backgroundImage: `url(${artwork})` }}
+            />
+          )}
           {/* Compte à rebours de départ 3-2-1 */}
           {countdown != null && (
             <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
@@ -555,7 +622,7 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
           )}
 
           {!apiError && (
-            <div className="karaoke-lyrics h-full overflow-y-auto scroll-smooth px-6 py-[38vh] text-center md:px-12" aria-live="polite">
+            <div className="karaoke-lyrics relative z-10 h-full overflow-y-auto scroll-smooth px-6 py-[38vh] text-center md:px-12" aria-live="polite">
               {hasLines ? (
                 lines.map((line, i) => {
                   const distance = displayIdx < 0 ? i + 1 : Math.abs(i - displayIdx);
@@ -600,8 +667,17 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
         </div>
       )}
 
-      {/* Contrôles bas (live) — padding bas = safe-area (barre de gestes) */}
-      {phase === 'live' && (
+      {/* Barre de progression fine (mode TV, immersif) */}
+      {phase === 'live' && tvMode && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-[4vw] pb-[3vh]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+            <div ref={tvProgressRef} className="h-full rounded-full bg-app-yellow" style={{ width: '0%' }} />
+          </div>
+        </div>
+      )}
+
+      {/* Contrôles bas (live) — masqués en TV (D-pad : OK=play/pause, ←/→=±10s, Retour=sair) */}
+      {phase === 'live' && !tvMode && (
         <footer className="flex items-center justify-center gap-3 px-4 pt-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:gap-4 md:pt-7 md:pb-[max(env(safe-area-inset-bottom),1.75rem)]">
           <CtrlButton onClick={handleReverse} title="Voltar (linha anterior)" aria-label="Voltar"><SkipBack className="h-5 w-5" /></CtrlButton>
           <CtrlButton onClick={handleRetry} title="Recomeçar esta linha" aria-label="Recomeçar linha"><RotateCcw className="h-5 w-5" /></CtrlButton>
@@ -615,6 +691,13 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
             ? <CtrlButton onClick={onNext} title="Próxima da fila" aria-label="Próxima"><SkipForward className="h-5 w-5" /></CtrlButton>
             : <CtrlButton onClick={handleReverse} title="" disabled hidden><SkipForward className="h-5 w-5" /></CtrlButton>}
         </footer>
+      )}
+
+      {/* Panneau d'options TV (D-pad) — lazy, hors bundle mobile */}
+      {tvMode && showOpts && phase === 'live' && (
+        <Suspense fallback={null}>
+          <KaraokeTvOptions opts={opts} setOpts={setOpts} />
+        </Suspense>
       )}
 
       {/* Nota final do medidor de energia */}

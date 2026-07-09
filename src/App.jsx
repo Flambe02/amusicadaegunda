@@ -5,12 +5,17 @@ import { Toaster } from "@/components/ui/toaster"
 import OfflineIndicator from "@/components/OfflineIndicator"
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { hideNativeSplash } from '@/utils/splash';
+import { isTV } from '@/tv/platform';
 
 const PushCTA = lazy(() => import('@/components/PushCTA'));
 const InstallAppBanner = lazy(() => import('@/components/InstallAppBanner'));
+// Le bundle TV est chargé à la demande UNIQUEMENT sur TV → aucun coût pour mobile/web.
+const TvApp = lazy(() => import('@/tv/TvApp'));
 
 function App() {
   const [deferredUiReady, setDeferredUiReady] = useState(false);
+  // Décision figée au montage (une TV ne devient pas un mobile en cours de session).
+  const [tvMode] = useState(() => { try { return isTV(); } catch { return false; } });
 
   // Masque le splash natif dès que le 1er contenu a peint (double rAF = au moins
   // une frame rendue). Évite l'écran noir de la WebView au cold start via widget/
@@ -42,6 +47,17 @@ function App() {
       }
     };
   }, []);
+
+  // ── Mode TV : app dédiée « 10-foot », isolée du shell mobile/web (pas de Layout,
+  // pas de bannières PWA/push). Le reste de l'app n'est jamais monté. ──
+  if (tvMode) {
+    return (
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#05070c' }} />}>
+        <TvApp />
+        <Toaster />
+      </Suspense>
+    );
+  }
 
   return (
     <>

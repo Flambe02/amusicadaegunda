@@ -1,1 +1,0 @@
-import{ag as n,ah as t,ai as o,aj as i,ak as d}from"./vendor-app-BRbAUAPC.js";const e=a=>{typeof window<"u"&&typeof window.gtag=="function"&&window.gtag("event",a.name,{event_category:"Web Vitals",event_label:a.id,value:Math.round(a.name==="CLS"?a.value*1e3:a.value),non_interaction:!0})};n(e);t(e);o(e);i(e);d(e);
