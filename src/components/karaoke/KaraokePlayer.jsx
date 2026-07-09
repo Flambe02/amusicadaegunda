@@ -433,8 +433,8 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
         <div ref={hostRef} />
       </div>
 
-      {/* Barre supérieure */}
-      <header className="relative z-30 flex items-center gap-3 px-4 py-3 md:px-6 md:py-4">
+      {/* Barre supérieure — padding haut = safe-area (sinon passe sous l'encoche/barre d'état) */}
+      <header className="relative z-30 flex items-center gap-3 px-4 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)] md:px-6 md:pb-4 md:pt-[max(env(safe-area-inset-top),1rem)]">
         <button type="button" onClick={handleClose}
           className="karaoke-focusable flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white/85 transition hover:bg-white/10"
           aria-label="Voltar">
@@ -600,9 +600,9 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
         </div>
       )}
 
-      {/* Contrôles bas (live) */}
+      {/* Contrôles bas (live) — padding bas = safe-area (barre de gestes) */}
       {phase === 'live' && (
-        <footer className="flex items-center justify-center gap-3 px-4 py-5 md:gap-4 md:py-7">
+        <footer className="flex items-center justify-center gap-3 px-4 pt-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:gap-4 md:pt-7 md:pb-[max(env(safe-area-inset-bottom),1.75rem)]">
           <CtrlButton onClick={handleReverse} title="Voltar (linha anterior)" aria-label="Voltar"><SkipBack className="h-5 w-5" /></CtrlButton>
           <CtrlButton onClick={handleRetry} title="Recomeçar esta linha" aria-label="Recomeçar linha"><RotateCcw className="h-5 w-5" /></CtrlButton>
           <button type="button" onClick={togglePlay} disabled={!playerReady}
@@ -621,7 +621,7 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
       {scoreResult && (
         <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-5 bg-black/88 px-6 text-center backdrop-blur-md">
           <button type="button" onClick={handleClose} aria-label="Sair"
-            className="karaoke-focusable absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10">
+            className="karaoke-focusable absolute right-4 top-[max(env(safe-area-inset-top),1rem)] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10">
             <X className="h-5 w-5" />
           </button>
           <div className="text-6xl md:text-7xl">{scoreResult.emoji}</div>
