@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Play, Pause,
   Plus, Copy, Trash2, Undo2, Redo2, Crosshair, Save, Loader2, Music, Minus, FileText,
-  RotateCcw, History, ClipboardPaste, ArrowLeft, Gauge, X, Sparkles, AlertTriangle,
+  RotateCcw, History, ClipboardPaste, ArrowLeft, Gauge, X, Sparkles, AlertTriangle, Pencil,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
@@ -133,16 +133,46 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
     const newTexts = splitLyricsLines(lyricsDraft);
     if (newTexts.length === 0) return;
     const unchanged = newTexts.length === lines.length && newTexts.every((t, i) => t === lines[i].text);
-    const finalLines = unchanged ? lines : newTexts.map((text) => ({ text, time: null, endTime: null }));
+    // Le texte a changé (ajout/suppression/correction) → FUSION intelligente qui
+    // préserve les temps des lignes inchangées (seules les lignes ajoutées repartent
+    // sans temps). Fini le « ajouter une phrase remet toute la synchro à zéro ».
+    const finalLines = unchanged ? lines : mergeLinesPreservingTimes(lines, newTexts);
     if (!unchanged) {
-      // Le texte a changé (ajout/suppression/correction) → les anciens temps ne
-      // correspondent plus forcément à l'ordre des lignes, on repart à zéro.
       setLines(finalLines);
-      setCursor(0);
+      const firstNull = finalLines.findIndex((l) => l.time == null);
+      setCursor(firstNull === -1 ? 0 : firstNull); // curseur sur la 1ère ligne à marquer
     }
     initialSyncLinesRef.current = finalLines.map((l) => ({ ...l }));
     setStep('sync');
   }, [lyricsDraft, lines]);
+
+  // Revenir à l'écran « Letra completa » depuis la sync : recharge le brouillon avec
+  // le texte ACTUEL des lignes (y compris les ajouts/corrections faits en sync).
+  const backToLyrics = useCallback(() => {
+    setLyricsDraft(lines.map((l) => l.text).join('\n'));
+    userEditedLyricsRef.current = true; // empêche l'écrasement par le fetch « fresh »
+    setStep('lyrics');
+  }, [lines]);
+
+  // Sauvegarde SEULE la letra (colonne `lyrics`) dans Supabase, sans toucher au LRC —
+  // pour corriger/compléter les paroles complètes stockées et les réutiliser ailleurs.
+  const [isSavingLyrics, setIsSavingLyrics] = useState(false);
+  const handleSaveLyricsOnly = useCallback(async () => {
+    const joined = splitLyricsLines(lyricsDraft).join('\n');
+    if (!joined) return;
+    setIsSavingLyrics(true);
+    try {
+      try { await supabase.auth.refreshSession(); } catch { /* diagnostic plus bas */ }
+      const { data, error } = await supabase.from('songs').update({ lyrics: joined }).eq('id', song.id).select();
+      if (error) throw new Error(describeSaveError(error));
+      if (!data || data.length === 0) throw new Error(await diagnoseZeroRows());
+      toast({ title: '✅ Letra guardada', description: 'A letra completa foi atualizada no Supabase.' });
+    } catch (err) {
+      toast({ title: 'Erro ao guardar letra', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSavingLyrics(false);
+    }
+  }, [lyricsDraft, song.id, toast]);
 
   // Colle le contenu du presse-papiers directement dans le textarea des paroles.
   const handlePasteLyrics = useCallback(async () => {
@@ -856,7 +886,21 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
           <ChevronRight size={13} className="hidden shrink-0 sm:inline" />
           <span className="truncate font-semibold text-white">{effectiveSong?.title}</span>
           <ChevronRight size={13} className="shrink-0" />
-          <span className="shrink-0 text-purple-300">{step === 'lyrics' ? 'Letra' : 'Sincronizar'}</span>
+          {step === 'sync' ? (
+            <>
+              <button
+                onClick={backToLyrics}
+                title="Editar a letra completa (adicionar/corrigir linhas sem perder a sincronização)"
+                className="karaoke-focusable inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-gray-400 hover:bg-white/10 hover:text-purple-300"
+              >
+                <Pencil size={12} /> Letra completa
+              </button>
+              <ChevronRight size={13} className="shrink-0" />
+              <span className="shrink-0 text-purple-300">Sincronizar</span>
+            </>
+          ) : (
+            <span className="shrink-0 text-purple-300">Letra</span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <button onClick={handleClose} className="rounded-lg px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10">
@@ -927,18 +971,31 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
                 placeholder="Cola ou escreve a letra aqui, uma linha por linha…"
                 className="w-full resize-y rounded-xl border border-white/10 bg-black/30 px-4 py-3 font-mono text-sm text-white outline-none focus:border-purple-400/50"
               />
-              <div className="mt-3 flex items-center justify-between">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <span className="flex items-center gap-1.5 text-xs text-gray-500">
                   <FileText size={12} /> {splitLyricsLines(lyricsDraft).length} linha(s)
                 </span>
-                <button
-                  onClick={proceedToSync}
-                  disabled={splitLyricsLines(lyricsDraft).length === 0}
-                  className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold hover:bg-purple-700 disabled:opacity-40"
-                >
-                  Sincronizar <ChevronRight size={16} />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveLyricsOnly}
+                    disabled={isSavingLyrics || splitLyricsLines(lyricsDraft).length === 0}
+                    title="Guardar apenas a letra completa no Supabase (sem tocar na sincronização)"
+                    className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-gray-300 hover:bg-white/10 disabled:opacity-40"
+                  >
+                    {isSavingLyrics ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar letra
+                  </button>
+                  <button
+                    onClick={proceedToSync}
+                    disabled={splitLyricsLines(lyricsDraft).length === 0}
+                    className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold hover:bg-purple-700 disabled:opacity-40"
+                  >
+                    Sincronizar <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
+              <p className="mt-2 text-[11px] text-gray-500">
+                Adicionar ou corrigir linhas aqui <span className="text-gray-400">preserva os tempos já marcados</span> (só as linhas novas ficam por sincronizar).
+              </p>
             </div>
           </div>
         </div>
@@ -1626,4 +1683,39 @@ function buildInitialLines(song) {
   const parsed = parseLrc(song?.lrc_content);
   if (parsed.length > 0) return parsed.map((l) => ({ text: l.text, time: l.time, endTime: l.endTime ?? null }));
   return splitLyricsLines(song?.lyrics).map((text) => ({ text, time: null, endTime: null }));
+}
+
+// Fusionne un nouveau texte (liste de lignes) avec les lignes déjà synchronisées en
+// PRÉSERVANT les temps des lignes inchangées. Utilise une plus longue sous-séquence
+// commune (LCS) sur le texte : les lignes appariées gardent leur time/endTime, les
+// lignes AJOUTÉES reçoivent time:null (à marquer), les lignes SUPPRIMÉES disparaissent.
+// Corrige le bug « ajouter une phrase remet toute la synchro à zéro ».
+function mergeLinesPreservingTimes(oldLines, newTexts) {
+  const oldTexts = oldLines.map((l) => l.text);
+  const n = oldTexts.length;
+  const m = newTexts.length;
+  // dp[i][j] = longueur LCS de oldTexts[i:] et newTexts[j:]
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      dp[i][j] = oldTexts[i] === newTexts[j]
+        ? dp[i + 1][j + 1] + 1
+        : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const result = [];
+  let i = 0;
+  let j = 0;
+  while (j < m) {
+    if (i < n && oldTexts[i] === newTexts[j]) {
+      result.push({ text: newTexts[j], time: oldLines[i].time, endTime: oldLines[i].endTime ?? null });
+      i += 1; j += 1;
+    } else if (i < n && dp[i + 1][j] >= dp[i][j + 1]) {
+      i += 1; // ancienne ligne supprimée
+    } else {
+      result.push({ text: newTexts[j], time: null, endTime: null }); // ligne ajoutée
+      j += 1;
+    }
+  }
+  return result;
 }

@@ -31,6 +31,9 @@ import PlatformsDrawer from '../components/PlatformsDrawer';
 import HistoryDrawer from '../components/HistoryDrawer';
 import { MobileHomeApp } from '@/components/mobile';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
+import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
+import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
+import { hasLrcContent } from '@/lib/lrc';
 
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -182,6 +185,7 @@ export default function Home() {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
   const [displayedSong, setDisplayedSong] = useState(null);
+  const [isKaraokeOpen, setIsKaraokeOpen] = useState(false); // overlay karaoké (desktop)
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false
   );
@@ -694,6 +698,19 @@ export default function Home() {
                         title="Compartilhar"
                       >
                         <Share2 className="h-4 w-4" />
+                      </button>
+                    )}
+                    {displayedSong
+                      && hasLrcContent(displayedSong.lrc_content)
+                      && (displayedSong.youtube_url || displayedSong.youtube_music_url) && (
+                      <button
+                        type="button"
+                        onClick={() => setIsKaraokeOpen(true)}
+                        className="mt-0.5 flex-shrink-0 inline-flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-[#FDE047]/70 bg-black/40 shadow-[0_0_24px_rgba(253,224,71,0.4)] transition hover:scale-105 hover:shadow-[0_0_32px_rgba(253,224,71,0.6)]"
+                        aria-label="Cantar no karaokê"
+                        title="Cantar (Karaokê)"
+                      >
+                        <CapivaraMicIcon className="h-full w-full" />
                       </button>
                     )}
                   </div>
@@ -1363,6 +1380,11 @@ export default function Home() {
         songs={allSongs}
         onSelectSong={(song) => handleReplaceVideo(song, null)}
       />
+
+      {/* Lecteur karaoké (desktop) — overlay plein écran via portal */}
+      {isKaraokeOpen && displayedSong && hasLrcContent(displayedSong.lrc_content) && (
+        <KaraokePlayer song={displayedSong} onClose={() => setIsKaraokeOpen(false)} />
+      )}
 
       {/* ===== DIALOG PLATAFORMAS ===== */}
       <Dialog open={showPlatformsDialog} onOpenChange={setShowPlatformsDialog}>
