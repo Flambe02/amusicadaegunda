@@ -7,7 +7,10 @@ import {
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
 import { parseLrc } from '@/lib/lrc';
+import { FONT_SCALES, PLAYBACK_RATES, TRANSLATION_LANGS, loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
+import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
+import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import '@/styles/karaoke.css';
 
@@ -15,16 +18,6 @@ import '@/styles/karaoke.css';
 const KaraokeTvOptions = lazy(() => import('@/tv/KaraokeTvOptions'));
 
 const FALLBACK_LINE_DURATION_SEC = 4;
-const OPTS_KEY = 'karaoke-opts-v1';
-// bolinha (balle de balayage) désactivée par défaut ; traduction off par défaut.
-const DEFAULT_OPTS = { fontScale: 1, showBall: false, rate: 1, dueto: false, energy: false, translate: 'off' };
-const FONT_SCALES = [
-  { label: 'P', value: 0.85 }, { label: 'M', value: 1 }, { label: 'G', value: 1.2 }, { label: 'XG', value: 1.45 },
-];
-const RATES = [1, 0.75, 0.5];
-const TRANSLATE_LANGS = [
-  { key: 'off', label: 'Off' }, { key: 'fr', label: 'FR' }, { key: 'en', label: 'EN' },
-];
 // Couleurs des parties en modo dueto (P1 / P2).
 const DUET_COLORS = ['#38bdf8', '#f472b6'];
 const YELLOW = '#FDE047';
@@ -32,11 +25,6 @@ const YELLOW = '#FDE047';
 // et RMS « cible » pour normaliser le volume moyen dans la note finale.
 const SING_THRESHOLD = 0.045;
 const LOUDNESS_TARGET = 0.18;
-
-function loadOpts() {
-  try { return { ...DEFAULT_OPTS, ...JSON.parse(localStorage.getItem(OPTS_KEY) || '{}') }; }
-  catch { return { ...DEFAULT_OPTS }; }
-}
 
 // Note ludique (pas de pitch : c'est une note d'ÉNERGIE/participation, honnête).
 function gradeFor(score) {
@@ -72,7 +60,10 @@ async function translateText(text, target) {
  * dernière ligne démarrée ; le balayage se complète (100%) à la fin captée et la ligne
  * reste visible jusqu'à la suivante.
  */
-export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null }) {
+export default function KaraokePlayer({
+  song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null,
+  initialSessionOptions = null,
+}) {
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
   const hostRef = useRef(null);
@@ -92,11 +83,36 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
   const [phase, setPhase] = useState('intro'); // 'intro' | 'live'
   const [countdown, setCountdown] = useState(null);
 
-  const [opts, setOpts] = useState(loadOpts);
+  // Override de session (ex. Dueto choisi depuis la landing karaokê TV) : fusionné
+  // aux préférences sauvegardées UNE SEULE FOIS au montage, sans jamais écraser la
+  // préférence globale de l'utilisateur — seul un changement EXPLICITE via le panneau
+  // d'options (après ce 1er rendu) déclenche une vraie sauvegarde. Aucun caller
+  // existant (mobile/desktop/TV solo) ne passe cette prop → comportement inchangé.
+  const [opts, setOpts] = useState(() => (
+    initialSessionOptions ? { ...loadKaraokeOptions(), ...initialSessionOptions } : loadKaraokeOptions()
+  ));
   const [showOpts, setShowOpts] = useState(false);
+  const showOptsRef = useRef(showOpts); showOptsRef.current = showOpts;
+  const skipNextSaveRef = useRef(Boolean(initialSessionOptions));
   useEffect(() => {
-    try { localStorage.setItem(OPTS_KEY, JSON.stringify(opts)); } catch { /* ignore */ }
+    if (skipNextSaveRef.current) { skipNextSaveRef.current = false; return; }
+    saveKaraokeOptions(opts);
   }, [opts]);
+
+  // ── Couche de contrôle TV (LOT A) : commandes révélées sur interaction, masquage
+  // auto après ~3,5 s en lecture, visibles indéfiniment en pause ──
+  const [controlsVisible, setControlsVisible] = useState(false);
+  const hideControlsTimerRef = useRef(null);
+  const lastOkPressRef = useRef(0);
+  const restartLockRef = useRef(false);
+  const restartTimeoutRef = useRef(null);
+  const revealControls = useCallback(() => {
+    setControlsVisible(true);
+  }, []);
+  useEffect(() => () => {
+    if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
+    if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+  }, []);
 
   // Refs miroir pour lire opts/queue à jour DANS l'effet de création du player
   // (dont les deps sont volontairement figées → sinon recréation du player).
@@ -157,6 +173,9 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
           else if (e.data === 2) setIsPlaying(false);
           else if (e.data === 0) {
             setIsPlaying(false);
+            // Panneau Opções ouvert au moment de la fin naturelle : le fermer avant
+            // d'afficher l'écran de fin, jamais les deux superposés.
+            if (showOptsRef.current) setShowOpts(false);
             // Fin naturelle : si le medidor de energia est actif et qu'on n'est pas en
             // mode fila, on affiche la note plutôt que d'enchaîner.
             if (optsRef.current.energy && !queueInfoRef.current) finishAndScoreRef.current?.();
@@ -178,6 +197,16 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
     if (!playerReady) return;
     try { playerRef.current?.setPlaybackRate?.(opts.rate); } catch { /* ignore */ }
   }, [playerReady, opts.rate]);
+
+  // Auto-masquage des commandes révélées : ~3,5 s en lecture, indéfini en pause.
+  useEffect(() => {
+    if (!tvMode || !controlsVisible) return undefined;
+    if (hideControlsTimerRef.current) { clearTimeout(hideControlsTimerRef.current); hideControlsTimerRef.current = null; }
+    if (isPlaying) {
+      hideControlsTimerRef.current = setTimeout(() => setControlsVisible(false), 3500);
+    }
+    return () => { if (hideControlsTimerRef.current) { clearTimeout(hideControlsTimerRef.current); hideControlsTimerRef.current = null; } };
+  }, [tvMode, isPlaying, controlsVisible]);
 
   // ── Poll : temps + ligne affichée (continuité) + compte à rebours d'entrée ──
   useEffect(() => {
@@ -276,17 +305,21 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
     };
   }, [opts.energy, phase]);
 
-  // ── Barre de progression TV (mise à jour légère, mutation directe, sans re-render) ──
+  // ── Barre de progression + temps TV (mise à jour légère, mutation directe, sans re-render) ──
   const tvProgressRef = useRef(null);
+  const tvTimeCurrentRef = useRef(null);
+  const tvTimeTotalRef = useRef(null);
   useEffect(() => {
     if (!tvMode || !playerReady) return undefined;
     const id = setInterval(() => {
       const p = playerRef.current;
-      if (!p || !tvProgressRef.current) return;
+      if (!p) return;
       try {
         const d = p.getDuration?.() || 0;
         const t = p.getCurrentTime?.() || 0;
-        tvProgressRef.current.style.width = d > 0 ? `${Math.min(100, (t / d) * 100)}%` : '0%';
+        if (tvProgressRef.current) tvProgressRef.current.style.width = d > 0 ? `${Math.min(100, (t / d) * 100)}%` : '0%';
+        if (tvTimeCurrentRef.current) tvTimeCurrentRef.current.textContent = formatTvTime(t);
+        if (tvTimeTotalRef.current) tvTimeTotalRef.current.textContent = d > 0 ? formatTvTime(d) : '--:--';
       } catch { /* ignore */ }
     }, 250);
     return () => clearInterval(id);
@@ -355,6 +388,28 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
     if (prev) seekTo(prev.time);
   }, [lines, seekTo]);
 
+  // Recomeçar (barre de commandes TV + panneau Opções) : pause, seekTo(0), reset de
+  // la ligne LRC active et des stats d'énergie de LA TENTATIVE en cours (aucune
+  // donnée persistée de session/fila touchée), puis reprise automatique. Verrou
+  // simple contre un double déclenchement (double appui rapproché).
+  const handleRestartControl = useCallback(() => {
+    if (restartLockRef.current) return;
+    restartLockRef.current = true;
+    try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ }
+    seekTo(0);
+    displayIdxRef.current = -1;
+    setDisplayIdx(-1);
+    setEntryDots(0);
+    energyStatsRef.current = { active: 0, sung: 0, sum: 0, count: 0 };
+    setScoreResult(null);
+    revealControls();
+    if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+    restartTimeoutRef.current = setTimeout(() => {
+      try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
+      restartLockRef.current = false;
+    }, 300);
+  }, [seekTo, revealControls]);
+
   // Retry = recommencer la ligne en cours.
   const handleRetry = useCallback(() => {
     const di = displayIdxRef.current;
@@ -391,38 +446,55 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
       else if (e.key === ' ' || e.key === 'k' || e.key === 'Enter') {
         if (e.key === 'Enter' && e.target?.tagName === 'BUTTON') return;
         e.preventDefault();
-        if (phase === 'intro') { if (playerReady) handleStart(); } else togglePlay();
+        if (phase === 'intro') { if (playerReady) handleStart(); } else if (tvMode) {
+          // Débounce : ignore un second OK trop rapproché (évite une double bascule).
+          const now = Date.now();
+          if (now - lastOkPressRef.current < 300) return;
+          lastOkPressRef.current = now;
+          togglePlay();
+          revealControls();
+        } else togglePlay();
       } else if (tvMode && phase === 'live' && e.key === 'ArrowUp') {
         e.preventDefault();
-        setShowOpts(true); // ▲ ouvre le panneau d'options
+        setControlsVisible(false); // le panneau masque les commandes révélées
+        setShowOpts(true); // ▲ ouvre directement le panneau d'options (un seul appui)
       } else if (phase === 'live' && e.key === 'ArrowLeft') {
         e.preventDefault();
-        if (tvMode) seekBy(-10); else handleReverse();
+        if (tvMode) { seekBy(-10); revealControls(); } else handleReverse();
       } else if (phase === 'live' && e.key === 'ArrowRight') {
         e.preventDefault();
-        if (tvMode) seekBy(10); else if (queueInfo && onNext) onNext();
+        if (tvMode) { seekBy(10); revealControls(); } else if (queueInfo && onNext) onNext();
+      } else if (tvMode && phase === 'live' && e.key === 'ArrowDown') {
+        e.preventDefault();
+        revealControls(); // révèle sans action de lecture (déplacement de focus non implémenté — cf. limites connues)
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleClose, togglePlay, phase, playerReady, handleStart, handleReverse, queueInfo, onNext, tvMode, seekBy, showOpts]);
+  }, [handleClose, togglePlay, phase, playerReady, handleStart, handleReverse, queueInfo, onNext, tvMode, seekBy, showOpts, revealControls]);
 
-  // Intercepteur de Back (TV) : panneau ouvert → Back le referme (consomme) ; sinon
-  // laisse TvApp fermer le karaoké.
+  // Intercepteur de Back (TV) — cascade stricte : panneau ouvert → le fermer ;
+  // sinon commandes révélées → les masquer ; sinon laisse TvApp fermer le karaoké.
   useEffect(() => {
     if (!tvMode || !backInterceptorRef) return undefined;
     backInterceptorRef.current = () => {
       if (showOpts) { setShowOpts(false); return true; }
+      if (controlsVisible) {
+        setControlsVisible(false);
+        if (hideControlsTimerRef.current) { clearTimeout(hideControlsTimerRef.current); hideControlsTimerRef.current = null; }
+        return true;
+      }
       return false;
     };
     return () => { if (backInterceptorRef) backInterceptorRef.current = null; };
-  }, [tvMode, backInterceptorRef, showOpts]);
+  }, [tvMode, backInterceptorRef, showOpts, controlsVisible]);
 
-  // ── Auto-scroll ──
+  // ── Auto-scroll (mobile/desktop uniquement — la fenêtre TV utilise des ancres fixes) ──
   const activeLineRef = useRef(null);
   useEffect(() => {
+    if (tvMode) return;
     activeLineRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [displayIdx]);
+  }, [displayIdx, tvMode]);
 
   // ── Traduction de la ligne courante (bandeau bas), avec cache ──
   useEffect(() => {
@@ -502,9 +574,12 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
           </p>
         </div>
         {tvMode && phase === 'live' && !showOpts && (
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70">
+          <button type="button"
+            onClick={() => { setControlsVisible(false); setShowOpts(true); }}
+            aria-label="Abrir opções do karaokê"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70 transition hover:bg-white/10">
             <Settings2 className="h-4 w-4" /> ▲ Opções
-          </span>
+          </button>
         )}
         {phase === 'live' && !tvMode && (
           <div className="relative">
@@ -535,9 +610,9 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
                     <Globe className="h-3.5 w-3.5" /> Tradução <span className="font-medium normal-case text-white/35">(rodapé)</span>
                   </p>
                   <div className="flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
-                    {TRANSLATE_LANGS.map((l) => (
-                      <button key={l.key} onClick={() => setOpts((o) => ({ ...o, translate: l.key }))}
-                        className={`karaoke-focusable flex-1 rounded-lg py-1.5 text-sm font-bold transition ${opts.translate === l.key ? 'bg-app-yellow text-black' : 'text-white/60 hover:bg-white/10'}`}>
+                    {TRANSLATION_LANGS.map((l) => (
+                      <button key={l.value} onClick={() => setOpts((o) => ({ ...o, translate: l.value }))}
+                        className={`karaoke-focusable flex-1 rounded-lg py-1.5 text-sm font-bold transition ${opts.translate === l.value ? 'bg-app-yellow text-black' : 'text-white/60 hover:bg-white/10'}`}>
                         {l.label}
                       </button>
                     ))}
@@ -546,10 +621,10 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
                 <div>
                   <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-white/45">Velocidade <span className="font-medium normal-case text-white/35">(treino)</span></p>
                   <div className="flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
-                    {RATES.map((r) => (
-                      <button key={r} onClick={() => setOpts((o) => ({ ...o, rate: r }))}
-                        className={`karaoke-focusable flex-1 rounded-lg py-1.5 text-sm font-bold transition ${opts.rate === r ? 'bg-app-yellow text-black' : 'text-white/60 hover:bg-white/10'}`}>
-                        {r}×
+                    {PLAYBACK_RATES.map((r) => (
+                      <button key={r.value} onClick={() => setOpts((o) => ({ ...o, rate: r.value }))}
+                        className={`karaoke-focusable flex-1 rounded-lg py-1.5 text-sm font-bold transition ${opts.rate === r.value ? 'bg-app-yellow text-black' : 'text-white/60 hover:bg-white/10'}`}>
+                        {r.label}
                       </button>
                     ))}
                   </div>
@@ -621,32 +696,49 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
             </div>
           )}
 
+          {/* Indicateur discret de pause (TV) */}
+          {tvMode && countdown == null && !isPlaying && (
+            <p className="tv-karaoke-paused-badge" aria-hidden="true">PAUSADO</p>
+          )}
+
           {!apiError && (
-            <div className="karaoke-lyrics relative z-10 h-full overflow-y-auto scroll-smooth px-6 py-[38vh] text-center md:px-12" aria-live="polite">
-              {hasLines ? (
-                lines.map((line, i) => {
-                  const distance = displayIdx < 0 ? i + 1 : Math.abs(i - displayIdx);
-                  const isActive = i === displayIdx;
-                  const duetColor = opts.dueto ? DUET_COLORS[i % 2] : null;
-                  return (
-                    <p key={`${i}-${line.time}`} ref={isActive ? activeLineRef : null}
-                      className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/20'].join(' ')}
-                      style={{
-                        fontSize: isActive ? `calc(clamp(2rem, 6vw, 5rem) * ${scale})` : distance === 1 ? `calc(clamp(1.35rem, 3.6vw, 2.6rem) * ${scale})` : `calc(clamp(1.1rem, 2.6vw, 1.9rem) * ${scale})`,
-                        marginBlock: isActive ? '0.55em' : '0.4em',
-                        opacity: distance > 3 ? 0.12 : undefined,
-                        color: !isActive && duetColor ? `${duetColor}66` : undefined,
-                      }}>
-                      {isActive
-                        ? <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />
-                        : (line.text || '♪')}
-                    </p>
-                  );
-                })
-              ) : (
-                <p className="mx-auto max-w-3xl text-lg text-white/50">Letra sincronizada em breve.</p>
-              )}
-            </div>
+            tvMode ? (
+              <TvKaraokeLyricsWindow
+                lines={lines}
+                displayIdx={displayIdx}
+                wipeApiRef={wipeApiRef}
+                fontScale={scale}
+                showBall={opts.showBall}
+                dueto={opts.dueto}
+                lineColor={lineColor}
+              />
+            ) : (
+              <div className="karaoke-lyrics relative z-10 h-full overflow-y-auto scroll-smooth px-6 py-[38vh] text-center md:px-12" aria-live="polite">
+                {hasLines ? (
+                  lines.map((line, i) => {
+                    const distance = displayIdx < 0 ? i + 1 : Math.abs(i - displayIdx);
+                    const isActive = i === displayIdx;
+                    const duetColor = opts.dueto ? DUET_COLORS[i % 2] : null;
+                    return (
+                      <p key={`${i}-${line.time}`} ref={isActive ? activeLineRef : null}
+                        className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/20'].join(' ')}
+                        style={{
+                          fontSize: isActive ? `calc(clamp(2rem, 6vw, 5rem) * ${scale})` : distance === 1 ? `calc(clamp(1.35rem, 3.6vw, 2.6rem) * ${scale})` : `calc(clamp(1.1rem, 2.6vw, 1.9rem) * ${scale})`,
+                          marginBlock: isActive ? '0.55em' : '0.4em',
+                          opacity: distance > 3 ? 0.12 : undefined,
+                          color: !isActive && duetColor ? `${duetColor}66` : undefined,
+                        }}>
+                        {isActive
+                          ? <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />
+                          : (line.text || '♪')}
+                      </p>
+                    );
+                  })
+                ) : (
+                  <p className="mx-auto max-w-3xl text-lg text-white/50">Letra sincronizada em breve.</p>
+                )}
+              </div>
+            )
           )}
 
           {apiError && (
@@ -667,11 +759,35 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
         </div>
       )}
 
-      {/* Barre de progression fine (mode TV, immersif) */}
+      {/* Couche de contrôle TV : barre de commandes révélée + progression/temps (permanents) */}
       {phase === 'live' && tvMode && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-[4vw] pb-[3vh]">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-            <div ref={tvProgressRef} className="h-full rounded-full bg-app-yellow" style={{ width: '0%' }} />
+        <div className="tv-karaoke-bottom">
+          <div className={`tv-karaoke-controlbar ${controlsVisible ? 'is-visible' : ''}`} aria-hidden={!controlsVisible}>
+            <button type="button" className="tv-kctrl-btn" tabIndex={controlsVisible ? 0 : -1}
+              onClick={() => { seekBy(-10); revealControls(); }} aria-label="Voltar 10 segundos">
+              <SkipBack className="h-6 w-6" /><span>10s</span>
+            </button>
+            <button type="button" className="tv-kctrl-btn" tabIndex={controlsVisible ? 0 : -1}
+              onClick={handleRestartControl} aria-label="Recomeçar a música">
+              <RotateCcw className="h-6 w-6" /><span>Recomeçar</span>
+            </button>
+            <button type="button" className="tv-kctrl-btn tv-kctrl-btn--main" tabIndex={controlsVisible ? 0 : -1}
+              onClick={() => { togglePlay(); revealControls(); }}
+              aria-label={isPlaying ? 'Pausar a música' : 'Continuar a música'}>
+              {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7 fill-current" />}
+              <span>{isPlaying ? 'Pausar' : 'Continuar'}</span>
+            </button>
+            <button type="button" className="tv-kctrl-btn" tabIndex={controlsVisible ? 0 : -1}
+              onClick={() => { seekBy(10); revealControls(); }} aria-label="Avançar 10 segundos">
+              <span>10s</span><SkipForward className="h-6 w-6" />
+            </button>
+          </div>
+          <div className="tv-karaoke-progress">
+            <span ref={tvTimeCurrentRef} className="tv-karaoke-time">0:00</span>
+            <div className="tv-karaoke-progress-track">
+              <div ref={tvProgressRef} className="tv-karaoke-progress-fill" style={{ width: '0%' }} />
+            </div>
+            <span ref={tvTimeTotalRef} className="tv-karaoke-time">--:--</span>
           </div>
         </div>
       )}
@@ -696,7 +812,12 @@ export default function KaraokePlayer({ song, onClose, queueInfo = null, onNext,
       {/* Panneau d'options TV (D-pad) — lazy, hors bundle mobile */}
       {tvMode && showOpts && phase === 'live' && (
         <Suspense fallback={null}>
-          <KaraokeTvOptions opts={opts} setOpts={setOpts} />
+          <KaraokeTvOptions
+            opts={opts}
+            setOpts={setOpts}
+            onRestart={handleRestartControl}
+            onExit={() => { setShowOpts(false); handleClose(); }}
+          />
         </Suspense>
       )}
 

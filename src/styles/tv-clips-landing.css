@@ -1,0 +1,82 @@
+/* ==========================================================================
+   Page dédiée Clipes (TvClipsLanding). Chargé UNIQUEMENT par le bundle TV.
+   Réutilise .tv2-home/.tv2-nav (tv-home-v2.css) pour le squelette + .tv2-rail*
+   pour les cartes 16:9 (mêmes proportions/focus que l'accueil et le karaokê) —
+   une seule couleur de focus ici aussi : #FDE047, jamais de cyan.
+   ========================================================================== */
+
+.tv-clips-landing {
+  /* Contrairement à .tv2-home (accueil/karaokê, contenu qui tient dans un seul
+     écran), Clipes peut avoir plus de rangées que la hauteur disponible : seule
+     .tv-clips-rails scrolle, la nav + l'en-tête restent fixes. */
+  overflow: hidden;
+}
+
+/* ── En-tête : titre + sélecteur d'organisation ──────────────────────────── */
+.tv-clips-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: clamp(1rem, 2vw, 2rem);
+  flex-wrap: wrap;
+}
+.tv-clips-title {
+  margin: 0; color: #fff; font-weight: 900; text-transform: uppercase;
+  letter-spacing: -0.01em; line-height: 1;
+  font-size: clamp(2.1rem, 3.1vw, 3.2rem); /* ~42-52px à 1080p */
+}
+.tv-clips-subtitle {
+  margin: 0.4rem 0 0; color: rgba(255, 255, 255, 0.55);
+  font-size: clamp(1.1rem, 1.25vw, 1.45rem); /* ~20-24px à 1080p */
+  font-weight: 600;
+}
+
+.tv-clips-sort { display: flex; align-items: center; gap: 0.9rem; flex: 0 0 auto; }
+.tv-clips-sort-label {
+  color: rgba(255, 255, 255, 0.55); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; font-size: clamp(0.85rem, 0.95vw, 1.05rem); white-space: nowrap;
+}
+.tv-clips-sort-pills { display: flex; gap: 0.6rem; }
+.tv-clips-pill {
+  padding: 0.55rem 1.3rem; border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.7);
+  font-size: clamp(0.9rem, 1vw, 1.05rem); font-weight: 800; letter-spacing: 0.03em;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.tv-clips-pill.is-selected { background: #FDE047; color: #171505; }
+.tv-clips-pill.is-focused {
+  box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.4), 0 0 22px rgba(253, 224, 71, 0.45);
+  transform: scale(1.06); color: #fff;
+}
+.tv-clips-pill.is-selected.is-focused { color: #171505; }
+.tv-clips-pill.is-disabled { opacity: 0.4; }
+
+/* ── Rangées scrollables (seule zone qui défile verticalement) ──────────── */
+.tv-clips-rails {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+  gap: clamp(1.3rem, 2.8vh, 2.1rem);
+  overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
+  padding: 0.35rem 0.25rem 0.5rem;
+  scroll-padding-top: 0.35rem;
+}
+.tv-clips-rails::-webkit-scrollbar { display: none; }
+
+.tv-clips-empty {
+  flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
+  color: rgba(255, 255, 255, 0.5); font-size: 1.4rem; font-weight: 700;
+}
+
+/* ── Extensions de .tv2-rail-title-h / .tv2-rail-badge (tv-home-v2.css) ──── */
+.tv2-rail-title-sub {
+  text-transform: none; color: rgba(255, 255, 255, 0.45);
+  font-weight: 700; font-size: 0.72em; letter-spacing: 0.01em;
+}
+.tv2-rail-badge-nova {
+  background: #FDE047; color: #171505; font-weight: 900;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-clips-pill { transition: none; }
+}

@@ -19,20 +19,23 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 
  * devient le masque du dégradé). La balle est positionnée en `left: p%` du bloc.
  */
 const KaraokeWipeLine = forwardRef(function KaraokeWipeLine(
-  { text, progress, showBall = true, color = '#FDE047', className = '' },
+  { text, progress, showBall = true, color = '#FDE047', unsungColor = 'rgba(255,255,255,0.92)', className = '' },
   ref,
 ) {
   const wipeRef = useRef(null);
   const ballRef = useRef(null);
   const colorRef = useRef(color);
   colorRef.current = color;
+  const unsungRef = useRef(unsungColor);
+  unsungRef.current = unsungColor;
 
   const setProgress = useCallback((p) => {
     const pct = Math.max(0, Math.min(100, (Number.isFinite(p) ? p : 0) * 100));
     const c = colorRef.current;
+    const u = unsungRef.current;
     if (wipeRef.current) {
       wipeRef.current.style.backgroundImage =
-        `linear-gradient(90deg, ${c} ${pct}%, rgba(255,255,255,0.92) ${pct}%)`;
+        `linear-gradient(90deg, ${c} ${pct}%, ${u} ${pct}%)`;
     }
     if (ballRef.current) {
       ballRef.current.style.left = `${pct}%`;
@@ -54,7 +57,7 @@ const KaraokeWipeLine = forwardRef(function KaraokeWipeLine(
       <span
         ref={wipeRef}
         className="karaoke-wipe"
-        style={{ backgroundImage: `linear-gradient(90deg, ${color} 0%, rgba(255,255,255,0.92) 0%)` }}
+        style={{ backgroundImage: `linear-gradient(90deg, ${color} 0%, ${unsungColor} 0%)` }}
       >
         {text}
       </span>

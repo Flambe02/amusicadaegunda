@@ -33,12 +33,15 @@ export function isTV() {
   const ua = navigator.userAgent || '';
   if (TV_UA.test(ua)) return true;
 
-  // Filet de sécurité pour les boîtiers Android TV sans marqueur UA explicite :
-  // natif Android + aucun tactile + écran large ET paysage (aucun téléphone/tablette
-  // ne peut réunir ces 3 conditions ; un vrai téléphone reste < 960px même en paysage).
+  // Filet de sécurité (le signal FIABLE est le tag UA « AndroidTV » posé nativement par
+  // MainActivity, capté ci-dessus par TV_UA). Ici : Android natif SANS pointeur tactile
+  // ET écran large paysage. ⚠️ On NE teste PAS `ontouchstart` : il est présent dans la
+  // WebView Android même sur une TV sans écran tactile → il cassait la détection.
+  // maxTouchPoints=0 (aucun doigt réel) + ≥960px paysage = profil TV ; un vrai téléphone
+  // a maxTouchPoints>0, une tablette tactile aussi.
   let nativeAndroid = false;
   try { nativeAndroid = Capacitor.getPlatform?.() === 'android'; } catch { /* web */ }
-  const noTouch = (navigator.maxTouchPoints || 0) === 0 && !('ontouchstart' in window);
+  const noTouch = (navigator.maxTouchPoints || 0) === 0;
   const wideLandscape = window.innerWidth >= 960 && window.innerWidth > window.innerHeight;
   if (nativeAndroid && noTouch && wideLandscape) return true;
 

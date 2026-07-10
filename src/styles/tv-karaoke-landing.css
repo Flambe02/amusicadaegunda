@@ -1,0 +1,126 @@
+/* ==========================================================================
+   Page dédiée Karaokê (TvKaraokeLanding) + choix de mode (TvKaraokeModeChooser).
+   Chargé UNIQUEMENT par le bundle TV. Réutilise .tv2-home/.tv2-nav de
+   tv-home-v2.css pour le squelette (nav + colonne) ; une seule couleur de focus
+   ici aussi : #FDE047, jamais de cyan.
+   ========================================================================== */
+
+/* ── Hero (pas d'image de chanson : mic stylisé + dégradé de scène) ──────── */
+.tv-karaoke-hero {
+  flex: 0 0 auto;
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between;
+  height: clamp(150px, 20vh, 210px);
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+  border-radius: 20px; overflow: hidden;
+  background:
+    radial-gradient(60% 120% at 82% 30%, rgba(147, 51, 234, 0.35), transparent 65%),
+    radial-gradient(45% 90% at 100% 100%, rgba(253, 224, 71, 0.08), transparent 60%),
+    linear-gradient(100deg, #0a0510 0%, #120a1c 55%, #1a0f26 100%);
+}
+.tv-karaoke-hero-text { position: relative; z-index: 1; max-width: 60%; }
+.tv-karaoke-hero-title {
+  margin: 0; color: #fff; font-weight: 900; letter-spacing: -0.01em;
+  font-size: clamp(2.2rem, 3.6vw, 3.4rem); line-height: 1;
+}
+.tv-karaoke-hero-subtitle {
+  margin: 0.5rem 0 0; color: rgba(255, 255, 255, 0.85);
+  font-size: clamp(1.05rem, 1.3vw, 1.3rem); font-weight: 700;
+}
+.tv-karaoke-hero-support {
+  margin: 0.3rem 0 0; color: rgba(255, 255, 255, 0.5);
+  font-size: clamp(0.9rem, 1vw, 1.05rem); font-weight: 500;
+}
+.tv-karaoke-hero-art {
+  position: relative; z-index: 1; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(253, 224, 71, 0.9);
+  filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.5));
+}
+.tv-karaoke-hero-glow {
+  position: absolute; inset: -40%; z-index: -1;
+  background: radial-gradient(circle, rgba(253, 224, 71, 0.22), transparent 68%);
+}
+
+/* ── 4 cartes de mode ──────────────────────────────────────────────────── */
+.tv-karaoke-modes {
+  flex: 0 0 auto;
+  display: flex; gap: clamp(1.1rem, 1.6vw, 1.5rem);
+}
+.tv-mode-card {
+  flex: 1 1 0; min-width: 0;
+  height: clamp(180px, 19vh, 210px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.045); border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px; color: rgba(255, 255, 255, 0.85);
+  transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease, filter 0.16s ease;
+}
+.tv-mode-card-title { font-size: clamp(1.3rem, 1.6vw, 1.6rem); font-weight: 900; color: #fff; }
+.tv-mode-card-sub { font-size: clamp(0.85rem, 0.95vw, 1rem); font-weight: 600; color: rgba(255, 255, 255, 0.5); }
+.tv-mode-card.is-focused {
+  transform: scale(1.04); background: rgba(253, 224, 71, 0.1);
+  border-color: #FDE047; filter: brightness(1.08);
+  box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.35), 0 0 30px rgba(253, 224, 71, 0.4);
+}
+.tv-mode-card.is-disabled { opacity: 0.42; }
+.tv-mode-card.is-disabled.is-focused {
+  transform: scale(1.02); border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
+  filter: none;
+}
+
+/* ── Rangée « Para cantar agora » (réutilise .tv2-rail* de tv-home-v2.css) ── */
+.tv-karaoke-row-wrap { flex: 0 0 auto; }
+.tv-karaoke-empty {
+  flex: 0 0 auto; margin: 0.5rem 0 0; color: rgba(255, 255, 255, 0.5);
+  font-size: 1.15rem; font-weight: 700;
+}
+
+/* Carte de fin de rangée « Ver todos os karaokês » — même style que tv-home-v2. */
+.tv-karaoke-landing .tv2-rail-action {
+  flex: 0 0 auto; width: clamp(230px, 16.4vw, 320px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem;
+  aspect-ratio: 16 / 9;
+  background: rgba(255, 255, 255, 0.04); border: 2px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 14px; color: rgba(255, 255, 255, 0.75);
+  font-size: 1.02rem; font-weight: 800; text-align: center;
+  transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+.tv-karaoke-landing .tv2-rail-action.is-focused {
+  transform: scale(1.075); color: #fff; background: rgba(253, 224, 71, 0.1);
+  border-style: solid; border-color: #FDE047;
+  box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.35), 0 18px 44px rgba(0, 0, 0, 0.55);
+}
+
+/* ── Choix de mode transitoire (TvKaraokeModeChooser) ────────────────────── */
+.tv-modechooser {
+  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.6rem; text-align: center;
+}
+.tv-modechooser-eyebrow {
+  margin: 0; color: rgba(253, 224, 71, 0.85); font-size: 1rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.1em;
+}
+.tv-modechooser-title {
+  margin: 0 0 1.6rem; color: #fff; font-weight: 900; text-transform: uppercase;
+  font-size: clamp(2rem, 3.4vw, 3.2rem); line-height: 1.05;
+}
+.tv-modechooser-actions { display: flex; gap: 1.4rem; }
+.tv-modechooser-card {
+  width: clamp(260px, 20vw, 340px); height: clamp(170px, 20vh, 210px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.045); border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px; color: rgba(255, 255, 255, 0.85);
+  transition: transform 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+.tv-modechooser-card-title { font-size: 1.4rem; font-weight: 900; color: #fff; }
+.tv-modechooser-card-sub { font-size: 0.95rem; font-weight: 600; color: rgba(255, 255, 255, 0.5); max-width: 85%; }
+.tv-modechooser-card.is-focused {
+  transform: scale(1.04); background: rgba(253, 224, 71, 0.1); border-color: #FDE047;
+  box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.35), 0 0 30px rgba(253, 224, 71, 0.4);
+}
+.tv-modechooser-card.is-disabled { opacity: 0.42; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-mode-card, .tv-modechooser-card, .tv-karaoke-landing .tv2-rail-action { transition: none; }
+}
