@@ -401,6 +401,7 @@ export default function TvApp() {
           presentNames={festaPresentNames}
           loading={festaLoading}
           offline={festaOffline}
+          queuedCount={festaQueue.filter((q) => q.status === 'waiting').length}
           onContinue={proceedToFestaPicker}
           onBack={exitFestaInvite}
           backInterceptorRef={backInterceptorRef}
@@ -452,7 +453,7 @@ export default function TvApp() {
     openSoloGrid, openDuetGrid, openFestaGrid,
     onRequestKaraoke, startKaraoke, startFesta, advanceFesta,
     festaSession, festaPresentNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
-    liveEnergyByEntry,
+    liveEnergyByEntry, festaQueue,
   ]);
 
   if (loading) {

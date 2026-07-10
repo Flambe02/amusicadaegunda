@@ -13,7 +13,7 @@ import '@/styles/tv-festa-invite.css';
  * tant qu'elle est active) — cf. TvApp.jsx `openFestaInvite`.
  */
 export default function TvFestaInvite({
-  code, joinUrl, presentNames = [], loading = false, offline = false,
+  code, joinUrl, presentNames = [], loading = false, offline = false, queuedCount = 0,
   onContinue, onBack, backInterceptorRef,
 }) {
   useEffect(() => {
@@ -67,15 +67,21 @@ export default function TvFestaInvite({
         </div>
       </div>
 
+      {queuedCount > 0 && (
+        <p className="tv-festa-invite-nudge">
+          🎵 {queuedCount} música{queuedCount > 1 ? 's' : ''} já na fila — toca em <strong>Começar</strong> quando quiseres!
+        </p>
+      )}
+
       <div className="tv-festa-invite-actions">
         <FocusableButton
           focusKey="FESTA_INVITE_CONTINUE"
           autoFocus
           className="tv2-btn tv2-btn-karaoke tv-festa-invite-continue"
-          ariaLabel="Continuar sem fila"
+          ariaLabel={queuedCount > 0 ? 'Começar' : 'Continuar sem fila'}
           onPress={onContinue}
         >
-          Continuar sem fila
+          {queuedCount > 0 ? `Começar (${queuedCount} na fila)` : 'Continuar sem fila'}
         </FocusableButton>
         <FocusableButton
           focusKey="FESTA_INVITE_BACK"

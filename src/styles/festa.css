@@ -74,6 +74,26 @@
   padding: 0.25rem 0.6rem;
 }
 
+.festa-onboarding {
+  margin: 0.5rem 1.25rem 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(253, 224, 71, 0.08);
+  border: 1px solid rgba(253, 224, 71, 0.25);
+}
+.festa-onboarding-title { font-weight: 800; margin-bottom: 0.6rem; }
+.festa-onboarding-steps { margin: 0 0 0.75rem; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.9rem; color: rgba(255, 255, 255, 0.85); }
+.festa-onboarding-dismiss {
+  height: 2.4rem;
+  padding: 0 1.25rem;
+  border-radius: 999px;
+  border: none;
+  background: #FDE047;
+  color: #0a0a0a;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
 .festa-tabs {
   display: flex;
   gap: 0.5rem;

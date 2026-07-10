@@ -102,6 +102,13 @@
   font-size: 0.9rem;
 }
 
+.tv-festa-invite-nudge {
+  font-size: 1.05rem;
+  color: var(--tv-accent, #FDE047);
+  font-weight: 700;
+}
+.tv-festa-invite-nudge strong { text-decoration: underline; }
+
 .tv-festa-invite-actions { display: flex; gap: 1rem; }
 .tv-festa-invite-continue { min-width: 280px; }
 .tv-festa-invite-back {

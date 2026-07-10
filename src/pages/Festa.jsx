@@ -14,6 +14,7 @@ import '@/styles/festa.css';
 
 const GUEST_NAME_KEY = 'festa_guest_name';
 const MY_ENTRIES_KEY = 'festa_my_entries';
+const ONBOARDING_KEY = 'festa_onboarding_dismissed';
 
 function loadGuestName() {
   try { return localStorage.getItem(GUEST_NAME_KEY) || ''; } catch { return ''; }
@@ -58,6 +59,13 @@ export default function Festa() {
   const [songs, setSongs] = useState([]);
   const [addingSongId, setAddingSongId] = useState(null);
   const [myEntryIds, setMyEntryIds] = useState(new Set());
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try { return localStorage.getItem(ONBOARDING_KEY) !== '1'; } catch { return true; }
+  });
+  const dismissOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    try { localStorage.setItem(ONBOARDING_KEY, '1'); } catch { /* pas bloquant */ }
+  }, []);
 
   const { queue, connectionState, sendEnergyReading } = useFestaSession(session?.id || null, { guestName });
 
@@ -134,6 +142,19 @@ export default function Festa() {
         </div>
         {connectionState === 'reconnecting' && <span className="festa-reconnecting">Reconectando…</span>}
       </header>
+
+      {showOnboarding && (
+        <div className="festa-onboarding">
+          <p className="festa-onboarding-title">🎉 Você entrou na festa!</p>
+          <ol className="festa-onboarding-steps">
+            <li>Escolhe uma música no <strong>Catálogo</strong></li>
+            <li>Ela entra na <strong>Fila</strong> — espera a tua vez</li>
+            <li>Quando tocar, <strong>aplaude 👏</strong> ou joga um <strong>tomate 🍅</strong></li>
+            <li>A TV não tem microfone — se quiseres, empresta o teu 🎤</li>
+          </ol>
+          <button type="button" className="festa-onboarding-dismiss" onClick={dismissOnboarding}>Entendi</button>
+        </div>
+      )}
 
       <nav className="festa-tabs">
         <button type="button" className={tab === 'catalogo' ? 'is-active' : ''} onClick={() => setTab('catalogo')}>Catálogo</button>

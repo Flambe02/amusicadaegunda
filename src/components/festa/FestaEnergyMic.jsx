@@ -31,6 +31,14 @@ export default function FestaEnergyMic({ entry, sendEnergyReading }) {
 
   const start = useCallback(async () => {
     setError('');
+    // getUserMedia exige un contexte sécurisé (HTTPS ou localhost) — sur un test
+    // en réseau local via http://IP:port, l'API n'existe même pas (navigator.mediaDevices
+    // est undefined). Message précis pour ne pas laisser croire à un vrai refus de
+    // permission : ça fonctionnera normalement une fois publié en HTTPS.
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      setError('O microfone só funciona em conexão segura (https). Em teste local por IP isso é normal — vai funcionar no site publicado.');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -65,8 +73,10 @@ export default function FestaEnergyMic({ entry, sendEnergyReading }) {
         try { ctx.close(); } catch { /* ignore */ }
       };
       setActive(true);
-    } catch {
-      setError('Não foi possível aceder ao microfone.');
+    } catch (err) {
+      setError(err?.name === 'NotAllowedError'
+        ? 'Permissão de microfone negada. Ativa o microfone para este site nas configurações do navegador.'
+        : 'Não foi possível aceder ao microfone.');
     }
   }, [entry, sendEnergyReading]);
 
