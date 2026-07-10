@@ -11,7 +11,7 @@ import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
  */
 export default function TvKaraokeScreen({
   song, onClose, backInterceptorRef, queueInfo, onNext, onEnded, handoff,
-  applauseScore, tomatoScore, initialSessionOptions,
+  applauseScore, tomatoScore, remoteEnergyLevel, remoteEnergyGrade, initialSessionOptions,
 }) {
   return (
     <KaraokePlayer
@@ -25,6 +25,8 @@ export default function TvKaraokeScreen({
       handoff={handoff}
       applauseScore={applauseScore}
       tomatoScore={tomatoScore}
+      remoteEnergyLevel={remoteEnergyLevel}
+      remoteEnergyGrade={remoteEnergyGrade}
       initialSessionOptions={initialSessionOptions}
     />
   );

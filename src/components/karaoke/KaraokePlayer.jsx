@@ -13,6 +13,7 @@ import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
 import TvDuetLyricsView from '@/tv/components/TvDuetLyricsView';
 import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
+import { SING_THRESHOLD, LOUDNESS_TARGET, gradeFor } from '@/lib/energyGrade';
 import '@/styles/karaoke.css';
 
 // Panneau d'options TV (D-pad) — lazy → chargé seulement en tvMode, hors bundle mobile.
@@ -22,19 +23,9 @@ const FALLBACK_LINE_DURATION_SEC = 4;
 // Couleurs des parties en modo dueto (P1 / P2).
 const DUET_COLORS = ['#38bdf8', '#f472b6'];
 const YELLOW = '#FDE047';
-// Medidor de energia : seuil RMS au-dessus duquel on considère que la personne chante,
-// et RMS « cible » pour normaliser le volume moyen dans la note finale.
-const SING_THRESHOLD = 0.045;
-const LOUDNESS_TARGET = 0.18;
-
-// Note ludique (pas de pitch : c'est une note d'ÉNERGIE/participation, honnête).
-function gradeFor(score) {
-  if (score >= 85) return { grade: 'Estrela da segunda!', emoji: '🌟' };
-  if (score >= 70) return { grade: 'Mandou muito bem!', emoji: '🎤' };
-  if (score >= 50) return { grade: 'Foi na onda!', emoji: '🎶' };
-  if (score >= 25) return { grade: 'Tímido… solta a voz!', emoji: '😅' };
-  return { grade: 'Cadê a voz?', emoji: '🙊' };
-}
+// SING_THRESHOLD/LOUDNESS_TARGET/gradeFor : voir src/lib/energyGrade.js (formule
+// partagée avec le médiateur d'énergie à distance du Modo Festa — la TV n'a pas de
+// micro, cf. src/components/festa/FestaEnergyMic.jsx).
 
 // Traduction via l'endpoint public (non officiel) de Google Translate — « outil Google
 // simple », sans clé API. sl=pt → tl=cible. Réponse = tableaux imbriqués.
@@ -59,6 +50,11 @@ async function translateText(text, target) {
  *  - applauseScore : number|null  (fila por telefone : aplausos reçus pour la chanson QUI VIENT
  *                                  DE FINIR — snapshot pris au moment du relais, affiché sur l'intro)
  *  - tomatoScore   : number|null  (idem, "tomates" — réaction négative/moquerie)
+ *  - remoteEnergyLevel : number|null  (0..1, LIVE — la TV n'a pas de micro, un téléphone
+ *                                       peut lui envoyer un niveau d'énergie mesuré localement
+ *                                       via Realtime broadcast, cf. FestaEnergyMic.jsx)
+ *  - remoteEnergyGrade : {score,grade,emoji}|null  (nota finale équivalente, pour la chanson
+ *                                                    QUI VIENT DE FINIR, affichée sur l'intro)
  *
  * Continuité : le texte ne disparaît JAMAIS. La ligne « affichée » est toujours la
  * dernière ligne démarrée ; le balayage se complète (100%) à la fin captée et la ligne
@@ -66,7 +62,8 @@ async function translateText(text, target) {
  */
 export default function KaraokePlayer({
   song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null,
-  applauseScore = null, tomatoScore = null, initialSessionOptions = null,
+  applauseScore = null, tomatoScore = null, remoteEnergyLevel = null, remoteEnergyGrade = null,
+  initialSessionOptions = null,
 }) {
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
@@ -674,6 +671,11 @@ export default function KaraokePlayer({
                   {(tomatoScore ?? 0) > 0 && <span>🍅 Tomates: {tomatoScore}</span>}
                 </p>
               )}
+              {handoff && remoteEnergyGrade && (
+                <p className="karaoke-focusable relative inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-bold text-white/80">
+                  {remoteEnergyGrade.emoji} {remoteEnergyGrade.grade} <span className="text-white/45">(microfone do celular)</span>
+                </p>
+              )}
               {artwork && (
                 <img src={artwork} alt="" className="relative h-28 w-28 rounded-3xl border border-white/15 object-cover shadow-[0_0_70px_rgba(253,224,71,0.22)] md:h-44 md:w-44" />
               )}
@@ -718,6 +720,17 @@ export default function KaraokePlayer({
           {opts.energy && (
             <div className="pointer-events-none absolute right-4 top-1/2 z-20 flex h-40 w-3 -translate-y-1/2 items-end overflow-hidden rounded-full border border-white/10 bg-white/5 md:right-8 md:h-56">
               <div ref={energyBarRef} className="w-full rounded-full bg-gradient-to-t from-orange-500 via-app-yellow to-red-400 transition-[height] duration-75" style={{ height: '0%' }} />
+            </div>
+          )}
+
+          {/* Energia à distance (téléphone → TV, la TV n'a pas de micro) — jauge séparée
+              du medidor de energia local ci-dessus, jamais les deux en même temps en tvMode. */}
+          {remoteEnergyLevel != null && (
+            <div className="pointer-events-none absolute left-4 top-1/2 z-20 flex h-40 w-3 -translate-y-1/2 items-end overflow-hidden rounded-full border border-white/10 bg-white/5 md:left-8 md:h-56">
+              <div
+                className="w-full rounded-full bg-gradient-to-t from-orange-500 via-app-yellow to-red-400 transition-[height] duration-75"
+                style={{ height: `${Math.min(100, remoteEnergyLevel * 260)}%` }}
+              />
             </div>
           )}
 

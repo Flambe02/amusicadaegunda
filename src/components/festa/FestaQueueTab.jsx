@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, Mic2 } from 'lucide-react';
+import FestaEnergyMic from './FestaEnergyMic';
 
 const APPLAUSE_WINDOW_MS = 20000; // fenêtre de vote après la fin d'une chanson
 
@@ -9,7 +10,9 @@ const APPLAUSE_WINDOW_MS = 20000; // fenêtre de vote après la fin d'une chanso
  * (première fois qu'une entrée est vue "done" → 20s pendant lesquelles les
  * boutons restent visibles), suffisant pour ce cas d'usage familial.
  */
-export default function FestaQueueTab({ songsById, queue, myEntryIds, guestName, onRemove, onApplaud, onTomato }) {
+export default function FestaQueueTab({
+  songsById, queue, myEntryIds, guestName, onRemove, onApplaud, onTomato, sendEnergyReading,
+}) {
   const doneSeenAtRef = useRef({});
   const [, setTick] = useState(0);
 
@@ -67,6 +70,10 @@ export default function FestaQueueTab({ songsById, queue, myEntryIds, guestName,
                 </button>
               )}
             </div>
+
+            {entry.status === 'playing' && sendEnergyReading && (
+              <FestaEnergyMic entry={entry} sendEnergyReading={sendEnergyReading} />
+            )}
 
             {votable && (
               <div className="festa-vote-row">

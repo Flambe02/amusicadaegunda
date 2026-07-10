@@ -59,7 +59,7 @@ export default function Festa() {
   const [addingSongId, setAddingSongId] = useState(null);
   const [myEntryIds, setMyEntryIds] = useState(new Set());
 
-  const { queue, connectionState } = useFestaSession(session?.id || null, { guestName });
+  const { queue, connectionState, sendEnergyReading } = useFestaSession(session?.id || null, { guestName });
 
   useEffect(() => {
     Song.list('-release_date').then((all) => setSongs(all || [])).catch(() => setSongs([]));
@@ -154,6 +154,7 @@ export default function Festa() {
             onRemove={handleRemove}
             onApplaud={handleApplaud}
             onTomato={handleTomato}
+            sendEnergyReading={sendEnergyReading}
           />
         )}
       </main>

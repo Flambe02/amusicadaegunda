@@ -59,7 +59,9 @@ export default function TvApp() {
   const festaSessionRef = useRef(festaSession);
   festaSessionRef.current = festaSession;
   const festaPlaybackStartedRef = useRef(false);
-  const { queue: festaQueue, presentNames: festaPresentNames } = useFestaSession(festaSession?.id || null);
+  const {
+    queue: festaQueue, presentNames: festaPresentNames, liveEnergyByEntry, getEnergyGrade,
+  } = useFestaSession(festaSession?.id || null);
   const festaQueueRef = useRef(festaQueue);
   festaQueueRef.current = festaQueue;
 
@@ -275,6 +277,7 @@ export default function TvApp() {
           festaQueueId: nextEntry.id,
           prevApplause: finishedEntry?.applause_score ?? null,
           prevTomato: finishedEntry?.tomato_score ?? null,
+          prevEnergyGrade: t.festaQueueId ? getEnergyGrade(t.festaQueueId) : null,
         }];
       }
     }
@@ -284,10 +287,11 @@ export default function TvApp() {
         ...t, index: t.index + 1, handoff: true, festaQueueId: null,
         prevApplause: finishedEntry?.applause_score ?? null,
         prevTomato: finishedEntry?.tomato_score ?? null,
+        prevEnergyGrade: t.festaQueueId ? getEnergyGrade(t.festaQueueId) : null,
       }];
     }
     return s.slice(0, -1);
-  }), []);
+  }), [getEnergyGrade]);
 
   const content = useMemo(() => {
     if (top.name === 'grid') {
@@ -420,6 +424,8 @@ export default function TvApp() {
           handoff={top.handoff}
           applauseScore={top.prevApplause ?? null}
           tomatoScore={top.prevTomato ?? null}
+          remoteEnergyLevel={top.festaQueueId ? (liveEnergyByEntry[top.festaQueueId] ?? null) : null}
+          remoteEnergyGrade={top.prevEnergyGrade ?? null}
           initialSessionOptions={top.sessionOptions}
         />
       );
@@ -446,6 +452,7 @@ export default function TvApp() {
     openSoloGrid, openDuetGrid, openFestaGrid,
     onRequestKaraoke, startKaraoke, startFesta, advanceFesta,
     festaSession, festaPresentNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
+    liveEnergyByEntry,
   ]);
 
   if (loading) {

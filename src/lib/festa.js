@@ -120,19 +120,25 @@ export async function incrementTomato(queueId) {
 /**
  * Abonnement Realtime unique pour une session festa : changements de la fila
  * (`festa_queue`), changements de la session elle-même (`current_song_id`,
- * `active`), et présence (prénoms connectés — trackée seulement côté
- * téléphone via `guestName`, la TV se contente d'observer).
+ * `active`), présence (prénoms connectés — trackée seulement côté téléphone
+ * via `guestName`, la TV se contente d'observer), et broadcast `energy` —
+ * la TV n'a pas de micro, un téléphone peut donc lui envoyer un niveau
+ * d'énergie mesuré localement (RMS, pas d'audio transmis) pendant qu'une
+ * chanson joue. Broadcast = pas de table, pas de RLS à gérer, juste des
+ * petits nombres poussés en direct sur le même canal.
  *
- * Retourne une fonction de nettoyage (à appeler dans le cleanup d'un effect).
+ * Retourne `{ channel, unsubscribe }` — `channel.send({type:'broadcast',
+ * event, payload})` permet d'émettre (ex. les lectures d'énergie du téléphone).
  */
 export function subscribeFestaSession(sessionId, {
   guestName = null,
   onQueueChange,
   onSessionChange,
   onPresenceSync,
+  onEnergy,
   onStatusChange,
 } = {}) {
-  if (!sessionId) return () => {};
+  if (!sessionId) return { channel: null, unsubscribe: () => {} };
 
   const channel = supabase.channel(`festa:${sessionId}`, {
     config: { presence: { key: guestName || `observer-${Math.random().toString(36).slice(2)}` } },
@@ -154,6 +160,10 @@ export function subscribeFestaSession(sessionId, {
     channel.on('presence', { event: 'sync' }, () => onPresenceSync(channel.presenceState()));
   }
 
+  if (onEnergy) {
+    channel.on('broadcast', { event: 'energy' }, ({ payload }) => onEnergy(payload));
+  }
+
   channel.subscribe(async (status) => {
     onStatusChange?.(status);
     if (status === 'SUBSCRIBED' && guestName) {
@@ -161,5 +171,5 @@ export function subscribeFestaSession(sessionId, {
     }
   });
 
-  return () => { supabase.removeChannel(channel); };
+  return { channel, unsubscribe: () => { supabase.removeChannel(channel); } };
 }
