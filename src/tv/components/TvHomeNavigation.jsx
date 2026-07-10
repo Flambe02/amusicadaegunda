@@ -9,6 +9,9 @@ import FocusableButton from './FocusableButton';
  * Pas de destination « Todos » (catálogo complet retiré du menu — cf. `onAll`
  * conservé côté TvApp.jsx/écrans pour compat, simplement non rendu ici).
  *
+ * Pas de logo à côté du wordmark : la mascotte capivara est déjà l'avatar de droite
+ * (bouton réglages) — un second logo à gauche ferait doublon.
+ *
  * `active` distingue la destination COURANTE (surlignage discret, cf. .is-active en
  * CSS) du focus D-pad (halo fort, cf. .is-focused) — les deux sont des concepts
  * différents. Valeurs : 'home' | 'karaoke' | 'festa' | 'clips' | null.
@@ -18,7 +21,6 @@ export default function TvHomeNavigation({ active = 'home', onStart, onKaraoke, 
   return (
     <header className="tv2-nav">
       <div className="tv2-nav-brand">
-        <img src={BRAND_SQUARE_SMALL} alt="" className="tv2-nav-logo" />
         <span className="tv2-nav-wordmark">A Música<br />da Segunda</span>
       </div>
 
