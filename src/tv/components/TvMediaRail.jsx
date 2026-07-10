@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { FocusContext, useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import { Mic, LayoutGrid } from 'lucide-react';
 
@@ -66,6 +67,23 @@ export default function TvMediaRail({
   const { ref, focusKey: rowKey } = useFocusable({
     focusKey, trackChildren: true, saveLastFocusedChild: true,
   });
+
+  // Molette/trackpad (souris, comme Netflix web) : convertit un scroll vertical en
+  // défilement horizontal de la rangée. Le D-pad reste géré indépendamment par le
+  // scrollIntoView au focus (RailCard) — ceci ne fait qu'ajouter le confort souris.
+  // Écouteur natif non-passif (requis pour preventDefault) : les props onWheel React
+  // sont attachées en passive, où preventDefault() est silencieusement ignoré.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // vrai geste horizontal → comportement natif
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [ref]);
 
   if (!songs?.length && !trailingAction) return null;
   const isKaraoke = variant === 'karaoke';

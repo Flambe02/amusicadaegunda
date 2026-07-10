@@ -8,8 +8,11 @@
 .tv-clips-landing {
   /* Contrairement à .tv2-home (accueil/karaokê, contenu qui tient dans un seul
      écran), Clipes peut avoir plus de rangées que la hauteur disponible : seule
-     .tv-clips-rails scrolle, la nav + l'en-tête restent fixes. */
-  overflow: hidden;
+     .tv-clips-rails scrolle, la nav + l'en-tête restent fixes.
+     Uniquement overflow-Y : un overflow-x:hidden ICI rognerait la 1ère/dernière
+     carte de chaque rangée (cf. .tv-clips-rails ci-dessous, qui gère seul le
+     clipping horizontal — avec assez de marge pour ne rien couper). */
+  overflow-y: hidden;
 }
 
 /* ── En-tête : titre + sélecteur d'organisation ──────────────────────────── */
@@ -58,7 +61,16 @@
   display: flex; flex-direction: column;
   gap: clamp(1.3rem, 2.8vh, 2.1rem);
   overflow-y: auto; overflow-x: hidden; scrollbar-width: none;
-  padding: 0.35rem 0.25rem 0.5rem;
+  /* .tv2-rail-scroll (tv-home-v2.css) bleed déjà -0.9rem de chaque côté (marge
+     négative compensée par son propre padding, pour laisser la place au glow de
+     focus). Sans marge ici, ce bleed dépasse la boîte de .tv-clips-rails et se
+     fait couper par overflow-x:hidden — visible sur la 1ère carte focusée d'une
+     rangée (celle qui scale +7.5%), typiquement la toute première au montage.
+     padding + margin négatif identiques ⇒ le contenu reste aligné avec le titre
+     "Clipes" au-dessus, mais la zone de clip est repoussée assez loin pour ne
+     plus jamais rogner le halo/zoom d'une carte en bord de rangée. */
+  padding: 0.35rem 2rem 0.5rem;
+  margin: 0 -2rem;
   scroll-padding-top: 0.35rem;
 }
 .tv-clips-rails::-webkit-scrollbar { display: none; }

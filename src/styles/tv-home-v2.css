@@ -165,6 +165,7 @@
   flex: 0 0 auto;
   display: flex; align-items: flex-start; gap: clamp(1.1rem, 1.25vw, 1.5rem);
   overflow-x: auto; overflow-y: visible; scrollbar-width: none;
+  scroll-behavior: smooth;
   /* Le focus agrandit la carte de 7.5% (.tv2-rail-card.is-focused) : la carte a
      besoin d'environ 12px de marge de chaque côté pour ne pas être rognée par
      ce conteneur (surtout la 1ère/dernière carte d'une rangée, ou une rangée
@@ -203,8 +204,22 @@
   color: rgba(255, 255, 255, 0.45); font-weight: 700; text-transform: uppercase;
   font-size: 0.78rem; letter-spacing: 0.05em; line-height: 1;
 }
-.tv2-rail-card.is-focused { transform: scale(1.075); z-index: 2; }
+/* Le zoom au focus scale UNIQUEMENT la vignette (jamais toute la carte, titre inclus) :
+   scaler .tv2-rail-card entier provoque un bug de rendu Chromium/WebView — la 1ère
+   carte d'une rangée imbriquée (ex. Clipes : rangées empilées dans un conteneur qui
+   scrolle verticalement) se retrouve avec son TEXTE rogné à gauche (ex. « Independência »
+   → « ndependência »), alors même que sa géométrie (getBoundingClientRect) est saine.
+   En scalant seulement la vignette (déjà son propre overflow:hidden + border-radius),
+   le titre/texte reste un frère non transformé → jamais concerné par ce bug. */
+.tv2-rail-card.is-focused { z-index: 2; }
 .tv2-rail-card.is-focused .tv2-rail-thumb {
+  /* Origine à GAUCHE (pas le centre par défaut) : le zoom ne pousse jamais le bord
+     gauche vers l'extérieur — sans ça, la 1ère carte d'une rangée (surtout une
+     rangée à carte unique, ex. "Julho 2026") se décale visiblement à gauche du
+     titre de rangée / des cartes des autres lignes au focus. Ne grandit que vers
+     la droite/le bas, toujours aligné avec le titre au-dessus. */
+  transform: scale(1.075);
+  transform-origin: 0% 50%;
   border-color: #FDE047; box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.4), 0 18px 44px rgba(0, 0, 0, 0.6);
   filter: brightness(1.06);
 }
