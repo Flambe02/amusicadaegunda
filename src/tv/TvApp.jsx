@@ -182,10 +182,34 @@ export default function TvApp() {
   const onChooseSolo = useCallback(() => openModeLanding('solo'), [openModeLanding]);
   const onChooseDuet = useCallback(() => openModeLanding('duet'), [openModeLanding]);
   // Festa passe désormais TOUJOURS par l'écran d'invitation (QR + code) avant
-  // le choix de la première chanson — « Continuar sem fila » y mène ensuite
-  // vers la même page de choix qu'avant (proceedToFestaPicker).
+  // le choix de la première chanson. « Continuar sem fila » : si des invités ont
+  // déjà mis des chansons en fila PENDANT que l'invitation était affichée, on
+  // démarre direto avec la 1ère au lieu de reposer un choix manuel (sinon la fila
+  // déjà remplie serait ignorée — piège découvert en test réel) ; sinon,
+  // comportement historique inchangé (mène au choix manuel de la 1ère chanson).
   const onChooseFesta = useCallback(() => openFestaInvite(), [openFestaInvite]);
-  const proceedToFestaPicker = useCallback(() => openModeLanding('festa'), [openModeLanding]);
+  const proceedToFestaPicker = useCallback(() => {
+    const waiting = festaQueueRef.current
+      .filter((q) => q.status === 'waiting')
+      .sort((a, b) => new Date(a.added_at) - new Date(b.added_at));
+    const firstEntry = waiting[0];
+    const song = firstEntry && songsRef.current.find((sg) => sg.id === firstEntry.song_id);
+    if (firstEntry && song) {
+      markFestaQueueStatus(firstEntry.id, 'playing').catch(() => {});
+      if (festaSessionRef.current) updateFestaSessionCurrentSong(festaSessionRef.current.id, song.id).catch(() => {});
+      festaPlaybackStartedRef.current = true;
+      setStack((s) => {
+        const pool = songsRef.current.filter(getHasKaraoke);
+        const rest = pool.filter((sg) => sg.id !== song.id);
+        return [...s, {
+          name: 'karaoke', queue: [song, ...rest], index: 0, handoff: false, sessionOptions: null,
+          festaQueueId: firstEntry.id, prevApplause: null, prevTomato: null,
+        }];
+      });
+      return;
+    }
+    openModeLanding('festa');
+  }, [openModeLanding, getHasKaraoke]);
 
   // Lance le karaoké normal (solo ou dueto — `sessionOptions` porte le dueto en
   // session uniquement, cf. KaraokePlayer `initialSessionOptions`). Représenté comme
