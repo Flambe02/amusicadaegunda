@@ -689,14 +689,6 @@ export default function KaraokePlayer({
         </div>
       ) : (
         <div className="relative flex-1 overflow-hidden">
-          {/* Fond artwork flouté (mode TV) — ambiance « scène », derrière les paroles */}
-          {tvMode && artwork && (
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center opacity-20 blur-2xl saturate-150"
-              style={{ backgroundImage: `url(${artwork})` }}
-            />
-          )}
           {/* Compte à rebours de départ 3-2-1 */}
           {countdown != null && (
             <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
