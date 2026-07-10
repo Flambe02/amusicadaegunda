@@ -3,6 +3,7 @@ import { useSEO } from '../hooks/useSEO';
 import { getPlayStoreUrl } from '@/lib/playStore';
 
 const SCREENSHOT = '/images/tv-app/tv-home-screenshot.webp';
+const FESTA_SCREENSHOT = '/images/tv-app/tv-festa-screenshot.webp';
 
 const FEATURES = [
   {
@@ -113,6 +114,10 @@ export default function Tv() {
               </div>
             ))}
           </div>
+
+          <div className="mt-6 overflow-hidden rounded-[18px] border border-white/10">
+            <img src={FESTA_SCREENSHOT} alt="Modo Festa do app A Música da Segunda no Google TV" className="w-full" loading="lazy" />
+          </div>
         </div>
       </div>
 
@@ -158,6 +163,10 @@ export default function Tv() {
             </div>
           ))}
         </div>
+
+        <section className="mt-6 overflow-hidden rounded-[28px] border border-white/10 shadow-2xl shadow-black/40">
+          <img src={FESTA_SCREENSHOT} alt="Modo Festa do app A Música da Segunda no Google TV" className="w-full" loading="lazy" />
+        </section>
       </div>
     </>
   );
