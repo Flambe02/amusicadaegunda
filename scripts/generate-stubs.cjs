@@ -262,6 +262,14 @@ ${songListHtml}
       path: '/tv',
       title: 'A Música da Segunda na sua TV — Karaokê para Google TV e Android TV',
       description: 'Baixe o app A Música da Segunda para Google TV / Android TV e cante karaokê na tela grande: letras sincronizadas, Modo Dueto e Modo Festa. Em breve também na Samsung TV.'
+    },
+    {
+      // ✅ SEO: /festa n'a de sens que via un código/QR partagé en direto pela TV
+      // (Modo Festa) — stub 200 + noindex, sinon un scan fresh sur GitHub Pages
+      // tomberia no fallback 404.html (redirect para "/", perdendo o ?c=CODE).
+      path: '/festa',
+      title: 'Festa — A Música da Segunda',
+      description: 'Entre na festa, escolha músicas para a fila do karaokê e aplauda ao vivo.'
     }
   ];
 
@@ -455,9 +463,10 @@ ${songListHtml}
 </div>`;
 
     // ✅ SEO: /blog ré-affiche les mêmes descriptions que /musica/[slug] (contenu
-    // dupliqué) ; /search est une route utilitaire (recherche désactivée).
-    // Les deux en noindex,follow : page navigable mais pas indexée.
-    const pageRobots = (page.path === '/blog' || page.path === '/search')
+    // dupliqué) ; /search est une route utilitaire (recherche désactivée) ; /festa
+    // n'a de sens que via un code de session partagé en direct. Toutes en
+    // noindex,follow : page navigable mais pas indexée.
+    const pageRobots = (page.path === '/blog' || page.path === '/search' || page.path === '/festa')
       ? 'noindex, follow'
       : 'index, follow, max-video-preview:0';
 

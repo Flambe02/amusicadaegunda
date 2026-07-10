@@ -31,6 +31,7 @@ const Categoria = lazy(() => import('../pages/Categoria'));
 const Guia = lazy(() => import('../pages/Guia'));
 const Privacy = lazy(() => import('../pages/Privacy'));
 const Tv = lazy(() => import('../pages/Tv'));
+const Festa = lazy(() => import('../pages/Festa'));
 const includeDebugRoutes = import.meta.env.DEV;
 
 /**
@@ -186,6 +187,12 @@ export const ROUTES = [
     component: Tv,
     name: 'Tv',
     seo: null // SEO géré via useSEO dans Tv.jsx
+  },
+  {
+    path: '/festa',
+    component: Festa,
+    name: 'Festa',
+    seo: null // noindex géré via useSEO dans Festa.jsx — page publique mais utile seulement via code/QR partagé en direct
   }
 ];
 
