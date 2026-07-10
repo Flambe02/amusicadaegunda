@@ -6,6 +6,11 @@ import { hasLrcContent } from '@/lib/lrc';
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
 import { onBackPress, exitApp } from './adapters/backButton';
 import { applyTvFlag } from './platform';
+import {
+  createFestaSession, endFestaSession, updateFestaSessionCurrentSong,
+  markFestaQueueStatus, buildFestaJoinUrl,
+} from '@/lib/festa';
+import { useFestaSession } from '@/hooks/useFestaSession';
 import TvHome from './TvHome';
 import TvGrid from './TvGrid';
 import TvSongDetail from './TvSongDetail';
@@ -13,6 +18,7 @@ import TvKaraokeScreen from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
 import TvClipsLanding from './TvClipsLanding';
 import TvKaraokeModeLanding from './TvKaraokeModeLanding';
+import TvFestaInvite from './components/TvFestaInvite';
 import '@/styles/tv.css';
 import '@/styles/tv-home-v2.css';
 import '@/styles/tv-karaoke-landing.css';
@@ -39,6 +45,49 @@ export default function TvApp() {
   const [loading, setLoading] = useState(true);
   const [stack, setStack] = useState([{ name: 'home' }]);
   const top = stack[stack.length - 1];
+
+  // ── Modo Festa piloté par téléphone (fila Supabase) ─────────────────────
+  // Session créée à la demande (premier passage par l'écran d'invitation),
+  // réutilisée tant qu'elle reste active (permet de la « rouvrir » en
+  // revenant simplement sur Início → Festa). `festaPlaybackStartedRef`
+  // distingue « invitation ouverte mais rien n'a encore joué » (Voltar =
+  // ferme la session) de « la festa est en cours » (Voltar = comportement
+  // normal de la pile, la session continue de tourner en tâche de fond).
+  const [festaSession, setFestaSession] = useState(null);
+  const [festaLoading, setFestaLoading] = useState(false);
+  const [festaOffline, setFestaOffline] = useState(false);
+  const festaSessionRef = useRef(festaSession);
+  festaSessionRef.current = festaSession;
+  const festaPlaybackStartedRef = useRef(false);
+  const { queue: festaQueue, presentNames: festaPresentNames } = useFestaSession(festaSession?.id || null);
+  const festaQueueRef = useRef(festaQueue);
+  festaQueueRef.current = festaQueue;
+
+  const openFestaInvite = useCallback(async () => {
+    if (!festaSessionRef.current) {
+      setFestaLoading(true);
+      setFestaOffline(false);
+      try {
+        const sess = await createFestaSession();
+        setFestaSession(sess);
+        festaPlaybackStartedRef.current = false;
+      } catch {
+        setFestaOffline(true);
+      } finally {
+        setFestaLoading(false);
+      }
+    }
+    setStack((s) => [...s, { name: 'festa-invite' }]);
+  }, []);
+
+  const exitFestaInvite = useCallback(() => {
+    if (!festaPlaybackStartedRef.current && festaSessionRef.current) {
+      const id = festaSessionRef.current.id;
+      setFestaSession(null);
+      endFestaSession(id).catch(() => { /* best-effort — la session restera "active" en base, sans conséquence grave */ });
+    }
+    setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
+  }, []);
 
   useEffect(() => { applyTvFlag(true); return () => applyTvFlag(false); }, []);
 
@@ -132,7 +181,11 @@ export default function TvApp() {
   const openModeLanding = useCallback((mode) => setStack((s) => [...s, { name: 'mode-landing', mode }]), []);
   const onChooseSolo = useCallback(() => openModeLanding('solo'), [openModeLanding]);
   const onChooseDuet = useCallback(() => openModeLanding('duet'), [openModeLanding]);
-  const onChooseFesta = useCallback(() => openModeLanding('festa'), [openModeLanding]);
+  // Festa passe désormais TOUJOURS par l'écran d'invitation (QR + code) avant
+  // le choix de la première chanson — « Continuar sem fila » y mène ensuite
+  // vers la même page de choix qu'avant (proceedToFestaPicker).
+  const onChooseFesta = useCallback(() => openFestaInvite(), [openFestaInvite]);
+  const proceedToFestaPicker = useCallback(() => openModeLanding('festa'), [openModeLanding]);
 
   // Lance le karaoké normal (solo ou dueto — `sessionOptions` porte le dueto en
   // session uniquement, cf. KaraokePlayer `initialSessionOptions`). Représenté comme
@@ -146,21 +199,68 @@ export default function TvApp() {
   // intermédiaire de question (le Modo Festa reste un choix fait depuis son point
   // d'entrée dédié de l'accueil, jamais reposé au niveau d'une chanson individuelle).
   const onRequestKaraoke = useCallback((song) => startKaraoke(song, null), [startKaraoke]);
-  // Fila festa : la chanson choisie en premier, puis le reste du catalogue karaokê.
-  const startFesta = useCallback((firstSong) => setStack((s) => {
-    const pool = songsRef.current.filter(getHasKaraoke);
-    const rest = pool.filter((song) => song.id !== firstSong.id);
-    return [...s, { name: 'karaoke', queue: [firstSong, ...rest], index: 0, handoff: false, sessionOptions: null }];
-  }), [getHasKaraoke]);
+  // Fila festa : la chanson choisie en premier, puis le reste du catalogue karaokê
+  // (filet de sécurité si la fila Supabase des téléphones reste vide, cf. advanceFesta).
+  const startFesta = useCallback((firstSong) => {
+    festaPlaybackStartedRef.current = true;
+    if (festaSessionRef.current) {
+      updateFestaSessionCurrentSong(festaSessionRef.current.id, firstSong.id).catch(() => {});
+    }
+    setStack((s) => {
+      const pool = songsRef.current.filter(getHasKaraoke);
+      const rest = pool.filter((song) => song.id !== firstSong.id);
+      return [...s, {
+        name: 'karaoke', queue: [firstSong, ...rest], index: 0, handoff: false, sessionOptions: null,
+        festaQueueId: null, prevApplause: null, prevTomato: null,
+      }];
+    });
+  }, [getHasKaraoke]);
 
-  // Avance dans la fila festa (fin naturelle OU skip manuel) : remplace l'écran
-  // karaoké courant par la chanson suivante (handoff=true → « passa o micro »), ou
-  // referme si la fila est terminée.
+  // Avance dans la fila festa (fin naturelle OU skip manuel). PRIORITÉ à la fila
+  // Supabase alimentée par les téléphones (entrées "waiting", triées par added_at) ;
+  // si elle est vide, filet de sécurité INCHANGÉ : le catalogue précalculé au
+  // lancement (comportement historique, zéro régression quand personne n'a rejoint).
   const advanceFesta = useCallback(() => setStack((s) => {
     const t = s[s.length - 1];
     if (!t || t.name !== 'karaoke') return s;
+
+    // La chanson qui vient de finir était pilotée par la fila → on la clôture.
+    const finishedEntry = t.festaQueueId
+      ? festaQueueRef.current.find((q) => q.id === t.festaQueueId)
+      : null;
+    if (t.festaQueueId) markFestaQueueStatus(t.festaQueueId, 'done').catch(() => {});
+
+    const waiting = festaSessionRef.current
+      ? festaQueueRef.current
+        .filter((q) => q.status === 'waiting')
+        .sort((a, b) => new Date(a.added_at) - new Date(b.added_at))
+      : [];
+
+    if (waiting.length > 0) {
+      const nextEntry = waiting[0];
+      const song = songsRef.current.find((sg) => sg.id === nextEntry.song_id);
+      if (song) {
+        markFestaQueueStatus(nextEntry.id, 'playing').catch(() => {});
+        updateFestaSessionCurrentSong(festaSessionRef.current.id, song.id).catch(() => {});
+        return [...s.slice(0, -1), {
+          name: 'karaoke',
+          queue: [...t.queue.slice(0, t.index + 1), song],
+          index: t.index + 1,
+          handoff: true,
+          sessionOptions: null,
+          festaQueueId: nextEntry.id,
+          prevApplause: finishedEntry?.applause_score ?? null,
+          prevTomato: finishedEntry?.tomato_score ?? null,
+        }];
+      }
+    }
+
     if (t.index < t.queue.length - 1) {
-      return [...s.slice(0, -1), { ...t, index: t.index + 1, handoff: true }];
+      return [...s.slice(0, -1), {
+        ...t, index: t.index + 1, handoff: true, festaQueueId: null,
+        prevApplause: finishedEntry?.applause_score ?? null,
+        prevTomato: finishedEntry?.tomato_score ?? null,
+      }];
     }
     return s.slice(0, -1);
   }), []);
@@ -265,6 +365,20 @@ export default function TvApp() {
         />
       );
     }
+    if (top.name === 'festa-invite') {
+      return (
+        <TvFestaInvite
+          code={festaSession?.code}
+          joinUrl={festaSession?.code ? buildFestaJoinUrl(festaSession.code) : ''}
+          presentNames={festaPresentNames}
+          loading={festaLoading}
+          offline={festaOffline}
+          onContinue={proceedToFestaPicker}
+          onBack={exitFestaInvite}
+          backInterceptorRef={backInterceptorRef}
+        />
+      );
+    }
     if (top.name === 'karaoke') {
       const currentSong = top.queue[top.index];
       const qInfo = top.queue.length > 1
@@ -280,6 +394,8 @@ export default function TvApp() {
           onNext={qInfo ? advanceFesta : undefined}
           onEnded={qInfo ? advanceFesta : undefined}
           handoff={top.handoff}
+          applauseScore={top.prevApplause ?? null}
+          tomatoScore={top.prevTomato ?? null}
           initialSessionOptions={top.sessionOptions}
         />
       );
@@ -305,6 +421,7 @@ export default function TvApp() {
     openKaraokeLanding, onChooseSolo, onChooseDuet, onChooseFesta, onOpenFullKaraokeGrid,
     openSoloGrid, openDuetGrid, openFestaGrid,
     onRequestKaraoke, startKaraoke, startFesta, advanceFesta,
+    festaSession, festaPresentNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
   ]);
 
   if (loading) {

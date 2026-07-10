@@ -52,10 +52,13 @@ async function translateText(text, target) {
  * Props :
  *  - song      : { title, artist, youtube_url, youtube_music_url, lrc_content, cover_image }
  *  - onClose   : () => void
- *  - queueInfo : { index, total, nextTitle } | null   (modo festa)
- *  - onNext    : () => void   (passer à la chanson suivante de la fila)
- *  - onEnded   : () => void   (la chanson s'est terminée naturellement)
- *  - handoff   : bool         (afficher « passa o micro » sur l'intro, pour un relais de fila)
+ *  - queueInfo     : { index, total, nextTitle } | null   (modo festa)
+ *  - onNext        : () => void   (passer à la chanson suivante de la fila)
+ *  - onEnded       : () => void   (la chanson s'est terminée naturellement)
+ *  - handoff       : bool         (afficher « passa o micro » sur l'intro, pour un relais de fila)
+ *  - applauseScore : number|null  (fila por telefone : aplausos reçus pour la chanson QUI VIENT
+ *                                  DE FINIR — snapshot pris au moment du relais, affiché sur l'intro)
+ *  - tomatoScore   : number|null  (idem, "tomates" — réaction négative/moquerie)
  *
  * Continuité : le texte ne disparaît JAMAIS. La ligne « affichée » est toujours la
  * dernière ligne démarrée ; le balayage se complète (100%) à la fin captée et la ligne
@@ -63,7 +66,7 @@ async function translateText(text, target) {
  */
 export default function KaraokePlayer({
   song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null,
-  initialSessionOptions = null,
+  applauseScore = null, tomatoScore = null, initialSessionOptions = null,
 }) {
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
@@ -663,6 +666,12 @@ export default function KaraokePlayer({
               {handoff && (
                 <p className="karaoke-focusable relative inline-flex items-center gap-2 rounded-full border border-app-yellow/30 bg-app-yellow/10 px-4 py-1.5 text-sm font-black text-app-yellow">
                   <Mic className="h-4 w-4" /> Passa o micro! Próxima na fila
+                </p>
+              )}
+              {handoff && ((applauseScore ?? 0) > 0 || (tomatoScore ?? 0) > 0) && (
+                <p className="karaoke-focusable relative inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-sm font-bold text-white/80">
+                  {(applauseScore ?? 0) > 0 && <span>👏 Aplausos da plateia: {applauseScore}</span>}
+                  {(tomatoScore ?? 0) > 0 && <span>🍅 Tomates: {tomatoScore}</span>}
                 </p>
               )}
               {artwork && (

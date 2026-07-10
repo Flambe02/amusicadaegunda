@@ -10,7 +10,8 @@ import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
  * pour le Modo Festa TV — aucune logique de fila dupliquée dans ce composant.
  */
 export default function TvKaraokeScreen({
-  song, onClose, backInterceptorRef, queueInfo, onNext, onEnded, handoff, initialSessionOptions,
+  song, onClose, backInterceptorRef, queueInfo, onNext, onEnded, handoff,
+  applauseScore, tomatoScore, initialSessionOptions,
 }) {
   return (
     <KaraokePlayer
@@ -22,6 +23,8 @@ export default function TvKaraokeScreen({
       onNext={onNext}
       onEnded={onEnded}
       handoff={handoff}
+      applauseScore={applauseScore}
+      tomatoScore={tomatoScore}
       initialSessionOptions={initialSessionOptions}
     />
   );

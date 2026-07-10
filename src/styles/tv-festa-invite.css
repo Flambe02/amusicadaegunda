@@ -1,0 +1,115 @@
+/* ==========================================================================
+   Écran d'invitation Modo Festa (TV) — QR code + code de session + invités
+   connectés. Chargé uniquement quand cet écran est monté (import statique
+   depuis TvFestaInvite.jsx, lui-même seulement référencé par TvApp.jsx).
+   ========================================================================== */
+
+.tv-festa-invite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.5rem, 3vh, 2.5rem);
+  height: 100%;
+  width: 100%;
+  text-align: center;
+}
+
+.tv-festa-invite-header { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.tv-festa-invite-icon { color: var(--tv-accent, #FDE047); }
+.tv-festa-invite-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+.tv-festa-invite-instruction {
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  color: rgba(255, 255, 255, 0.75);
+}
+.tv-festa-invite-instruction strong { color: var(--tv-accent, #FDE047); }
+
+.tv-festa-invite-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(2rem, 5vw, 4rem);
+  flex-wrap: wrap;
+}
+
+.tv-festa-invite-qr-block { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; }
+.tv-festa-invite-qr {
+  padding: 1rem;
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 0 60px rgba(253, 224, 71, 0.18);
+}
+.tv-festa-invite-qr-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  min-height: 220px;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.95rem;
+}
+.tv-festa-invite-code-label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.25rem;
+}
+.tv-festa-invite-code {
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: var(--tv-accent, #FDE047);
+}
+
+.tv-festa-invite-guests {
+  min-width: 280px;
+  max-width: 380px;
+  text-align: left;
+}
+.tv-festa-invite-guests-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-bottom: 0.75rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+.tv-festa-invite-guests-empty { color: rgba(255, 255, 255, 0.45); font-size: 0.95rem; }
+.tv-festa-invite-guests-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tv-festa-invite-guest-pill {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(253, 224, 71, 0.12);
+  border: 1px solid rgba(253, 224, 71, 0.3);
+  color: var(--tv-accent, #FDE047);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.tv-festa-invite-actions { display: flex; gap: 1rem; }
+.tv-festa-invite-continue { min-width: 280px; }
+.tv-festa-invite-back {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0.9rem 1.75rem;
+  font-weight: 700;
+}
+.tv-festa-invite-back.is-focused { border-color: var(--tv-focus, #22d3ee); color: #fff; }
