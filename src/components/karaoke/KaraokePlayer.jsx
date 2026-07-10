@@ -6,10 +6,11 @@ import {
 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
-import { parseLrc } from '@/lib/lrc';
+import { parseLrc, hasDuetTags } from '@/lib/lrc';
 import { FONT_SCALES, PLAYBACK_RATES, TRANSLATION_LANGS, loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
+import TvDuetLyricsView from '@/tv/components/TvDuetLyricsView';
 import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import '@/styles/karaoke.css';
@@ -138,6 +139,14 @@ export default function KaraokePlayer({
 
   // Couleur d'une ligne selon le mode (dueto → part color, sinon jaune).
   const lineColor = useCallback((i) => (opts.dueto ? DUET_COLORS[i % 2] : YELLOW), [opts.dueto]);
+
+  // Duet View (LOT B) : disponible seulement si la chanson a des tags {A}/{B} réels.
+  // Toggle discret sur l'écran de lancement (tvMode) — non activé par défaut, ne
+  // touche PAS la préférence globale « Modo dueto (P1/P2) » du panneau d'options
+  // (qui reste le comportement historique en alternance par index pour les
+  // chansons SANS tags).
+  const duetTaggedAvailable = useMemo(() => tvMode && hasDuetTags(song?.lrc_content), [tvMode, song?.lrc_content]);
+  const [duetToggleOn, setDuetToggleOn] = useState(false);
 
   // ── Scroll lock ──
   useEffect(() => {
@@ -342,12 +351,18 @@ export default function KaraokePlayer({
   }, [isPlaying]);
 
   const handleStart = useCallback(() => {
+    // Le toggle Dueto (écran de lancement) tranche pour CETTE chanson uniquement,
+    // sans écraser la préférence globale « Modo dueto (P1/P2) » du panneau d'options.
+    if (duetTaggedAvailable) {
+      skipNextSaveRef.current = true;
+      setOpts((o) => ({ ...o, dueto: duetToggleOn }));
+    }
     energyStatsRef.current = { active: 0, sung: 0, sum: 0, count: 0 }; // repart à zéro
     setScoreResult(null);
     try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
     setPhase('live');
     setCountdown(3);
-  }, []);
+  }, [duetTaggedAvailable, duetToggleOn]);
 
   // Calcule et affiche la note d'énergie. coverage = part du temps « à chanter » où le
   // micro a capté du son ; loudness = volume moyen normalisé. Pondération 70/30.
@@ -659,6 +674,15 @@ export default function KaraokePlayer({
                 className="karaoke-focusable karaoke-start-btn relative mt-2 inline-flex items-center gap-3 rounded-full bg-app-yellow px-9 py-4 text-lg font-black text-black disabled:opacity-50 md:px-12 md:py-5 md:text-xl">
                 {playerReady ? (<><Play className="h-6 w-6 fill-current" /> Começar</>) : (<><Loader2 className="h-6 w-6 animate-spin" /> A preparar…</>)}
               </button>
+              {duetTaggedAvailable && (
+                <button type="button"
+                  onClick={() => setDuetToggleOn((v) => !v)}
+                  aria-pressed={duetToggleOn}
+                  aria-label="Cantar em dueto"
+                  className={`karaoke-focusable tv-karaoke-duet-chip ${duetToggleOn ? 'is-on' : ''}`}>
+                  🎤🎤 Cantar em dueto
+                </button>
+              )}
               <p className="relative flex items-center gap-1.5 text-xs text-white/40"><Mic className="h-3.5 w-3.5" /> Prepara a voz — 3, 2, 1…</p>
             </>
           )}
@@ -703,15 +727,26 @@ export default function KaraokePlayer({
 
           {!apiError && (
             tvMode ? (
-              <TvKaraokeLyricsWindow
-                lines={lines}
-                displayIdx={displayIdx}
-                wipeApiRef={wipeApiRef}
-                fontScale={scale}
-                showBall={opts.showBall}
-                dueto={opts.dueto}
-                lineColor={lineColor}
-              />
+              opts.dueto && duetTaggedAvailable ? (
+                <TvDuetLyricsView
+                  lines={lines}
+                  displayIdx={displayIdx}
+                  wipeApiRef={wipeApiRef}
+                  fontScale={scale}
+                  showBall={opts.showBall}
+                  speakerNames={null}
+                />
+              ) : (
+                <TvKaraokeLyricsWindow
+                  lines={lines}
+                  displayIdx={displayIdx}
+                  wipeApiRef={wipeApiRef}
+                  fontScale={scale}
+                  showBall={opts.showBall}
+                  dueto={opts.dueto}
+                  lineColor={lineColor}
+                />
+              )
             ) : (
               <div className="karaoke-lyrics relative z-10 h-full overflow-y-auto scroll-smooth px-6 py-[38vh] text-center md:px-12" aria-live="polite">
                 {hasLines ? (

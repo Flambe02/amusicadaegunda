@@ -17,6 +17,10 @@
 const LRC_LINE_RE = /^\s*((?:\[\d{1,2}:\d{1,2}(?:[.:]\d{1,3})?\]\s*)+)(.*?)(\[\d{1,2}:\d{1,2}(?:[.:]\d{1,3})?\])?\s*$/;
 const LRC_TAG_RE = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]/g;
 const LRC_SINGLE_TAG_RE = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]/;
+// Tag de chanteur optionnel — extension ADDITIVE propre à cet outil (Modo Dueto TV) :
+// `{A}`, `{B}` ou `{AB}` en tout début de texte, ex. `[00:12.50]{A}Eu sou Ronaldo`.
+// Une ligne sans ce tag garde `singer: null` (comportement historique inchangé).
+const SINGER_TAG_RE = /^\{(A|B|AB)\}\s*/i;
 
 /**
  * Découpe des paroles brutes en lignes exploitables.
@@ -100,8 +104,15 @@ export function parseLrc(lrc) {
     const match = rawLine.match(LRC_LINE_RE);
     if (!match) continue;
     const tags = match[1];
-    const text = (match[2] || '').trim();
+    let text = (match[2] || '').trim();
     const endTime = match[3] ? parseTagSeconds(match[3]) : null;
+
+    let singer = null;
+    const singerMatch = text.match(SINGER_TAG_RE);
+    if (singerMatch) {
+      singer = singerMatch[1].toUpperCase();
+      text = text.slice(singerMatch[0].length).trim();
+    }
 
     LRC_TAG_RE.lastIndex = 0;
     let tagMatch;
@@ -112,7 +123,7 @@ export function parseLrc(lrc) {
       // Normalise la partie fractionnaire (2 ou 3 chiffres) en secondes décimales
       const frac = parseInt(fracRaw, 10) / Math.pow(10, fracRaw.length);
       const time = mm * 60 + ss + frac;
-      out.push({ time, text, endTime });
+      out.push({ time, text, endTime, singer });
     }
   }
 
@@ -147,4 +158,14 @@ export function activeLineIndex(parsed, currentTime) {
 /** true si la string LRC contient au moins une ligne datée exploitable. */
 export function hasLrcContent(lrc) {
   return parseLrc(lrc).length > 0;
+}
+
+/**
+ * true si la chanson a au moins une ligne taguée par chanteur (`{A}`/`{B}`) — condition
+ * pour proposer la Duet View réelle (paroles alignées par chanteur). Une chanson sans
+ * tag reste utilisable en Modo Dueto « historique » (couleurs en alternance par index),
+ * mais pas en Duet View.
+ */
+export function hasDuetTags(lrc) {
+  return parseLrc(lrc).some((line) => line.singer === 'A' || line.singer === 'B');
 }

@@ -13,14 +13,11 @@ import TvKaraokeScreen from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
 import TvClipsLanding from './TvClipsLanding';
 import TvKaraokeModeLanding from './TvKaraokeModeLanding';
-import TvKaraokeModeChooser from './components/TvKaraokeModeChooser';
 import '@/styles/tv.css';
 import '@/styles/tv-home-v2.css';
 import '@/styles/tv-karaoke-landing.css';
 import '@/styles/tv-clips-landing.css';
 import '@/styles/tv-karaoke-mode-landing.css';
-
-const FESTA_MIN_SONGS = 2;
 
 // Initialise la navigation spatiale une seule fois (au chargement du bundle TV).
 init({ debug: false, visualDebug: false });
@@ -137,16 +134,18 @@ export default function TvApp() {
   const onChooseDuet = useCallback(() => openModeLanding('duet'), [openModeLanding]);
   const onChooseFesta = useCallback(() => openModeLanding('festa'), [openModeLanding]);
 
-  // Chanson choisie SANS contexte de mode (rangée « Para cantar agora », grille
-  // complète) → écran transitoire pour demander explicitement Karaokê vs Festa.
-  const onRequestKaraoke = useCallback((song) => setStack((s) => [...s, { name: 'mode-chooser', song }]), []);
-
   // Lance le karaoké normal (solo ou dueto — `sessionOptions` porte le dueto en
   // session uniquement, cf. KaraokePlayer `initialSessionOptions`). Représenté comme
   // une fila d'UNE chanson : la même forme de pile sert le solo/dueto ET la festa.
   const startKaraoke = useCallback((song, sessionOptions) => setStack((s) => [
     ...s, { name: 'karaoke', queue: [song], index: 0, handoff: false, sessionOptions: sessionOptions || null },
   ]), []);
+
+  // Chanson choisie SANS contexte de mode (rangée « Para cantar agora », grille
+  // complète) → lance directement le karaoké en solo par défaut, SANS écran
+  // intermédiaire de question (le Modo Festa reste un choix fait depuis son point
+  // d'entrée dédié de l'accueil, jamais reposé au niveau d'une chanson individuelle).
+  const onRequestKaraoke = useCallback((song) => startKaraoke(song, null), [startKaraoke]);
   // Fila festa : la chanson choisie en premier, puis le reste du catalogue karaokê.
   const startFesta = useCallback((firstSong) => setStack((s) => {
     const pool = songsRef.current.filter(getHasKaraoke);
@@ -263,17 +262,6 @@ export default function TvApp() {
           onNavigateAll={openCatalog}
           onExitApp={exitApp}
           backInterceptorRef={backInterceptorRef}
-        />
-      );
-    }
-    if (top.name === 'mode-chooser') {
-      const karaokeCount = songsRef.current.filter(getHasKaraoke).length;
-      return (
-        <TvKaraokeModeChooser
-          song={top.song}
-          festaDisabled={karaokeCount < FESTA_MIN_SONGS}
-          onChooseKaraoke={() => { pop(); startKaraoke(top.song, null); }}
-          onChooseFesta={() => { pop(); startFesta(top.song); }}
         />
       );
     }

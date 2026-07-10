@@ -464,4 +464,31 @@
   .tv-karaoke-controlbar { transition: opacity 0.01s linear; transform: none !important; }
   .tv-karaoke-line { transition: none; }
 }
+
+/* ── Karaokê TV — chip Dueto discret (écran de lancement) ────────────────── */
+.tv-karaoke-duet-chip {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  height: clamp(44px, 4.6vh, 52px); padding: 0 clamp(20px, 1.4vw, 26px);
+  border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent; color: rgba(255, 255, 255, 0.75);
+  font-size: clamp(1.05rem, 1.05vw, 1.25rem); font-weight: 700;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.tv-karaoke-duet-chip.is-on {
+  background: rgba(253, 224, 71, 0.22); border-color: var(--tv-accent); color: #fff;
+}
+.tv-karaoke-duet-chip:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px var(--tv-accent), 0 0 18px rgba(253, 224, 71, 0.4);
+}
+
+/* ── Karaokê TV — Duet View (alignement par chanteur) ────────────────────── */
+.tv-duet-line--left { text-align: left; }
+.tv-duet-line--right { text-align: right; }
+.tv-duet-line--center { text-align: center; }
+.tv-duet-speakers {
+  position: absolute; top: 6%; left: 50%; z-index: 12;
+  transform: translateX(-50%); margin: 0;
+  font-size: clamp(0.9rem, 1vw, 1.05rem); font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5);
+}
 .tv-opt-switch.is-on > span { left: 27px; }
