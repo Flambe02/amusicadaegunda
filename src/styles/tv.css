@@ -370,7 +370,7 @@
 .tv-opt-chip {
   min-width: 2.4rem; text-align: center; padding: 0.35rem 0.7rem; border-radius: 9999px;
   background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.6);
-  font-size: 0.95rem; font-weight: 800;
+  font-size: 0.95rem; font-weight: 800; cursor: pointer;
 }
 .tv-opt-chip.is-sel { background: var(--tv-accent); color: #000; }
 

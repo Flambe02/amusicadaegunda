@@ -27,7 +27,18 @@ export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onC
       <span className="tv-opt-label">{Icon && <Icon size={17} />}{label}</span>
       <span className="tv-opt-choices">
         {options.map((o) => (
-          <span key={o.label} className={`tv-opt-chip ${o.value === value ? 'is-sel' : ''}`}>{o.label}</span>
+          // Tap direct sur une pastille (tablette/téléphone détecté comme TV, cf.
+          // platform.js) — jusqu'ici SEUL le D-pad (←/→ via onArrowPress ci-dessus)
+          // pouvait changer la valeur ; au toucher, rien ne se passait.
+          <span
+            key={o.label}
+            role="button"
+            tabIndex={-1}
+            onClick={() => onChange(o.value)}
+            className={`tv-opt-chip ${o.value === value ? 'is-sel' : ''}`}
+          >
+            {o.label}
+          </span>
         ))}
       </span>
     </div>
