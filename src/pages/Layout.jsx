@@ -10,7 +10,8 @@ import {
   FileText,
   Mic,
   Search,
-  Shuffle
+  Shuffle,
+  Tv
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
 import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
@@ -98,6 +99,7 @@ export default function Layout({ children }) {
     { name: 'Roda', url: createPageUrl('Roda'), icon: Gift },
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Pesquisa', url: createPageUrl('Search'), icon: Search },
+    { name: 'TV', url: createPageUrl('Tv'), icon: Tv },
     { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info }
   ];
 
@@ -121,6 +123,7 @@ export default function Layout({ children }) {
         { value: 'roleta', label: 'Roda', href: '/roda', icon: Gift },
         { value: 'blog', label: 'Blog', href: '/blog', icon: FileText },
         { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
+        { value: 'tv', label: 'App para TV', href: '/tv', icon: Tv },
         { value: 'sobre', label: 'Sobre', href: '/sobre', icon: Info },
       ],
     },

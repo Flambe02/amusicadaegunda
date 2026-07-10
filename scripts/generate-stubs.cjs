@@ -257,6 +257,11 @@ ${songListHtml}
       path: '/search',
       title: 'Buscar Músicas — A Música da Segunda',
       description: 'Busque entre todas as paródias musicais de A Música da Segunda.'
+    },
+    {
+      path: '/tv',
+      title: 'A Música da Segunda na sua TV — Karaokê para Google TV e Android TV',
+      description: 'Baixe o app A Música da Segunda para Google TV / Android TV e cante karaokê na tela grande: letras sincronizadas, Modo Dueto e Modo Festa. Em breve também na Samsung TV.'
     }
   ];
 

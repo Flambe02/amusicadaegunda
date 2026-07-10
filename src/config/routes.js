@@ -30,6 +30,7 @@ const Karaoke = lazy(() => import('../pages/Karaoke'));
 const Categoria = lazy(() => import('../pages/Categoria'));
 const Guia = lazy(() => import('../pages/Guia'));
 const Privacy = lazy(() => import('../pages/Privacy'));
+const Tv = lazy(() => import('../pages/Tv'));
 const includeDebugRoutes = import.meta.env.DEV;
 
 /**
@@ -179,6 +180,12 @@ export const ROUTES = [
       description: 'Política de privacidade do A Música da Segunda: quais dados são coletados, como são protegidos e como solicitar a exclusão.',
       keywords: 'política de privacidade, privacidade, lgpd, a música da segunda'
     }
+  },
+  {
+    path: '/tv',
+    component: Tv,
+    name: 'Tv',
+    seo: null // SEO géré via useSEO dans Tv.jsx
   }
 ];
 

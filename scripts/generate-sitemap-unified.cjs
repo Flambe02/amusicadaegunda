@@ -46,6 +46,7 @@ const staticPages = [
   // ✅ /blog retiré : contenu dupliqué de /musica/[slug], désormais noindex,follow
   { path: '/sobre', priority: 0.7, changefreq: 'monthly' },
   { path: '/guia', priority: 0.8, changefreq: 'monthly' },
+  { path: '/tv', priority: 0.7, changefreq: 'monthly' },
   { path: '/adventcalendar', priority: 0.8, changefreq: 'weekly' },
   // Category pages — only include categories with ≥2 songs (thin pages excluded)
   // Managed dynamically: categories with 1 song (outros, seguranca, gastronomia) get lower priority
