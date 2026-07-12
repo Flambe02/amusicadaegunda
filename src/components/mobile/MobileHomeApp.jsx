@@ -287,9 +287,21 @@ export default function MobileHomeApp({
                 <span className="text-[11px] font-semibold text-white/78">{releaseDate}</span>
               </div>
 
-              <p className="line-clamp-2 max-w-[72%] text-[11px] font-medium leading-4 text-white/82">
-                {getContextPreview(currentSong)}
-              </p>
+              {songSlug ? (
+                <Link
+                  to={`/musica/${songSlug}`}
+                  className="block max-w-[72%] active:opacity-70"
+                  aria-label="Ler a descricao completa da musica"
+                >
+                  <p className="line-clamp-2 text-[11px] font-medium leading-4 text-white/82 underline decoration-white/30 underline-offset-2">
+                    {getContextPreview(currentSong)}
+                  </p>
+                </Link>
+              ) : (
+                <p className="line-clamp-2 max-w-[72%] text-[11px] font-medium leading-4 text-white/82">
+                  {getContextPreview(currentSong)}
+                </p>
+              )}
 
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <AppButton size="md" onClick={onListen} disabled={!hasSong} className="min-h-10 justify-center px-3 text-xs">

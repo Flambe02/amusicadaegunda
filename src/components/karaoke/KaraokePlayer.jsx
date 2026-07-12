@@ -830,6 +830,13 @@ export default function KaraokePlayer({
               onClick={() => { seekBy(10); revealControls(); }} aria-label="Avançar 10 segundos">
               <span>10s</span><SkipForward className="h-6 w-6" />
             </button>
+            {/* Sair : ferme le karaokê et revient à l'écran précédent (fiche/menu).
+                Avant, seul le Retour matériel le permettait — ajouté ici pour un
+                accès direct visible dans la barre de commandes (cf. bug TV réel). */}
+            <button type="button" className="tv-kctrl-btn tv-kctrl-btn--exit" tabIndex={controlsVisible ? 0 : -1}
+              onClick={handleClose} aria-label="Sair do karaokê">
+              <Square className="h-6 w-6" /><span>Sair</span>
+            </button>
           </div>
           <div className="tv-karaoke-progress">
             <span ref={tvTimeCurrentRef} className="tv-karaoke-time">0:00</span>

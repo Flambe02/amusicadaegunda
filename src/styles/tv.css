@@ -101,12 +101,18 @@
 /* ── Carte chanson (titre en overlay) ────────────────────────────────────── */
 .tv-card { flex: 0 0 auto; width: 236px; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; transition: transform 0.15s ease; }
 .tv-card-thumb {
-  position: relative; width: 100%; aspect-ratio: 16 / 10; border-radius: 16px; overflow: hidden;
+  /* Ratio 16:10 via le hack padding-bottom (basé sur la LARGEUR, toujours définie)
+     plutôt que `aspect-ratio` : dans une grille à pistes `1fr` (.tv-grid), les
+     anciennes WebView Android TV calculent mal la hauteur d'un enfant en
+     `aspect-ratio` → les cartes prenaient leur hauteur d'image (portrait) et se
+     CHEVAUCHAIENT d'une rangée à l'autre. Le padding-hack est fiable partout. */
+  position: relative; width: 100%; height: 0; padding-bottom: 62.5%;
+  border-radius: 16px; overflow: hidden;
   background: var(--tv-card); border: 3px solid transparent; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.tv-card-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.tv-card-thumb-fallback { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1d25, #0c0e13); }
+.tv-card-thumb img, .tv-card-thumb-fallback { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tv-card-thumb-fallback { background: linear-gradient(135deg, #1a1d25, #0c0e13); }
 .tv-card-overlay {
   position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end;
   gap: 0.15rem; padding: 0.7rem 0.8rem;
@@ -214,6 +220,13 @@
 .tv-phoneframe-thumb, .tv-phoneframe-player, .tv-phoneframe-player iframe {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
+/* PIÈGE YouTube : sans ceci, le D-pad/clic pouvait entrer DANS l'iframe YouTube
+   (logo, « Watch on YouTube »…) et faire naviguer la WebView vers youtube.com —
+   l'utilisateur restait coincé et le Retour matériel faisait planter l'app. On
+   coupe toute interaction avec l'iframe : la lecture est pilotée par notre propre
+   clavier (OK = play/pause, ←/→ = ±10 s) via l'API YouTube (postMessage, non
+   affectée par pointer-events). */
+.tv-phoneframe-player, .tv-phoneframe-player iframe { pointer-events: none; }
 .tv-phoneframe-thumb { animation: tv-phoneframe-thumb-in 260ms ease-out; }
 @keyframes tv-phoneframe-thumb-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .tv-phoneframe-thumb { animation: none; } }
@@ -277,12 +290,19 @@
 .tv-context-overlay {
   position: absolute; inset: 0; z-index: 40;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(7, 8, 12, 0.94);
+  /* Marge de sécurité SUPPLÉMENTAIRE (au-delà de l'overscan de .tv-root) : sur
+     certaines TV le panneau touchait le bord haut et le titre était rogné. */
+  padding: clamp(1rem, 3vh, 2.5rem) clamp(1rem, 3vw, 2.5rem);
+  background: rgba(7, 8, 12, 0.98);
 }
 .tv-context-panel {
-  width: 60%; max-height: 80%;
-  display: flex; flex-direction: column; gap: 1.2rem;
-  padding: clamp(1.5rem, 2.6vw, 2.6rem);
+  /* Fond OPAQUE (avant : transparent → la fiche derrière transparaissait en
+     « fantôme ») + max-height 100% de l'overlay déjà margé → jamais coupé. */
+  width: min(64%, 60rem); max-height: 100%;
+  display: flex; flex-direction: column; gap: 1.1rem;
+  padding: clamp(1.4rem, 2.4vw, 2.4rem);
+  background: #0d0f16; border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
 }
 .tv-context-title {
   margin: 0; font-size: clamp(1.5rem, 2vw, 2.1rem); font-weight: 900;
@@ -447,6 +467,9 @@
 }
 .tv-kctrl-btn--main { background: var(--tv-accent); color: #000; padding: 0 1.7rem; }
 .tv-kctrl-btn--main:hover, .tv-kctrl-btn--main:focus-visible { background: #fff2a8; color: #000; }
+.tv-kctrl-btn--exit:hover, .tv-kctrl-btn--exit:focus-visible {
+  background: rgba(248, 113, 113, 0.18); color: #fca5a5;
+}
 .tv-karaoke-progress {
   display: flex; align-items: center; gap: 0.8rem; width: 100%; max-width: 60vw;
 }

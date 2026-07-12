@@ -484,7 +484,7 @@ export default function SongPage() {
             <div className="flex items-end gap-2">
               <h1 className="text-[2rem] font-black leading-none text-white">{song.title}</h1>
               {song.category && CATEGORY_LABELS[song.category] ? (
-                <Link to={`/categoria/${song.category}`} className="mb-1 rounded-md border border-app-yellow/35 bg-app-yellow/10 px-1.5 py-0.5 text-[10px] font-black text-app-yellow">
+                <Link to={`/categoria/${song.category}`} className="mb-1 inline-flex items-center rounded-md border border-app-yellow/35 bg-app-yellow/10 px-1.5 py-0.5 text-[10px] font-black leading-none text-app-yellow">
                   {CATEGORY_LABELS[song.category]}
                 </Link>
               ) : null}
@@ -560,7 +560,15 @@ export default function SongPage() {
                     </span>
                     <ChevronDown className={`h-4 w-4 text-white/42 transition ${open ? 'rotate-180' : ''}`} />
                   </button>
-                  {open ? <div className="px-4 pb-3 text-sm leading-6 text-white/64"><p className="line-clamp-5 whitespace-pre-line">{content}</p></div> : null}
+                  {open ? (
+                    <div className="px-4 pb-3 text-sm leading-6 text-white/64">
+                      {/* "letra" garde le clamp : sa lecture complete se fait dans l'overlay dedie
+                          (action -> setIsLyricsOpen), jamais en dumpant tout le texte inline.
+                          "contexto"/"piada" doivent afficher le texte entier une fois ouverts —
+                          sinon le chevron tourne mais le texte reste coupe (bug signale). */}
+                      <p className={`whitespace-pre-line ${key === 'letra' ? 'line-clamp-5' : ''}`}>{content}</p>
+                    </div>
+                  ) : null}
                 </article>
               );
             })}

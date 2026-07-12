@@ -8,7 +8,21 @@ import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 export default function FocusableButton({
   onPress, children, className = '', focusKey, autoFocus = false, ariaLabel, style,
 }) {
-  const { ref, focused, focusSelf } = useFocusable({ onEnterPress: onPress, focusKey });
+  // Au focus, on ramène le bouton dans la zone visible du conteneur qui défile.
+  // Sans ça, sur l'accueil/les landings (nav + hero + rangées plus hauts que
+  // l'écran), descendre dans une rangée fait défiler la page vers le bas, mais
+  // remonter sur le hero/la nav ne la faisait PAS remonter (ces boutons ne
+  // scrollaient pas) → on restait bloqué en bas. Les cartes de rangée le font déjà
+  // (RailCard/TvCard) ; on aligne le même comportement ici.
+  const { ref, focused, focusSelf } = useFocusable({
+    onEnterPress: onPress,
+    focusKey,
+    onFocus: () => {
+      try {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      } catch { /* ignore */ }
+    },
+  });
 
   useEffect(() => {
     if (autoFocus) focusSelf();

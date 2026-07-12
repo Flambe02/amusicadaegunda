@@ -1,0 +1,227 @@
+/* ==========================================================================
+   Fiche chanson TV « song-first » — écran de DÉCISION. 3 colonnes (affiche+teaser
+   / identité+métadonnées+conceito+contexto+prévia da letra / « Por que cantar? »)
+   + rangée d'actions pleine largeur + barre d'interaction. Calqué sur l'image de
+   référence (icônes, typographie, couleurs). Namespace tvd- (distinct de tvh-/tvc-).
+   Réutilise les variables de couleur de tv-home-v3.css (--tvh-yellow, etc.).
+   ========================================================================== */
+
+.tvd-page {
+  height: 100%; min-height: 0; max-width: 2400px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: clamp(0.5rem, 1.1vh, 0.9rem);
+}
+
+/* Accents d'icônes (métadonnées, éditorial). */
+.is-yellow { color: var(--tvh-yellow); }
+.is-green { color: #4ade80; }
+.is-cyan { color: #38bdf8; }
+.is-pink { color: var(--tvh-pink); }
+.is-purple { color: var(--tvh-purple); }
+.tvd-icon-fill { fill: currentColor; }
+
+/* ── Corps 3 colonnes ──────────────────────────────────────────────────────── */
+.tvd-body {
+  flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch;
+  gap: clamp(0.9rem, 1.4vw, 1.5rem);
+}
+.tvd-visual { flex: 0 0 30%; min-width: 0; }
+.tvd-main { flex: 1 1 47%; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: clamp(0.7rem, 1.5vh, 1.2rem); }
+.tvd-why { flex: 0 0 20%; min-width: 0; }
+
+/* ── Colonne visuelle : affiche + teaser ───────────────────────────────────── */
+.tvd-visual {
+  position: relative; border-radius: clamp(18px, 1.4vw, 24px); overflow: hidden;
+  background: #0c0e13; border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.tvd-visual-art { position: absolute; inset: 0; overflow: hidden; }
+/* L'affiche générée a un ratio proche du panneau (peu de débordement à repositionner) :
+   on la ZOOME depuis le haut pour rejeter hors champ le bas où sont incrustés les
+   logos Spotify/Apple/YouTube — non pertinents pour la décision karaokê TV (cf.
+   spec). Le scrim bas + le teaser renforcent ce masquage. */
+.tvd-visual-art img { width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.24); transform-origin: 50% 0%; display: block; }
+.tvd-visual-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1d25, #0c0e13); }
+.tvd-visual-fallback img { width: 55%; height: auto; opacity: 0.6; object-fit: contain; }
+.tvd-visual-art-scrim { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(6, 7, 11, 0.96) 0%, rgba(6, 7, 11, 0.72) 14%, transparent 40%); }
+.tvd-visual-error { position: absolute; left: 0; right: 0; bottom: 96px; text-align: center; color: #fca5a5; font-weight: 700; font-size: 1rem; padding: 0 1rem; }
+
+/* Teaser (bande basse) — clip = contenu secondaire, jamais dominant. */
+.tvd-teaser {
+  position: absolute; left: clamp(0.7rem, 1vw, 1.1rem); right: clamp(0.7rem, 1vw, 1.1rem);
+  bottom: clamp(0.7rem, 1vw, 1.1rem);
+  display: flex; align-items: center; gap: 0.8rem; cursor: pointer;
+  height: clamp(64px, 7vh, 86px); padding: 0 clamp(0.7rem, 1vw, 1rem);
+  border-radius: 14px; overflow: hidden; border: 2px solid transparent;
+  background: rgba(6, 7, 11, 0.55);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.tvd-teaser-bg { position: absolute; inset: 0; z-index: 0; }
+.tvd-teaser-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tvd-teaser-scrim { position: absolute; inset: 0; background: rgba(6, 7, 11, 0.55); }
+.tvd-teaser-play {
+  position: relative; z-index: 1; flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: clamp(42px, 3.2vw, 54px); height: clamp(42px, 3.2vw, 54px);
+  border-radius: 9999px; border: 2px solid rgba(255, 255, 255, 0.85); color: #fff;
+}
+.tvd-teaser-meta { position: relative; z-index: 1; margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.tvd-teaser-label { color: #fff; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; font-size: clamp(0.78rem, 0.95vw, 1rem); }
+.tvd-teaser-dur { color: rgba(255, 255, 255, 0.7); font-weight: 700; font-size: clamp(0.72rem, 0.85vw, 0.9rem); }
+.tvd-teaser.is-focused { border-color: var(--tvh-yellow); box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.4), 0 10px 30px rgba(0, 0, 0, 0.5); transform: scale(1.02); }
+.tvd-teaser.is-focused .tvd-teaser-play { border-color: var(--tvh-yellow); color: var(--tvh-yellow); }
+
+/* Lecture inline du teaser */
+.tvd-visual-player { position: absolute; inset: 0; background: #000; }
+.tvd-visual-host { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.tvd-visual-host iframe { width: 100%; height: 100%; }
+.tvd-visual-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.8); }
+.tvd-visual-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255, 255, 255, 0.15); }
+.tvd-visual-progress span { display: block; height: 100%; width: 0%; background: var(--tvh-yellow); }
+
+/* ── Colonne centrale ──────────────────────────────────────────────────────── */
+.tvd-identity { display: flex; flex-direction: column; gap: 0.3rem; }
+.tvd-type { color: var(--tvh-purple); font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; font-size: clamp(0.85rem, 1vw, 1.1rem); }
+.tvd-title {
+  margin: 0; color: #fff; font-weight: 900; text-transform: uppercase; letter-spacing: -0.01em;
+  font-size: clamp(2.2rem, 3.3vw, 3.9rem); line-height: 1.02;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tvd-pitch {
+  margin: 0.15rem 0 0; color: rgba(255, 255, 255, 0.78); font-size: clamp(1.15rem, 1.4vw, 1.55rem); line-height: 1.34;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* Métadonnées (5 cartes) */
+.tvd-meta-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(0.5rem, 0.8vw, 0.85rem); }
+.tvd-meta-card {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.25rem;
+  padding: clamp(0.7rem, 1.1vh, 1rem) 0.5rem; border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045); border: 1px solid rgba(255, 255, 255, 0.09);
+}
+.tvd-meta-icon { display: inline-flex; align-items: center; justify-content: center; height: clamp(26px, 2vw, 32px); color: #fff; }
+.tvd-meta-label { color: rgba(255, 255, 255, 0.5); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; font-size: clamp(0.66rem, 0.8vw, 0.82rem); }
+.tvd-meta-value { color: #fff; font-weight: 800; font-size: clamp(0.98rem, 1.15vw, 1.28rem); line-height: 1.1; }
+
+/* Barres de difficulté (icône de la carte DIFICULDADE) */
+.tvd-diff-bars { display: inline-flex; align-items: flex-end; gap: 2.5px; height: 24px; }
+.tvd-diff-bars i { display: block; width: 5px; border-radius: 1.5px; background: rgba(255, 255, 255, 0.22); }
+.tvd-diff-bars i.is-on { background: currentColor; }
+.tvd-diff-easy { color: #4ade80; }
+.tvd-diff-medium { color: var(--tvh-yellow); }
+.tvd-diff-hard { color: var(--tvh-pink); }
+
+/* Conceito + Contexto */
+.tvd-editorial { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.6rem, 1vw, 1rem); }
+.tvd-edit-block { padding: clamp(0.7rem, 1.1vh, 1rem) clamp(0.8rem, 1.1vw, 1.1rem); border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); }
+.tvd-edit-h { margin: 0 0 0.4rem; display: flex; align-items: center; gap: 0.4rem; color: var(--tvh-yellow); font-weight: 900; text-transform: uppercase; letter-spacing: 0.03em; font-size: clamp(0.85rem, 1vw, 1.05rem); }
+.tvd-edit-h-context { color: var(--tvh-purple); }
+.tvd-edit-text { margin: 0; color: rgba(255, 255, 255, 0.82); font-size: clamp(1rem, 1.15vw, 1.28rem); line-height: 1.34; }
+
+/* Prévia da letra */
+.tvd-lyric { padding: clamp(0.8rem, 1.2vh, 1.1rem) clamp(0.9rem, 1.2vw, 1.25rem); border-radius: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.09); }
+.tvd-lyric-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+.tvd-lyric-h { margin: 0; display: flex; align-items: center; gap: 0.4rem; color: var(--tvh-purple); font-weight: 900; text-transform: uppercase; letter-spacing: 0.03em; font-size: clamp(0.85rem, 1vw, 1.05rem); }
+.tvd-lyric-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem; height: clamp(40px, 4vh, 50px); padding: 0 1rem;
+  border-radius: 10px; background: rgba(255, 255, 255, 0.07); border: 1.5px solid rgba(255, 255, 255, 0.18);
+  color: #fff; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em; font-size: clamp(0.8rem, 0.95vw, 1rem);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+}
+.tvd-lyric-btn.is-focused { background: var(--tvh-yellow); color: var(--tvh-ink); border-color: var(--tvh-yellow); box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.35); transform: scale(1.04); }
+.tvd-lyric-quote { display: flex; align-items: flex-start; gap: 0.5rem; }
+.tvd-lyric-qmark { color: var(--tvh-purple); flex: 0 0 auto; margin-top: 0.1rem; fill: currentColor; opacity: 0.85; }
+.tvd-lyric-lines { display: flex; flex-direction: column; gap: 0.15rem; }
+.tvd-lyric-line { color: #fff; font-size: clamp(1.15rem, 1.4vw, 1.6rem); line-height: 1.32; }
+
+/* ── Colonne « Por que cantar? » ───────────────────────────────────────────── */
+.tvd-why { display: flex; flex-direction: column; padding: clamp(1rem, 1.5vw, 1.5rem) clamp(0.9rem, 1.3vw, 1.4rem); border-radius: clamp(16px, 1.2vw, 22px); background: rgba(255, 255, 255, 0.045); border: 1px solid rgba(255, 255, 255, 0.1); }
+.tvd-why-heading { margin: 0 0 clamp(0.8rem, 1.6vh, 1.3rem); display: flex; align-items: center; gap: 0.5rem; color: var(--tvh-yellow); font-weight: 900; text-transform: uppercase; letter-spacing: 0.03em; font-size: clamp(0.95rem, 1.1vw, 1.2rem); }
+.tvd-why-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: clamp(0.8rem, 1.7vh, 1.3rem); }
+.tvd-why-item { display: flex; align-items: flex-start; gap: 0.6rem; }
+.tvd-why-icon { flex: 0 0 auto; margin-top: 0.1em; color: var(--tvh-yellow); }
+.tvd-why-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.tvd-why-title { color: #fff; font-weight: 800; font-size: clamp(1rem, 1.15vw, 1.28rem); line-height: 1.18; }
+.tvd-why-sub { color: rgba(255, 255, 255, 0.6); font-weight: 500; font-size: clamp(0.85rem, 1vw, 1.08rem); line-height: 1.25; }
+
+/* ── Rangée d'actions ──────────────────────────────────────────────────────── */
+.tvd-actions { flex: 0 0 auto; display: flex; align-items: stretch; gap: clamp(0.7rem, 1vw, 1.1rem); }
+.tvd-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  height: clamp(58px, 5.6vh, 74px); padding: 0 clamp(1.2rem, 1.8vw, 2rem);
+  border-radius: clamp(13px, 1.2vw, 18px);
+  font-size: clamp(1.02rem, 1.3vw, 1.4rem); font-weight: 900; white-space: nowrap;
+  text-transform: uppercase; letter-spacing: 0.03em;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.tvd-btn-primary { flex: 0 0 auto; min-width: clamp(240px, 20vw, 340px); background: var(--tvh-yellow); color: var(--tvh-ink); }
+.tvd-btn-primary.is-focused { box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.4), 0 0 40px rgba(253, 224, 71, 0.55); transform: scale(1.03); }
+.tvd-btn-secondary { flex: 1 1 auto; background: rgba(255, 255, 255, 0.08); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.22); }
+.tvd-btn-secondary.is-focused { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.45); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28); transform: scale(1.02); }
+.tvd-btn-tertiary { flex: 1 1 auto; background: rgba(255, 255, 255, 0.03); color: rgba(255, 255, 255, 0.82); border: 1.5px solid rgba(255, 255, 255, 0.14); font-weight: 800; }
+.tvd-btn-tertiary.is-focused { color: #fff; background: rgba(255, 255, 255, 0.1); border-color: var(--tvh-yellow); box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.32); transform: scale(1.02); }
+
+.tvd-unavailable { flex: 0 0 auto; margin: 0; color: #fca5a5; font-weight: 700; font-size: clamp(0.9rem, 1.05vw, 1.15rem); }
+
+/* ── Overlays (mode / contexte / letra) ────────────────────────────────────── */
+.tvd-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: clamp(1.5rem, 4vh, 3rem) clamp(1.75rem, 4vw, 4rem); background: rgba(6, 7, 11, 0.84); backdrop-filter: blur(4px); animation: tvd-fade 150ms ease-out; }
+@keyframes tvd-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.tvd-mode-box { width: min(1100px, 92%); background: rgba(12, 14, 20, 0.98); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; padding: clamp(1.4rem, 3vh, 2.4rem); display: flex; flex-direction: column; gap: clamp(1rem, 2vh, 1.6rem); }
+.tvd-mode-heading { margin: 0; text-align: center; color: #fff; font-weight: 900; text-transform: uppercase; font-size: clamp(1.4rem, 2vw, 2.3rem); }
+.tvd-mode-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: clamp(0.9rem, 1.4vw, 1.4rem); }
+.tvd-mode-option {
+  display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer;
+  padding: clamp(1.2rem, 2.4vh, 2rem) 1rem; border-radius: 18px; border: 2px solid transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.tvd-mode-solo { background: linear-gradient(120deg, #3b0764 0%, #6d28d9 65%, #9333ea 100%); }
+.tvd-mode-duet { background: linear-gradient(120deg, #831843 0%, #be185d 60%, #ec4899 100%); }
+.tvd-mode-festa { background: linear-gradient(120deg, #78350f 0%, #d97706 60%, #f59e0b 100%); }
+.tvd-mode-icon { display: inline-flex; align-items: center; justify-content: center; width: clamp(52px, 4vw, 68px); height: clamp(52px, 4vw, 68px); border-radius: 16px; background: rgba(0, 0, 0, 0.25); color: #fff; }
+.tvd-mode-title { color: #fff; font-weight: 900; text-transform: uppercase; font-size: clamp(1.3rem, 1.7vw, 1.9rem); }
+.tvd-mode-desc { color: rgba(255, 255, 255, 0.82); font-weight: 600; font-size: clamp(1rem, 1.15vw, 1.25rem); }
+.tvd-mode-option.is-focused { transform: scale(1.04); border-color: var(--tvh-yellow); box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.45), 0 18px 44px rgba(0, 0, 0, 0.55); }
+
+/* Letra complète */
+.tvd-lyrics-panel { width: min(900px, 90%); max-height: 86%; display: flex; flex-direction: column; gap: 1rem; background: rgba(12, 14, 20, 0.98); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; padding: clamp(1.4rem, 3vh, 2.2rem); }
+.tvd-lyrics-title { margin: 0; color: #fff; font-weight: 900; text-transform: uppercase; font-size: clamp(1.3rem, 1.8vw, 2rem); }
+.tvd-lyrics-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.tvd-lyrics-body::-webkit-scrollbar { display: none; }
+.tvd-lyrics-line { margin: 0; color: rgba(255, 255, 255, 0.9); font-size: clamp(1.15rem, 1.4vw, 1.6rem); line-height: 1.5; }
+.tvd-lyrics-gap { height: 0.6em; }
+.tvd-lyrics-close { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.3rem; border-radius: 12px; background: var(--tvh-yellow); color: var(--tvh-ink); border: 0; font-weight: 800; font-size: 1.05rem; cursor: pointer; }
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+/* 1280×720 : masque le panneau « Por que cantar? », colonnes visuel/central. */
+@media (max-width: 1400px) {
+  .tvd-why { display: none; }
+  .tvd-visual { flex-basis: 34%; }
+}
+/* 720p : hauteur serrée → on resserre espacements/typo et on limite la prévia à
+   3 lignes pour que TOUT tienne sans chevauchement (rangée d'actions/barre du bas). */
+@media (max-height: 800px) {
+  .tvd-page { gap: 0.4rem; }
+  .tvd-body { gap: 0.8rem; }
+  .tvd-main { gap: 0.5rem; }
+  .tvd-title { font-size: clamp(1.9rem, 2.8vw, 2.4rem); -webkit-line-clamp: 1; }
+  .tvd-pitch { font-size: 1.05rem; }
+  .tvd-meta-card { padding: 0.5rem 0.4rem; }
+  .tvd-meta-value { font-size: 1rem; }
+  .tvd-editorial { gap: 0.6rem; }
+  .tvd-edit-block { padding: 0.5rem 0.7rem; }
+  .tvd-edit-text { font-size: 0.95rem; -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+  .tvd-lyric { padding: 0.55rem 0.8rem; }
+  .tvd-lyric-line { font-size: 1.05rem; }
+  .tvd-lyric-lines .tvd-lyric-line:nth-child(4) { display: none; }
+  .tvd-btn { height: 52px; font-size: 0.95rem; }
+  .tvd-btn-primary { min-width: 200px; }
+}
+/* Palier 4K (≥2500px) : relève les plafonds clamp() (proportionnel). */
+@media (min-width: 2500px) {
+  .tvd-title { font-size: clamp(2.2rem, 3.3vw, 6.4rem); }
+  .tvd-pitch { font-size: clamp(1.15rem, 1.4vw, 2.5rem); }
+  .tvd-type { font-size: clamp(0.85rem, 1vw, 1.8rem); }
+  .tvd-meta-value { font-size: clamp(0.98rem, 1.15vw, 2rem); }
+  .tvd-edit-text, .tvd-lyric-line { font-size: clamp(1rem, 1.15vw, 2rem); }
+  .tvd-why-title { font-size: clamp(1rem, 1.15vw, 2rem); }
+  .tvd-btn { height: clamp(58px, 5.6vh, 110px); font-size: clamp(1.02rem, 1.3vw, 2.2rem); }
+}

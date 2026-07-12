@@ -17,11 +17,34 @@ const supabaseAnonKey = (envKey && !envKey.startsWith('eyJ'))
   ? envKey
   : PUBLISHABLE_KEY_FALLBACK
 
+// ⏱️ Timeout réseau pour TOUTES les requêtes Supabase. Sans ça, quand l'hôte
+// Supabase est injoignable (réseau bloqué/VPN/DNS, extension de blocage, projet en
+// pause, IPv6 mort…), le fetch reste pendu ~30-120 s (ERR_CONNECTION_TIMED_OUT) →
+// l'app reste bloquée sur ses skeletons avant de basculer sur le catalogue statique
+// (content/songs.json). Avec un abort à 7 s, l'échec est rapide et le fallback
+// statique s'affiche vite. Chaîne un éventuel signal appelant (auth) pour ne pas
+// casser ses propres annulations.
+const SUPABASE_FETCH_TIMEOUT_MS = 7000
+function fetchWithTimeout(input, init = {}) {
+  if (typeof AbortController === 'undefined') return fetch(input, init)
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(new DOMException('Supabase request timeout', 'TimeoutError')), SUPABASE_FETCH_TIMEOUT_MS)
+  const callerSignal = init.signal
+  if (callerSignal) {
+    if (callerSignal.aborted) controller.abort(callerSignal.reason)
+    else callerSignal.addEventListener('abort', () => controller.abort(callerSignal.reason), { once: true })
+  }
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
 // Client Supabase avec persistance de session.
 // Cache headers globaux retirés pour laisser le CDN/PostgREST gérer la cache policy.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   db: {
     schema: 'public',
+  },
+  global: {
+    fetch: fetchWithTimeout,
   },
   auth: {
     persistSession: true,

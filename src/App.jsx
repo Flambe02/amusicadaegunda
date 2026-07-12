@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 // ✅ PERFORMANCE: HelmetProvider supprimé ici (déjà dans main.jsx)
 // Garder un seul HelmetProvider à la racine évite la duplication de contextes
 import OfflineIndicator from "@/components/OfflineIndicator"
+import ErrorBoundary from "@/components/ErrorBoundary"
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { hideNativeSplash } from '@/utils/splash';
 import { isTV } from '@/tv/platform';
@@ -11,6 +12,9 @@ const PushCTA = lazy(() => import('@/components/PushCTA'));
 const InstallAppBanner = lazy(() => import('@/components/InstallAppBanner'));
 // Le bundle TV est chargé à la demande UNIQUEMENT sur TV → aucun coût pour mobile/web.
 const TvApp = lazy(() => import('@/tv/TvApp'));
+// Écran d'erreur TV (sortie de secours navigable au D-pad) — remplace le fallback
+// web générique quand le crash survient dans le bundle TV.
+const TvErrorFallback = lazy(() => import('@/tv/TvErrorFallback'));
 
 function App() {
   const [deferredUiReady, setDeferredUiReady] = useState(false);
@@ -52,10 +56,21 @@ function App() {
   // pas de bannières PWA/push). Le reste de l'app n'est jamais monté. ──
   if (tvMode) {
     return (
-      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#05070c' }} />}>
-        <TvApp />
-        <Toaster />
-      </Suspense>
+      // ErrorBoundary DÉDIÉ TV (imbriqué sous celui de main.jsx, il capte donc en
+      // premier) : un crash affiche une sortie de secours à la télécommande
+      // (compte à rebours + Sair) au lieu du fallback web non navigable au D-pad.
+      <ErrorBoundary
+        fallback={(
+          <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#0a0a0a' }} />}>
+            <TvErrorFallback />
+          </Suspense>
+        )}
+      >
+        <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#05070c' }} />}>
+          <TvApp />
+          <Toaster />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 

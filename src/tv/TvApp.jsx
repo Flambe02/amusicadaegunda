@@ -11,16 +11,20 @@ import {
   markFestaQueueStatus, buildFestaJoinUrl,
 } from '@/lib/festa';
 import { useFestaSession } from '@/hooks/useFestaSession';
-import TvHome from './TvHome';
+import TvHomePage from './TvHomePage';
+import TvCatalogPage from './TvCatalogPage';
 import TvGrid from './TvGrid';
-import TvSongDetail from './TvSongDetail';
+import TvSongDetailPage from './TvSongDetailPage';
 import TvKaraokeScreen from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
 import TvClipsLanding from './TvClipsLanding';
 import TvKaraokeModeLanding from './TvKaraokeModeLanding';
 import TvFestaInvite from './components/TvFestaInvite';
+import { emptyAdvanced } from './lib/tvCatalogFilters';
 import '@/styles/tv.css';
 import '@/styles/tv-home-v2.css';
+import '@/styles/tv-home-v3.css';
+import '@/styles/tv-catalog.css';
 import '@/styles/tv-karaoke-landing.css';
 import '@/styles/tv-clips-landing.css';
 import '@/styles/tv-karaoke-mode-landing.css';
@@ -43,6 +47,7 @@ const CATEGORY_LABELS = {
 export default function TvApp() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [stack, setStack] = useState([{ name: 'home' }]);
   const top = stack[stack.length - 1];
 
@@ -91,20 +96,26 @@ export default function TvApp() {
     setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
   }, []);
 
-  useEffect(() => { applyTvFlag(true); return () => applyTvFlag(false); }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const all = await Song.list('-release_date');
-        if (!cancelled) setSongs(all || []);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
+  // Chargement des chansons (Song.list bascule déjà tout seul sur content/songs.json
+  // si Supabase échoue — cf. src/api/entities.js). `loadError` = liste vide au final
+  // (les deux sources ont échoué) → l'état d'erreur du catálogo propose de réessayer.
+  const loadSongs = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
+    try {
+      const all = await Song.list('-release_date');
+      setSongs(all || []);
+      setLoadError(!all || all.length === 0);
+    } catch {
+      setSongs([]);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => { applyTvFlag(true); return () => applyTvFlag(false); }, []);
+  useEffect(() => { loadSongs(); }, [loadSongs]);
 
   const push = useCallback((screen) => setStack((s) => [...s, screen]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
@@ -156,9 +167,9 @@ export default function TvApp() {
   // Destination « Clipes » de la nav partagée — page dédiée (rangées mês/ano/
   // tema), plus la grille générique (cf. TvClipsLanding.jsx).
   const openClipsLanding = useCallback(() => setStack((s) => [...s, { name: 'clips-landing' }]), []);
-  const openCatalog = useCallback(() => setStack((s) => [
-    ...s, { name: 'grid', title: 'Catálogo', songs: songsRef.current },
-  ]), []);
+  // Destination « Catálogo » de la nav = page dédiée song-first (recherche, filtres,
+  // grille + panneau contextuel, fila). Remplace l'ancienne grille générique.
+  const openCatalog = useCallback(() => setStack((s) => [...s, { name: 'catalog' }]), []);
 
   // ── Landing Karaokê (page dédiée) : 4 modes + rangée « Para cantar agora » ──
   const openKaraokeLanding = useCallback(() => setStack((s) => [...s, { name: 'karaoke-landing' }]), []);
@@ -190,6 +201,49 @@ export default function TvApp() {
   // déjà remplie serait ignorée — piège découvert en test réel) ; sinon,
   // comportement historique inchangé (mène au choix manuel de la 1ère chanson).
   const onChooseFesta = useCallback(() => openFestaInvite(), [openFestaInvite]);
+  // Dispatcher unique pour la section « Como você quer cantar? » de l'accueil v3 :
+  // chaque mode mène à SON parcours (jamais la même page), cf. onChoose* ci-dessus.
+  const onChooseMode = useCallback((mode) => {
+    if (mode === 'solo') return onChooseSolo();
+    if (mode === 'duet') return onChooseDuet();
+    return onChooseFesta(); // festa
+  }, [onChooseSolo, onChooseDuet, onChooseFesta]);
+
+  // Restauration du focus au retour d'une fiche → l'accueil v3 mémorise la clé de la
+  // dernière carte focalisée (ref, pas de state : jamais de re-render pendant que
+  // l'accueil est monté). Persistée sur TvApp (qui reste monté) → survit au
+  // démontage/remontage de l'accueil quand une fiche passe au-dessus dans la pile.
+  const homeFocusKeyRef = useRef(null);
+  const setHomeFocusKey = useCallback((key) => { homeFocusKeyRef.current = key; }, []);
+
+  // ── État du Catálogo (filtres/recherche/carte focalisée) — ref, restauré au
+  // retour d'une fiche sans re-render pendant que le catálogo est monté. ──
+  const catalogStateRef = useRef({ quickId: 'todas', advanced: emptyAdvanced(), searchQuery: '', focusKey: null });
+  const setCatalogState = useCallback((partial) => {
+    catalogStateRef.current = { ...catalogStateRef.current, ...partial };
+  }, []);
+
+  // ── Fila LOCALE du catálogo (en mémoire) — indépendante de la fila Festa
+  // Supabase. Chaque entrée : { qid, id, title, singer? }. Sert au bouton
+  // « Adicionar à fila » + à l'overlay de fila + « Começar a cantar ». ──
+  const [localQueue, setLocalQueue] = useState([]);
+  const localQueueRef = useRef(localQueue);
+  localQueueRef.current = localQueue;
+  const addToQueue = useCallback((vm) => {
+    const existingIndex = localQueueRef.current.findIndex((q) => q.id === vm.id);
+    if (existingIndex >= 0) return { added: false, position: existingIndex + 1 };
+    const entry = { qid: `${vm.id}-${Date.now()}`, id: vm.id, title: vm.title, raw: vm.raw };
+    setLocalQueue((q) => [...q, entry]);
+    return { added: true, position: localQueueRef.current.length + 1 };
+  }, []);
+  const removeFromQueue = useCallback((qid) => setLocalQueue((q) => q.filter((e) => e.qid !== qid)), []);
+  const clearQueue = useCallback(() => setLocalQueue([]), []);
+
+  // Titres « familiers » (récemment ouverts en fiche ou chantés) → débloque le CTA
+  // tertiaire discret « Cantar agora » dans le panneau du catálogo.
+  const familiarIdsRef = useRef(new Set());
+  const markFamiliar = useCallback((song) => { if (song?.id) familiarIdsRef.current.add(song.id); }, []);
+
   const proceedToFestaPicker = useCallback(() => {
     const waiting = festaQueueRef.current
       .filter((q) => q.status === 'waiting')
@@ -225,6 +279,22 @@ export default function TvApp() {
   // intermédiaire de question (le Modo Festa reste un choix fait depuis son point
   // d'entrée dédié de l'accueil, jamais reposé au niveau d'une chanson individuelle).
   const onRequestKaraoke = useCallback((song) => startKaraoke(song, null), [startKaraoke]);
+
+  // « Começar a cantar » depuis l'overlay de fila du catálogo — lance le karaokê
+  // avec la fila LOCALE comme playlist (titres chantables d'abord). `advanceFesta`
+  // (réutilisé comme onNext/onEnded) avance dans la fila via sa branche générique
+  // « index < length-1 » quand aucune session Festa n'est active.
+  const startLocalQueue = useCallback(() => {
+    const list = localQueueRef.current.map((e) => e.raw).filter(Boolean);
+    const singable = list.filter(getHasKaraoke);
+    const queue = singable.length ? singable : list;
+    if (!queue.length) return;
+    setStack((s) => [...s, {
+      name: 'karaoke', queue, index: 0, handoff: false, sessionOptions: null,
+      festaQueueId: null, prevApplause: null, prevTomato: null,
+    }]);
+  }, [getHasKaraoke]);
+
   // Fila festa : la chanson choisie en premier, puis le reste du catalogue karaokê
   // (filet de sécurité si la fila Supabase des téléphones reste vide, cf. advanceFesta).
   const startFesta = useCallback((firstSong) => {
@@ -315,20 +385,48 @@ export default function TvApp() {
         />
       );
     }
+    if (top.name === 'catalog') {
+      return (
+        <TvCatalogPage
+          songs={songs}
+          getThumb={getThumb}
+          loading={loading}
+          loadError={loadError}
+          queue={localQueue}
+          festaPeople={festaSession ? festaPresentNames.length : null}
+          familiarIds={familiarIdsRef.current}
+          initialState={catalogStateRef.current}
+          onStateChange={setCatalogState}
+          onOpenDetail={(song) => { markFamiliar(song); push({ name: 'detail', song, source: 'catalog' }); }}
+          onCantar={(song) => { markFamiliar(song); startKaraoke(song, null); }}
+          onAddToQueue={addToQueue}
+          onRemoveFromQueue={removeFromQueue}
+          onClearQueue={clearQueue}
+          onStartQueue={startLocalQueue}
+          onGoHome={goHome}
+          onOpenKaraoke={openKaraokeLanding}
+          onOpenFesta={onChooseFesta}
+          onRetryLoad={loadSongs}
+          backInterceptorRef={backInterceptorRef}
+        />
+      );
+    }
     if (top.name === 'detail') {
       return (
-        <TvSongDetail
+        <TvSongDetailPage
           key={top.song.id}
           song={top.song}
-          thumb={getThumb(top.song)}
-          categoryLabel={getCat(top.song)}
-          hasKaraoke={getHasKaraoke(top.song)}
-          onKaraoke={() => startKaraoke(top.song, null)}
+          source={top.source || 'catalog'}
+          getThumb={getThumb}
+          festaPeople={festaSession ? festaPresentNames.length : null}
+          queue={localQueue}
+          onStartKaraoke={startKaraoke}
+          onAddToQueue={addToQueue}
           onGoHome={goHome}
-          onOpenKaraokeGrid={openKaraokeLanding}
-          onOpenClipsGrid={openClipsLanding}
           onOpenCatalog={openCatalog}
-          onExitApp={exitApp}
+          onOpenKaraoke={openKaraokeLanding}
+          onOpenFesta={onChooseFesta}
+          onConnectPhone={onChooseFesta}
           backInterceptorRef={backInterceptorRef}
         />
       );
@@ -432,28 +530,31 @@ export default function TvApp() {
       );
     }
     return (
-      <TvHome
+      <TvHomePage
         songs={songs}
         getThumb={getThumb}
-        getCat={getCat}
         getHasKaraoke={getHasKaraoke}
-        onSelectSong={(s) => push({ name: 'detail', song: s })}
-        onOpenKaraoke={(s) => startKaraoke(s, null)}
-        onOpenKaraokeLanding={openKaraokeLanding}
-        onOpenClipsLanding={openClipsLanding}
-        onOpenFestaGrid={onChooseFesta}
-        onOpenGrid={(title, list) => push({ name: 'grid', title, songs: list })}
-        onExitApp={exitApp}
-        backInterceptorRef={backInterceptorRef}
+        festaQueueCount={festaSession ? festaQueue.filter((q) => q.status === 'waiting').length : null}
+        initialFocusKey={homeFocusKeyRef.current}
+        onOpenDetail={(s) => { markFamiliar(s); push({ name: 'detail', song: s, source: 'home' }); }}
+        onCantar={(s) => startKaraoke(s, null)}
+        onChooseMode={onChooseMode}
+        onOpenCatalog={openCatalog}
+        onOpenKaraoke={openKaraokeLanding}
+        onCardFocusKey={setHomeFocusKey}
       />
     );
   }, [
-    top, songs, getThumb, getCat, getHasKaraoke, push, pop, goHome, openClipsLanding, openCatalog,
-    openKaraokeLanding, onChooseSolo, onChooseDuet, onChooseFesta, onOpenFullKaraokeGrid,
-    openSoloGrid, openDuetGrid, openFestaGrid,
-    onRequestKaraoke, startKaraoke, startFesta, advanceFesta,
+    top, songs, getThumb, getHasKaraoke, push, openCatalog,
+    onChooseMode, startKaraoke, advanceFesta, startFesta,
+    onChooseSolo, onChooseDuet, onChooseFesta, openKaraokeLanding, openClipsLanding,
+    onOpenFullKaraokeGrid, onRequestKaraoke, openSoloGrid, openDuetGrid, openFestaGrid,
+    goHome, pop, getCat, setHomeFocusKey,
     festaSession, festaPresentNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
     liveEnergyByEntry, festaQueue,
+    // Catálogo
+    loading, loadError, localQueue, setCatalogState, markFamiliar,
+    addToQueue, removeFromQueue, clearQueue, startLocalQueue, loadSongs,
   ]);
 
   if (loading) {

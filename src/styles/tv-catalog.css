@@ -1,0 +1,325 @@
+/* ==========================================================================
+   Catálogo TV « song-first » — split grille (~70%) + panneau contextuel (~30%).
+   Chargé UNIQUEMENT par le bundle TV. Namespace tvc- (distinct des namespaces tvh-
+   et tv2- des autres écrans).
+   Réutilise la nav .tvh-nav (importée avec tv-home-v3.css). Palette : navy/quasi-
+   noir, JAUNE = focus + action, violet/rose = accents secondaires, difficulté =
+   vert/jaune/rouge (avec barres, jamais la couleur seule).
+   ========================================================================== */
+
+.tvc-page {
+  height: 100%; min-height: 0; max-width: 2400px; margin: 0 auto;
+  display: flex; flex-direction: column; gap: clamp(0.5rem, 1.1vh, 0.9rem);
+}
+
+/* ── Entête ─────────────────────────────────────────────────────────────────── */
+.tvc-header {
+  flex: 0 0 auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem;
+}
+.tvc-header-title {
+  margin: 0; color: #fff; font-weight: 900; text-transform: uppercase; letter-spacing: 0.01em;
+  font-size: clamp(1.6rem, 2.2vw, 2.6rem); line-height: 1.05;
+}
+.tvc-header-sub {
+  margin: 0.25rem 0 0; color: rgba(255, 255, 255, 0.6); font-weight: 600;
+  font-size: clamp(0.95rem, 1.15vw, 1.3rem);
+}
+
+.tvc-queue-indicator-spacer { min-width: 1px; }
+.tvc-queue-indicator {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem;
+  padding: 0.45rem 0.9rem; border-radius: 14px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.05); border: 1.5px solid rgba(255, 255, 255, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.tvc-queue-indicator.is-focused {
+  background: rgba(253, 224, 71, 0.14); border-color: var(--tvh-yellow);
+  box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.32); transform: scale(1.03);
+}
+.tvc-queue-festa { color: #f9a8d4; font-weight: 800; font-size: clamp(0.72rem, 0.85vw, 0.95rem); }
+.tvc-queue-count {
+  display: inline-flex; align-items: center; gap: 0.4rem; color: #fff; font-weight: 800;
+  font-size: clamp(0.9rem, 1vw, 1.15rem);
+}
+
+/* ── Barre de filtres ──────────────────────────────────────────────────────── */
+.tvc-filters {
+  flex: 0 0 auto; display: flex; align-items: center; gap: clamp(0.5rem, 0.75vw, 0.85rem);
+  overflow-x: auto; scrollbar-width: none; padding: 0.4rem 0.5rem; margin: 0 -0.5rem;
+}
+.tvc-filters::-webkit-scrollbar { display: none; }
+.tvc-chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.45rem;
+  height: clamp(44px, 4.6vh, 56px); padding: 0 clamp(0.9rem, 1.3vw, 1.4rem);
+  border-radius: 9999px; white-space: nowrap; cursor: pointer;
+  background: rgba(255, 255, 255, 0.055); border: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.75); font-size: clamp(0.9rem, 1.1vw, 1.25rem); font-weight: 800;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+.tvc-chip-search { background: rgba(168, 85, 247, 0.14); color: #d8b4fe; }
+.tvc-chip.is-active { background: rgba(253, 224, 71, 0.16); color: var(--tvh-yellow); border-color: rgba(253, 224, 71, 0.4); }
+.tvc-chip.is-focused {
+  background: var(--tvh-yellow); color: var(--tvh-ink); border-color: var(--tvh-yellow);
+  box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.3); transform: scale(1.05);
+}
+.tvc-chip-search.is-focused { background: var(--tvh-purple); color: #fff; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.35); }
+.tvc-chip-more { margin-left: auto; position: relative; }
+.tvc-chip-badge {
+  position: absolute; top: 6px; right: 8px; width: 9px; height: 9px; border-radius: 9999px;
+  background: var(--tvh-yellow); box-shadow: 0 0 0 2px rgba(10, 12, 18, 0.9);
+}
+
+/* ── Corps : grille + panneau ──────────────────────────────────────────────────
+   Flex row (PAS grid) : une piste grid `auto` se dimensionnait au contenu (56
+   cartes ≈ 2800px) et débordait sous la ligne de flottaison (tv-root overflow
+   hidden → CTA du panneau rognés hors écran). En flex row + min-height:0 sur les
+   deux colonnes, chacune est bornée à la hauteur du corps et scrolle en interne. */
+.tvc-body {
+  flex: 1 1 auto; min-height: 0; display: flex; align-items: stretch;
+  gap: clamp(1rem, 1.5vw, 1.6rem);
+}
+.tvc-left { flex: 0 0 70%; min-width: 0; min-height: 0; display: flex; }
+
+.tvc-grid {
+  width: 100%;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: clamp(0.9rem, 1.2vw, 1.5rem);
+  align-content: start;
+}
+.tvc-grid-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; padding: 0.5rem; margin: -0.5rem; }
+.tvc-grid-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Carte de chanson ──────────────────────────────────────────────────────── */
+/* display:block (PAS flex column) : Chromium ignore `aspect-ratio` sur un enfant
+   flex sans contenu (l'img est en position:absolute) dans une colonne flex à
+   hauteur indéfinie → la vignette s'effondrait à la hauteur de sa bordure (6px).
+   En bloc, `.tvc-card-media` est une boîte aspect-ratio canonique qui prend bien
+   sa hauteur (largeur définie par la colonne de grille × 9/16). */
+.tvc-card {
+  display: block;
+  background: transparent; border: 0; padding: 0; text-align: left; cursor: pointer;
+}
+/* Ratio 16:9 via padding-bottom (PAS aspect-ratio) : la hauteur dérivée d'
+   aspect-ratio n'est pas prise en compte par le calcul de piste d'une grille CSS
+   `1fr` sur Chromium → les cartes s'effondraient et se chevauchaient. Le
+   padding-bottom (% de la largeur = largeur de colonne, définie) contribue
+   correctement à la hauteur intrinsèque de la rangée. */
+.tvc-card-media {
+  position: relative; width: 100%; height: 0; padding-bottom: 56.25%;
+  border-radius: 14px; overflow: hidden;
+  background: #12141a; border: 3px solid transparent; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.tvc-card-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.16s ease, filter 0.16s ease; }
+.tvc-card-img-fallback { background: linear-gradient(135deg, #1a1d25, #0c0e13); }
+.tvc-card-compat {
+  position: absolute; top: 8px; right: 8px; display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 9999px; background: rgba(7, 8, 12, 0.78); color: #fff;
+}
+.tvc-card-body { display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem; }
+.tvc-card-title {
+  color: #fff; font-weight: 800; font-size: clamp(0.98rem, 1.05vw, 1.22rem); line-height: 1.18;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tvc-card-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.tvc-card-theme {
+  color: rgba(255, 255, 255, 0.5); font-weight: 700; text-transform: uppercase;
+  font-size: 0.72rem; letter-spacing: 0.04em;
+}
+.tvc-card-diff, .tvc-panel-diff {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.02em;
+}
+.tvc-diff-easy { color: var(--tvh-green); }
+.tvc-diff-medium { color: var(--tvh-yellow); }
+.tvc-diff-hard { color: var(--tvh-red); }
+.tvc-diff-bars { display: inline-flex; align-items: flex-end; gap: 1.5px; height: 10px; }
+.tvc-diff-bars i { display: block; width: 2.5px; border-radius: 1px; background: rgba(255, 255, 255, 0.25); }
+.tvc-diff-bars i.is-on { background: currentColor; }
+
+/* Zoom au focus = image seule (jamais la carte/texte) → pas de décalage voisin
+   ni de bug de rognage texte Chromium. Bordure/halo sur .tvc-card-media (fixe). */
+.tvc-card.is-focused .tvc-card-media {
+  border-color: var(--tvh-yellow);
+  box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.42), 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+.tvc-card.is-focused .tvc-card-img { transform: scale(1.04); filter: brightness(1.05); }
+
+/* ── Panneau contextuel ────────────────────────────────────────────────────── */
+.tvc-panel {
+  flex: 1 1 30%; min-width: 0; min-height: 0; display: flex; flex-direction: column;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px; overflow: hidden;
+}
+.tvc-panel-empty { align-items: center; justify-content: center; padding: 2rem; color: rgba(255, 255, 255, 0.45); font-weight: 700; text-align: center; }
+.tvc-panel-art { position: relative; width: 100%; aspect-ratio: 16 / 9; flex: 0 0 auto; background: #12141a; }
+.tvc-panel-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tvc-panel-art-fallback { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1d25, #0c0e13); }
+.tvc-panel-art-scrim { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10, 11, 16, 0.85) 0%, transparent 55%); }
+
+.tvc-panel-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: clamp(0.9rem, 1.3vw, 1.4rem); display: flex; flex-direction: column; gap: 0.5rem; }
+.tvc-panel-scroll::-webkit-scrollbar { display: none; }
+.tvc-panel-title { margin: 0; color: #fff; font-weight: 900; font-size: clamp(1.3rem, 1.7vw, 2rem); line-height: 1.08; text-transform: uppercase; }
+.tvc-panel-type { margin: 0; color: var(--tvh-yellow); font-weight: 800; font-size: clamp(0.85rem, 1vw, 1.1rem); text-transform: uppercase; letter-spacing: 0.03em; }
+.tvc-panel-pitch { margin: 0.2rem 0 0; color: rgba(255, 255, 255, 0.82); font-size: clamp(0.98rem, 1.15vw, 1.3rem); line-height: 1.34; }
+.tvc-panel-festa { margin: 0.15rem 0 0; color: #f9a8d4; font-weight: 700; font-size: clamp(0.85rem, 1vw, 1.05rem); }
+
+.tvc-panel-meta { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.35rem; }
+.tvc-panel-meta-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; border-bottom: 1px solid rgba(255, 255, 255, 0.07); padding-bottom: 0.3rem; }
+.tvc-panel-meta-label { color: rgba(255, 255, 255, 0.5); font-weight: 700; text-transform: uppercase; font-size: clamp(0.72rem, 0.85vw, 0.95rem); letter-spacing: 0.03em; }
+.tvc-panel-meta-value { color: #fff; font-weight: 800; font-size: clamp(0.85rem, 1vw, 1.15rem); }
+
+.tvc-panel-lyric { margin-top: 0.5rem; padding: 0.7rem 0.85rem; border-radius: 12px; background: rgba(253, 224, 71, 0.07); border-left: 3px solid rgba(253, 224, 71, 0.55); }
+.tvc-panel-lyric-h { color: var(--tvh-yellow); font-weight: 800; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; }
+.tvc-panel-lyric-text { margin: 0.25rem 0 0; color: rgba(255, 255, 255, 0.9); font-style: italic; font-size: clamp(0.95rem, 1.1vw, 1.25rem); line-height: 1.3; }
+
+.tvc-panel-actions { flex: 0 0 auto; display: flex; flex-direction: column; gap: 0.5rem; padding: clamp(0.8rem, 1.1vw, 1.15rem); border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.tvc-panel-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+  height: clamp(50px, 4.8vh, 62px); border-radius: 14px; font-size: clamp(1rem, 1.2vw, 1.3rem); font-weight: 800;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+}
+.tvc-cta-icon-fill { fill: currentColor; } /* triangle play plein */
+.tvc-panel-cta.is-primary { background: var(--tvh-yellow); color: var(--tvh-ink); }
+.tvc-panel-cta.is-primary.is-focused { box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.35), 0 0 30px rgba(253, 224, 71, 0.5); transform: scale(1.03); }
+.tvc-panel-cta.is-secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.2); }
+.tvc-panel-cta.is-secondary.is-focused { background: rgba(255, 255, 255, 0.2); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28); transform: scale(1.03); }
+.tvc-panel-cta.is-tertiary { background: transparent; color: rgba(255, 255, 255, 0.7); border: 1.5px dashed rgba(255, 255, 255, 0.2); height: clamp(42px, 4vh, 52px); font-size: clamp(0.9rem, 1.05vw, 1.1rem); }
+.tvc-panel-cta.is-tertiary.is-focused { color: #fff; border-style: solid; border-color: var(--tvh-yellow); box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.3); transform: scale(1.03); }
+
+/* ── États : skeleton / vide / erreur ──────────────────────────────────────── */
+.tvc-card-skeleton { pointer-events: none; }
+.tvc-skeleton-line { height: 0.9rem; border-radius: 6px; }
+.tvc-skeleton-shimmer { background: linear-gradient(100deg, #16181f 30%, #22252f 50%, #16181f 70%); background-size: 200% 100%; animation: tvc-shimmer 1.3s ease-in-out infinite; }
+@keyframes tvc-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .tvc-skeleton-shimmer { animation: none; } }
+
+.tvc-empty { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.6rem; padding: 2rem; }
+.tvc-empty-icon { color: rgba(255, 255, 255, 0.4); }
+.tvc-empty-title { margin: 0; color: #fff; font-weight: 800; font-size: clamp(1.2rem, 1.5vw, 1.7rem); }
+.tvc-empty-sub { margin: 0; color: rgba(255, 255, 255, 0.55); font-size: clamp(0.95rem, 1.1vw, 1.25rem); }
+.tvc-empty-actions { display: flex; gap: 0.75rem; margin-top: 0.75rem; }
+.tvc-empty-btn { height: clamp(48px, 4.6vh, 58px); padding: 0 1.4rem; border-radius: 12px; font-weight: 800; font-size: clamp(0.95rem, 1.1vw, 1.2rem); background: rgba(255, 255, 255, 0.08); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.18); }
+.tvc-empty-btn.is-primary { background: var(--tvh-yellow); color: var(--tvh-ink); border-color: var(--tvh-yellow); }
+.tvc-empty-btn.is-focused { box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.35); transform: scale(1.04); }
+.tvc-empty-btn.is-primary.is-focused { box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.4), 0 0 26px rgba(253, 224, 71, 0.5); }
+
+/* ── Indice télécommande + toast ───────────────────────────────────────────── */
+.tvc-hint { flex: 0 0 auto; display: flex; align-items: center; gap: 0.8rem; color: rgba(255, 255, 255, 0.42); font-size: clamp(0.8rem, 0.95vw, 1rem); font-weight: 600; padding-top: 0.15rem; }
+.tvc-hint-key { display: inline-flex; align-items: center; padding: 0.1rem 0.45rem; border-radius: 6px; background: rgba(255, 255, 255, 0.09); border: 1px solid rgba(255, 255, 255, 0.14); color: rgba(255, 255, 255, 0.7); font-size: 0.85em; margin-right: 0.3rem; }
+.tvc-hint-sep { color: rgba(255, 255, 255, 0.25); }
+
+.tvc-toast {
+  position: fixed; left: 50%; bottom: clamp(1.5rem, 4vh, 3rem); transform: translateX(-50%); z-index: 60;
+  display: inline-flex; align-items: center; gap: 0.55rem;
+  padding: 0.8rem 1.3rem; border-radius: 12px; background: rgba(16, 18, 24, 0.96);
+  border: 1.5px solid rgba(74, 222, 128, 0.5); color: #fff; font-weight: 800; font-size: clamp(0.95rem, 1.1vw, 1.2rem);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55); animation: tvc-toast-in 180ms ease-out;
+}
+.tvc-toast svg { color: var(--tvh-green); }
+@keyframes tvc-toast-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* ── Overlays (search / advanced / queue) ──────────────────────────────────── */
+.tvc-overlay {
+  position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+  padding: clamp(1.5rem, 4vh, 3rem) clamp(1.75rem, 4vw, 4rem);
+  background: rgba(6, 7, 11, 0.82); backdrop-filter: blur(4px); animation: tvc-fade 160ms ease-out;
+}
+@keyframes tvc-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* Recherche */
+.tvc-search-box { width: min(1200px, 92%); display: flex; flex-direction: column; gap: clamp(1rem, 2vh, 1.6rem); }
+.tvc-search-field { display: flex; align-items: center; gap: 0.7rem; padding: clamp(0.8rem, 1.4vh, 1.2rem) 1.3rem; border-radius: 16px; background: rgba(255, 255, 255, 0.06); border: 1.5px solid rgba(255, 255, 255, 0.14); }
+.tvc-search-field svg { color: rgba(255, 255, 255, 0.6); flex: 0 0 auto; }
+.tvc-search-query { color: #fff; font-size: clamp(1.3rem, 1.8vw, 2.1rem); font-weight: 800; display: inline-flex; align-items: center; min-height: 1.4em; }
+.tvc-search-ph { color: rgba(255, 255, 255, 0.4); font-weight: 600; }
+.tvc-search-caret { width: 3px; height: 1.15em; margin-left: 3px; background: var(--tvh-yellow); animation: tvc-blink 1s step-end infinite; }
+@keyframes tvc-blink { 50% { opacity: 0; } }
+
+.tvc-keyboard { display: flex; flex-direction: column; gap: clamp(0.5rem, 1vh, 0.85rem); }
+.tvc-key-row { display: flex; gap: clamp(0.5rem, 0.8vw, 0.85rem); justify-content: center; }
+.tvc-key {
+  flex: 1 1 0; min-width: 0; height: clamp(52px, 6vh, 74px); border-radius: 12px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.06); border: 2px solid transparent; color: #fff;
+  font-size: clamp(1.1rem, 1.5vw, 1.7rem); font-weight: 800;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+.tvc-key.is-focused { background: var(--tvh-yellow); color: var(--tvh-ink); border-color: var(--tvh-yellow); box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.3); transform: scale(1.06); }
+.tvc-key-actions { margin-top: 0.3rem; }
+.tvc-key-wide { flex: 1.5 1 0; font-size: clamp(0.95rem, 1.2vw, 1.35rem); background: rgba(255, 255, 255, 0.09); }
+.tvc-key-confirm { flex: 2 1 0; background: var(--tvh-yellow); color: var(--tvh-ink); font-size: clamp(1rem, 1.25vw, 1.4rem); }
+.tvc-key-confirm.is-focused { box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.4), 0 0 26px rgba(253, 224, 71, 0.5); }
+
+/* Filtros avançados */
+.tvc-adv-box { width: min(1400px, 94%); max-height: 92%; display: flex; flex-direction: column; gap: clamp(0.9rem, 1.6vh, 1.4rem); background: rgba(12, 14, 20, 0.98); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; padding: clamp(1.2rem, 2.4vh, 2rem) clamp(1.4rem, 2.4vw, 2.4rem); }
+.tvc-adv-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.tvc-adv-title { margin: 0; color: #fff; font-weight: 900; text-transform: uppercase; font-size: clamp(1.4rem, 1.9vw, 2.2rem); }
+.tvc-adv-count { color: var(--tvh-yellow); font-weight: 800; font-size: clamp(1.05rem, 1.3vw, 1.5rem); }
+.tvc-adv-sections { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: clamp(0.8rem, 1.6vh, 1.3rem); }
+.tvc-adv-sections::-webkit-scrollbar { display: none; }
+.tvc-adv-section-h { margin: 0 0 0.5rem; color: rgba(255, 255, 255, 0.55); font-weight: 800; text-transform: uppercase; font-size: clamp(0.82rem, 0.95vw, 1.05rem); letter-spacing: 0.04em; }
+.tvc-adv-options { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.tvc-adv-chip {
+  display: inline-flex; align-items: center; gap: 0.4rem; height: clamp(46px, 4.8vh, 58px); padding: 0 clamp(1rem, 1.4vw, 1.5rem);
+  border-radius: 12px; cursor: pointer; background: rgba(255, 255, 255, 0.06); border: 2px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.82); font-weight: 800; font-size: clamp(0.9rem, 1.1vw, 1.2rem);
+  transition: transform 0.13s ease, box-shadow 0.13s ease, background-color 0.13s ease, border-color 0.13s ease, color 0.13s ease;
+}
+.tvc-adv-chip.is-active { background: rgba(253, 224, 71, 0.16); border-color: rgba(253, 224, 71, 0.5); color: var(--tvh-yellow); }
+.tvc-adv-chip.is-focused { background: var(--tvh-yellow); color: var(--tvh-ink); border-color: var(--tvh-yellow); box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.3); transform: scale(1.04); }
+.tvc-adv-actions { flex: 0 0 auto; display: flex; gap: 0.75rem; }
+.tvc-adv-btn { height: clamp(52px, 5vh, 64px); padding: 0 1.6rem; border-radius: 14px; font-weight: 800; font-size: clamp(1rem, 1.2vw, 1.3rem); background: rgba(255, 255, 255, 0.08); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.18); }
+.tvc-adv-btn.is-primary { background: var(--tvh-yellow); color: var(--tvh-ink); border-color: var(--tvh-yellow); }
+.tvc-adv-btn.is-focused { box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.35); transform: scale(1.03); }
+.tvc-adv-btn.is-primary.is-focused { box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.4), 0 0 26px rgba(253, 224, 71, 0.5); }
+
+/* Fila */
+.tvc-queue-box { width: min(1000px, 92%); max-height: 90%; display: flex; flex-direction: column; gap: clamp(0.9rem, 1.6vh, 1.3rem); background: rgba(12, 14, 20, 0.98); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 22px; padding: clamp(1.2rem, 2.4vh, 2rem); }
+.tvc-queue-head { display: flex; align-items: center; gap: 0.9rem; }
+.tvc-queue-title { margin: 0; color: #fff; font-weight: 900; text-transform: uppercase; font-size: clamp(1.4rem, 1.9vw, 2.2rem); }
+.tvc-queue-festa-badge { padding: 0.3rem 0.8rem; border-radius: 9999px; background: rgba(236, 72, 153, 0.16); border: 1.5px solid rgba(236, 72, 153, 0.4); color: #f9a8d4; font-weight: 800; font-size: 0.9rem; }
+.tvc-queue-empty { color: rgba(255, 255, 255, 0.5); font-weight: 700; font-size: clamp(1rem, 1.2vw, 1.3rem); }
+.tvc-queue-lists { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 1rem; }
+.tvc-queue-lists::-webkit-scrollbar { display: none; }
+.tvc-queue-section-h { color: rgba(255, 255, 255, 0.5); font-weight: 800; text-transform: uppercase; font-size: 0.82rem; letter-spacing: 0.05em; }
+.tvc-queue-ul { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.tvc-qrow { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.75rem; border-radius: 12px; background: rgba(255, 255, 255, 0.04); }
+.tvc-qrow-now { margin-top: 0.4rem; background: rgba(253, 224, 71, 0.1); border: 1px solid rgba(253, 224, 71, 0.3); }
+.tvc-qrow-nowicon { color: var(--tvh-yellow); flex: 0 0 auto; }
+.tvc-qrow.is-focused { background: rgba(253, 224, 71, 0.12); box-shadow: 0 0 0 2px rgba(253, 224, 71, 0.4); }
+.tvc-qrow-pos { flex: 0 0 auto; width: 1.8rem; text-align: center; color: rgba(255, 255, 255, 0.5); font-weight: 900; }
+.tvc-qrow-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.tvc-qrow-title { color: #fff; font-weight: 800; font-size: clamp(1rem, 1.15vw, 1.25rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tvc-qrow-singer { color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; font-weight: 600; }
+.tvc-qrow-remove { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.4rem 0.7rem; border-radius: 9999px; background: transparent; border: 1.5px solid rgba(248, 113, 113, 0.3); color: #f87171; font-weight: 800; font-size: 0.9rem; cursor: pointer; }
+.tvc-qrow.is-focused .tvc-qrow-remove { background: rgba(248, 113, 113, 0.2); border-color: #f87171; color: #fff; }
+.tvc-queue-actions { flex: 0 0 auto; display: flex; gap: 0.75rem; }
+.tvc-queue-btn { height: clamp(52px, 5vh, 64px); padding: 0 1.5rem; border-radius: 14px; font-weight: 800; font-size: clamp(1rem, 1.2vw, 1.3rem); background: rgba(255, 255, 255, 0.08); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.18); display: inline-flex; align-items: center; gap: 0.5rem; }
+.tvc-queue-btn.is-primary { background: var(--tvh-yellow); color: var(--tvh-ink); border-color: var(--tvh-yellow); }
+.tvc-queue-btn.is-danger { color: #f87171; border-color: rgba(248, 113, 113, 0.4); }
+.tvc-queue-btn.is-focused { box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.35); transform: scale(1.03); }
+.tvc-queue-btn.is-danger.is-focused { background: rgba(248, 113, 113, 0.2); border-color: #f87171; color: #fff; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.4); }
+
+/* ── Responsive : 1280×720 → cartes un peu plus petites, panneau conservé ───── */
+@media (max-width: 1400px) {
+  .tvc-left { flex-basis: 66%; }
+  .tvc-grid { gap: clamp(0.7rem, 1vw, 1.1rem); }
+}
+/* 720p : la grille passe à 3 colonnes pour garder des cartes lisibles à 3 m. */
+@media (max-height: 800px) {
+  .tvc-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ── Palier 4K (≥2500px) — relève les plafonds clamp() (proportionnel) ──────── */
+@media (min-width: 2500px) {
+  .tvc-header-title { font-size: clamp(1.6rem, 2.2vw, 4rem); }
+  .tvc-header-sub { font-size: clamp(0.95rem, 1.15vw, 2rem); }
+  .tvc-chip { height: clamp(44px, 4.6vh, 92px); font-size: clamp(0.9rem, 1.1vw, 1.9rem); }
+  .tvc-card-title { font-size: clamp(0.98rem, 1.05vw, 1.85rem); }
+  .tvc-panel-title { font-size: clamp(1.3rem, 1.7vw, 3rem); }
+  .tvc-panel-pitch { font-size: clamp(0.98rem, 1.15vw, 2rem); }
+  .tvc-panel-meta-value { font-size: clamp(0.85rem, 1vw, 1.7rem); }
+  .tvc-panel-cta { height: clamp(50px, 4.8vh, 96px); font-size: clamp(1rem, 1.2vw, 2rem); }
+  .tvc-key { height: clamp(52px, 6vh, 118px); font-size: clamp(1.1rem, 1.5vw, 2.6rem); }
+}
