@@ -1,158 +1,227 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { Mic, Users, PartyPopper, Settings2, LayoutGrid } from 'lucide-react';
-import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
-import { getTvCardArtwork, useTvArtworkManifest } from './tvArtwork';
-import TvHomeNavigation from './components/TvHomeNavigation';
-import TvMediaRail from './components/TvMediaRail';
-import TvSettingsPanel from './components/TvSettingsPanel';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FocusContext, useFocusable, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
+import { Mic, Music, Sparkles, ChevronRight } from 'lucide-react';
+import { useTvArtworkManifest, getTvCardArtwork } from './tvArtwork';
+import { toTvSongs } from './lib/tvSongRepository';
+import { filterCatalog, QUICK_FILTERS } from './lib/tvCatalogFilters';
+import { trackTv } from './lib/tvAnalytics';
+import TvTopNavigation from './components/TvTopNavigation';
+import TvSongGrid from './components/TvSongGrid';
+import TvFocusedSongPanel from './components/TvFocusedSongPanel';
+import TvEmptyCatalogState from './components/TvEmptyCatalogState';
 import FocusableButton from './components/FocusableButton';
 
-const FESTA_MIN_SONGS = 2;
+// Mêmes clés de focus que le catálogo (les deux écrans ne coexistent jamais dans la
+// pile) → la carte hérite du même « Droite depuis la dernière colonne → panneau ».
+const cardFocusKey = (vm) => `CAT_CARD_${vm.id}`;
+
+/** Une chip de filtre rapide (réutilise le style .tvc-chip du catálogo). */
+function FilterChip({ label, active, focusKey, onPress }) {
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: onPress,
+    onFocus: () => ref.current?.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' }),
+  });
+  return (
+    <button
+      ref={ref}
+      type="button"
+      onClick={onPress}
+      aria-pressed={active}
+      aria-label={label}
+      className={`tvc-chip ${active ? 'is-active' : ''} ${focused ? 'is-focused' : ''}`}
+    >
+      <span>{label}</span>
+    </button>
+  );
+}
+
+/** Rangée de chips de filtre rapide (groupe de focus propre). */
+function KaraokeFilters({ activeQuickId, onSelectQuick }) {
+  const { ref, focusKey } = useFocusable({
+    focusKey: 'KARAOKE_FILTERS', trackChildren: true, saveLastFocusedChild: true,
+  });
+  return (
+    <FocusContext.Provider value={focusKey}>
+      <div ref={ref} className="tvc-filters tvk-filters" role="toolbar" aria-label="Filtrar karaokês">
+        {QUICK_FILTERS.map((f) => (
+          <FilterChip
+            key={f.id}
+            label={f.label}
+            active={activeQuickId === f.id}
+            focusKey={`KARAOKE_FILTER_${f.id.toUpperCase()}`}
+            onPress={() => onSelectQuick(f.id)}
+          />
+        ))}
+      </div>
+    </FocusContext.Provider>
+  );
+}
 
 /**
- * Page dédiée « Karaokê » — atteinte depuis la destination Karaokê de la nav
- * partagée. Remplace l'ancienne grille vide : hero + 4 cartes de mode + une seule
- * rangée « Para cantar agora ». Ne duplique AUCUNE logique de lecture/synchro — les
- * 4 cartes ouvrent des flux déjà câblés au niveau TvApp (grille filtrée par mode,
- * ou lancement direct karaoké/festa).
+ * Écran Karaokê TV « Palco da Segunda » — catálogo dédié aux titres chantables,
+ * inspiré de la page Karaokê desktop et adapté au 10-foot / D-pad :
+ *   hero compact + « Me surpreenda » + filtres rapides + grille de cartes + panneau
+ *   contextuel (~30% droite). OK/clic sur une carte OUVRE LA FICHE (jamais le lecteur
+ *   directement) ; « Me surpreenda » tire une chanson au hasard et ouvre sa fiche.
+ *
+ * Ne duplique aucune logique de lecture : la fiche décide (Cantar agora / fila /
+ * dueto…). Réutilise les composants du catálogo (grille, panneau, chips) pour rester
+ * cohérent, sans toucher au TvCatalogPage générique.
  */
 export default function TvKaraokeLanding({
-  songs, getThumb, getHasKaraoke,
-  onChooseSolo, onChooseDuet, onChooseFesta, onOpenFullGrid, onRequestKaraoke,
-  onNavigateHome, onNavigateFesta, onNavigateClips, onNavigateAll,
-  onExitApp, backInterceptorRef,
+  songs, getThumb, getHasKaraoke, familiarIds = null,
+  onOpenDetail, onCantar,
+  onNavigateHome, onNavigateFesta, onNavigateAll, onOpenSettings,
+  initialFocusKey = null, onCardFocusKey,
+  backInterceptorRef,
 }) {
   const manifest = useTvArtworkManifest();
-  const getCardArtwork = useCallback(
-    (song) => getTvCardArtwork(song, manifest, getThumb(song) || song?.cover_image),
+
+  useEffect(() => { trackTv('tv_karaoke_opened'); }, []);
+
+  const [quickId, setQuickId] = useState('todas');
+  const karaokeVms = useMemo(() => toTvSongs(songs.filter(getHasKaraoke)), [songs, getHasKaraoke]);
+  const filtered = useMemo(() => filterCatalog(karaokeVms, { quickId }), [karaokeVms, quickId]);
+  const total = karaokeVms.length;
+
+  // ── Chanson focalisée (pilote le panneau) — restaurée au retour d'une fiche ──
+  const restoredVm = initialFocusKey && filtered.find((vm) => cardFocusKey(vm) === initialFocusKey);
+  const [focusedVm, setFocusedVm] = useState(restoredVm || filtered[0] || null);
+  useEffect(() => {
+    if (!filtered.length) { setFocusedVm(null); return; }
+    if (!focusedVm || !filtered.some((vm) => vm.id === focusedVm.id)) setFocusedVm(filtered[0]);
+  }, [filtered, focusedVm]);
+
+  const getArtwork = useCallback(
+    (vm) => getTvCardArtwork(vm.raw, manifest, getThumb(vm.raw) || vm.raw?.cover_image),
     [manifest, getThumb],
   );
 
-  const karaokeSongs = useMemo(() => songs.filter(getHasKaraoke), [songs, getHasKaraoke]);
-  const karaokeRail = karaokeSongs.slice(0, 12);
-  const hasSongs = karaokeSongs.length > 0;
-  const festaDisabled = karaokeSongs.length < FESTA_MIN_SONGS;
+  const handleFocusSong = useCallback((vm) => {
+    setFocusedVm(vm);
+    onCardFocusKey?.(cardFocusKey(vm));
+  }, [onCardFocusKey]);
 
-  // Focus initial : Solo (cf. cahier des charges) — sauf si aucune chanson karaokê
-  // n'est disponible, auquel cas on ne force rien sur un bouton désactivé.
-  useEffect(() => {
-    const target = hasSongs ? 'KARAOKE_MODE_SOLO' : 'HOME_NAV_KARAOKE';
-    const t = setTimeout(() => { try { SpatialNavigation.setFocus(target); } catch { /* ignore */ } }, 0);
-    return () => clearTimeout(t);
-  }, [hasSongs]);
+  const openDetail = useCallback((vm) => {
+    trackTv('tv_song_detail_opened', { song_id: vm.id, source: 'karaoke' });
+    onOpenDetail(vm.raw);
+  }, [onOpenDetail]);
 
-  // ── Panneau de réglages (même composant partagé que l'accueil/la fiche) ──
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [karaokeOpts, setKaraokeOpts] = useState(loadKaraokeOptions);
-  useEffect(() => { saveKaraokeOptions(karaokeOpts); }, [karaokeOpts]);
-  const openSettings = useCallback(() => setSettingsOpen(true), []);
-  const closeSettings = useCallback(() => {
-    setSettingsOpen(false);
-    setTimeout(() => { try { SpatialNavigation.setFocus('KARAOKE_MODE_OPTIONS'); } catch { /* ignore */ } }, 0);
+  const selectQuick = useCallback((id) => {
+    trackTv('tv_karaoke_filter_selected', { filter: id });
+    setQuickId(id);
   }, []);
 
+  // « Me surpreenda » : tire une chanson au hasard parmi les résultats filtrés
+  // (respecte le filtre actif), évite de retirer la même deux fois de suite, et
+  // OUVRE SA FICHE (pas de lecture auto — la fiche reste l'écran de décision).
+  const lastSurpriseRef = useRef(null);
+  const surprise = useCallback(() => {
+    const pool = filtered.length ? filtered : karaokeVms;
+    if (!pool.length) return;
+    let idx = Math.floor(Math.random() * pool.length);
+    if (pool.length > 1 && pool[idx].id === lastSurpriseRef.current) idx = (idx + 1) % pool.length;
+    const pick = pool[idx];
+    lastSurpriseRef.current = pick.id;
+    trackTv('tv_karaoke_surprise_result', { song_id: pick.id });
+    onOpenDetail(pick.raw);
+  }, [filtered, karaokeVms, onOpenDetail]);
+
+  // ── Focus initial / restauré (une seule fois au montage) ──
+  useEffect(() => {
+    const restorable = initialFocusKey && filtered.some((vm) => cardFocusKey(vm) === initialFocusKey);
+    const target = restorable
+      ? initialFocusKey
+      : (filtered[0] ? cardFocusKey(filtered[0]) : 'KARAOKE_SURPRISE');
+    const t = setTimeout(() => { try { SpatialNavigation.setFocus(target); } catch { /* ignore */ } }, 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Back sans overlay → laisse TvApp dépiler (retour à l'écran précédent).
   useEffect(() => {
     if (!backInterceptorRef) return undefined;
-    backInterceptorRef.current = () => {
-      if (settingsOpen) { closeSettings(); return true; }
-      return false;
-    };
+    backInterceptorRef.current = () => false;
     return () => { if (backInterceptorRef) backInterceptorRef.current = null; };
-  }, [backInterceptorRef, settingsOpen, closeSettings]);
+  }, [backInterceptorRef]);
+
+  const focusFirstSong = useCallback(() => {
+    setQuickId('todas');
+    setTimeout(() => {
+      try { SpatialNavigation.setFocus(filtered[0] ? cardFocusKey(filtered[0]) : 'KARAOKE_SURPRISE'); } catch { /* ignore */ }
+    }, 0);
+  }, [filtered]);
+
+  const familiar = focusedVm && familiarIds ? familiarIds.has(focusedVm.id) : false;
 
   return (
-    <div className="tv2-home tv-karaoke-landing">
-      <TvHomeNavigation
+    <div className="tvc-page tvk-page">
+      <TvTopNavigation
         active="karaoke"
-        onStart={onNavigateHome}
-        onKaraoke={() => SpatialNavigation.setFocus('KARAOKE_MODE_SOLO')}
+        onInicio={onNavigateHome}
+        onCatalogo={onNavigateAll}
+        onKaraoke={focusFirstSong}
         onFesta={onNavigateFesta}
-        onClips={onNavigateClips}
-        onAll={onNavigateAll}
-        onOpenSettings={openSettings}
+        onOpenSettings={onOpenSettings}
+        festaQueueCount={null}
       />
 
-      <section className="tv-karaoke-hero">
-        <div className="tv-karaoke-hero-text">
-          <h1 className="tv-karaoke-hero-title">KARAOKÊ</h1>
-          <p className="tv-karaoke-hero-subtitle">Escolha seu jeito de cantar</p>
-          <p className="tv-karaoke-hero-support">Cante sozinho, em dupla ou com toda a família.</p>
+      <section className="tvk-hero">
+        <div className="tvk-hero-text">
+          <p className="tvk-eyebrow"><Mic size={17} /> Palco da Segunda</p>
+          <h1 className="tvk-title">KARAOKÊ</h1>
+          <p className="tvk-subtitle">Escolha uma música ou deixe a sorte decidir.</p>
         </div>
-        <div className="tv-karaoke-hero-art" aria-hidden="true">
-          <div className="tv-karaoke-hero-glow" />
-          <Mic size={148} strokeWidth={1.2} />
-        </div>
+        {total > 0 && (
+          <p className="tvk-count">
+            <Music size={17} /> {total} música{total > 1 ? 's' : ''} pronta{total > 1 ? 's' : ''} para cantar
+          </p>
+        )}
       </section>
 
-      <div className="tv-karaoke-modes">
+      <div className="tvk-actions">
         <FocusableButton
-          focusKey="KARAOKE_MODE_SOLO"
-          className={`tv-mode-card ${!hasSongs ? 'is-disabled' : ''}`}
-          ariaLabel="Cantar sozinho"
-          onPress={hasSongs ? onChooseSolo : undefined}
+          focusKey="KARAOKE_SURPRISE"
+          className="tvk-surprise"
+          ariaLabel="Me surpreenda — sortear uma música para cantar"
+          onPress={surprise}
         >
-          <Mic size={28} />
-          <span className="tv-mode-card-title">Solo</span>
-          <span className="tv-mode-card-sub">Cante sozinho</span>
+          <span className="tvk-surprise-icon" aria-hidden="true"><Sparkles size={26} /></span>
+          <span className="tvk-surprise-text">
+            <span className="tvk-surprise-title">ME SURPREENDA</span>
+            <span className="tvk-surprise-sub">Uma música escolhida na hora</span>
+          </span>
+          <span className="tvk-surprise-chevron" aria-hidden="true"><ChevronRight size={22} /></span>
         </FocusableButton>
-        <FocusableButton
-          focusKey="KARAOKE_MODE_DUET"
-          className={`tv-mode-card ${!hasSongs ? 'is-disabled' : ''}`}
-          ariaLabel="Cantar em dueto"
-          onPress={hasSongs ? onChooseDuet : undefined}
-        >
-          <Users size={28} />
-          <span className="tv-mode-card-title">Dueto</span>
-          <span className="tv-mode-card-sub">Cante com alguém</span>
-        </FocusableButton>
-        <FocusableButton
-          focusKey="KARAOKE_MODE_FESTA"
-          className={`tv-mode-card ${festaDisabled ? 'is-disabled' : ''}`}
-          ariaLabel="Ativar Modo Festa"
-          onPress={festaDisabled ? undefined : onChooseFesta}
-        >
-          <PartyPopper size={28} />
-          <span className="tv-mode-card-title">Festa</span>
-          <span className="tv-mode-card-sub">Todos cantam juntos</span>
-        </FocusableButton>
-        <FocusableButton
-          focusKey="KARAOKE_MODE_OPTIONS"
-          className="tv-mode-card"
-          ariaLabel="Abrir opções do karaokê"
-          onPress={openSettings}
-        >
-          <Settings2 size={28} />
-          <span className="tv-mode-card-title">Opções</span>
-          <span className="tv-mode-card-sub">Ajuste sua experiência</span>
-        </FocusableButton>
+        <KaraokeFilters activeQuickId={quickId} onSelectQuick={selectQuick} />
       </div>
 
-      {hasSongs ? (
-        <div className="tv-karaoke-row-wrap">
-          <TvMediaRail
-            focusKey="KARAOKE_ROW"
-            title="Para cantar agora"
-            songs={karaokeRail}
-            getArtwork={getCardArtwork}
-            variant="karaoke"
-            onSelect={onRequestKaraoke}
-            trailingAction={{
-              focusKey: 'KARAOKE_ROW_ALL',
-              label: 'Ver todos os karaokês',
-              ariaLabel: 'Ver todos os karaokês',
-              icon: LayoutGrid,
-              onPress: onOpenFullGrid,
-            }}
-          />
+      <div className="tvc-body">
+        <div className="tvc-left">
+          {total === 0 ? (
+            <p className="tvk-empty">Nenhum karaokê disponível no momento.</p>
+          ) : filtered.length === 0 ? (
+            <TvEmptyCatalogState variant="empty-filter" onAction={() => setQuickId('todas')} />
+          ) : (
+            <TvSongGrid
+              items={filtered}
+              getArtwork={getArtwork}
+              focusKeyFor={cardFocusKey}
+              onSelect={openDetail}
+              onFocusSong={handleFocusSong}
+            />
+          )}
         </div>
-      ) : (
-        <p className="tv-karaoke-empty">Nenhum karaokê disponível no momento.</p>
-      )}
 
-      {settingsOpen && (
-        <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={onExitApp} />
-      )}
+        <TvFocusedSongPanel
+          vm={focusedVm}
+          artSrc={focusedVm ? getArtwork(focusedVm) : null}
+          familiar={familiar}
+          onConhecer={openDetail}
+          onCantar={(vm) => onCantar(vm.raw)}
+        />
+      </div>
     </div>
   );
 }

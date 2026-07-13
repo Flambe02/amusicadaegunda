@@ -26,7 +26,19 @@ export default function ProtectedAdmin() {
           const devEmail = import.meta.env.VITE_DEV_ADMIN_EMAIL;
           const devPass  = import.meta.env.VITE_DEV_ADMIN_PASSWORD;
           if (devEmail && devPass) {
-            await supabase.auth.signInWithPassword({ email: devEmail, password: devPass });
+            // ⚠️ Ne JAMAIS avaler cet échec : des credentials .env invalides
+            // laissaient l'Admin s'afficher SANS session → toutes les écritures
+            // bloquées par RLS (« Falha ao salvar » incompréhensible, 2026-07-13).
+            const { error } = await supabase.auth.signInWithPassword({ email: devEmail, password: devPass });
+            if (error) {
+              console.error(
+                '❌ Auto-login dev ÉCHOUÉ (VITE_DEV_ADMIN_EMAIL/VITE_DEV_ADMIN_PASSWORD invalides dans .env):',
+                error.message,
+                '→ le formulaire de login s\'affiche ; connecte-toi manuellement avec la conta admin.',
+              );
+            }
+          } else {
+            console.warn('⚠️ Dev: VITE_DEV_ADMIN_EMAIL/VITE_DEV_ADMIN_PASSWORD absents du .env → login manuel requis.');
           }
         }
       }
@@ -199,10 +211,12 @@ export default function ProtectedAdmin() {
     }
   };
 
-  // Dev mode: skip login UI but still need a valid session for RLS
-  // isAuthenticated is set by checkAuth() → checkAdminStatus() via the normal flow
-  // Just skip the "not admin" gate and render Admin as soon as loading is done
-  if (isDev && !isLoading) {
+  // Dev mode : saute le portail « admins » (confort), mais JAMAIS sans session.
+  // Avant : `if (isDev && !isLoading) return <Admin />` affichait l'Admin même
+  // sans session Supabase → l'utilisateur croyait être connecté alors que le RLS
+  // bloquait toutes les écritures (« Falha ao salvar », 2026-07-13). Désormais :
+  // pas de session en dev → le formulaire de login s'affiche, comme en prod.
+  if (isDev && !isLoading && isAuthenticated) {
     return <Admin />;
   }
 

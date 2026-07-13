@@ -40,10 +40,21 @@ export default function TvFeaturedHero({ song, heroSrc, hasKaraoke, dots, onConh
       <div className="tvh-hero-scrim" aria-hidden="true" />
 
       <div className="tvh-hero-content">
-        <span className="tvh-hero-badge"><Star size={13} /> {badge}</span>
-        <h1 className={`tvh-hero-title ${titleSizeClass(song.title)}`}>{song.title}</h1>
-        {pitch && <p className="tvh-hero-pitch">{pitch}</p>}
-        {meta && <p className="tvh-hero-meta">{meta}</p>}
+        {/* Zone d'info cliquable (souris/tactile) → ouvre la fiche, comme un clic sur
+            une carte. Non focusable au D-pad (pas de useFocusable) : la télécommande
+            passe par le bouton « Abrir ficha » ci-dessous, jamais interrompue. */}
+        <div
+          className="tvh-hero-lead"
+          role="button"
+          tabIndex={-1}
+          onClick={onConhecer}
+          aria-label={`Abrir a ficha de ${song.title}`}
+        >
+          <span className="tvh-hero-badge"><Star size={13} /> {badge}</span>
+          <h1 className={`tvh-hero-title ${titleSizeClass(song.title)}`}>{song.title}</h1>
+          {pitch && <p className="tvh-hero-pitch">{pitch}</p>}
+          {meta && <p className="tvh-hero-meta">{meta}</p>}
+        </div>
 
         <div className="tvh-hero-actions">
           <FocusableButton

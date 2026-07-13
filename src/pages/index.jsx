@@ -55,6 +55,24 @@ function PagesContent() {
         return () => clearTimeout(gaTimer.current);
     }, [location]);
 
+    // Admin routes use their OWN full-screen shell (AdminLayout inside
+    // ProtectedAdmin/Admin). They must NOT be wrapped in the public <Layout>
+    // (olive sidebar, branding card, countdown, mobile bottom nav). We split the
+    // route tree here so the public shell is never mounted on /admin/*.
+    const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+
+    if (isAdminRoute) {
+        const AdminComponent = ROUTES.find((r) => r.path === '/admin')?.component;
+        return (
+            <Suspense fallback={<LoadingSpinner />}>
+                <AuthHashHandler />
+                <Routes>
+                    <Route path="/admin/*" element={AdminComponent ? <AdminComponent /> : null} />
+                </Routes>
+            </Suspense>
+        );
+    }
+
     return (
         <Layout>
             <AuthHashHandler />
@@ -65,21 +83,22 @@ function PagesContent() {
                     {/* ✅ SEO: Redirections 301 legacy - DOIVENT ÊTRE EN PREMIER */}
                     <Route path="/chansons" element={<Navigate to="/musica" replace />} />
                     <Route path="/chansons/:slug" element={<LegacyChansonRedirect />} />
-                    
+
                     {/* ✅ SEO: Redirection 301 pour /home → / (évite duplication de contenu) */}
                     <Route path="/home" element={<Navigate to="/" replace />} />
 
                     {/* Produit: /calendar supprimé, redirection vers la home */}
                     <Route path="/calendar" element={<Navigate to="/" replace />} />
-                    
+
                     {/* ✅ SEO: Redirection 301 pour /playlist → /musica (single source of truth) */}
                     <Route path="/playlist" element={<Navigate to="/musica" replace />} />
-                    
-                    {ROUTES.map((route) => (
-                        <Route 
-                            key={route.path} 
-                            path={route.path} 
-                            element={<route.component />} 
+
+                    {/* Admin is rendered above, outside the public Layout */}
+                    {ROUTES.filter((route) => route.path !== '/admin').map((route) => (
+                        <Route
+                            key={route.path}
+                            path={route.path}
+                            element={<route.component />}
                         />
                     ))}
                 </Routes>

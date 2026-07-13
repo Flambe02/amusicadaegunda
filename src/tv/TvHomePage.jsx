@@ -16,7 +16,10 @@ const HERO_DECODE_TIMEOUT_MS = 900;
 // événement par appui D-pad rapide en traversant la rangée, seulement quand
 // l'utilisateur s'arrête réellement sur une carte.
 const FOCUS_ANALYTICS_DWELL_MS = 600;
-const RAIL_MAX = 14;
+// Rangée d'accueil : on n'affiche QUE 4 chansons + une carte « Ver outras músicas »
+// (5 emplacements) → tient sans débordement sur une TV 1080p standard, et la carte
+// finale mène droit au Catálogo (au lieu d'une rangée qui défile à l'infini).
+const RAIL_VISIBLE = 4;
 // Bannière « roll out » du hero : cycle automatiquement les 3 dernières chansons
 // (3 pastilles). Cadence de rotation ; la rotation se met en pause tant que
 // l'utilisateur parcourt la rangée (le hero suit alors la carte focalisée) et
@@ -45,7 +48,7 @@ const cardFocusKey = (song) => `HOME_CARD_${song.id}`;
 export default function TvHomePage({
   songs, getThumb, getHasKaraoke,
   festaQueueCount, initialFocusKey,
-  onOpenDetail, onCantar, onChooseMode, onOpenCatalog, onOpenKaraoke, onCardFocusKey,
+  onOpenDetail, onCantar, onChooseMode, onOpenCatalog, onOpenKaraoke, onOpenSettings, onCardFocusKey,
 }) {
   const manifest = useTvArtworkManifest();
   const manifestRef = useRef(manifest);
@@ -53,7 +56,8 @@ export default function TvHomePage({
 
   useEffect(() => { trackTv('tv_home_opened'); }, []);
 
-  const railSongs = useMemo(() => songs.slice(0, RAIL_MAX), [songs]);
+  const railSongs = useMemo(() => songs.slice(0, RAIL_VISIBLE), [songs]);
+  const railRemaining = Math.max(0, songs.length - RAIL_VISIBLE);
   // Bannière roll-out : les 3 dernières chansons.
   const carouselSongs = useMemo(() => songs.slice(0, CAROUSEL_MAX), [songs]);
 
@@ -215,7 +219,7 @@ export default function TvHomePage({
   if (!songs.length) {
     return (
       <div className="tvh-home">
-        <TvTopNavigation active="inicio" onInicio={resetToInitial} onCatalogo={onOpenCatalog} onKaraoke={onOpenKaraoke} onFesta={() => chooseMode('festa')} festaQueueCount={festaQueueCount} />
+        <TvTopNavigation active="inicio" onInicio={resetToInitial} onCatalogo={onOpenCatalog} onKaraoke={onOpenKaraoke} onFesta={() => chooseMode('festa')} onOpenSettings={onOpenSettings} festaQueueCount={festaQueueCount} />
         <p className="tvh-empty">Nenhuma música disponível.</p>
       </div>
     );
@@ -229,6 +233,7 @@ export default function TvHomePage({
         onCatalogo={onOpenCatalog}
         onKaraoke={onOpenKaraoke}
         onFesta={() => chooseMode('festa')}
+        onOpenSettings={onOpenSettings}
         festaQueueCount={festaQueueCount}
       />
 
@@ -249,6 +254,8 @@ export default function TvHomePage({
           focusKeyFor={cardFocusKey}
           onSelect={selectFromRail}
           onFocusSong={handleFocusSong}
+          onSeeAll={onOpenCatalog}
+          remainingCount={railRemaining}
         />
 
         <TvSingingModes onChooseMode={chooseMode} />

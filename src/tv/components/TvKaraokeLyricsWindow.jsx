@@ -1,4 +1,5 @@
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
+import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import { TV_LINE_ROLES, tvActiveFontSize } from '@/tv/lib/tvLyricsWindow';
 
 /**
@@ -11,7 +12,7 @@ import { TV_LINE_ROLES, tvActiveFontSize } from '@/tv/lib/tvLyricsWindow';
  * mobile/desktop (scrollable, toutes les lignes montées).
  */
 export default function TvKaraokeLyricsWindow({
-  lines, displayIdx, wipeApiRef, fontScale, showBall, dueto, lineColor,
+  lines, displayIdx, wipeApiRef, wordApiRef, fontScale, showBall, dueto, lineColor,
 }) {
   if (!lines || lines.length === 0) {
     return (
@@ -42,14 +43,25 @@ export default function TvKaraokeLyricsWindow({
             }}
           >
             {isActive ? (
-              <KaraokeWipeLine
-                ref={wipeApiRef}
-                text={line.text || '♪'}
-                showBall={showBall}
-                color={dueto ? lineColor(i) : '#FDE047'}
-                unsungColor="rgba(255,255,255,0.6)"
-                className="tv-karaoke-activeline"
-              />
+              Array.isArray(line.words) && line.words.length > 0 ? (
+                <KaraokeWordLine
+                  ref={wordApiRef}
+                  words={line.words}
+                  showBall={showBall}
+                  color={dueto ? lineColor(i) : '#FDE047'}
+                  unsungColor="rgba(255,255,255,0.6)"
+                  className="tv-karaoke-activeline"
+                />
+              ) : (
+                <KaraokeWipeLine
+                  ref={wipeApiRef}
+                  text={line.text || '♪'}
+                  showBall={showBall}
+                  color={dueto ? lineColor(i) : '#FDE047'}
+                  unsungColor="rgba(255,255,255,0.6)"
+                  className="tv-karaoke-activeline"
+                />
+              )
             ) : (line.text || '♪')}
           </p>
         );

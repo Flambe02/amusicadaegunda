@@ -1,19 +1,19 @@
 import { FocusContext, useFocusable } from '@noriginmedia/norigin-spatial-navigation';
-import { Mic, Plus, BookOpen, Play } from 'lucide-react';
+import { Mic, BookOpen, Play } from 'lucide-react';
 import FocusableButton from './FocusableButton';
 
 /**
  * Rangée d'actions de la fiche, priorité (cf. spec) :
  *   1. CANTAR AGORA  (jaune, dominant, focus initial)
- *   2. ADICIONAR À FILA  (secondaire, sombre bordé) — « … DA FESTA » si session active
- *   3. VER CONTEXTO COMPLETO  (tertiaire, discret)
- *   4. PRÉVIA DO CLIPE  (tertiaire, discret) — le clip n'est JAMAIS une action primaire
- * Groupe de focus dédié (`DETAIL_ACTIONS`). Le CTA clip n'apparaît que si un teaser
- * existe ; « Ver contexto » que si un contexte complet existe.
+ *   2. VER CONTEXTO COMPLETO  (tertiaire, discret)
+ *   3. PRÉVIA DO CLIPE  (tertiaire, discret) — le clip n'est JAMAIS une action primaire
+ * « Adicionar à fila » a été retiré de la fiche (jugé confus). La fila reste
+ * alimentable via le Modo Festa. Groupe de focus dédié (`DETAIL_ACTIONS`). Le CTA
+ * clip n'apparaît que si un teaser existe ; « Ver contexto » que si un contexte existe.
  */
 export default function TvSongActions({
-  festaActive = false, hasContext = true, hasTeaser = true, canSing = true,
-  onCantar, onFila, onContext, onTeaser,
+  hasContext = true, hasTeaser = true, canSing = true,
+  onCantar, onContext, onTeaser,
 }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'DETAIL_ACTIONS', trackChildren: true, saveLastFocusedChild: true,
@@ -32,14 +32,6 @@ export default function TvSongActions({
             <Mic size={24} /> Cantar agora
           </FocusableButton>
         )}
-        <FocusableButton
-          focusKey="DETAIL_FILA"
-          className="tvd-btn tvd-btn-secondary"
-          ariaLabel={festaActive ? 'Adicionar à fila da festa' : 'Adicionar à fila'}
-          onPress={onFila}
-        >
-          <Plus size={22} /> {festaActive ? 'Adicionar à fila da festa' : 'Adicionar à fila'}
-        </FocusableButton>
         {hasContext && (
           <FocusableButton
             focusKey="DETAIL_CONTEXT"

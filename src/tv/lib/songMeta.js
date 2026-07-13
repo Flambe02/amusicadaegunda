@@ -13,6 +13,12 @@ import { hasLrcContent, hasDuetTags } from '@/lib/lrc';
 import { MONTHS_PT } from '../tvMonths';
 
 export const DIFFICULTY = { EASY: 'Fácil', MEDIUM: 'Médio', HARD: 'Difícil' };
+
+// Mappe la clé stable stockée en base (`songs.difficulty`) vers le label affiché.
+// Accepte aussi un label déjà en portugais (tolérance si la colonne contient l'ancien format).
+const DIFFICULTY_BY_KEY = {
+  easy: DIFFICULTY.EASY, medium: DIFFICULTY.MEDIUM, hard: DIFFICULTY.HARD,
+};
 export const ENERGY = { LOW: 'Baixa energia', MEDIUM: 'Média energia', HIGH: 'Alta energia' };
 export const MODE = { SOLO: 'Solo', DUET: 'Dueto' };
 
@@ -64,7 +70,10 @@ export function getTheme(song) {
  * Fácil/Médio/Difícil ≈ 25/50/25, pas « tout difícil ».
  */
 export function getDifficulty(song) {
-  if (song?.difficulty) return song.difficulty; // colonne réelle prioritaire (DB-ready)
+  // Colonne réelle prioritaire : clé stable ('easy'/'medium'/'hard') mappée vers le label,
+  // ou label portugais accepté tel quel (tolérance). NULL/absent → estimation ci-dessous.
+  const explicit = song?.difficulty;
+  if (explicit) return DIFFICULTY_BY_KEY[String(explicit).toLowerCase()] || explicit;
   const n = wordCount(song?.lyrics);
   if (!n) return DIFFICULTY.MEDIUM;
   if (n < 165) return DIFFICULTY.EASY;

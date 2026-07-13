@@ -15,9 +15,14 @@ import FocusableButton from './FocusableButton';
  *
  * `active` = destination courante → texte jaune + soulignement discret. Le focus
  * D-pad (halo/pill fort) reste un concept séparé.
+ *
+ * L'avatar est focusable (`onOpenSettings`) et ouvre le même panneau de
+ * réglages/sortie que les écrans « v2 » (TvHomeNavigation) — même clé de focus
+ * (`TOPNAV_SETTINGS`) sur tous les écrans qui rendent cette barre, réutilisable
+ * car un seul écran est monté à la fois.
  */
 export default function TvTopNavigation({
-  active = 'inicio', onInicio, onCatalogo, onKaraoke, onFesta, festaQueueCount = null,
+  active = 'inicio', onInicio, onCatalogo, onKaraoke, onFesta, onOpenSettings, festaQueueCount = null,
 }) {
   const cls = (key) => `tvh-nav-item ${active === key ? 'is-active' : ''}`;
   const hasFesta = typeof festaQueueCount === 'number';
@@ -70,7 +75,14 @@ export default function TvTopNavigation({
             Fila · {festaQueueCount} {festaQueueCount === 1 ? 'música' : 'músicas'}
           </span>
         )}
-        <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="tvh-nav-avatar" />
+        <FocusableButton
+          focusKey="TOPNAV_SETTINGS"
+          className="tvh-nav-avatar-btn"
+          ariaLabel="Abrir configurações"
+          onPress={onOpenSettings}
+        >
+          <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="tvh-nav-avatar" />
+        </FocusableButton>
       </div>
     </header>
   );

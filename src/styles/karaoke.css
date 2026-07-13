@@ -34,6 +34,16 @@
   color: transparent;
 }
 
+/* ── Balayage MOT par mot (Stage 2) — KaraokeWordLine : un <span> par mot, même
+   technique de dégradé que .karaoke-wipe mais borné à chaque mot individuellement. */
+.karaoke-wipe-word {
+  display: inline-block;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  white-space: pre;
+}
+
 .karaoke-ball {
   position: absolute;
   top: -0.42em;
@@ -52,6 +62,54 @@
 @keyframes karaoke-ball-bob {
   from { transform: translate(-50%, 0); }
   to   { transform: translate(-50%, -0.22em); }
+}
+
+/* ── Studio « Afinar palavras e bola » : mot cliquable + boule rebondissante remasterisée ── */
+.ball-sync-word {
+  display: inline-block;
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  cursor: pointer;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  white-space: pre;
+  transition: filter 0.12s ease;
+}
+.ball-sync-word:hover { filter: brightness(1.15); }
+.ball-sync-word:focus-visible { outline: 2px solid #fde047; outline-offset: 2px; border-radius: 4px; }
+
+/* Atterrissage : léger squash horizontal + lueur brève sur le mot actif. */
+.ball-sync-land { animation: ball-sync-word-land 130ms ease-out; }
+@keyframes ball-sync-word-land {
+  0%   { transform: scaleY(1); filter: drop-shadow(0 0 0 rgba(253,224,71,0)); }
+  40%  { transform: scaleY(0.9) scaleX(1.04); filter: drop-shadow(0 0 10px rgba(253,224,71,0.7)); }
+  100% { transform: scaleY(1); filter: drop-shadow(0 0 0 rgba(253,224,71,0)); }
+}
+
+/* Boule : positionnée en px absolus (left/top) par rAF depuis les timestamps. */
+.ball-sync-ball {
+  position: absolute;
+  left: 0; top: 0;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  border-radius: 9999px;
+  background: #fde047;
+  box-shadow: 0 0 16px rgba(253, 224, 71, 0.9);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  will-change: left, top, transform;
+}
+/* Micro-squash à l'atterrissage. */
+.ball-sync-ball--land { animation: ball-sync-ball-land 120ms ease-out; }
+@keyframes ball-sync-ball-land {
+  0%   { transform: scale(1, 1); }
+  45%  { transform: scale(1.25, 0.75); }
+  100% { transform: scale(1, 1); }
 }
 
 /* ── Neon Stage : titre néon, spotlights, abertura de palco ── */
@@ -137,6 +195,8 @@
   .karaoke-line-active,
   .karaoke-lyrics p { transition: none !important; }
   .karaoke-ball { animation: none; }
+  .ball-sync-land,
+  .ball-sync-ball--land { animation: none !important; }
   .karaoke-neon,
   .karaoke-spotlights,
   .karaoke-start-btn { animation: none; }

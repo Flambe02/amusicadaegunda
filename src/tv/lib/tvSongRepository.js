@@ -21,14 +21,6 @@ import {
 
 const DEFAULT_TEASER_SECONDS = 30;
 
-/** 1re ligne « chantée » des paroles, pour la prévia (jamais toute la strophe). */
-function getLyricPreview(song) {
-  const raw = (song?.lyrics || '').replace(/\r/g, '');
-  const firstLine = raw.split('\n').map((l) => l.trim()).find(Boolean);
-  if (!firstLine) return '';
-  return firstLine.length > 60 ? `${firstLine.slice(0, 59).trimEnd()}…` : firstLine;
-}
-
 /**
  * Modes de performance recommandés — dérivés (DB-ready via `song.recommended_modes`).
  * Solo toujours possible ; Dueto si LRC 2 voix ; Família si pas trop difficile
@@ -83,7 +75,6 @@ export function toTvSong(song) {
     recommendedModes: deriveModes(song),
     recommendedMode: getMode(song),   // 'Solo' | 'Dueto' (mode principal, badge carte)
     language: getIdiomaLabel(song),   // « Português BR »
-    lyricPreview: getLyricPreview(song),        // 1 ligne (panneau catálogo)
     lyricPreviewLines: getLyricPreviewLines(song, 4), // jusqu'à 4 lignes (fiche)
     hasFullLyrics: hasFullLyrics(song, 4),
     portugueseLevel: getPortugueseLevel(song),  // 'easy' | 'intermediate' | 'native'

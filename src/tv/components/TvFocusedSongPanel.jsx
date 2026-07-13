@@ -1,5 +1,5 @@
 import { FocusContext, useFocusable } from '@noriginmedia/norigin-spatial-navigation';
-import { Play, Plus, Mic } from 'lucide-react';
+import { Play, Mic } from 'lucide-react';
 import FocusableButton from './FocusableButton';
 
 const MODE_LABELS = { solo: 'Solo', duet: 'Dueto', family: 'Família', festa: 'Festa' };
@@ -26,7 +26,7 @@ function MetaRow({ label, value }) {
  * en session Festa.
  */
 export default function TvFocusedSongPanel({
-  vm, artSrc, familiar = false, festaChosenBy = null, onConhecer, onAddQueue, onCantar,
+  vm, artSrc, familiar = false, festaChosenBy = null, onConhecer, onCantar,
 }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'CAT_PANEL', trackChildren: true, saveLastFocusedChild: true,
@@ -66,13 +66,6 @@ export default function TvFocusedSongPanel({
             <MetaRow label="Energia" value={vm.energyLabel} />
             {modes && <MetaRow label="Ideal para" value={modes} />}
           </div>
-
-          {vm.lyricPreview && (
-            <div className="tvc-panel-lyric">
-              <span className="tvc-panel-lyric-h">Prévia da letra</span>
-              <p className="tvc-panel-lyric-text">“{vm.lyricPreview}”</p>
-            </div>
-          )}
         </div>
 
         <div className="tvc-panel-actions">
@@ -84,20 +77,12 @@ export default function TvFocusedSongPanel({
           >
             <Play size={19} className="tvc-cta-icon-fill" /> Abrir ficha
           </FocusableButton>
-          <FocusableButton
-            focusKey="CAT_PANEL_FILA"
-            className="tvc-panel-cta is-secondary"
-            ariaLabel={`Adicionar ${vm.title} à fila`}
-            onPress={() => onAddQueue(vm)}
-          >
-            <Plus size={19} /> Adicionar à fila
-          </FocusableButton>
-          {/* Action tertiaire discrète, seulement si le titre est déjà familier
-              (récemment ouvert/chanté) — ne concurrence jamais « Conhecer ». */}
+          {/* « Cantar agora » : raccourci direct visible seulement si le titre est déjà
+              familier (récemment ouvert/chanté) — ne concurrence jamais « Abrir ficha ». */}
           {familiar && vm.isSingable && (
             <FocusableButton
               focusKey="CAT_PANEL_CANTAR"
-              className="tvc-panel-cta is-tertiary"
+              className="tvc-panel-cta is-secondary"
               ariaLabel={`Cantar ${vm.title} agora`}
               onPress={() => onCantar(vm)}
             >

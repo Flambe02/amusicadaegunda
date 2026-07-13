@@ -1,4 +1,5 @@
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
+import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import { TV_LINE_ROLES, tvActiveFontSize } from '@/tv/lib/tvLyricsWindow';
 
 const SINGER_A_COLOR = '#FDE047';
@@ -25,7 +26,7 @@ function alignClassFor(singer) {
  * KaraokePlayer, qui bascule vers ce composant au lieu du rendu solo/dueto historique.
  */
 export default function TvDuetLyricsView({
-  lines, displayIdx, wipeApiRef, fontScale, showBall, speakerNames,
+  lines, displayIdx, wipeApiRef, wordApiRef, fontScale, showBall, speakerNames,
 }) {
   return (
     <div className="tv-karaoke-lyrics-window" aria-live="polite">
@@ -51,14 +52,25 @@ export default function TvDuetLyricsView({
             }}
           >
             {isActive ? (
-              <KaraokeWipeLine
-                ref={wipeApiRef}
-                text={line.text || '♪'}
-                showBall={showBall}
-                color={color}
-                unsungColor="rgba(255,255,255,0.6)"
-                className="tv-karaoke-activeline"
-              />
+              Array.isArray(line.words) && line.words.length > 0 ? (
+                <KaraokeWordLine
+                  ref={wordApiRef}
+                  words={line.words}
+                  showBall={showBall}
+                  color={color}
+                  unsungColor="rgba(255,255,255,0.6)"
+                  className="tv-karaoke-activeline"
+                />
+              ) : (
+                <KaraokeWipeLine
+                  ref={wipeApiRef}
+                  text={line.text || '♪'}
+                  showBall={showBall}
+                  color={color}
+                  unsungColor="rgba(255,255,255,0.6)"
+                  className="tv-karaoke-activeline"
+                />
+              )
             ) : (line.text || '♪')}
           </p>
         );

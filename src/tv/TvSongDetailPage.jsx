@@ -27,7 +27,7 @@ function formatDuration(seconds) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
-const ACTIVE_BY_SOURCE = { home: 'inicio', catalog: 'catalogo', festa: 'festa' };
+const ACTIVE_BY_SOURCE = { home: 'inicio', catalog: 'catalogo', karaoke: 'karaoke', festa: 'festa' };
 
 /**
  * Fiche chanson TV « song-first » — l'écran de DÉCISION. Conheça a música. Entenda a
@@ -44,7 +44,7 @@ export default function TvSongDetailPage({
   song, source = 'catalog', getThumb,
   festaPeople = null, queue = [],
   onStartKaraoke, onAddToQueue,
-  onGoHome, onOpenCatalog, onOpenKaraoke, onOpenFesta, onConnectPhone,
+  onGoHome, onOpenCatalog, onOpenKaraoke, onOpenFesta, onOpenSettings, onConnectPhone,
   backInterceptorRef,
 }) {
   const manifest = useTvArtworkManifest();
@@ -225,6 +225,7 @@ export default function TvSongDetailPage({
         onCatalogo={onOpenCatalog}
         onKaraoke={onOpenKaraoke}
         onFesta={onOpenFesta}
+        onOpenSettings={onOpenSettings}
         festaQueueCount={queueCount > 0 ? queueCount : null}
       />
 
@@ -291,12 +292,10 @@ export default function TvSongDetailPage({
       </div>
 
       <TvSongActions
-        festaActive={festaActive}
         hasContext={hasContext}
         hasTeaser={hasTeaser}
         canSing={vm.isSingable}
         onCantar={onCantar}
-        onFila={addToQueue}
         onContext={openContext}
         onTeaser={() => startTeaser('DETAIL_CLIPE')}
       />
