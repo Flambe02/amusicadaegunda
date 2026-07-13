@@ -6,10 +6,27 @@ import './styles/a11y.css'
 import { HelmetProvider } from 'react-helmet-async'
 import ErrorBoundary from './components/ErrorBoundary'
 import { logBuildInfo } from '@/lib/buildInfo'
+import { isTV } from '@/tv/platform'
 
 const helmetContext = {}
 
 logBuildInfo()
+
+// ── Viewport TV — AVANT le montage de React (jamais après) ──────────────────
+// La WebView Android TV rapporte ~960×540 px CSS sur une dalle 1080p (densité 2×)
+// alors que toute l'UI TV est conçue sur un canvas logique 1920×1080. On force la
+// largeur de conception ici, avant le 1er rendu : changer le viewport après coup
+// provoquerait un double reflow (layout 960 → 1920), un scroll déjà décalé et un
+// focus restauré sur de mauvaises coordonnées. Le canvas mis à l'échelle
+// (src/tv/components/TvStage.jsx) complète ce réglage : même si la WebView ignore
+// le wide viewport, l'échelle est recalculée explicitement.
+try {
+  if (isTV()) {
+    document.querySelector('meta[name="viewport"]')
+      ?.setAttribute('content', 'width=1920, user-scalable=no')
+    document.documentElement.classList.add('tv-mode')
+  }
+} catch { /* jamais bloquant pour le boot mobile/web */ }
 
 // Handler pour logger les erreurs vers un service externe (future Sentry integration)
 const handleError = (error, errorInfo) => {

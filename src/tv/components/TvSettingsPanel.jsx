@@ -46,17 +46,24 @@ export default function TvSettingsPanel({ opts, setOpts, onExitApp }) {
       <div className="tv2-settings-overlay">
         <div ref={ref} className="tv2-settings-panel">
           <h2 className="tv2-settings-h">Configurações do karaokê</h2>
-          <OptChoiceLine focusKey="HSET_0" label="Tamanho da letra" options={FONT_SCALES} value={opts.fontScale} onChange={(v) => set({ fontScale: v })} wrap={false} />
-          <OptToggleLine focusKey="HSET_1" label="Bolinha" on={opts.showBall} onToggle={() => set({ showBall: !opts.showBall })} />
-          <OptToggleLine focusKey="HSET_2" label="Modo dueto (P1 / P2)" icon={Users} on={opts.dueto} onToggle={() => set({ dueto: !opts.dueto })} />
-          <OptToggleLine focusKey="HSET_3" label="Medidor de energia" icon={Flame} on={opts.energy} onToggle={() => set({ energy: !opts.energy })} />
-          <OptChoiceLine focusKey="HSET_4" label="Tradução" icon={Globe} options={TRANSLATION_LANGS} value={opts.translate} onChange={(v) => set({ translate: v })} wrap />
-          <OptChoiceLine focusKey="HSET_5" label="Velocidade" options={PLAYBACK_RATES} value={opts.rate} onChange={(v) => set({ rate: v })} wrap={false} />
+          {/* Zone scrollable : SEULES les options défilent — la section Aplicativo
+              (Sair) reste TOUJOURS visible en bas, jamais hors écran. */}
+          <div className="tv2-settings-scroll">
+            <OptChoiceLine focusKey="HSET_0" label="Tamanho da letra" options={FONT_SCALES} value={opts.fontScale} onChange={(v) => set({ fontScale: v })} wrap={false} />
+            <OptToggleLine focusKey="HSET_1" label="Bolinha" on={opts.showBall} onToggle={() => set({ showBall: !opts.showBall })} />
+            <OptToggleLine focusKey="HSET_2" label="Modo dueto (P1 / P2)" icon={Users} on={opts.dueto} onToggle={() => set({ dueto: !opts.dueto })} />
+            {/* PAS de toggle « Medidor de energia » sur TV (pas de micro — le toggle
+                se désactivait silencieusement). L'énergie vient du celular en Modo Festa. */}
+            <p className="tv-opts-note"><Flame size={15} /> Medidor de energia: disponível no Modo Festa, usando o microfone do celular.</p>
+            <OptChoiceLine focusKey="HSET_4" label="Tradução" icon={Globe} options={TRANSLATION_LANGS} value={opts.translate} onChange={(v) => set({ translate: v })} wrap />
+            <OptChoiceLine focusKey="HSET_5" label="Velocidade" options={PLAYBACK_RATES} value={opts.rate} onChange={(v) => set({ rate: v })} wrap={false} />
+          </div>
 
-          <h2 className="tv2-settings-h tv2-settings-h-app">Aplicativo</h2>
-          <ExitLine onPress={onExitApp} />
-
-          <p className="tv2-settings-hint">Voltar para fechar</p>
+          <div className="tv2-settings-footer">
+            <h2 className="tv2-settings-h tv2-settings-h-app">Aplicativo</h2>
+            <ExitLine onPress={onExitApp} />
+            <p className="tv2-settings-hint">Voltar para fechar</p>
+          </div>
         </div>
       </div>
     </FocusContext.Provider>

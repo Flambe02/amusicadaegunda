@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, RefreshCw, LogOut } from 'lucide-react';
 import { exitApp } from './adapters/backButton';
+import TvStage from './components/TvStage';
 import '@/styles/tv-error.css';
 
 const COUNTDOWN_SECONDS = 5;
@@ -54,7 +55,8 @@ export default function TvErrorFallback() {
   }, []);
 
   return (
-    <div className="tv-error-root" role="alert">
+    <TvStage>
+      <div className="tv-error-root" role="alert">
       <div className="tv-error-card">
         <div className="tv-error-icon"><AlertTriangle size={54} /></div>
         <h1 className="tv-error-title">Algo deu errado</h1>
@@ -81,6 +83,7 @@ export default function TvErrorFallback() {
         </div>
         <p className="tv-error-hint">Pressiona Voltar na telecomando para sair.</p>
       </div>
-    </div>
+      </div>
+    </TvStage>
   );
 }

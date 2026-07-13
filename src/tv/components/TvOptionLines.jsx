@@ -9,6 +9,9 @@ export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onC
   const idx = options.findIndex((o) => o.value === value);
   const { ref, focused } = useFocusable({
     focusKey,
+    // Le panneau hôte peut scroller (contenu > hauteur) : la ligne focalisée doit
+    // toujours rester visible.
+    onFocus: () => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
     onArrowPress: (dir) => {
       if (dir === 'left' || dir === 'right') {
         const delta = dir === 'right' ? 1 : -1;
@@ -47,7 +50,11 @@ export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onC
 
 /** Toggle = UN focusable. OK bascule on/off. */
 export function OptToggleLine({ focusKey, label, icon: Icon, on, onToggle }) {
-  const { ref, focused } = useFocusable({ focusKey, onEnterPress: onToggle });
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: onToggle,
+    onFocus: () => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
+  });
   return (
     <div ref={ref} onClick={onToggle} className={`tv-opt-line ${focused ? 'is-focused' : ''}`}>
       <span className="tv-opt-label">{Icon && <Icon size={17} />}{label}</span>
@@ -58,7 +65,11 @@ export function OptToggleLine({ focusKey, label, icon: Icon, on, onToggle }) {
 
 /** Ligne d'action (pas de valeur) — ex. « Recomeçar música », « Sair do karaokê ». */
 export function OptActionLine({ focusKey, label, icon: Icon, onPress, danger }) {
-  const { ref, focused } = useFocusable({ focusKey, onEnterPress: onPress });
+  const { ref, focused } = useFocusable({
+    focusKey,
+    onEnterPress: onPress,
+    onFocus: () => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
+  });
   return (
     <div
       ref={ref}

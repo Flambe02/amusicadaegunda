@@ -31,16 +31,26 @@ export default function KaraokeTvOptions({ opts, setOpts, onRestart, onExit }) {
       <div className="tv-opts-overlay">
         <div ref={ref} className="tv-opts-panel">
           <h2 className="tv-opts-title">Opções</h2>
-          <OptChoiceLine focusKey="KTV_OPT_0" label="Tamanho da letra" options={FONT_SCALES} value={opts.fontScale} onChange={(v) => set({ fontScale: v })} wrap={false} />
-          <OptToggleLine label="Bolinha" on={opts.showBall} onToggle={() => set({ showBall: !opts.showBall })} />
-          <OptToggleLine label="Modo dueto (P1 / P2)" icon={Users} on={opts.dueto} onToggle={() => set({ dueto: !opts.dueto })} />
-          <OptToggleLine label="Medidor de energia" icon={Flame} on={opts.energy} onToggle={() => set({ energy: !opts.energy })} />
-          <OptChoiceLine label="Tradução" icon={Globe} options={TRANSLATION_LANGS} value={opts.translate} onChange={(v) => set({ translate: v })} wrap />
-          <OptChoiceLine label="Velocidade" options={PLAYBACK_RATES} value={opts.rate} onChange={(v) => set({ rate: v })} wrap={false} />
-          <div className="tv-opts-divider" aria-hidden="true" />
-          <OptActionLine focusKey="KTV_OPT_RESTART" label="Recomeçar música" icon={RotateCcw} onPress={onRestart} />
-          <OptActionLine focusKey="KTV_OPT_EXIT" label="Sair do karaokê" icon={LogOut} onPress={onExit} danger />
-          <p className="tv-opts-hint">Voltar para fechar</p>
+          {/* Zone scrollable : SEULES les options défilent — le footer (Recomeçar /
+              Sair) reste TOUJOURS visible en bas du panneau, jamais hors écran. */}
+          <div className="tv-opts-scroll">
+            <OptChoiceLine focusKey="KTV_OPT_0" label="Tamanho da letra" options={FONT_SCALES} value={opts.fontScale} onChange={(v) => set({ fontScale: v })} wrap={false} />
+            <OptToggleLine label="Bolinha" on={opts.showBall} onToggle={() => set({ showBall: !opts.showBall })} />
+            <OptToggleLine label="Modo dueto (P1 / P2)" icon={Users} on={opts.dueto} onToggle={() => set({ dueto: !opts.dueto })} />
+            {/* PAS de toggle « Medidor de energia » ici : la TV n'a pas de micro —
+                getUserMedia échouait et le toggle se désactivait silencieusement
+                (bug « ne fonctionne pas », 2026-07). En Modo Festa, l'énergie vient
+                du micro du CELULAR (jauge remoteEnergyLevel de KaraokePlayer). */}
+            <p className="tv-opts-note"><Flame size={15} /> Medidor de energia: disponível no Modo Festa, usando o microfone do celular.</p>
+            <OptChoiceLine label="Tradução" icon={Globe} options={TRANSLATION_LANGS} value={opts.translate} onChange={(v) => set({ translate: v })} wrap />
+            <OptChoiceLine label="Velocidade" options={PLAYBACK_RATES} value={opts.rate} onChange={(v) => set({ rate: v })} wrap={false} />
+          </div>
+          <div className="tv-opts-footer">
+            <div className="tv-opts-divider" aria-hidden="true" />
+            <OptActionLine focusKey="KTV_OPT_RESTART" label="Recomeçar música" icon={RotateCcw} onPress={onRestart} />
+            <OptActionLine focusKey="KTV_OPT_EXIT" label="Sair do karaokê" icon={LogOut} onPress={onExit} danger />
+            <p className="tv-opts-hint">Voltar para fechar</p>
+          </div>
         </div>
       </div>
     </FocusContext.Provider>

@@ -13,13 +13,14 @@ export const TV_LINE_ROLES = [
   { role: 'next2', offset: 2, top: '82%' },
 ];
 
-// Taille adaptative de la ligne active selon sa longueur (base 1920×1080, clamp
-// vers 1280×720 via l'unité vw).
+// Taille adaptative de la ligne active selon sa longueur. Valeurs en px FIXES
+// pour le canvas TvStage 1920×1080 (1vw ≡ 19.2px) : les unités viewport se
+// calculaient sur la FENÊTRE, pas sur le stage → tailles fausses hors 16:9 exact.
 export function tvActiveFontSize(text) {
   const len = (text || '').length;
-  if (len <= 20) return 'clamp(3.2rem, 3.96vw, 4.75rem)';
-  if (len <= 40) return 'clamp(2.8rem, 3.54vw, 4.25rem)';
-  return 'clamp(2.4rem, 3.02vw, 3.625rem)';
+  if (len <= 20) return '76px';
+  if (len <= 40) return '68px';
+  return '58px';
 }
 
 export function formatTvTime(seconds) {

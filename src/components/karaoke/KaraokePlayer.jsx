@@ -6,9 +6,11 @@ import {
 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
-import { parseLrc, hasDuetTags } from '@/lib/lrc';
+import { hasDuetTags } from '@/lib/lrc';
+import { resolveSongTiming } from '@/lib/timingModel';
 import { FONT_SCALES, PLAYBACK_RATES, TRANSLATION_LANGS, loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
+import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
 import TvDuetLyricsView from '@/tv/components/TvDuetLyricsView';
 import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
@@ -73,6 +75,7 @@ export default function KaraokePlayer({
   const syncRef = useRef({ t: 0, wall: 0, playing: false, rate: 1 });
   const displayIdxRef = useRef(-1);
   const wipeApiRef = useRef(null);
+  const wordApiRef = useRef(null); // ref alternative quand la ligne active a un timing par mot (Stage 2)
   // onEnded via ref : ne doit PAS entrer dans les deps du player (sinon recréation à chaque render).
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
@@ -133,19 +136,26 @@ export default function KaraokePlayer({
     () => extractYouTubeId(song?.youtube_url) || extractYouTubeId(song?.youtube_music_url),
     [song?.youtube_url, song?.youtube_music_url]
   );
-  const lines = useMemo(() => parseLrc(song?.lrc_content), [song?.lrc_content]);
+  // Timing : préfère timing_data structuré (ligne+mot) quand valide, sinon lrc_content
+  // — comportement historique inchangé pour toute chanson sans timing structuré.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- volontairement scopé à lrc_content/timing_data (comme videoId ci-dessus)
+  const { lines, timingSource } = useMemo(() => resolveSongTiming(song), [song?.lrc_content, song?.timing_data]);
   const artwork = song?.cover_image
     || getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault');
 
   // Couleur d'une ligne selon le mode (dueto → part color, sinon jaune).
   const lineColor = useCallback((i) => (opts.dueto ? DUET_COLORS[i % 2] : YELLOW), [opts.dueto]);
 
-  // Duet View (LOT B) : disponible seulement si la chanson a des tags {A}/{B} réels.
+  // Duet View (LOT B) : disponible seulement si la chanson a des tags {A}/{B} réels
+  // — que ce soit via le LRC historique ou via `singer` dans le timing structuré.
   // Toggle discret sur l'écran de lancement (tvMode) — non activé par défaut, ne
   // touche PAS la préférence globale « Modo dueto (P1/P2) » du panneau d'options
   // (qui reste le comportement historique en alternance par index pour les
   // chansons SANS tags).
-  const duetTaggedAvailable = useMemo(() => tvMode && hasDuetTags(song?.lrc_content), [tvMode, song?.lrc_content]);
+  const duetTaggedAvailable = useMemo(
+    () => tvMode && (timingSource === 'structured' ? lines.some((l) => l.singer === 'A' || l.singer === 'B') : hasDuetTags(song?.lrc_content)),
+    [tvMode, timingSource, lines, song?.lrc_content],
+  );
   const [duetToggleOn, setDuetToggleOn] = useState(false);
 
   // ── Scroll lock ──
@@ -250,6 +260,9 @@ export default function KaraokePlayer({
   }, [playerReady, lines]);
 
   // ── Balayage (rAF, sans re-render) ──
+  // Priorité mot > frase pour la ligne active (Stage 2) : si `line.words` existe et est
+  // valide, on pilote le rendu mot-par-mot (wordApiRef) ; sinon le wipe de ligne classique
+  // (wipeApiRef) — comportement 100% inchangé pour toute chanson sans timing par mot.
   useEffect(() => {
     if (!playerReady) return undefined;
     let raf;
@@ -259,9 +272,20 @@ export default function KaraokePlayer({
       const idx = displayIdxRef.current;
       const line = idx >= 0 ? lines[idx] : null;
       if (line) {
-        const end = line.endTime ?? lines[idx + 1]?.time ?? line.time + FALLBACK_LINE_DURATION_SEC;
-        const dur = Math.max(0.2, end - line.time);
-        wipeApiRef.current?.setProgress((t - line.time) / dur); // clamp 0..1 → reste 100% dans le gap
+        const words = Array.isArray(line.words) && line.words.length > 0 ? line.words : null;
+        if (words) {
+          let wi = -1;
+          for (let k = 0; k < words.length; k += 1) { if (words[k].start <= t) wi = k; else break; }
+          if (wi === -1) wi = 0;
+          const w = words[wi];
+          const wEnd = Number.isFinite(w.end) ? w.end : (words[wi + 1]?.start ?? line.endTime ?? w.start + FALLBACK_LINE_DURATION_SEC);
+          const wDur = Math.max(0.05, wEnd - w.start);
+          wordApiRef.current?.setActive(wi, (t - w.start) / wDur);
+        } else {
+          const end = line.endTime ?? lines[idx + 1]?.time ?? line.time + FALLBACK_LINE_DURATION_SEC;
+          const dur = Math.max(0.2, end - line.time);
+          wipeApiRef.current?.setProgress((t - line.time) / dur); // clamp 0..1 → reste 100% dans le gap
+        }
       }
       raf = requestAnimationFrame(tick);
     };
@@ -746,6 +770,7 @@ export default function KaraokePlayer({
                   lines={lines}
                   displayIdx={displayIdx}
                   wipeApiRef={wipeApiRef}
+                  wordApiRef={wordApiRef}
                   fontScale={scale}
                   showBall={opts.showBall}
                   speakerNames={null}
@@ -755,6 +780,7 @@ export default function KaraokePlayer({
                   lines={lines}
                   displayIdx={displayIdx}
                   wipeApiRef={wipeApiRef}
+                  wordApiRef={wordApiRef}
                   fontScale={scale}
                   showBall={opts.showBall}
                   dueto={opts.dueto}
@@ -778,7 +804,9 @@ export default function KaraokePlayer({
                           color: !isActive && duetColor ? `${duetColor}66` : undefined,
                         }}>
                         {isActive
-                          ? <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />
+                          ? (Array.isArray(line.words) && line.words.length > 0
+                            ? <KaraokeWordLine ref={wordApiRef} words={line.words} showBall={opts.showBall} color={lineColor(i)} />
+                            : <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />)
                           : (line.text || '♪')}
                       </p>
                     );
@@ -908,7 +936,11 @@ export default function KaraokePlayer({
         </div>
       )}
     </div>,
-    document.body
+    // En tvMode le portal DOIT rester DANS le canvas TV mis à l'échelle
+    // (#tv-portal-root, cf. TvStage.jsx) : un portal vers document.body
+    // échapperait au transform scale et redeviendrait 2× trop grand.
+    // Lookup inline (pas d'import TvStage) → tv.css jamais tiré dans le bundle mobile.
+    (tvMode && document.getElementById('tv-portal-root')) || document.body
   );
 }
 

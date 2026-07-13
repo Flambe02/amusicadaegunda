@@ -10,23 +10,23 @@
   flex: 0 0 auto;
   position: relative;
   display: flex; align-items: center; justify-content: space-between;
-  height: clamp(280px, 34vh, 380px);
-  padding: 0 clamp(1.75rem, 3.4vw, 3.4rem);
+  height: clamp(280px, 367.2px, 380px);
+  padding: 0 clamp(1.75rem, 65.3px, 3.4rem);
   border-radius: 22px; overflow: hidden;
 }
 .tv-modelanding-hero-text { position: relative; z-index: 1; max-width: 58%; display: flex; flex-direction: column; gap: 0.5rem; }
 .tv-modelanding-title {
   margin: 0; color: #fff; font-weight: 900; letter-spacing: -0.01em;
-  font-size: clamp(2.6rem, 4.2vw, 3.7rem); /* ~52-64px à 1080p */
+  font-size: clamp(2.6rem, 80.6px, 3.7rem); /* ~52-64px à 1080p */
   line-height: 1;
 }
 .tv-modelanding-subtitle {
   margin: 0.2rem 0 0; color: rgba(255, 255, 255, 0.88);
-  font-size: clamp(1.1rem, 1.35vw, 1.4rem); font-weight: 700;
+  font-size: clamp(1.1rem, 25.9px, 1.4rem); font-weight: 700;
 }
 .tv-modelanding-description {
   margin: 0.1rem 0 0.4rem; max-width: 42rem; color: rgba(255, 255, 255, 0.6);
-  font-size: clamp(1.15rem, 1.35vw, 1.5rem); /* ~22-26px à 1080p */
+  font-size: clamp(1.15rem, 25.9px, 1.5rem); /* ~22-26px à 1080p */
   line-height: 1.35;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }

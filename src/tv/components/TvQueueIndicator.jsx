@@ -7,10 +7,15 @@ import { ListMusic } from 'lucide-react';
  * non vide OU une session Festa active (cf. cahier des charges — jamais la fila
  * complète en permanence hors Festa).
  */
-export default function TvQueueIndicator({ queueCount = 0, festaPeople = null, onOpen }) {
+export default function TvQueueIndicator({ queueCount = 0, festaQueueCount = 0, festaPeople = null, onOpen }) {
   const { ref, focused } = useFocusable({ focusKey: 'CAT_QUEUE_INDICATOR', onEnterPress: onOpen });
   const hasFesta = typeof festaPeople === 'number';
-  if (!hasFesta && queueCount <= 0) return <div className="tvc-queue-indicator-spacer" />;
+  // Deux filas distinctes coexistent : la fila LOCALE du catálogo (queueCount) et
+  // la fila FESTA Supabase alimentée par les téléphones (festaQueueCount). Le
+  // compteur affiche la somme — n'afficher que la locale faisait croire que les
+  // músicas ajoutées par les invités étaient perdues (« 0 músicas », 2026-07).
+  const total = queueCount + (hasFesta ? festaQueueCount : 0);
+  if (!hasFesta && total <= 0) return <div className="tvc-queue-indicator-spacer" />;
 
   return (
     <button
@@ -24,7 +29,7 @@ export default function TvQueueIndicator({ queueCount = 0, festaPeople = null, o
         <span className="tvc-queue-festa">Festa ativa · {festaPeople} {festaPeople === 1 ? 'pessoa' : 'pessoas'}</span>
       )}
       <span className="tvc-queue-count">
-        <ListMusic size={17} /> Fila · {queueCount} {queueCount === 1 ? 'música' : 'músicas'}
+        <ListMusic size={17} /> Fila · {total} {total === 1 ? 'música' : 'músicas'}
       </span>
     </button>
   );

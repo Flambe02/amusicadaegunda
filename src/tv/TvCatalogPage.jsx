@@ -37,10 +37,10 @@ const cardFocusKey = (vm) => `CAT_CARD_${vm.id}`;
  */
 export default function TvCatalogPage({
   songs, getThumb, loading = false, loadError = false,
-  queue = [], festaPeople = null, familiarIds = null,
+  queue = [], festaPeople = null, festaQueueCount = 0, familiarIds = null,
   initialState, onStateChange,
   onOpenDetail, onCantar, onAddToQueue, onRemoveFromQueue, onClearQueue, onStartQueue,
-  onGoHome, onOpenKaraoke, onOpenFesta, onRetryLoad,
+  onGoHome, onOpenKaraoke, onOpenFesta, onOpenSettings, onRetryLoad,
   backInterceptorRef,
 }) {
   const manifest = useTvArtworkManifest();
@@ -198,11 +198,13 @@ export default function TvCatalogPage({
         onCatalogo={resetAll}
         onKaraoke={onOpenKaraoke}
         onFesta={onOpenFesta}
+        onOpenSettings={onOpenSettings}
         festaQueueCount={null}
       />
 
       <TvCatalogHeader
         queueCount={queueVms.length}
+        festaQueueCount={festaQueueCount}
         festaPeople={festaPeople}
         onOpenQueue={openQueue}
       />
@@ -239,7 +241,6 @@ export default function TvCatalogPage({
           artSrc={focusedVm ? getArtwork(focusedVm) : null}
           familiar={familiar}
           onConhecer={openDetail}
-          onAddQueue={addToQueue}
           onCantar={(vm) => onCantar(vm.raw)}
         />
       </div>

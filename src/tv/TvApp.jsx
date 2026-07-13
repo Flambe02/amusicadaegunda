@@ -11,6 +11,7 @@ import {
   markFestaQueueStatus, buildFestaJoinUrl,
 } from '@/lib/festa';
 import { useFestaSession } from '@/hooks/useFestaSession';
+import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import TvHomePage from './TvHomePage';
 import TvCatalogPage from './TvCatalogPage';
 import TvGrid from './TvGrid';
@@ -20,6 +21,9 @@ import TvKaraokeLanding from './TvKaraokeLanding';
 import TvClipsLanding from './TvClipsLanding';
 import TvKaraokeModeLanding from './TvKaraokeModeLanding';
 import TvFestaInvite from './components/TvFestaInvite';
+import TvSettingsPanel from './components/TvSettingsPanel';
+import TvStage from './components/TvStage';
+import { BRAND_SQUARE_LARGE } from '@/lib/imageAssets';
 import { emptyAdvanced } from './lib/tvCatalogFilters';
 import '@/styles/tv.css';
 import '@/styles/tv-home-v2.css';
@@ -69,6 +73,15 @@ export default function TvApp() {
   } = useFestaSession(festaSession?.id || null);
   const festaQueueRef = useRef(festaQueue);
   festaQueueRef.current = festaQueue;
+  const festaPresentNamesRef = useRef(festaPresentNames);
+  festaPresentNamesRef.current = festaPresentNames;
+  // Fila festa en attente (téléphones) — affichée dans les indicateurs de fila dès
+  // qu'une session est active, EN PLUS de la fila locale du catálogo (deux filas
+  // distinctes ; n'afficher que la locale faisait croire que la fila festa était
+  // vide — bug « 0 músicas » 2026-07).
+  const festaWaitingCount = festaSession
+    ? festaQueue.filter((q) => q.status === 'waiting').length
+    : 0;
 
   const openFestaInvite = useCallback(async () => {
     if (!festaSessionRef.current) {
@@ -88,7 +101,16 @@ export default function TvApp() {
   }, []);
 
   const exitFestaInvite = useCallback(() => {
-    if (!festaPlaybackStartedRef.current && festaSessionRef.current) {
+    // Ne fermer la session au Voltar QUE si elle est encore vierge : personne n'a
+    // rejoint ET la fila est vide. Sinon (invités connectés / músicas déjà na fila),
+    // la session reste vivante en arrière-plan — la fermer orphelinait les
+    // téléphones : à la réouverture, une NOUVELLE session (nouveau code) était
+    // créée et la TV affichait « 0 pessoas / 0 músicas » (bug 2026-07). La session
+    // n'est alors terminée qu'à la sortie de l'app (exitApp) ou côté base (TTL).
+    const untouched = !festaPlaybackStartedRef.current
+      && festaPresentNamesRef.current.length === 0
+      && festaQueueRef.current.length === 0;
+    if (untouched && festaSessionRef.current) {
       const id = festaSessionRef.current.id;
       setFestaSession(null);
       endFestaSession(id).catch(() => { /* best-effort — la session restera "active" en base, sans conséquence grave */ });
@@ -120,6 +142,24 @@ export default function TvApp() {
   const push = useCallback((screen) => setStack((s) => [...s, screen]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
 
+  // ── Panneau de réglages global (avatar de TvTopNavigation) ─────────────────
+  // Un SEUL état ici (au lieu d'un état local par écran) : l'avatar ouvre le même
+  // panneau depuis Início/Catálogo/Karaokê/fiche (tous rendent TvTopNavigation).
+  // Même source de vérité que KaraokePlayer/TvSettingsPanel (localStorage).
+  // Déclaré AVANT l'effet onBackPress ci-dessous : celui-ci référence
+  // `closeTvSettings` dans son tableau de dépendances, évalué au rendu — une
+  // déclaration plus bas provoquerait un ReferenceError (TDZ) à chaque render.
+  const [tvSettingsOpen, setTvSettingsOpen] = useState(false);
+  const tvSettingsOpenRef = useRef(false);
+  tvSettingsOpenRef.current = tvSettingsOpen;
+  const [karaokeOpts, setKaraokeOpts] = useState(loadKaraokeOptions);
+  useEffect(() => { saveKaraokeOptions(karaokeOpts); }, [karaokeOpts]);
+  const openTvSettings = useCallback(() => setTvSettingsOpen(true), []);
+  const closeTvSettings = useCallback(() => {
+    setTvSettingsOpen(false);
+    setTimeout(() => { try { SpatialNavigation.setFocus('TOPNAV_SETTINGS'); } catch { /* ignore */ } }, 0);
+  }, []);
+
   // Un écran peut « intercepter » le Back (ex. fiche en lecture vidéo → couper la vidéo
   // au lieu de quitter l'écran). L'intercepteur retourne true s'il a consommé le Back.
   const backInterceptorRef = useRef(null);
@@ -128,10 +168,13 @@ export default function TvApp() {
   const stackRef = useRef(stack);
   stackRef.current = stack;
   useEffect(() => onBackPress(() => {
+    // Le panneau de réglages global est prioritaire sur TOUT écran (fermeture,
+    // jamais un pop de pile ni une sortie d'app pendant qu'il est ouvert).
+    if (tvSettingsOpenRef.current) { closeTvSettings(); return; }
     if (backInterceptorRef.current?.()) return; // l'écran courant a géré le Back
     if (stackRef.current.length > 1) pop();
     else exitApp();
-  }), [pop]);
+  }), [pop, closeTvSettings]);
 
   // Overlays plein écran (watch/karaoke) : on met la nav spatiale en pause pour
   // laisser flèches/OK au lecteur, puis on la réactive au retour.
@@ -180,7 +223,6 @@ export default function TvApp() {
   const openModeGrid = useCallback((mode, title) => setStack((s) => [
     ...s, { name: 'grid', title, songs: songsRef.current.filter(getHasKaraoke), mode },
   ]), [getHasKaraoke]);
-  const onOpenFullKaraokeGrid = useCallback(() => openModeGrid('karaoke-any', 'Karaokê'), [openModeGrid]);
   // Grilles complètes « Ver todos os karaokês » ATTEINTES DEPUIS une page de mode
   // (mode-landing) — même contexte de mode que la page d'origine (jamais le
   // sélecteur générique 'karaoke-any', qui rouvrirait le choix Karaokê/Festa).
@@ -215,6 +257,11 @@ export default function TvApp() {
   // démontage/remontage de l'accueil quand une fiche passe au-dessus dans la pile.
   const homeFocusKeyRef = useRef(null);
   const setHomeFocusKey = useCallback((key) => { homeFocusKeyRef.current = key; }, []);
+
+  // Idem pour l'écran Karaokê (catálogo dédié) : mémorise la dernière carte
+  // focalisée → restaurée au retour d'une fiche ouverte depuis le Karaokê.
+  const karaokeFocusKeyRef = useRef(null);
+  const setKaraokeFocusKey = useCallback((key) => { karaokeFocusKeyRef.current = key; }, []);
 
   // ── État du Catálogo (filtres/recherche/carte focalisée) — ref, restauré au
   // retour d'une fiche sans re-render pendant que le catálogo est monté. ──
@@ -394,6 +441,7 @@ export default function TvApp() {
           loadError={loadError}
           queue={localQueue}
           festaPeople={festaSession ? festaPresentNames.length : null}
+          festaQueueCount={festaWaitingCount}
           familiarIds={familiarIdsRef.current}
           initialState={catalogStateRef.current}
           onStateChange={setCatalogState}
@@ -406,6 +454,7 @@ export default function TvApp() {
           onGoHome={goHome}
           onOpenKaraoke={openKaraokeLanding}
           onOpenFesta={onChooseFesta}
+          onOpenSettings={openTvSettings}
           onRetryLoad={loadSongs}
           backInterceptorRef={backInterceptorRef}
         />
@@ -426,6 +475,7 @@ export default function TvApp() {
           onOpenCatalog={openCatalog}
           onOpenKaraoke={openKaraokeLanding}
           onOpenFesta={onChooseFesta}
+          onOpenSettings={openTvSettings}
           onConnectPhone={onChooseFesta}
           backInterceptorRef={backInterceptorRef}
         />
@@ -437,16 +487,15 @@ export default function TvApp() {
           songs={songs}
           getThumb={getThumb}
           getHasKaraoke={getHasKaraoke}
-          onChooseSolo={onChooseSolo}
-          onChooseDuet={onChooseDuet}
-          onChooseFesta={onChooseFesta}
-          onOpenFullGrid={onOpenFullKaraokeGrid}
-          onRequestKaraoke={onRequestKaraoke}
+          familiarIds={familiarIdsRef.current}
+          initialFocusKey={karaokeFocusKeyRef.current}
+          onCardFocusKey={setKaraokeFocusKey}
+          onOpenDetail={(song) => { markFamiliar(song); push({ name: 'detail', song, source: 'karaoke' }); }}
+          onCantar={(song) => { markFamiliar(song); startKaraoke(song, null); }}
           onNavigateHome={goHome}
           onNavigateFesta={onChooseFesta}
-          onNavigateClips={openClipsLanding}
           onNavigateAll={openCatalog}
-          onExitApp={exitApp}
+          onOpenSettings={openTvSettings}
           backInterceptorRef={backInterceptorRef}
         />
       );
@@ -534,24 +583,25 @@ export default function TvApp() {
         songs={songs}
         getThumb={getThumb}
         getHasKaraoke={getHasKaraoke}
-        festaQueueCount={festaSession ? festaQueue.filter((q) => q.status === 'waiting').length : null}
+        festaQueueCount={festaSession ? festaWaitingCount : null}
         initialFocusKey={homeFocusKeyRef.current}
         onOpenDetail={(s) => { markFamiliar(s); push({ name: 'detail', song: s, source: 'home' }); }}
         onCantar={(s) => startKaraoke(s, null)}
         onChooseMode={onChooseMode}
         onOpenCatalog={openCatalog}
         onOpenKaraoke={openKaraokeLanding}
+        onOpenSettings={openTvSettings}
         onCardFocusKey={setHomeFocusKey}
       />
     );
   }, [
     top, songs, getThumb, getHasKaraoke, push, openCatalog,
     onChooseMode, startKaraoke, advanceFesta, startFesta,
-    onChooseSolo, onChooseDuet, onChooseFesta, openKaraokeLanding, openClipsLanding,
-    onOpenFullKaraokeGrid, onRequestKaraoke, openSoloGrid, openDuetGrid, openFestaGrid,
-    goHome, pop, getCat, setHomeFocusKey,
+    onChooseFesta, openKaraokeLanding, openClipsLanding,
+    onRequestKaraoke, openSoloGrid, openDuetGrid, openFestaGrid,
+    goHome, pop, getCat, setHomeFocusKey, setKaraokeFocusKey, openTvSettings,
     festaSession, festaPresentNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
-    liveEnergyByEntry, festaQueue,
+    liveEnergyByEntry, festaQueue, festaWaitingCount,
     // Catálogo
     loading, loadError, localQueue, setCatalogState, markFamiliar,
     addToQueue, removeFromQueue, clearQueue, startLocalQueue, loadSongs,
@@ -559,12 +609,24 @@ export default function TvApp() {
 
   if (loading) {
     return (
-      <div className="tv-root tv-boot">
-        <Loader2 className="tv-spin" size={44} />
-        <p>A preparar o palco…</p>
-      </div>
+      <TvStage>
+        <div className="tv-root tv-boot">
+          <img src={BRAND_SQUARE_LARGE} alt="" className="tv-boot-mascot" />
+          <Loader2 className="tv-spin" size={44} />
+          <p>A preparar o palco…</p>
+        </div>
+      </TvStage>
     );
   }
 
-  return <div className="tv-root">{content}</div>;
+  return (
+    <TvStage>
+      <div className="tv-root">
+        {content}
+        {tvSettingsOpen && (
+          <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} />
+        )}
+      </div>
+    </TvStage>
+  );
 }
