@@ -1,4 +1,10 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import { arcAmplitude } from '@/lib/ballMotion';
+
+// easing horizontal doux (même courbe que ballAt() du studio admin).
+function easeInOut(p) {
+  return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+}
 
 /**
  * Ligne karaoké à balayage MOT PAR MOT — sœur de KaraokeWipeLine (même technique de
@@ -14,14 +20,25 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 
  * frame : seul le mot actif est repeint en continu.
  */
 const KaraokeWordLine = forwardRef(function KaraokeWordLine(
-  { words, progress, activeIndex: activeIndexProp, showBall = true, color = '#FDE047', unsungColor = 'rgba(255,255,255,0.92)', className = '' },
+  {
+    words, progress, activeIndex: activeIndexProp, showBall = true, color = '#FDE047',
+    unsungColor = 'rgba(255,255,255,0.92)', className = '',
+    // arcBall : boule rebondissante « clássica » du studio admin (arc parabolique entre
+    // les centres des mots + squash à l'atterrissage). Défaut false → TV et aperçus
+    // admin gardent la boule glissante historique, rien ne change pour eux.
+    arcBall = false,
+  },
   ref,
 ) {
   const spanRefs = useRef([]);
   const ballRef = useRef(null);
   const lastIdxRef = useRef(-1);
+  const lastLandIdxRef = useRef(-1);
   const colorRef = useRef(color); colorRef.current = color;
   const unsungRef = useRef(unsungColor); unsungRef.current = unsungColor;
+  const reducedRef = useRef(
+    typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches,
+  );
 
   const paintWord = useCallback((i, pct) => {
     const el = spanRefs.current[i];
@@ -31,7 +48,15 @@ const KaraokeWordLine = forwardRef(function KaraokeWordLine(
     el.style.backgroundImage = `linear-gradient(90deg, ${c} ${pct}%, ${u} ${pct}%)`;
   }, []);
 
-  const setActive = useCallback((activeIndex, prog) => {
+  // Centre rendu d'un mot (x = milieu, y = ligne de repos de la boule juste au-dessus).
+  const wordCenter = useCallback((i) => {
+    const el = spanRefs.current[i];
+    if (!el) return null;
+    const fontSizePx = parseFloat(getComputedStyle(el).fontSize) || 16;
+    return { x: el.offsetLeft + (el.offsetWidth || 1) / 2, y: el.offsetTop - fontSizePx * 0.42 };
+  }, []);
+
+  const setActive = useCallback((activeIndex, prog, spanSec) => {
     const pct = Math.max(0, Math.min(100, (Number.isFinite(prog) ? prog : 0) * 100));
     if (lastIdxRef.current !== activeIndex) {
       // Recolore les mots AVANT/APRÈS une seule fois par changement de mot actif
@@ -44,6 +69,38 @@ const KaraokeWordLine = forwardRef(function KaraokeWordLine(
       lastIdxRef.current = activeIndex;
     }
     if (activeIndex >= 0) paintWord(activeIndex, pct);
+    if (ballRef.current && arcBall) {
+      // ── Boule rebondissante « clássica » (même math que ballAt() du studio) ──
+      const ball = ballRef.current;
+      const n = spanRefs.current.length;
+      const i = Math.max(0, Math.min(n - 1, activeIndex));
+      const from = wordCenter(i);
+      if (!from) { ball.style.opacity = '0'; return; }
+      const p = Math.max(0, Math.min(1, Number.isFinite(prog) ? prog : 0));
+      let x = from.x; let y = from.y;
+      if (i < n - 1) {
+        const to = wordCenter(i + 1) || from;
+        x = from.x + (to.x - from.x) * easeInOut(p);
+        y = from.y + (to.y - from.y) * p; // suit un retour à la ligne éventuel
+        if (!reducedRef.current) {
+          const amp = arcAmplitude(to.x - from.x, spanSec, 'classica');
+          y -= amp * 4 * p * (1 - p); // parabole : 0 aux extrémités, max au milieu
+        }
+      }
+      ball.style.left = `${x}px`;
+      ball.style.top = `${y}px`;
+      ball.style.opacity = '1';
+      // Squash à l'atterrissage (au changement de mot actif), comme le studio.
+      if (lastLandIdxRef.current !== i) {
+        lastLandIdxRef.current = i;
+        if (!reducedRef.current) {
+          ball.classList.remove('karaoke-ball--land');
+          void ball.offsetWidth; // reflow → relance l'animation
+          ball.classList.add('karaoke-ball--land');
+        }
+      }
+      return;
+    }
     if (ballRef.current) {
       const el = activeIndex >= 0 ? spanRefs.current[activeIndex] : null;
       if (el) {
@@ -65,7 +122,7 @@ const KaraokeWordLine = forwardRef(function KaraokeWordLine(
         ballRef.current.style.opacity = '0';
       }
     }
-  }, [paintWord]);
+  }, [paintWord, arcBall, wordCenter]);
 
   useImperativeHandle(ref, () => ({ setActive }), [setActive]);
 
@@ -76,7 +133,14 @@ const KaraokeWordLine = forwardRef(function KaraokeWordLine(
 
   return (
     <span className={`karaoke-wipe-wrap ${className}`}>
-      {showBall && <span ref={ballRef} className="karaoke-ball" aria-hidden="true" style={{ background: color, boxShadow: `0 0 12px ${color}` }} />}
+      {showBall && (
+        <span
+          ref={ballRef}
+          className={`karaoke-ball ${arcBall ? 'karaoke-ball--arc' : ''}`}
+          aria-hidden="true"
+          style={{ background: color, boxShadow: `0 0 12px ${color}` }}
+        />
+      )}
       {words.flatMap((w, i) => {
         // L'espace inter-mots est un nœud texte SÉPARÉ, hors du <span> mesuré — sinon
         // sa largeur fausse le % du mot (voir le commentaire dans setActive()).

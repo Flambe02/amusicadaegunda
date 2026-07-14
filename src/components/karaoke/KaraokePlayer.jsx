@@ -2,15 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } fro
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft, Play, Pause, Music, Loader2, Settings2, Mic,
-  SkipBack, SkipForward, Square, RotateCcw, Users, Flame, Globe, X,
+  SkipBack, SkipForward, Square, RotateCcw, X,
+  SlidersHorizontal, Repeat, Check,
 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
 import { hasDuetTags } from '@/lib/lrc';
 import { resolveSongTiming } from '@/lib/timingModel';
-import { FONT_SCALES, PLAYBACK_RATES, TRANSLATION_LANGS, loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
+import { distributeWords } from '@/lib/wordDistribution';
+import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
+import KaraokeMixerSheet from '@/components/karaoke/KaraokeMixerSheet';
 import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
 import TvDuetLyricsView from '@/tv/components/TvDuetLyricsView';
 import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
@@ -29,14 +32,33 @@ const YELLOW = '#FDE047';
 // partagée avec le médiateur d'énergie à distance du Modo Festa — la TV n'a pas de
 // micro, cf. src/components/festa/FestaEnergyMic.jsx).
 
-// Traduction via l'endpoint public (non officiel) de Google Translate — « outil Google
-// simple », sans clé API. sl=pt → tl=cible. Réponse = tableaux imbriqués.
-async function translateText(text, target) {
+// Traduction sans clé API, avec repli. L'endpoint Google (non officiel) est souvent
+// bloqué par les bloqueurs de pub / la protection anti-pistage / des limites de débit
+// (échec silencieux) → si indisponible, on bascule sur MyMemory (CORS ouvert, gratuit).
+async function translateViaGoogle(text, target) {
   const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('translate failed');
+  if (!res.ok) throw new Error('google translate failed');
   const data = await res.json();
-  return (data?.[0] || []).map((seg) => seg?.[0] || '').join('');
+  const out = (data?.[0] || []).map((seg) => seg?.[0] || '').join('');
+  if (!out) throw new Error('google translate empty');
+  return out;
+}
+async function translateViaMyMemory(text, target) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=pt|${target}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('mymemory failed');
+  const data = await res.json();
+  const out = data?.responseData?.translatedText;
+  if (!out || data?.responseStatus === 403) throw new Error('mymemory empty');
+  return out;
+}
+async function translateText(text, target) {
+  try {
+    return await translateViaGoogle(text, target);
+  } catch {
+    return translateViaMyMemory(text, target); // repli fiable (CORS *)
+  }
 }
 
 /**
@@ -124,6 +146,15 @@ export default function KaraokePlayer({
   const queueInfoRef = useRef(queueInfo); queueInfoRef.current = queueInfo;
   const finishAndScoreRef = useRef(null);
 
+  // Compensação de exibição das letras (Ajuste das letras) — em segundos. Aplicada
+  // SÓ no render (tempo efetivo = tempo da mídia + offset) ; nunca modifica os dados
+  // de sincronização guardados (§15). Via ref para leitura no poll/rAF sem recriar.
+  const offsetSecRef = useRef((opts.lyricsOffsetMs || 0) / 1000);
+  offsetSecRef.current = (opts.lyricsOffsetMs || 0) / 1000;
+
+  // Confirmação « Finalizar » (evita toque acidental) — só móvel/web.
+  const [confirmFinish, setConfirmFinish] = useState(false);
+
   // Medidor de energia → note finale : stats accumulées pendant le chant.
   const energyStatsRef = useRef({ active: 0, sung: 0, sum: 0, count: 0 });
   const [scoreResult, setScoreResult] = useState(null); // { score, grade, emoji } | null
@@ -139,7 +170,23 @@ export default function KaraokePlayer({
   // Timing : préfère timing_data structuré (ligne+mot) quand valide, sinon lrc_content
   // — comportement historique inchangé pour toute chanson sans timing structuré.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- volontairement scopé à lrc_content/timing_data (comme videoId ci-dessus)
-  const { lines, timingSource } = useMemo(() => resolveSongTiming(song), [song?.lrc_content, song?.timing_data]);
+  const { lines: baseLines, timingSource } = useMemo(() => resolveSongTiming(song), [song?.lrc_content, song?.timing_data]);
+  // Boule « clássica » (mobile/desktop uniquement) : les lignes SANS timing par mot
+  // reçoivent une distribution déterministe des mots (wordDistribution) pour que la
+  // boule puisse rebondir de mot en mot comme dans le studio admin. Les temps de
+  // ligne (time/endTime) sont INCHANGÉS ; la TV garde les lignes d'origine.
+  const lines = useMemo(() => {
+    if (tvMode) return baseLines;
+    return baseLines.map((l, i) => {
+      if (l.time == null || (Array.isArray(l.words) && l.words.length > 0)) return l;
+      const text = (l.text || '').trim();
+      if (!text) return l;
+      const end = l.endTime ?? baseLines[i + 1]?.time ?? l.time + FALLBACK_LINE_DURATION_SEC;
+      if (!(end > l.time)) return l;
+      const words = distributeWords(text, l.time, end);
+      return words.length > 0 ? { ...l, words } : l;
+    });
+  }, [baseLines, tvMode]);
   const artwork = song?.cover_image
     || getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault');
 
@@ -217,6 +264,12 @@ export default function KaraokePlayer({
     try { playerRef.current?.setPlaybackRate?.(opts.rate); } catch { /* ignore */ }
   }, [playerReady, opts.rate]);
 
+  // Volume da música (« Música » no mixer) — único áudio disponível (YouTube).
+  useEffect(() => {
+    if (!playerReady) return;
+    try { playerRef.current?.setVolume?.(Math.max(0, Math.min(100, opts.musicVolume ?? 100))); } catch { /* ignore */ }
+  }, [playerReady, opts.musicVolume]);
+
   // Auto-masquage des commandes révélées : ~3,5 s en lecture, indéfini en pause.
   useEffect(() => {
     if (!tvMode || !controlsVisible) return undefined;
@@ -233,7 +286,8 @@ export default function KaraokePlayer({
     pollRef.current = setInterval(() => {
       const p = playerRef.current;
       if (!p || typeof p.getCurrentTime !== 'function') return;
-      const t = p.getCurrentTime();
+      // Tempo efetivo das letras = tempo da mídia + offset (Ajuste das letras).
+      const t = p.getCurrentTime() + offsetSecRef.current;
       syncRef.current = { t, wall: performance.now(), playing: p.getPlayerState?.() === 1, rate: p.getPlaybackRate?.() ?? 1 };
 
       // Ligne AFFICHÉE = dernière ligne démarrée (jamais -1 une fois commencé → continuité).
@@ -280,7 +334,9 @@ export default function KaraokePlayer({
           const w = words[wi];
           const wEnd = Number.isFinite(w.end) ? w.end : (words[wi + 1]?.start ?? line.endTime ?? w.start + FALLBACK_LINE_DURATION_SEC);
           const wDur = Math.max(0.05, wEnd - w.start);
-          wordApiRef.current?.setActive(wi, (t - w.start) / wDur);
+          // 3e arg (durée en s) : utilisé par la boule « clássica » pour amortir les
+          // sauts très courts (arcAmplitude) — ignoré par le mode historique/TV.
+          wordApiRef.current?.setActive(wi, (t - w.start) / wDur, wDur);
         } else {
           const end = line.endTime ?? lines[idx + 1]?.time ?? line.time + FALLBACK_LINE_DURATION_SEC;
           const dur = Math.max(0.2, end - line.time);
@@ -338,25 +394,36 @@ export default function KaraokePlayer({
     };
   }, [opts.energy, phase]);
 
-  // ── Barre de progression + temps TV (mise à jour légère, mutation directe, sans re-render) ──
+  // ── Barre de progression + temps (mise à jour légère, mutation directe, sans re-render) ──
+  // Mêmes refs pour TV et mobile : une seule des deux séries de nœuds est montée à la
+  // fois (branche tvMode vs non-tvMode), l'autre reste null → mise à jour no-op.
   const tvProgressRef = useRef(null);
   const tvTimeCurrentRef = useRef(null);
   const tvTimeTotalRef = useRef(null);
+  const mProgressRef = useRef(null);
+  const mTimeCurRef = useRef(null);
+  const mTimeTotalRef = useRef(null);
+  const durationRef = useRef(0); // durée réelle (média) — pour le seek de la barre mobile
   useEffect(() => {
-    if (!tvMode || !playerReady) return undefined;
+    if (!playerReady) return undefined;
     const id = setInterval(() => {
       const p = playerRef.current;
       if (!p) return;
       try {
         const d = p.getDuration?.() || 0;
         const t = p.getCurrentTime?.() || 0;
-        if (tvProgressRef.current) tvProgressRef.current.style.width = d > 0 ? `${Math.min(100, (t / d) * 100)}%` : '0%';
+        durationRef.current = d;
+        const pct = d > 0 ? `${Math.min(100, (t / d) * 100)}%` : '0%';
+        if (tvProgressRef.current) tvProgressRef.current.style.width = pct;
         if (tvTimeCurrentRef.current) tvTimeCurrentRef.current.textContent = formatTvTime(t);
         if (tvTimeTotalRef.current) tvTimeTotalRef.current.textContent = d > 0 ? formatTvTime(d) : '--:--';
+        if (mProgressRef.current) mProgressRef.current.style.width = pct;
+        if (mTimeCurRef.current) mTimeCurRef.current.textContent = formatTvTime(t);
+        if (mTimeTotalRef.current) mTimeTotalRef.current.textContent = d > 0 ? formatTvTime(d) : '--:--';
       } catch { /* ignore */ }
     }, 250);
     return () => clearInterval(id);
-  }, [tvMode, playerReady]);
+  }, [playerReady]);
 
   // ── Contrôles ──
   const seekTo = useCallback((t) => {
@@ -373,6 +440,19 @@ export default function KaraokePlayer({
     if (!p) return;
     if (isPlaying) p.pauseVideo(); else p.playVideo();
   }, [isPlaying]);
+
+  // Seek vers le TEMPS D'UNE LIGNE (domaine paroles) → converti en temps média en
+  // retirant l'offset d'affichage, pour que la ligne visée redevienne active après
+  // application de l'offset. `pre` = petit recul additionnel (ex. Repetir : 0.4s).
+  const seekToLine = useCallback((lineTime, pre = 0) => {
+    seekTo(lineTime - offsetSecRef.current - pre);
+  }, [seekTo]);
+
+  // Seek par fraction 0..1 de la durée (barre de progression mobile).
+  const seekToFraction = useCallback((frac) => {
+    const d = durationRef.current || playerRef.current?.getDuration?.() || 0;
+    if (d > 0) seekTo(Math.max(0, Math.min(1, frac)) * d);
+  }, [seekTo]);
 
   const handleStart = useCallback(() => {
     // Le toggle Dueto (écran de lancement) tranche pour CETTE chanson uniquement,
@@ -422,10 +502,26 @@ export default function KaraokePlayer({
     const t = syncRef.current.t;
     const cur = di >= 0 ? lines[di] : null;
     // Si on est >1.5s dans la ligne courante, on la reprend ; sinon on va à la précédente.
-    if (cur && t - cur.time > 1.5) { seekTo(cur.time); return; }
+    if (cur && t - cur.time > 1.5) { seekToLine(cur.time); return; }
     const prev = di > 0 ? lines[di - 1] : cur;
-    if (prev) seekTo(prev.time);
-  }, [lines, seekTo]);
+    if (prev) seekToLine(prev.time);
+  }, [lines, seekToLine]);
+
+  // Repetir = rejoga a FRASE ativa (seek para o início da frase − 0,4s). Não reinicia
+  // a música inteira nem modifica os tempos de sincronização (§10). Funciona em pausa
+  // ou em reprodução. Sem frase ativa → repete a última frase começada, senão recua 5s.
+  const handleRepeatPhrase = useCallback(() => {
+    const di = displayIdxRef.current;
+    const cur = di >= 0 ? lines[di] : null;
+    if (cur?.time != null) {
+      seekToLine(cur.time, 0.4);
+    } else {
+      const lastStarted = [...lines].reverse().find((l) => l.time != null && l.time <= syncRef.current.t);
+      if (lastStarted?.time != null) seekToLine(lastStarted.time, 0.4);
+      else seekBy(-5);
+    }
+    try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
+  }, [lines, seekToLine, seekBy]);
 
   // Recomeçar (barre de commandes TV + panneau Opções) : pause, seekTo(0), reset de
   // la ligne LRC active et des stats d'énergie de LA TENTATIVE en cours (aucune
@@ -448,13 +544,6 @@ export default function KaraokePlayer({
       restartLockRef.current = false;
     }, 300);
   }, [seekTo, revealControls]);
-
-  // Retry = recommencer la ligne en cours.
-  const handleRetry = useCallback(() => {
-    const di = displayIdxRef.current;
-    const cur = di >= 0 ? lines[di] : lines[0];
-    if (cur?.time != null) seekTo(cur.time);
-  }, [lines, seekTo]);
 
   // Stop = pause + retour à l'écran d'ouverture. Si le medidor de energia est actif et
   // qu'on a assez de données, on montre la note (« terminar e ver a nota ») au lieu de
@@ -529,10 +618,21 @@ export default function KaraokePlayer({
   }, [tvMode, backInterceptorRef, showOpts, controlsVisible]);
 
   // ── Auto-scroll (mobile/desktop uniquement — la fenêtre TV utilise des ancres fixes) ──
+  // Positionne la ligne active à ~44% de la hauteur visible (plus haut que le centre)
+  // pour réduire l'espace vide et garder les lignes futures lisibles (§7).
   const activeLineRef = useRef(null);
+  const lyricsBoxRef = useRef(null);
   useEffect(() => {
     if (tvMode) return;
-    activeLineRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const box = lyricsBoxRef.current;
+    const el = activeLineRef.current;
+    if (!box || !el) return;
+    const reduce = typeof window !== 'undefined'
+      && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const target = Math.max(0, el.offsetTop - box.clientHeight * 0.44 + el.clientHeight / 2);
+    // Garde : Element.scrollTo absent sur de vieux WebViews (et jsdom) → fallback scrollTop.
+    if (typeof box.scrollTo === 'function') box.scrollTo({ top: target, behavior: reduce ? 'auto' : 'smooth' });
+    else box.scrollTop = target;
   }, [displayIdx, tvMode]);
 
   // ── Traduction de la ligne courante (bandeau bas), avec cache ──
@@ -593,6 +693,9 @@ export default function KaraokePlayer({
         <div ref={hostRef} />
       </div>
 
+      {/* Fundo limpo (só móvel/web) : brilho amarelo subtil + gradiente — sem imagem/capa. */}
+      {!tvMode && <div className="karaoke-clean-bg" aria-hidden="true" />}
+
       {/* Barre supérieure — padding haut = safe-area (sinon passe sous l'encoche/barre d'état) */}
       <header className="relative z-30 flex items-center gap-3 px-4 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)] md:px-6 md:pb-4 md:pt-[max(env(safe-area-inset-top),1rem)]">
         {tvMode ? (
@@ -621,58 +724,40 @@ export default function KaraokePlayer({
           </button>
         )}
         {phase === 'live' && !tvMode && (
-          <div className="relative">
-            <button type="button" onClick={() => setShowOpts((v) => !v)}
-              className={`karaoke-focusable flex h-11 w-11 items-center justify-center rounded-full border transition ${
-                showOpts ? 'border-app-yellow/50 bg-app-yellow/15 text-app-yellow' : 'border-white/15 bg-white/5 text-white/85 hover:bg-white/10'}`}
-              aria-label="Opções">
-              <Settings2 className="h-5 w-5" />
-            </button>
-            {showOpts && (
-              <div className="absolute right-0 top-full z-40 mt-2 max-h-[min(32rem,calc(100vh-6rem))] w-72 space-y-4 overflow-y-auto rounded-2xl border border-white/12 bg-black/92 p-4 text-left shadow-2xl backdrop-blur-xl">
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-white/45">Tamanho da letra</p>
-                  <div className="flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
-                    {FONT_SCALES.map((f) => (
-                      <button key={f.label} onClick={() => setOpts((o) => ({ ...o, fontScale: f.value }))}
-                        className={`karaoke-focusable flex-1 rounded-lg py-1.5 text-sm font-bold transition ${opts.fontScale === f.value ? 'bg-app-yellow text-black' : 'text-white/60 hover:bg-white/10'}`}>
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <ToggleRow label="Bolinha" on={opts.showBall} onClick={() => setOpts((o) => ({ ...o, showBall: !o.showBall }))} />
-                <ToggleRow label="Modo dueto (P1 / P2)" icon={Users} on={opts.dueto} onClick={() => setOpts((o) => ({ ...o, dueto: !o.dueto }))} />
-                <ToggleRow label="Medidor de energia 🔥 (micro)" icon={Flame} on={opts.energy} onClick={() => setOpts((o) => ({ ...o, energy: !o.energy }))} />
-                <div>
-                  <p className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white/45">
-                    <Globe className="h-3.5 w-3.5" /> Tradução <span className="font-medium normal-case text-white/35">(rodapé)</span>
-                  </p>
-                  <div className="flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
-                    {TRANSLATION_LANGS.map((l) => (
-                      <button key={l.value} onClick={() => setOpts((o) => ({ ...o, translate: l.value }))}
-                        className={`karaoke-focusable flex-1 rounded-lg py-1.5 text-sm font-bold transition ${opts.translate === l.value ? 'bg-app-yellow text-black' : 'text-white/60 hover:bg-white/10'}`}>
-                        {l.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-white/45">Velocidade <span className="font-medium normal-case text-white/35">(treino)</span></p>
-                  <div className="flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1">
-                    {PLAYBACK_RATES.map((r) => (
-                      <button key={r.value} onClick={() => setOpts((o) => ({ ...o, rate: r.value }))}
-                        className={`karaoke-focusable flex-1 rounded-lg py-1.5 text-sm font-bold transition ${opts.rate === r.value ? 'bg-app-yellow text-black' : 'text-white/60 hover:bg-white/10'}`}>
-                        {r.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <button type="button" onClick={() => setShowOpts(true)}
+            className={`karaoke-focusable flex h-11 w-11 items-center justify-center rounded-full border transition ${
+              showOpts ? 'border-app-yellow/50 bg-app-yellow/15 text-app-yellow' : 'border-white/15 bg-white/5 text-white/85 hover:bg-white/10'}`}
+            aria-label="Abrir mixer">
+            <SlidersHorizontal className="h-5 w-5" />
+          </button>
         )}
       </header>
+
+      {/* Barra de progressão móvel — tempo decorrido / faixa / duração (§6). Seek por toque. */}
+      {phase === 'live' && !tvMode && (
+        <div className="km-progress">
+          <span ref={mTimeCurRef} className="km-progress-time">0:00</span>
+          <div
+            className="km-progress-track"
+            role="slider"
+            tabIndex={0}
+            aria-label="Progresso da música"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            onPointerDown={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              seekToFraction((e.clientX - rect.left) / rect.width);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowLeft') { e.preventDefault(); seekBy(-5); }
+              else if (e.key === 'ArrowRight') { e.preventDefault(); seekBy(5); }
+            }}
+          >
+            <div ref={mProgressRef} className="km-progress-fill" style={{ width: '0%' }} />
+          </div>
+          <span ref={mTimeTotalRef} className="km-progress-time km-progress-time--total">--:--</span>
+        </div>
+      )}
 
       {phase === 'intro' ? (
         <div className="relative flex flex-1 flex-col items-center justify-center gap-5 overflow-hidden px-6 text-center">
@@ -788,33 +873,45 @@ export default function KaraokePlayer({
                 />
               )
             ) : (
-              <div className="karaoke-lyrics relative z-10 h-full overflow-y-auto scroll-smooth px-6 py-[38vh] text-center md:px-12" aria-live="polite">
-                {hasLines ? (
-                  lines.map((line, i) => {
-                    const distance = displayIdx < 0 ? i + 1 : Math.abs(i - displayIdx);
-                    const isActive = i === displayIdx;
-                    const duetColor = opts.dueto ? DUET_COLORS[i % 2] : null;
-                    return (
-                      <p key={`${i}-${line.time}`} ref={isActive ? activeLineRef : null}
-                        className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/20'].join(' ')}
-                        style={{
-                          fontSize: isActive ? `calc(clamp(2rem, 6vw, 5rem) * ${scale})` : distance === 1 ? `calc(clamp(1.35rem, 3.6vw, 2.6rem) * ${scale})` : `calc(clamp(1.1rem, 2.6vw, 1.9rem) * ${scale})`,
-                          marginBlock: isActive ? '0.55em' : '0.4em',
-                          opacity: distance > 3 ? 0.12 : undefined,
-                          color: !isActive && duetColor ? `${duetColor}66` : undefined,
-                        }}>
-                        {isActive
-                          ? (Array.isArray(line.words) && line.words.length > 0
-                            ? <KaraokeWordLine ref={wordApiRef} words={line.words} showBall={opts.showBall} color={lineColor(i)} />
-                            : <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />)
-                          : (line.text || '♪')}
-                      </p>
-                    );
-                  })
-                ) : (
-                  <p className="mx-auto max-w-3xl text-lg text-white/50">Letra sincronizada em breve.</p>
+              <>
+                {/* Etiqueta « Pausado » discreta (não esconde a letra) */}
+                {countdown == null && !isPlaying && hasLines && (
+                  <div className="km-paused-badge"><span><Pause className="h-3 w-3" /> Pausado</span></div>
                 )}
-              </div>
+
+                {/* Scroll do utilizador BLOQUEADO durante a música (overflow-hidden) — só o
+                    auto-scroll programático (scrollTo) move a letra. */}
+                <div ref={lyricsBoxRef} className="karaoke-lyrics relative z-10 h-full overflow-hidden px-6 pt-[30vh] pb-[46vh] text-center md:px-12" aria-live="polite">
+                  {hasLines ? (
+                    lines.map((line, i) => {
+                      // Limpa o ecrã : esconde as frases já cantadas, mantendo apenas a
+                      // imediatamente anterior à ativa (i >= displayIdx - 1).
+                      if (i < displayIdx - 1) return null;
+                      const distance = displayIdx < 0 ? i + 1 : Math.abs(i - displayIdx);
+                      const isActive = i === displayIdx;
+                      const duetColor = opts.dueto ? DUET_COLORS[i % 2] : null;
+                      return (
+                        <p key={`${i}-${line.time}`} ref={isActive ? activeLineRef : null}
+                          className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/25'].join(' ')}
+                          style={{
+                            fontSize: isActive ? `calc(clamp(1.75rem, 8vw, 3.5rem) * ${scale})` : distance === 1 ? `calc(clamp(1.15rem, 5vw, 2rem) * ${scale})` : `calc(clamp(1rem, 4vw, 1.6rem) * ${scale})`,
+                            marginBlock: isActive ? '0.55em' : '0.42em',
+                            opacity: distance > 3 ? 0.12 : undefined,
+                            color: !isActive && duetColor ? `${duetColor}66` : undefined,
+                          }}>
+                          {isActive
+                            ? (Array.isArray(line.words) && line.words.length > 0
+                              ? <KaraokeWordLine ref={wordApiRef} words={line.words} showBall={opts.showBall} arcBall color={lineColor(i)} />
+                              : <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />)
+                            : (line.text || '♪')}
+                        </p>
+                      );
+                    })
+                  ) : (
+                    <p className="mx-auto max-w-3xl text-lg text-white/50">Letra sincronizada indisponível.</p>
+                  )}
+                </div>
+              </>
             )
           )}
 
@@ -827,13 +924,20 @@ export default function KaraokePlayer({
         </div>
       )}
 
-      {/* Bandeau de traduction (barre noire, gros texte) */}
+      {/* Bandeau de traduction — TV : barre noire pleine largeur (inchangée) ;
+          mobile/web : pastille juste au-dessus de la barre de contrôle. */}
       {phase === 'live' && opts.translate !== 'off' && translation && (
-        <div className="pointer-events-none shrink-0 bg-black px-6 py-3 text-center md:py-4">
-          <p className="mx-auto max-w-4xl text-lg font-semibold leading-snug text-white/90 md:text-2xl">
-            {translation}
-          </p>
-        </div>
+        tvMode ? (
+          <div className="pointer-events-none shrink-0 bg-black px-6 py-3 text-center md:py-4">
+            <p className="mx-auto max-w-4xl text-lg font-semibold leading-snug text-white/90 md:text-2xl">
+              {translation}
+            </p>
+          </div>
+        ) : (
+          <div className="km-translation" aria-live="polite">
+            <p>{translation}</p>
+          </div>
+        )
       )}
 
       {/* Couche de contrôle TV : barre de commandes révélée + progression/temps (permanents) */}
@@ -878,19 +982,50 @@ export default function KaraokePlayer({
 
       {/* Contrôles bas (live) — masqués en TV (D-pad : OK=play/pause, ←/→=±10s, Retour=sair) */}
       {phase === 'live' && !tvMode && (
-        <footer className="flex items-center justify-center gap-3 px-4 pt-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] md:gap-4 md:pt-7 md:pb-[max(env(safe-area-inset-bottom),1.75rem)]">
-          <CtrlButton onClick={handleReverse} title="Voltar (linha anterior)" aria-label="Voltar"><SkipBack className="h-5 w-5" /></CtrlButton>
-          <CtrlButton onClick={handleRetry} title="Recomeçar esta linha" aria-label="Recomeçar linha"><RotateCcw className="h-5 w-5" /></CtrlButton>
-          <button type="button" onClick={togglePlay} disabled={!playerReady}
-            className="karaoke-focusable inline-flex h-16 w-16 items-center justify-center rounded-full bg-app-yellow text-black shadow-[0_0_40px_rgba(253,224,71,0.35)] transition hover:scale-105 disabled:opacity-40 md:h-20 md:w-20"
-            aria-label={isPlaying ? 'Pausar' : 'Tocar'}>
-            {isPlaying ? <Pause className="h-7 w-7 md:h-9 md:w-9" /> : <Play className="ml-1 h-7 w-7 fill-current md:h-9 md:w-9" />}
+        <footer className="km-controls">
+          <button type="button" className="km-ctrl" onClick={() => seekBy(-10)} aria-label="Voltar 10 segundos">
+            <span className="km-ctrl-icon"><SkipBack className="h-5 w-5" /></span>
+            <span className="km-ctrl-label">Voltar 10s</span>
           </button>
-          <CtrlButton onClick={handleStop} title="Parar e recomeçar do início" aria-label="Parar"><Square className="h-5 w-5" /></CtrlButton>
-          {hasNext
-            ? <CtrlButton onClick={onNext} title="Próxima da fila" aria-label="Próxima"><SkipForward className="h-5 w-5" /></CtrlButton>
-            : <CtrlButton onClick={handleReverse} title="" disabled hidden><SkipForward className="h-5 w-5" /></CtrlButton>}
+          <button type="button" className="km-ctrl" onClick={handleRepeatPhrase} aria-label="Repetir frase atual">
+            <span className="km-ctrl-icon"><Repeat className="h-5 w-5" /></span>
+            <span className="km-ctrl-label">Repetir</span>
+          </button>
+          <button type="button" className="km-ctrl km-ctrl--main" onClick={togglePlay} disabled={!playerReady}
+            aria-label={isPlaying ? 'Pausar música' : 'Continuar música'}>
+            <span className="km-ctrl-icon">
+              {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="ml-0.5 h-8 w-8 fill-current" />}
+            </span>
+            <span className="km-ctrl-label">{isPlaying ? 'Pausar' : 'Continuar'}</span>
+          </button>
+          <button type="button" className="km-ctrl" onClick={() => setShowOpts(true)} aria-label="Abrir mixer">
+            <span className="km-ctrl-icon"><SlidersHorizontal className="h-5 w-5" /></span>
+            <span className="km-ctrl-label">Mixer</span>
+          </button>
+          <button type="button" className="km-ctrl km-ctrl--exit" onClick={() => setConfirmFinish(true)} aria-label="Finalizar karaokê">
+            <span className="km-ctrl-icon"><Check className="h-5 w-5" /></span>
+            <span className="km-ctrl-label">Finalizar</span>
+          </button>
         </footer>
+      )}
+
+      {/* Mixer (bottom-sheet) — só móvel/web ; a música continua a tocar */}
+      {phase === 'live' && !tvMode && showOpts && (
+        <KaraokeMixerSheet opts={opts} setOpts={setOpts} onClose={() => setShowOpts(false)} />
+      )}
+
+      {/* Confirmação « Finalizar » (evita toque acidental) */}
+      {confirmFinish && !tvMode && (
+        <div className="km-confirm-overlay" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setConfirmFinish(false); }}>
+          <div className="km-confirm" role="dialog" aria-modal="true" aria-label="Finalizar karaokê">
+            <p className="km-confirm-title">Finalizar o karaokê?</p>
+            <p className="km-confirm-body">A música vai parar e voltas ao início.</p>
+            <div className="km-confirm-actions">
+              <button type="button" className="km-confirm-no" onClick={() => setConfirmFinish(false)}>Cancelar</button>
+              <button type="button" className="km-confirm-yes" onClick={() => { setConfirmFinish(false); handleStop(); }}>Finalizar</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Panneau d'options TV (D-pad) — lazy, hors bundle mobile */}
@@ -944,26 +1079,3 @@ export default function KaraokePlayer({
   );
 }
 
-function CtrlButton({ onClick, disabled, title, hidden, children, ...rest }) {
-  if (hidden) return <span className="h-12 w-12 md:h-14 md:w-14" aria-hidden="true" />;
-  return (
-    <button type="button" onClick={onClick} disabled={disabled} title={title} {...rest}
-      className="karaoke-focusable inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/85 transition hover:bg-white/10 disabled:opacity-30 md:h-14 md:w-14">
-      {children}
-    </button>
-  );
-}
-
-function ToggleRow({ label, icon: Icon, on, onClick }) {
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white/45">
-        {Icon && <Icon className="h-3.5 w-3.5" />} {label}
-      </p>
-      <button onClick={onClick} aria-pressed={on} aria-label={label}
-        className={`karaoke-focusable relative h-7 w-12 shrink-0 rounded-full transition ${on ? 'bg-app-yellow' : 'bg-white/15'}`}>
-        <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${on ? 'left-6' : 'left-1'}`} />
-      </button>
-    </div>
-  );
-}

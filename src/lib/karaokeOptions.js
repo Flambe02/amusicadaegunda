@@ -15,7 +15,18 @@ export const DEFAULT_KARAOKE_OPTIONS = {
   dueto: false,
   energy: false,
   translate: 'off',
+  // Volume da música (0..100) — aplicado via YouTube IFrame `setVolume`. É o único
+  // áudio disponível (mistura completa), por isso NÃO existe controlo de « Guia ».
+  musicVolume: 100,
+  // Compensação de exibição das letras, em ms. Apenas no render (nunca modifica a
+  // sincronização oficial guardada). effT = tempoDaMídia + lyricsOffsetMs.
+  lyricsOffsetMs: 0,
 };
+
+// Ajuste das letras (bottom-sheet mixer) — limites e passo.
+export const LYRICS_OFFSET_MIN_MS = -1000;
+export const LYRICS_OFFSET_MAX_MS = 1000;
+export const LYRICS_OFFSET_STEP_MS = 50;
 
 export const FONT_SCALES = [
   { label: 'P', value: 0.85 },
