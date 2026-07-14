@@ -22,14 +22,15 @@ html.tv-mode, html.tv-mode body, html.tv-mode #root {
 }
 .tv-viewport {
   position: fixed; inset: 0;
-  display: grid; place-items: center;
   overflow: hidden; background: #000;
 }
+/* Le canvas est ancré en HAUT-GAUCHE et centré par une translation calculée en JS
+   (TvStage.jsx) — jamais par le centrage CSS d'un élément surdimensionné (fragile
+   sur la WebView Android TV Samsung, cf. bug « rien n'est centré »). Le `transform`
+   (translate + scale) et `transform-origin: 0 0` sont posés inline par TvStage. */
 .tv-stage {
-  position: relative; flex: none;
+  position: absolute; top: 0; left: 0;
   width: 1920px; height: 1080px;
-  transform: scale(var(--tv-scale, 1));
-  transform-origin: center center;
   overflow: hidden;
   background: var(--tv-bg);
 }
@@ -495,6 +496,26 @@ html.tv-mode, html.tv-mode body, html.tv-mode #root {
   font-size: clamp(1.1rem, 23px, 1.25rem); font-weight: 800;
   letter-spacing: 0.14em; text-transform: uppercase;
   color: rgba(255, 255, 255, 0.55); margin: 0;
+}
+
+/* ── Karaokê TV — sous-titre de traduction ──────────────────────────────────
+   Placé en ABSOLU au-dessus de la couche de contrôle (jamais un enfant flex en
+   bas — sinon recouvert par .tv-karaoke-bottom / la barre de progression, cf. bug
+   TV « traduction invisible » 2026-07-14). z-index 20 = sous la barre de commandes
+   révélée (z-30, elle repasse par-dessus le temps d'un appui) mais au-dessus des
+   paroles. Fond opaque = lisible même par-dessus une ligne de letra atténuée. */
+.tv-karaoke-translation {
+  position: absolute; inset-inline: 0; bottom: 168px; z-index: 20;
+  display: flex; justify-content: center; padding: 0 76.8px;
+  pointer-events: none;
+}
+.tv-karaoke-translation p {
+  margin: 0; max-width: 1500px;
+  padding: 10px 30px; border-radius: 16px;
+  background: rgba(3, 4, 8, 0.78);
+  color: #fff; text-align: center; font-weight: 800; line-height: 1.24;
+  font-size: clamp(1.4rem, 34px, 2.1rem);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 /* ── Karaokê TV — couche de contrôle (barre de commandes + progression) ─── */

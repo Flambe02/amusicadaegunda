@@ -73,6 +73,28 @@ export default function Festa() {
     Song.list('-release_date').then((all) => setSongs(all || [])).catch(() => setSongs([]));
   }, []);
 
+  // Wake lock pendant la festa : garde l'écran du téléphone allumé tant qu'une
+  // session est rejointe. Sans ça, l'écran s'éteignait → le WebSocket Realtime se
+  // coupait → la présence expirait et le prénom DISPARAISSAIT de la TV (bug
+  // « les personnages entrés disparaissent », 2026-07-14). Ré-acquis au retour au
+  // premier plan (le lock est libéré par le système quand l'onglet se cache).
+  useEffect(() => {
+    if (!session?.id) return undefined;
+    let lock = null;
+    let released = false;
+    const acquire = async () => {
+      try { lock = await navigator.wakeLock?.request?.('screen'); } catch { /* non supporté / refusé */ }
+    };
+    acquire();
+    const onVis = () => { if (document.visibilityState === 'visible' && !released) acquire(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      released = true;
+      document.removeEventListener('visibilitychange', onVis);
+      try { lock?.release?.(); } catch { /* ignore */ }
+    };
+  }, [session?.id]);
+
   const handleJoin = useCallback(async (code, name) => {
     setJoining(true);
     setJoinError('');

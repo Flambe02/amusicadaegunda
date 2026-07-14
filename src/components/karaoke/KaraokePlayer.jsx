@@ -870,6 +870,7 @@ export default function KaraokePlayer({
                   showBall={opts.showBall}
                   dueto={opts.dueto}
                   lineColor={lineColor}
+                  translating={opts.translate !== 'off'}
                 />
               )
             ) : (
@@ -924,14 +925,16 @@ export default function KaraokePlayer({
         </div>
       )}
 
-      {/* Bandeau de traduction — TV : barre noire pleine largeur (inchangée) ;
-          mobile/web : pastille juste au-dessus de la barre de contrôle. */}
+      {/* Bandeau de traduction — TV : sous-titre centré ABSOLU au-dessus de la couche
+          de contrôle (⚠️ était un enfant flex `shrink-0` en bas → RECOUVERT par
+          `.tv-karaoke-bottom` z-30 + barre de progression toujours visible = « la
+          traduction ne s'affiche pas », bug TV réel 2026-07-14 ; la traduction ELLE
+          fonctionnait, seul le placement la masquait). mobile/web : pastille juste
+          au-dessus de la barre de contrôle. */}
       {phase === 'live' && opts.translate !== 'off' && translation && (
         tvMode ? (
-          <div className="pointer-events-none shrink-0 bg-black px-6 py-3 text-center md:py-4">
-            <p className="mx-auto max-w-4xl text-lg font-semibold leading-snug text-white/90 md:text-2xl">
-              {translation}
-            </p>
+          <div className="tv-karaoke-translation" aria-live="polite">
+            <p>{translation}</p>
           </div>
         ) : (
           <div className="km-translation" aria-live="polite">

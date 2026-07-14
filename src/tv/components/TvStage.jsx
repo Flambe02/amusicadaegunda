@@ -33,11 +33,28 @@ export function getTvPortalRoot() {
   return document.getElementById(PORTAL_ROOT_ID) || document.body;
 }
 
-function computeScale() {
-  const w = window.visualViewport?.width ?? window.innerWidth;
-  const h = window.visualViewport?.height ?? window.innerHeight;
-  if (!w || !h) return 1;
-  return Math.min(w / TV_STAGE_WIDTH, h / TV_STAGE_HEIGHT);
+/**
+ * Échelle ET translation de centrage calculées ENSEMBLE, de façon déterministe.
+ *
+ * ⚠️ Ne JAMAIS s'appuyer sur le centrage CSS (grid/flex `place-items:center`)
+ * d'un canvas plus grand que son conteneur : sur la vraie WebView Android TV
+ * (Samsung), le viewport rapporté et le comportement de débordement d'un élément
+ * surdimensionné divergent de Chromium desktop → le canvas partait en bas-à-droite
+ * et devenait « pannable » à la télécommande (bug « rien n'est centré »). Ici on
+ * ancre le canvas en HAUT-GAUCHE (`transform-origin: 0 0`) puis on le translate
+ * explicitement pour le centrer (letterbox symétrique si la dalle n'est pas 16:9).
+ */
+function computeTransform() {
+  const w = window.visualViewport?.width ?? window.innerWidth ?? TV_STAGE_WIDTH;
+  const h = window.visualViewport?.height ?? window.innerHeight ?? TV_STAGE_HEIGHT;
+  if (!w || !h) return { scale: 1, offsetX: 0, offsetY: 0 };
+  const scale = Math.min(w / TV_STAGE_WIDTH, h / TV_STAGE_HEIGHT);
+  // Translation en px ÉCRAN : dans `transform: translate() scale()`, la
+  // translate() s'applique DANS l'espace écran (après le scale au niveau de la
+  // matrice) → pas de division par l'échelle. Centre le letterbox.
+  const offsetX = (w - TV_STAGE_WIDTH * scale) / 2;
+  const offsetY = (h - TV_STAGE_HEIGHT * scale) / 2;
+  return { scale, offsetX, offsetY };
 }
 
 /** Overlay de diagnostic (activé par ?tvdebug=1, persistant ; ?tvdebug=0 le retire). */
@@ -53,7 +70,7 @@ function useTvDebug() {
   return on;
 }
 
-function TvDebugViewport({ scale }) {
+function TvDebugViewport({ transform }) {
   const [, force] = useState(0);
   useEffect(() => {
     const id = setInterval(() => force((n) => n + 1), 2000);
@@ -64,36 +81,51 @@ function TvDebugViewport({ scale }) {
     innerHeight: window.innerHeight,
     visualWidth: Math.round(window.visualViewport?.width ?? 0),
     visualHeight: Math.round(window.visualViewport?.height ?? 0),
+    visualScale: Number((window.visualViewport?.scale ?? 1).toFixed(3)),
     screenWidth: window.screen.width,
     screenHeight: window.screen.height,
     dpr: window.devicePixelRatio,
-    stageScale: Number(scale.toFixed(4)),
+    stageScale: Number(transform.scale.toFixed(4)),
+    offsetX: Math.round(transform.offsetX),
+    offsetY: Math.round(transform.offsetY),
   };
   return <pre className="tv-debug">{JSON.stringify(info, null, 2)}</pre>;
 }
 
 export default function TvStage({ children }) {
-  const [scale, setScale] = useState(computeScale);
+  const [transform, setTransform] = useState(computeTransform);
   const debug = useTvDebug();
 
   useEffect(() => {
-    const updateScale = () => setScale(computeScale());
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    window.visualViewport?.addEventListener('resize', updateScale);
+    const update = () => setTransform(computeTransform());
+    update();
+    window.addEventListener('resize', update);
+    window.addEventListener('orientationchange', update);
+    window.visualViewport?.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('scroll', update);
     return () => {
-      window.removeEventListener('resize', updateScale);
-      window.visualViewport?.removeEventListener('resize', updateScale);
+      window.removeEventListener('resize', update);
+      window.removeEventListener('orientationchange', update);
+      window.visualViewport?.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('scroll', update);
     };
   }, []);
 
+  const stageStyle = {
+    '--tv-scale': transform.scale,
+    '--tv-off-x': `${transform.offsetX}px`,
+    '--tv-off-y': `${transform.offsetY}px`,
+    transform: `translate(var(--tv-off-x), var(--tv-off-y)) scale(var(--tv-scale))`,
+    transformOrigin: '0 0',
+  };
+
   return (
     <div className="tv-viewport">
-      <div className="tv-stage" style={{ '--tv-scale': scale }}>
+      <div className="tv-stage" style={stageStyle}>
         {children}
         {/* Cible des portals TV — TOUJOURS en dernier enfant du stage (au-dessus). */}
         <div id={PORTAL_ROOT_ID} />
-        {debug && <TvDebugViewport scale={scale} />}
+        {debug && <TvDebugViewport transform={transform} />}
       </div>
     </div>
   );

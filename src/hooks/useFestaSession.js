@@ -17,6 +17,15 @@ import { gradeFor, SING_THRESHOLD, LOUDNESS_TARGET } from '@/lib/energyGrade';
  * local de KaraokePlayer — coverage/loudness accumulés sur TOUTE la durée reçue,
  * faute de connaître le timing des lignes de letra côté téléphone).
  */
+// Tolérance avant de retirer un prénom de la liste des présents. Sur téléphone,
+// un verrouillage d'écran / passage en arrière-plan coupe le WebSocket Realtime →
+// la présence « leave » arrive côté serveur, mais le téléphone se reconnecte dès
+// le réveil. Sans grâce, les invités CLIGNOTAIENT / disparaissaient de la TV à
+// chaque micro-coupure (bug « les personnages entrés disparaissent », 2026-07-14).
+// On garde donc un prénom affiché jusqu'à PRESENCE_GRACE_MS après sa dernière
+// apparition ; un balayage périodique retire ceux réellement partis.
+const PRESENCE_GRACE_MS = 25000;
+
 export function useFestaSession(sessionId, { guestName = null } = {}) {
   const [queue, setQueue] = useState([]);
   const [presentNames, setPresentNames] = useState([]);
@@ -26,6 +35,7 @@ export function useFestaSession(sessionId, { guestName = null } = {}) {
   queueRef.current = queue;
   const channelRef = useRef(null);
   const energyStatsRef = useRef({}); // queueId -> { sum, sungCount, count }
+  const lastSeenRef = useRef(new Map()); // name -> timestamp (ordre d'insertion = ordre d'affichage)
 
   useEffect(() => {
     if (!sessionId) {
@@ -34,6 +44,7 @@ export function useFestaSession(sessionId, { guestName = null } = {}) {
       setConnectionState('idle');
       setLiveEnergyByEntry({});
       energyStatsRef.current = {};
+      lastSeenRef.current = new Map();
       channelRef.current = null;
       return undefined;
     }
@@ -41,7 +52,25 @@ export function useFestaSession(sessionId, { guestName = null } = {}) {
     let cancelled = false;
     setConnectionState('connecting');
     energyStatsRef.current = {};
+    lastSeenRef.current = new Map();
     setLiveEnergyByEntry({});
+
+    // Recalcule la liste visible = prénoms vus il y a moins de PRESENCE_GRACE_MS,
+    // dans l'ordre de première apparition (stable → pas de réordonnancement/flicker).
+    const recomputePresent = () => {
+      if (cancelled) return;
+      const now = Date.now();
+      const visible = [];
+      for (const [name, ts] of lastSeenRef.current) {
+        if (now - ts <= PRESENCE_GRACE_MS) visible.push(name);
+        else lastSeenRef.current.delete(name);
+      }
+      setPresentNames((prev) => (
+        prev.length === visible.length && prev.every((n, i) => n === visible[i]) ? prev : visible
+      ));
+    };
+    // Balayage : retire les invités réellement partis même sans nouvel event de sync.
+    const sweep = setInterval(recomputePresent, 5000);
 
     listFestaQueue(sessionId)
       .then((rows) => { if (!cancelled) setQueue(rows); })
@@ -67,11 +96,15 @@ export function useFestaSession(sessionId, { guestName = null } = {}) {
       guestName,
       onQueueChange: applyChange,
       onPresenceSync: (state) => {
+        const now = Date.now();
         const names = Object.values(state)
           .flat()
           .map((entry) => entry?.name)
           .filter(Boolean);
-        setPresentNames(names);
+        // Rafraîchit l'horodatage des présents actuels (les absents gardent leur
+        // ancien timestamp → retirés seulement après la période de grâce).
+        names.forEach((name) => lastSeenRef.current.set(name, now));
+        recomputePresent();
       },
       onEnergy: ({ queueId, rms }) => {
         if (!queueId || typeof rms !== 'number') return;
@@ -93,6 +126,7 @@ export function useFestaSession(sessionId, { guestName = null } = {}) {
 
     return () => {
       cancelled = true;
+      clearInterval(sweep);
       channelRef.current = null;
       unsubscribe();
     };

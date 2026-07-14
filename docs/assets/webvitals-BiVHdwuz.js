@@ -1,0 +1,1 @@
+import{ar as n,as as t,at as o,au as i,av as s}from"./vendor-app-FiPbyXgC.js";const e=a=>{typeof window<"u"&&typeof window.gtag=="function"&&window.gtag("event",a.name,{event_category:"Web Vitals",event_label:a.id,value:Math.round(a.name==="CLS"?a.value*1e3:a.value),non_interaction:!0})};n(e);t(e);o(e);i(e);s(e);

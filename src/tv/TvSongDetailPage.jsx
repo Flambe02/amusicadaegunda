@@ -132,8 +132,16 @@ export default function TvSongDetailPage({
   const hostRef = useRef(null);
   const playerRef = useRef(null);
   const progressRef = useRef(null);
+  const wrapRef = useRef(null); // .tvd-visual-player — reçoit `inert` pendant la lecture
+  const focusHolderRef = useRef(null); // puits de focus (jamais l'iframe)
   const [playerReady, setPlayerReady] = useState(false);
   const [blocked, setBlocked] = useState(false);
+
+  // Garde le focus HORS de l'iframe YouTube (sinon D-pad piégé + crash Back sur TV).
+  const parkFocus = useCallback(() => {
+    try { playerRef.current?.getIframe?.()?.blur?.(); } catch { /* ignore */ }
+    try { focusHolderRef.current?.focus?.({ preventScroll: true }); } catch { /* ignore */ }
+  }, []);
 
   useEffect(() => {
     if (!playing || !ready || !YT || !videoId || !hostRef.current) return undefined;
@@ -147,7 +155,17 @@ export default function TvSongDetailPage({
         disablekb: 1, fs: 0, iv_load_policy: 3, ...(origin ? { origin } : {}),
       },
       events: {
-        onReady: () => { if (!destroyed) { setPlayerReady(true); try { player.playVideo(); } catch { /* ignore */ } } },
+        onReady: () => {
+          if (destroyed) return;
+          setPlayerReady(true);
+          try { player.playVideo(); } catch { /* ignore */ }
+          // Rend l'iframe non-focusable et déplace le focus hors d'elle : c'est ce
+          // qui empêche le D-pad de rester « coincé dans YouTube » et le Retour
+          // matériel de faire planter la WebView (bug TV 2026-07-14).
+          try { player.getIframe?.()?.setAttribute('tabindex', '-1'); } catch { /* ignore */ }
+          try { wrapRef.current?.setAttribute('inert', ''); } catch { /* ignore */ }
+          parkFocus();
+        },
         onError: (e) => { if (!destroyed && YT_BLOCKED_CODES.has(e?.data)) setBlocked(true); },
       },
     });
@@ -155,11 +173,15 @@ export default function TvSongDetailPage({
     try { player.getIframe?.()?.setAttribute('tabindex', '-1'); } catch { /* ignore */ }
     return () => {
       destroyed = true;
+      // Sortir le focus de l'iframe AVANT de la détruire (destroy pendant que
+      // l'iframe est focalisée = source du crash natif observé au Retour). Le focus
+      // final est reposé par stopTeaser (SpatialNavigation.setFocus), pas ici.
+      try { player.getIframe?.()?.blur?.(); } catch { /* ignore */ }
       try { player.destroy(); } catch { /* ignore */ }
       playerRef.current = null;
       setPlayerReady(false);
     };
-  }, [playing, ready, YT, videoId]);
+  }, [playing, ready, YT, videoId, parkFocus]);
 
   useEffect(() => {
     if (!playing || !playerReady) return undefined;
@@ -176,10 +198,18 @@ export default function TvSongDetailPage({
   }, [playing, playerReady]);
 
   // Pendant la lecture : nav spatiale en pause + OK/±10s au clavier (comme ailleurs).
+  // Escape/Backspace = fermeture (fallback si le Retour matériel n'arrive pas jusqu'à
+  // l'intercepteur). Chaque touche re-parque le focus hors de l'iframe (anti-dérive).
   useEffect(() => {
     if (!playing) return undefined;
     SpatialNavigation.pause();
+    const CLOSE_KEYS = new Set(['Escape', 'Backspace', 'GoBack', 'BrowserBack']);
     const onKey = (e) => {
+      if (CLOSE_KEYS.has(e.key) || e.keyCode === 10009 /* Tizen */ || e.keyCode === 461 /* webOS */) {
+        e.preventDefault();
+        stopTeaser();
+        return;
+      }
       const p = playerRef.current;
       if (!p) return;
       if (e.key === 'Enter' || e.key === ' ' || e.key === 'k') {
@@ -192,10 +222,12 @@ export default function TvSongDetailPage({
         e.preventDefault();
         try { p.seekTo((p.getCurrentTime?.() || 0) + 10, true); } catch { /* ignore */ }
       }
+      // Après toute touche, garantir que le focus n'a pas glissé dans l'iframe.
+      parkFocus();
     };
     window.addEventListener('keydown', onKey);
     return () => { window.removeEventListener('keydown', onKey); SpatialNavigation.resume(); };
-  }, [playing]);
+  }, [playing, stopTeaser, parkFocus]);
 
   // ── Focus initial : CANTAR AGORA (ou Adicionar à fila si non chantable) ────
   useEffect(() => {
@@ -240,6 +272,9 @@ export default function TvSongDetailPage({
           error={Boolean(apiError) || blocked}
           hostRef={hostRef}
           progressRef={progressRef}
+          wrapRef={wrapRef}
+          focusHolderRef={focusHolderRef}
+          onStopTeaser={stopTeaser}
           onPlayTeaser={() => startTeaser('DETAIL_TEASER')}
         />
 

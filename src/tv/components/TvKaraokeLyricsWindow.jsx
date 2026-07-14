@@ -13,6 +13,7 @@ import { TV_LINE_ROLES, tvActiveFontSize } from '@/tv/lib/tvLyricsWindow';
  */
 export default function TvKaraokeLyricsWindow({
   lines, displayIdx, wipeApiRef, wordApiRef, fontScale, showBall, dueto, lineColor,
+  translating = false,
 }) {
   if (!lines || lines.length === 0) {
     return (
@@ -27,6 +28,10 @@ export default function TvKaraokeLyricsWindow({
   return (
     <div className="tv-karaoke-lyrics-window" aria-live="polite">
       {TV_LINE_ROLES.map(({ role, offset, top }) => {
+        // Quand la traduction est active, on laisse tomber la 2ᵉ ligne suivante
+        // (82 %) : ce créneau est occupé par le sous-titre de traduction, sinon
+        // les deux se chevauchent (cf. .tv-karaoke-translation, bug TV 2026-07-14).
+        if (translating && role === 'next2') return null;
         const i = displayIdx + offset;
         if (i < 0 || i >= lines.length) return null;
         const line = lines[i];

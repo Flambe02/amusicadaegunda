@@ -87,6 +87,24 @@
 .tvd-visual-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.8); }
 .tvd-visual-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255, 255, 255, 0.15); }
 .tvd-visual-progress span { display: block; height: 100%; width: 0%; background: var(--tvh-yellow); }
+/* Puits de focus invisible (jamais l'iframe comme élément actif — cf. anti-crash TV). */
+.tvd-visual-focustrap { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.tvd-visual-focustrap:focus { outline: none; }
+/* Barre d'aide + Fechar au-dessus du lecteur (le lecteur est inert, donc cette
+   barre reste la seule surface interactive/lisible pendant la prévia). */
+.tvd-visual-teaser-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 3;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px;
+  background: linear-gradient(to top, rgba(6, 7, 11, 0.92), rgba(6, 7, 11, 0));
+}
+.tvd-visual-close {
+  flex: 0 0 auto; pointer-events: auto;
+  padding: 8px 16px; border-radius: 9999px;
+  border: 2px solid var(--tvh-yellow); background: rgba(253, 224, 71, 0.14);
+  color: var(--tvh-yellow); font-weight: 800; font-size: clamp(0.8rem, 18px, 1rem);
+}
+.tvd-visual-hint { color: rgba(255, 255, 255, 0.82); font-weight: 700; font-size: clamp(0.72rem, 16px, 0.9rem); }
 
 /* ── Colonne centrale ──────────────────────────────────────────────────────── */
 .tvd-identity { display: flex; flex-direction: column; gap: 0.3rem; }

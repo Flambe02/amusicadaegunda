@@ -13,17 +13,19 @@ const helmetContext = {}
 logBuildInfo()
 
 // ── Viewport TV — AVANT le montage de React (jamais après) ──────────────────
-// La WebView Android TV rapporte ~960×540 px CSS sur une dalle 1080p (densité 2×)
-// alors que toute l'UI TV est conçue sur un canvas logique 1920×1080. On force la
-// largeur de conception ici, avant le 1er rendu : changer le viewport après coup
-// provoquerait un double reflow (layout 960 → 1920), un scroll déjà décalé et un
-// focus restauré sur de mauvaises coordonnées. Le canvas mis à l'échelle
-// (src/tv/components/TvStage.jsx) complète ce réglage : même si la WebView ignore
-// le wide viewport, l'échelle est recalculée explicitement.
+// ⚠️ NE PAS forcer `width=1920` ici (ancien réglage retiré 2026-07-14) : sur la
+// vraie WebView Android TV (Samsung), `width=1920` crée un LAYOUT viewport de
+// 1920 px sur une dalle physique de ~960 px CSS, et la WebView applique EN PLUS
+// son propre zoom pour tenir → double mise à l'échelle, `position:fixed` accroché
+// au viewport de 1920, et un visual viewport « pannable » à la télécommande. C'est
+// la cause du bug « rien n'est centré » (contenu en bas-à-droite). On garde donc
+// le viewport NATUREL du device (device-width, initial-scale=1, sans zoom) et
+// c'est le canvas mis à l'échelle par transform (src/tv/components/TvStage.jsx)
+// qui adapte l'UI 1920×1080 à la taille réelle rapportée — de façon déterministe.
 try {
   if (isTV()) {
     document.querySelector('meta[name="viewport"]')
-      ?.setAttribute('content', 'width=1920, user-scalable=no')
+      ?.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
     document.documentElement.classList.add('tv-mode')
   }
 } catch { /* jamais bloquant pour le boot mobile/web */ }

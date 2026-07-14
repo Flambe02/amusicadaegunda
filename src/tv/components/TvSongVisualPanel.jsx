@@ -38,10 +38,22 @@ function TeaserStrip({ thumb, durationLabel, onPress }) {
  * portrait étiré/flouté. Le cycle de vie du lecteur YouTube est géré par la PAGE
  * (séparation présentation / lecture) : ici on ne fait que monter l'iframe dans
  * `hostRef` quand `playing`, sinon on affiche l'affiche + le teaser.
+ *
+ * ⚠️ TV — piège focus/crash (bug « coincé dans YouTube + Back plante », 2026-07-14) :
+ * `pointer-events:none` ne bloque QUE la souris/tactile, jamais le focus D-pad. Sur
+ * une vraie télécommande le focus entrait DANS l'iframe YouTube et le Retour matériel
+ * (iframe focalisée) faisait planter la WebView. Parades ici :
+ *  - `wrapRef` reçoit l'attribut `inert` (posé par la page pendant la lecture) →
+ *    l'iframe qui remplace `.tvd-visual-host` devient non-focusable/non-interactive
+ *    (la lecture via postMessage n'est PAS affectée par inert) ;
+ *  - `focusHolderRef` = puits de focus (tabindex -1) que la page focalise pour que
+ *    l'élément actif ne soit JAMAIS l'iframe ;
+ *  - barre d'aide visible : rappelle OK = pausar, ◀▶ = avançar, Voltar = sair.
  */
 export default function TvSongVisualPanel({
   artSrc, teaserThumb, durationLabel, hasTeaser,
   playing, loading, error, hostRef, progressRef, onPlayTeaser,
+  wrapRef, focusHolderRef, onStopTeaser,
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showPlayer = playing && !error;
@@ -49,11 +61,21 @@ export default function TvSongVisualPanel({
   return (
     <section className="tvd-visual">
       {showPlayer ? (
-        <div className="tvd-visual-player">
-          <div ref={hostRef} className="tvd-visual-host" />
-          {loading && <span className="tvd-visual-loading"><Loader2 size={40} className="tv-spin" /></span>}
-          <div className="tvd-visual-progress"><span ref={progressRef} /></div>
-        </div>
+        <>
+          {/* Puits de focus HORS de l'iframe — jamais l'iframe comme élément actif. */}
+          <div ref={focusHolderRef} tabIndex={-1} className="tvd-visual-focustrap" aria-hidden="true" />
+          <div ref={wrapRef} className="tvd-visual-player">
+            <div ref={hostRef} className="tvd-visual-host" />
+            {loading && <span className="tvd-visual-loading"><Loader2 size={40} className="tv-spin" /></span>}
+            <div className="tvd-visual-progress"><span ref={progressRef} /></div>
+          </div>
+          <div className="tvd-visual-teaser-bar" role="note">
+            <button type="button" className="tvd-visual-close" onClick={onStopTeaser} aria-label="Fechar prévia">
+              ✕ Fechar
+            </button>
+            <span className="tvd-visual-hint">OK: pausar · ◀ ▶: avançar · Voltar: sair</span>
+          </div>
+        </>
       ) : (
         <>
           <div className="tvd-visual-art">
