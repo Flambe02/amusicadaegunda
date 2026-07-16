@@ -101,7 +101,7 @@ const SECURITY: Record<string, string> = {
 function cors(extra: Record<string,string> = {}) {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
-    "Access-Control-Allow-Headers": "content-type",
+    "Access-Control-Allow-Headers": "authorization, content-type",
     "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
     "Vary": "Origin",
     ...SECURITY,
@@ -220,6 +220,34 @@ async function removeByEndpoint(endpoint: string) {
     return;
   }
   await supabase.from("push_subscriptions").delete().eq("endpoint", endpoint);
+}
+
+// Vérifie que l'appelant est un admin authentifié : JWT user valide ET présent
+// dans public.admins. Retourne le user_id si OK, null sinon.
+//
+// ⚠️ Sans ça, /send (blast de notifications à TOUS les abonnés, avec title/body/
+// url arbitraires) était déclenchable avec la seule clé anon publique embarquée
+// dans le bundle → vecteur de phishing. Même modèle que generate-subtitle.
+// `getUser(token)` interroge le serveur Auth : la clé anon (pas de user) échoue,
+// et le check `admins` (service role → bypass RLS) ferme définitivement l'accès.
+async function verifyAdmin(authHeader: string | null): Promise<string | null> {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
+  const token = authHeader.slice(7).trim();
+  if (!token) return null;
+  if (!supabase) return null;
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  if (userError || !userData?.user) return null;
+  const userId = userData.user.id;
+
+  const { data: adminRow, error: adminError } = await supabase
+    .from("admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (adminError || !adminRow) return null;
+
+  return userId;
 }
 
 Deno.serve(async (req: Request) => {
@@ -380,6 +408,17 @@ Deno.serve(async (req: Request) => {
   // POST|GET /push/send → Envoi réel des notifications
   if (pathname.endsWith("/send") && (req.method === "POST" || req.method === "GET")) {
     try {
+      // 🔒 Auth admin OBLIGATOIRE : /send diffuse à tous les abonnés. Réservé
+      // aux comptes de public.admins (cf. verifyAdmin). Sans ce contrôle, la clé
+      // anon publique suffisait à déclencher un blast (phishing via `url`).
+      const adminId = await verifyAdmin(req.headers.get("authorization"));
+      if (!adminId) {
+        return new Response(JSON.stringify({ error: "unauthorized" }), {
+          status: 401,
+          headers: cors({ "Content-Type": "application/json" }),
+        });
+      }
+
       // Initialiser webpush si nécessaire
       const isInitialized = await ensureWebPushInitialized();
       if (!isInitialized || !webpush) {
