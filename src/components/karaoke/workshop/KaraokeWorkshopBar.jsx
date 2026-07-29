@@ -29,6 +29,8 @@ export default function KaraokeWorkshopBar({
   onPickAudio, onOpenCalibration,
   // Transport local
   transport, canReview, reviewReason, onReviewPhrase,
+  // Source d'horloge réellement utilisée par la capture (frases ET palavras)
+  captureSourceLabel, captureBlockedMessage,
   // Sélection / navigation
   selectedLabel, canPrev, canNext, onPrev, onNext,
   // Mode d'édition
@@ -162,7 +164,21 @@ export default function KaraokeWorkshopBar({
         </span>
       </div>
 
-      {!canReview && reviewReason && (
+      {/* Source d'horloge de la CAPTURE — toujours celle réellement utilisée. */}
+      <span
+        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+          captureBlockedMessage ? 'bg-red-500/20 text-red-200'
+            : /áudio local/.test(captureSourceLabel || '') ? 'bg-violet-500/20 text-violet-200'
+            : 'bg-white/10 text-gray-300'
+        }`}
+      >
+        {captureSourceLabel}
+      </span>
+
+      {captureBlockedMessage && (
+        <p className="w-full text-[10px] font-semibold text-red-200">{captureBlockedMessage}</p>
+      )}
+      {!captureBlockedMessage && !canReview && reviewReason && (
         <p className="w-full text-[10px] text-amber-200/90">{reviewReason}</p>
       )}
 

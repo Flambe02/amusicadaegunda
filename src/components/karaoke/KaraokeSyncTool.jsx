@@ -28,6 +28,8 @@ import {
 import {
   EDITING_MODE, REVIEW_MARGIN_SEC, phraseReviewWindow, canReviewLocally,
   reviewBlockedReason, issueTarget,
+  CAPTURE_SOURCE, captureSourceFor, canonicalCaptureTime, captureBlockedMessage,
+  captureSourceLabel, compensateLatency,
 } from '@/lib/karaokeWorkshop';
 import { useLocalTransport } from '@/hooks/useLocalTransport';
 import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
@@ -712,6 +714,46 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     const p = playerRef.current;
     return p && typeof p.getCurrentTime === 'function' ? p.getCurrentTime() : 0;
   };
+
+  // ══════════ SOURCE D'HORLOGE DE LA CAPTURE — décision UNIQUE ══════════
+  // Utilisée par le clavier ET par tous les boutons de marquage, pour que la barre de
+  // l'atelier ne puisse jamais annoncer « áudio local » tout en captant YouTube.
+  // Sans fichier local → YouTube (inchangé) ; fichier calibré → audio local converti en
+  // canonique ; fichier NON calibré → bloqué, jamais de repli silencieux.
+  const captureSource = captureSourceFor({
+    hasLocalFile: Boolean(localAudio.fileName),
+    calibrationStatus: fullCal.status,
+  });
+  const captureSourceRef = useRef(captureSource); captureSourceRef.current = captureSource;
+  const captureBlocked = captureBlockedMessage(captureSource);
+
+  // Refs pour que les handlers clavier (non ré-enregistrés à chaque frappe) lisent
+  // toujours l'offset et la vitesse de la source ACTIVE.
+  const captureOffsetRef = useRef(fullCal.offsetSeconds); captureOffsetRef.current = fullCal.offsetSeconds;
+  const captureRateRef = useRef(1);
+
+  /**
+   * Instant CANONIQUE à enregistrer, depuis la source active. null = capture bloquée
+   * (l'appelant n'écrit alors rien). La latence de réaction est retranchée avec la
+   * vitesse de la source active quand `compensate` est vrai.
+   */
+  const canonicalNow = useCallback((compensate = false) => {
+    const source = captureSourceRef.current;
+    const el = localAudioRef.current?.audioRef?.current;
+    const raw = canonicalCaptureTime({
+      source,
+      localTime: el ? el.currentTime : 0,
+      offsetSeconds: captureOffsetRef.current,
+      youtubeTime: getTime(),
+    });
+    if (!compensate) return raw;
+    return compensateLatency(raw, latencyMs, captureRateRef.current);
+  }, [latencyMs]);
+
+  /** Signale le blocage une seule fois par tentative. */
+  const warnCaptureBlocked = useCallback(() => {
+    toast({ title: 'Sincronização bloqueada', description: captureBlockedMessage(CAPTURE_SOURCE.BLOCKED), variant: 'destructive' });
+  }, [toast]);
   const seekTo = useCallback((t) => {
     const p = playerRef.current;
     if (p && typeof p.seekTo === 'function') p.seekTo(Math.max(0, t), true);
@@ -751,12 +793,10 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // Marquage INSTANTANÉ (Enter, bouton « I ») — sans geste maintenu, donc sans fin :
   // le chrono du maintien appartient à startHold/finishHold, qui ne passent pas ici.
   const markLineStart = useCallback((index) => {
-    // On retranche la latence de réaction mesurée. Elle est en temps RÉEL ; convertie
-    // en temps vidéo selon la vitesse de lecture (à 0.5×, 200ms réels = 100ms vidéo),
-    // cohérent avec le calcul de la durée au relâchement (finishHold).
-    const t = Math.max(0, getTime() - (latencyMs / 1000) * playbackRate);
+    const t = canonicalNow(true); // source active + latence de réaction retranchée
+    if (t === null) { warnCaptureBlocked(); return; }
     commitLines((prev) => prev.map((l, i) => (i === index ? { ...l, time: t, endTime: null } : l)));
-  }, [commitLines, latencyMs, playbackRate]);
+  }, [commitLines, canonicalNow, warnCaptureBlocked]);
 
   const markCursor = useCallback(() => {
     if (cursor < 0 || cursor >= lines.length) return;
@@ -767,11 +807,12 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // Outil manuel « Marcar fim » : fixe la fin de la ligne sélectionnée au temps courant
   // (correction ponctuelle — le geste central reste Espaço maintenu). Un pas d'undo.
   const markEndAtPlayhead = useCallback(() => {
-    const t = getTime();
+    const t = canonicalNow(); // même source que la capture principale
+    if (t === null) { warnCaptureBlocked(); return; }
     commitLines((prev) => prev.map((l, i) => (
       i === cursor && l.time != null && t > l.time + 0.05 ? { ...l, endTime: t } : l
     )));
-  }, [cursor, commitLines]);
+  }, [cursor, commitLines, canonicalNow, warnCaptureBlocked]);
 
   // « Recomeçar linha » : recua até ao início da linha e toca (para reouvir/afinar).
   const restartLine = useCallback(() => {
@@ -814,7 +855,8 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // Insère une ligne vide au temps courant (pause auto), pour une parole oubliée.
   const insertAtPlayhead = useCallback(() => {
     try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ }
-    const t = getTime();
+    const t = canonicalNow();
+    if (t === null) { warnCaptureBlocked(); return; }
     commitLines((prev) => {
       const next = prev.slice();
       let idx = next.length;
@@ -824,7 +866,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       next.splice(idx, 0, { text: '', time: t, endTime: null });
       return next;
     });
-  }, [commitLines]);
+  }, [commitLines, canonicalNow, warnCaptureBlocked]);
 
   // « Reset From Current » : efface seulement les temps à partir de la ligne sélectionnée
   // (préserve le travail déjà fait avant) — vs « Reset All » qui efface tout.
@@ -904,13 +946,17 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // actuellement sélectionnée » : le suivi de lecture ou un clic pouvait déplacer le
   // curseur entre l'appui et le relâchement, et on clôturait alors une autre frase.
   const captureOwnerRef = useRef(null);
+  // Source figée à l'appui : le relâchement doit clôturer avec la MÊME horloge, même si
+  // la calibration ou le fichier changeaient entre-temps.
+  const holdSourceRef = useRef(CAPTURE_SOURCE.YOUTUBE);
 
   const startHold = useCallback(() => {
     if (captureOwnerRef.current) return; // capture déjà en cours → un seul début
-    // Latence de réaction retranchée, en temps RÉEL converti en temps vidéo selon la
-    // vitesse de lecture (à 0.5×, 200 ms réels = 100 ms vidéo) — cohérent avec la durée
-    // mesurée au relâchement.
-    const t = Math.max(0, getTime() - (latencyMs / 1000) * playbackRate);
+    // Instant CANONIQUE depuis la source active (audio local calibré ou YouTube), latence
+    // de réaction retranchée avec la vitesse de cette source.
+    const t = canonicalNow(true);
+    if (t === null) { warnCaptureBlocked(); return; } // fichier local non calibré
+    holdSourceRef.current = captureSourceRef.current;
     const begun = beginCapture(linesRef.current, cursorRef.current, t);
     if (!begun) return;
     captureOwnerRef.current = begun.owner;
@@ -918,7 +964,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     isHoldingRef.current = true;
     setIsHolding(true);
     commitLines(begun.lines); // UN pas d'historique pour tout le geste (début + fin)
-  }, [commitLines, latencyMs, playbackRate]);
+  }, [commitLines, canonicalNow, warnCaptureBlocked]);
 
   const finishHold = useCallback(() => {
     const owner = captureOwnerRef.current;
@@ -928,13 +974,24 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     setIsHolding(false);
     const startedAt = holdStartWallClockRef.current;
     holdStartWallClockRef.current = null;
-    // Durée = temps RÉEL écoulé depuis l'appui (converti en temps vidéo), pas
-    // getCurrentTime() au relâchement : la granularité de YouTube (~250 ms) rend un
-    // geste bref indiscernable.
-    const elapsedVideoSec = startedAt != null
-      ? Math.max(0, (performance.now() - startedAt) / 1000) * playbackRate
-      : 0;
-    const end = elapsedVideoSec > 0.03 ? owner.start + elapsedVideoSec : null;
+
+    // La FIN dépend de l'horloge figée à l'appui :
+    //  • audio LOCAL → on lit la vraie tête de lecture (HTMLAudioElement.currentTime est
+    //    précis) et on la convertit en canonique : plus exact qu'une extrapolation ;
+    //  • YouTube → temps RÉEL écoulé depuis l'appui × vitesse, car getCurrentTime() a une
+    //    granularité de ~250 ms qui rend un geste bref indiscernable (comportement
+    //    historique, inchangé).
+    let end = null;
+    if (holdSourceRef.current === CAPTURE_SOURCE.LOCAL) {
+      const now = canonicalNow(true);
+      if (now !== null && now > owner.start + 0.03) end = now;
+    } else {
+      const elapsedVideoSec = startedAt != null
+        ? Math.max(0, (performance.now() - startedAt) / 1000) * playbackRate
+        : 0;
+      if (elapsedVideoSec > 0.03) end = owner.start + elapsedVideoSec;
+    }
+
     const done = completeCapture(linesRef.current, owner, end);
     if (!done.completed) return;
     setLines(done.lines);            // même pas d'historique que le début
@@ -945,7 +1002,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
         description: 'As palavras já não caíam dentro da nova frase. A linha continua a funcionar em modo frase — podes voltar a afiná-las.',
       });
     }
-  }, [playbackRate, toast]);
+  }, [playbackRate, canonicalNow, toast]);
 
   // Capture avortée (relâchement jamais reçu : la fenêtre perd le focus, le player
   // YouTube prend le focus au clic…). On ANNULE et on restaure le timing précédent au
@@ -1403,7 +1460,10 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     if (!words || words.length === 0) return;
     const idx = captureIndexRef.current;
     if (idx >= words.length) { exitWordCapture(); return; } // tout est déjà capturé
-    const t = getTime();
+    // MÊME source que la capture de frases : sinon la barre annoncerait « áudio local »
+    // pendant que ce panneau capte l'horloge YouTube.
+    const t = canonicalNow();
+    if (t === null) { warnCaptureBlocked(); return; }
     const line = lines[wordPanelIndex];
     const lineEnd = line.endTime ?? effectiveEnd(wordPanelIndex);
     setLineWords(wordPanelIndex, (prevWords) => prevWords.map((w, wi) => {
@@ -1418,7 +1478,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     captureIndexRef.current = next;
     setSelectedWordIndex(Math.min(next, words.length - 1));
     if (next >= words.length) exitWordCapture(); // capture terminée après le dernier mot
-  }, [wordPanelIndex, lines, effectiveEnd, setLineWords, exitWordCapture]);
+  }, [wordPanelIndex, lines, effectiveEnd, setLineWords, exitWordCapture, canonicalNow, warnCaptureBlocked]);
   captureNextWordRef.current = captureNextWord; // synchronise la réf lue par l'effet clavier (déclaré plus haut)
 
   // Déplace/redimensionne un bloc-mot par pointeur (même technique que le drag de
@@ -1786,6 +1846,10 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       localTransport.togglePlay();
     },
   }), [localTransport]);
+
+  // La compensation de latence doit utiliser la vitesse de la source ACTIVE : celle du
+  // lecteur local quand on capte dessus, celle de YouTube sinon.
+  captureRateRef.current = captureSource === CAPTURE_SOURCE.LOCAL ? localTransport.rate : playbackRate;
 
   // ── Sauvegarde ──
   // Persiste le LRC dans `songs`, PUIS crée une version durable (song_timing_versions)
@@ -2901,6 +2965,8 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
               canReview={canReviewPhrase}
               reviewReason={reviewBlocked}
               onReviewPhrase={handleReviewPhrase}
+              captureSourceLabel={captureSourceLabel(captureSource)}
+              captureBlockedMessage={captureBlocked}
               selectedLabel={`Frase ${cursor + 1} de ${lines.length}`}
               canPrev={cursor > 0}
               canNext={cursor < lines.length - 1}

@@ -17,7 +17,7 @@
  * ne renvoie que des temps, et aucune fonction de ce module n'accepte un temps pour
  * produire une sélection.
  */
-import { canonicalTimeToLocalAudio, clampLocalSeek } from '@/lib/audioClock';
+import { canonicalTimeToLocalAudio, localAudioTimeToCanonical, clampLocalSeek } from '@/lib/audioClock';
 
 /** Les deux modes d'édition. Changer de mode ne change JAMAIS la frase sélectionnée. */
 export const EDITING_MODE = { PHRASE: 'phrase', WORD: 'word' };
@@ -225,6 +225,72 @@ export function keyboardOwner({
 /** true si les raccourcis de TRANSPORT peuvent tirer (jamais pendant un geste de capture). */
 export function transportShortcutsActive(ctx = {}) {
   return keyboardOwner(ctx) === 'phrase-capture' && !ctx.isCapturing;
+}
+
+// ─────────────────── Source d'horloge de la CAPTURE ───────────────────
+
+/**
+ * D'où vient l'instant capté. UNE SEULE décision, partagée par le clavier ET les boutons
+ * — l'interface ne peut donc pas annoncer « áudio local » tout en captant YouTube.
+ */
+export const CAPTURE_SOURCE = { LOCAL: 'local', YOUTUBE: 'youtube', BLOCKED: 'blocked' };
+
+/**
+ * Choisit la source de capture :
+ *   • pas de fichier local  → YouTube (comportement historique, inchangé) ;
+ *   • fichier local calibré → l'audio LOCAL (converti en canonique) ;
+ *   • fichier local NON calibré (absent / périmé) → BLOQUÉ. Jamais de repli silencieux
+ *     sur YouTube : l'administrateur écoute le fichier local, capter la vidéo produirait
+ *     des temps faux sans que rien ne le signale.
+ */
+export function captureSourceFor({ hasLocalFile, calibrationStatus } = {}) {
+  if (!hasLocalFile) return CAPTURE_SOURCE.YOUTUBE;
+  return calibrationStatus === 'calibrated' ? CAPTURE_SOURCE.LOCAL : CAPTURE_SOURCE.BLOCKED;
+}
+
+/**
+ * Instant CANONIQUE à enregistrer, selon la source active.
+ *   • LOCAL   → canonique = local + offset (mapping de l'étape 4) ;
+ *   • YOUTUBE → le temps de la vidéo EST déjà canonique (aucun offset appliqué) ;
+ *   • BLOCKED → null : l'appelant n'a aucun timestamp, donc n'écrit rien.
+ *
+ * Le temps local n'est JAMAIS renvoyé tel quel : rien de local n'entre dans le brouillon
+ * ni dans le payload.
+ */
+export function canonicalCaptureTime({ source, localTime, offsetSeconds, youtubeTime } = {}) {
+  if (source === CAPTURE_SOURCE.LOCAL) {
+    return localAudioTimeToCanonical(Number.isFinite(localTime) ? localTime : 0, offsetSeconds);
+  }
+  if (source === CAPTURE_SOURCE.YOUTUBE) {
+    return Number.isFinite(youtubeTime) ? youtubeTime : 0;
+  }
+  return null;
+}
+
+/** Étiquette affichée — reflète TOUJOURS la source réellement utilisée. */
+export function captureSourceLabel(source) {
+  if (source === CAPTURE_SOURCE.LOCAL) return 'Fonte de sincronização: áudio local';
+  if (source === CAPTURE_SOURCE.YOUTUBE) return 'Fonte de sincronização: YouTube';
+  return 'Fonte de sincronização: bloqueada';
+}
+
+/** Message pt-BR quand la capture est bloquée, sinon null. */
+export function captureBlockedMessage(source) {
+  return source === CAPTURE_SOURCE.BLOCKED
+    ? 'Calibre o áudio local antes de sincronizar as frases.'
+    : null;
+}
+
+/**
+ * Retranche la latence de réaction mesurée. Elle est en temps RÉEL : on la convertit
+ * selon la vitesse de lecture de la SOURCE ACTIVE (à 0,5×, 200 ms réels = 100 ms de
+ * musique). Propage null quand il n'y a pas d'instant capté.
+ */
+export function compensateLatency(canonicalTime, latencyMs, rate) {
+  if (canonicalTime === null || !Number.isFinite(canonicalTime)) return null;
+  const ms = Number.isFinite(latencyMs) ? latencyMs : 0;
+  const r = Number.isFinite(rate) && rate > 0 ? rate : 1;
+  return Math.max(0, canonicalTime - (ms / 1000) * r);
 }
 
 // ─────────────────────── Validation → navigation ───────────────────────
