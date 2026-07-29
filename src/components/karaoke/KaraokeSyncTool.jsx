@@ -21,6 +21,10 @@ import { parseTimingModel, timingModelToEditorLines } from '@/lib/timingModel';
 import {
   isParentKeyboardActive, buildTimingPayload, buildRestoreTimingPayload, applyWordEditorResult,
 } from '@/lib/karaokeSyncContract';
+import {
+  initialSelectedIndex, beginCapture, completeCapture, cancelCapture,
+  lyricContext, previewIndex, captureStatus, visibleWithSelected, shouldFollowPlayback,
+} from '@/lib/phraseCapture';
 import { distributeWords } from '@/lib/wordDistribution';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
@@ -426,11 +430,12 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // Lignes : { text, time:number|null }. Init depuis LRC existant, sinon paroles brutes.
   // (nouvelle instance à chaque changement de `song` grâce à key={song.id} côté Admin.jsx)
   const [lines, setLines] = useState(() => buildInitialLines(song));
-  const [cursor, setCursor] = useState(() => {
-    const init = buildInitialLines(song);
-    const firstNull = init.findIndex((l) => l.time == null);
-    return firstNull === -1 ? Math.max(0, init.length - 1) : firstNull;
-  });
+  // Miroir lu par les handlers clavier (qui ne se ré-enregistrent pas à chaque frappe) :
+  // sans lui, le geste maintenu travaillerait sur une copie périmée de `lines`.
+  const linesRef = useRef(lines); linesRef.current = lines;
+  // CURSEUR D'ÉDITION explicite — déplacé uniquement par l'utilisateur (clic, flèches)
+  // ou par la fin d'une capture réussie. JAMAIS dérivé en continu de `currentTime`.
+  const [cursor, setCursor] = useState(() => initialSelectedIndex(buildInitialLines(song)));
   const cursorRef = useRef(0);
   cursorRef.current = cursor;
   // Horodatage de la dernière sélection MANUELLE d'une ligne (clic liste/frise) : pendant
@@ -736,30 +741,15 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
 
   // Marque le DÉPART d'une ligne (efface un éventuel ancien temps de fin, devenu
   // caduc puisqu'il était lié à l'ancien départ).
+  // Marquage INSTANTANÉ (Enter, bouton « I ») — sans geste maintenu, donc sans fin :
+  // le chrono du maintien appartient à startHold/finishHold, qui ne passent pas ici.
   const markLineStart = useCallback((index) => {
     // On retranche la latence de réaction mesurée. Elle est en temps RÉEL ; convertie
     // en temps vidéo selon la vitesse de lecture (à 0.5×, 200ms réels = 100ms vidéo),
-    // cohérent avec le calcul de la durée dans markLineEnd.
+    // cohérent avec le calcul de la durée au relâchement (finishHold).
     const t = Math.max(0, getTime() - (latencyMs / 1000) * playbackRate);
-    holdStartWallClockRef.current = performance.now();
     commitLines((prev) => prev.map((l, i) => (i === index ? { ...l, time: t, endTime: null } : l)));
   }, [commitLines, latencyMs, playbackRate]);
-
-  // Marque la FIN d'une ligne (relâchement d'Espace) — durée = temps RÉEL écoulé
-  // depuis l'appui (converti en temps vidéo selon la vitesse de lecture), pas
-  // getCurrentTime() au relâchement. Fusionnée dans le même pas d'historique que
-  // le départ (setLines direct, pas de nouveau commitLines) pour qu'un seul
-  // Anular annule tout le geste maintenu.
-  const markLineEnd = useCallback((index) => {
-    const startedAt = holdStartWallClockRef.current;
-    const elapsedRealSec = startedAt != null ? Math.max(0, (performance.now() - startedAt) / 1000) : 0;
-    const elapsedVideoSec = elapsedRealSec * playbackRate;
-    holdStartWallClockRef.current = null;
-    setLines((prev) => prev.map((l, i) => {
-      if (i !== index || l.time == null || elapsedVideoSec <= 0.03) return l;
-      return { ...l, endTime: l.time + elapsedVideoSec };
-    }));
-  }, [playbackRate]);
 
   const markCursor = useCallback(() => {
     if (cursor < 0 || cursor >= lines.length) return;
@@ -902,13 +892,72 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   //   review        → Play/Pause (aucun timing modifié)
   //   capture-lines → maintenir/relâcher = début/fin de la ligne (workflow central)
   //   capture-words → toque bref = capture le mot suivant
+  // Le geste maintenu appartient à un PROPRIÉTAIRE DE CAPTURE figé à l'appui (index +
+  // début + timing précédent). Le relâchement clôture CE propriétaire, jamais « la ligne
+  // actuellement sélectionnée » : le suivi de lecture ou un clic pouvait déplacer le
+  // curseur entre l'appui et le relâchement, et on clôturait alors une autre frase.
+  const captureOwnerRef = useRef(null);
+
+  const startHold = useCallback(() => {
+    if (captureOwnerRef.current) return; // capture déjà en cours → un seul début
+    // Latence de réaction retranchée, en temps RÉEL converti en temps vidéo selon la
+    // vitesse de lecture (à 0.5×, 200 ms réels = 100 ms vidéo) — cohérent avec la durée
+    // mesurée au relâchement.
+    const t = Math.max(0, getTime() - (latencyMs / 1000) * playbackRate);
+    const begun = beginCapture(linesRef.current, cursorRef.current, t);
+    if (!begun) return;
+    captureOwnerRef.current = begun.owner;
+    holdStartWallClockRef.current = performance.now();
+    isHoldingRef.current = true;
+    setIsHolding(true);
+    commitLines(begun.lines); // UN pas d'historique pour tout le geste (début + fin)
+  }, [commitLines, latencyMs, playbackRate]);
+
   const finishHold = useCallback(() => {
-    if (!isHoldingRef.current) return;
-    markLineEnd(cursorRef.current);
+    const owner = captureOwnerRef.current;
+    if (!owner) return; // pas de capture active → un second keyup ne fait rien
+    captureOwnerRef.current = null;
     isHoldingRef.current = false;
     setIsHolding(false);
-    setCursor((c) => Math.min(c + 1, lines.length - 1));
-  }, [markLineEnd, lines.length]);
+    const startedAt = holdStartWallClockRef.current;
+    holdStartWallClockRef.current = null;
+    // Durée = temps RÉEL écoulé depuis l'appui (converti en temps vidéo), pas
+    // getCurrentTime() au relâchement : la granularité de YouTube (~250 ms) rend un
+    // geste bref indiscernable.
+    const elapsedVideoSec = startedAt != null
+      ? Math.max(0, (performance.now() - startedAt) / 1000) * playbackRate
+      : 0;
+    const end = elapsedVideoSec > 0.03 ? owner.start + elapsedVideoSec : null;
+    const done = completeCapture(linesRef.current, owner, end);
+    if (!done.completed) return;
+    setLines(done.lines);            // même pas d'historique que le début
+    setCursor(done.selectedIndex);   // avance d'exactement un cran, borné
+    if (done.wordsDropped) {
+      toast({
+        title: 'Timing por palavra removido nesta linha',
+        description: 'As palavras já não caíam dentro da nova frase. A linha continua a funcionar em modo frase — podes voltar a afiná-las.',
+      });
+    }
+  }, [playbackRate, toast]);
+
+  // Capture avortée (relâchement jamais reçu : la fenêtre perd le focus, le player
+  // YouTube prend le focus au clic…). On ANNULE et on restaure le timing précédent au
+  // lieu de finaliser : l'horloge murale a continué de tourner, une fin calculée là
+  // serait fantaisiste. Une frase déjà valide n'est jamais abîmée par un keyup manquant.
+  const cancelHold = useCallback(() => {
+    const owner = captureOwnerRef.current;
+    if (!owner) return;
+    captureOwnerRef.current = null;
+    isHoldingRef.current = false;
+    setIsHolding(false);
+    holdStartWallClockRef.current = null;
+    const restored = cancelCapture(linesRef.current, owner);
+    setLines(restored.lines);
+    // Le début avait poussé une entrée d'historique : on la retire, il n'y a plus rien
+    // à annuler (l'état restauré est exactement l'état d'avant le geste).
+    historyPast.current.pop();
+    setCanUndo(historyPast.current.length > 0);
+  }, []);
 
   // PROPRIÉTÉ EXCLUSIVE DU CLAVIER : tant que le studio « Afinar palavras e bola » est
   // ouvert (monté en portail DEPUIS ce composant), il possède seul le clavier et ce
@@ -936,10 +985,9 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
         if (e.repeat) return; // ignore la répétition auto du navigateur pendant le maintien
         if (mode === 'capture-words') { captureNextWordRef.current?.(); return; }
         if (mode === 'review') { togglePlay(); return; }
-        // capture-lines : démarre le chrono de la ligne
-        markLineStart(cursor);
-        isHoldingRef.current = true;
-        setIsHolding(true);
+        // capture-lines : démarre le chrono sur la ligne SÉLECTIONNÉE (une seule fois —
+        // startHold ignore un appui alors qu'une capture est déjà en cours).
+        startHold();
         return;
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
@@ -984,9 +1032,11 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       }
     };
 
-    // Filet de sécurité : si la fenêtre perd le focus (alt-tab, clic ailleurs) pendant
-    // un maintien, on clôt la ligne proprement — jamais de ligne bloquée « en gravação ».
-    const onBlur = () => { finishHold(); };
+    // Filet de sécurité : si la fenêtre perd le focus (alt-tab, clic sur le player
+    // YouTube) pendant un maintien, on ANNULE la capture et on restaure le timing
+    // précédent — jamais de ligne bloquée « en gravação », et jamais une fin inventée
+    // sur une horloge qui a continué de tourner hors focus.
+    const onBlur = () => { cancelHold(); };
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -996,7 +1046,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [step, ballStudioIndex, cursor, mode, markLineStart, markCursor, finishHold, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
+  }, [step, ballStudioIndex, mode, startHold, finishHold, cancelHold, markCursor, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
 
   // Compteur live (durée du maintien) affiché pendant la capture — rAF, un seul petit
   // state, actif seulement le temps bref d'un maintien d'Espaço.
@@ -1143,14 +1193,17 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     if (ballStudioIndex != null) return; // studio focalisé ouvert : ne pas bouger le curseur
     if (!autoFollow) return; // seguimento automático desligado pelo utilizador
     if (loopActive) return; // en boucle, on garde le curseur sur la ligne bouclée
-    if (!isPlaying || isHolding || activeIdx < 0) return;
+    // JAMAIS pendant une session de capture manuelle : la lecture volerait la sélection
+    // en pleine passe de marquage (et le relâchement clôturait alors une autre frase).
+    if (!shouldFollowPlayback({ mode, isCapturing: isHolding })) return;
+    if (!isPlaying || activeIdx < 0) return;
     if (Date.now() - manualSelectRef.current < 4000) return; // respecte une sélection manuelle récente
     const ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
     const aheadSynced = activeIdx >= lines.length - 1 || lines[activeIdx + 1]?.time != null;
     if (!aheadSynced) return;
     setCursor((c) => (c === activeIdx ? c : activeIdx));
-  }, [isPlaying, isHolding, activeIdx, lines, loopActive, autoFollow, ballStudioIndex]);
+  }, [isPlaying, isHolding, mode, activeIdx, lines, loopActive, autoFollow, ballStudioIndex]);
 
   // ── Frise temporelle : zoom + drag pour ajuster le temps d'une ligne ──
   const zoomIn = () => setPxPerSecond((v) => Math.min(MAX_PX_PER_SEC, Math.round(v * 1.4)));
@@ -1465,8 +1518,11 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       if (q && !(l.text || '').toLowerCase().includes(q)) return;
       out.push(i);
     });
-    return out;
-  }, [lines, lineFilter, lineSearch, lineLevel]);
+    // La ligne SÉLECTIONNÉE reste toujours listée : le filtre « não sincronizadas » la
+    // retirait à l'instant même où elle recevait son temps, et elle disparaissait de
+    // l'écran juste après le relâchement d'Espaço.
+    return visibleWithSelected(out, cursor);
+  }, [lines, lineFilter, lineSearch, lineLevel, cursor]);
 
   // Mode de timing global — badge du header (Linha / Palavra / Híbrido).
   const timingMode = useMemo(() => {
@@ -1654,12 +1710,21 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   const ticks = [];
   for (let s = 0; s <= totalSeconds; s += tickStep) ticks.push(s);
 
-  const currentLine = activeIdx >= 0 ? lines[activeIdx] : null;
-  const nextLine = activeIdx + 1 < lines.length ? lines[activeIdx + 1] : null;
-  // Dans um trecho instrumental (sem linha ativa), mostra sempre a PRÓXIMA linha
-  // cantada em grande — nunca um placeholder genérico « ♪ (música) » — mais fácil
-  // de seguir/preparar a marcação durante a sincronização manual.
-  const afterPreviewLine = currentLine ? nextLine : (activeIdx + 2 < lines.length ? lines[activeIdx + 2] : null);
+  // ── Contexte de paroles de l'écran de capture ──
+  // Dérivé du CURSEUR D'ÉDITION en mode capture (jamais de `currentTime`, qui n'a pas de
+  // ligne active dans les silences : `activeIdx` valait -1 et `lines[activeIdx + 1]`
+  // affichait alors la ligne 0 quelle que soit la position réelle). En revisão la lecture
+  // pilote l'aperçu, avec repli sur la sélection pour ne jamais rien vider.
+  const previewIdx = previewIndex({
+    mode, selectedIndex: cursor, playbackActiveIndex: activeIdx, lineCount: lines.length,
+  });
+  const preview = lyricContext(lines, previewIdx);
+  // La progression du balayage n'a de sens que si l'aperçu montre bien la ligne jouée.
+  const onPlayedLine = previewIdx === activeIdx;
+  const previewProgress = onPlayedLine ? activeProgress : 0;
+  const previewWordIdx = onPlayedLine ? activeWordIdx : -1;
+  const previewWordProgress = onPlayedLine ? activeWordProgress : 0;
+  const allTimed = lines.length > 0 && syncedCount === lines.length;
 
   // ── Sauvegarde ──
   // Persiste le LRC dans `songs`, PUIS crée une version durable (song_timing_versions)
@@ -2299,20 +2364,26 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
                           : mode === 'capture-words' ? 'bg-violet-500/25 text-violet-200'
                           : 'bg-white/10 text-gray-300'
                       }`}>
-                        {mode === 'capture-lines' ? (isHolding ? `● Gravando ${holdMs}ms` : 'Captura de linhas ativa')
-                          : mode === 'capture-words' ? 'Captura de palavras ativa'
-                          : 'Modo revisão'}
+                        {mode === 'capture-lines' && isHolding
+                          ? `● Marcando frase… ${holdMs}ms`
+                          : captureStatus({ mode, isCapturing: isHolding, allTimed })}
                       </span>
                     </div>
-                    <p className="max-w-3xl text-3xl font-black leading-tight sm:text-4xl md:text-5xl">
-                      {currentLine
-                        ? (Array.isArray(currentLine.words) && currentLine.words.length > 0
-                          ? <KaraokeWordLine words={currentLine.words} activeIndex={activeWordIdx} progress={activeWordProgress} />
-                          : <KaraokeWipeLine text={currentLine.text || '♪'} progress={activeProgress} />)
-                        : (nextLine ? <span className="text-white/50">{nextLine.text || '♪'}</span> : null)}
+                    {/* Contexte à trois lignes, TOUJOURS monté : la frase qu'on vient de
+                        marquer devient « anterior » et la suivante passe au centre sans
+                        aucune frame vide entre les deux. */}
+                    {preview.prev && (
+                      <p className="max-w-2xl text-lg font-semibold text-white/30">{preview.prev.text || '♪'}</p>
+                    )}
+                    <p className="max-w-3xl text-3xl font-black leading-tight sm:text-4xl md:text-5xl" aria-live="polite">
+                      {preview.current
+                        ? (Array.isArray(preview.current.words) && preview.current.words.length > 0
+                          ? <KaraokeWordLine words={preview.current.words} activeIndex={previewWordIdx} progress={previewWordProgress} />
+                          : <KaraokeWipeLine text={preview.current.text || '♪'} progress={previewProgress} />)
+                        : null}
                     </p>
-                    {afterPreviewLine && (
-                      <p className="max-w-2xl text-lg font-semibold text-white/35">{afterPreviewLine.text || '♪'}</p>
+                    {preview.next && (
+                      <p className="max-w-2xl text-lg font-semibold text-white/35">{preview.next.text || '♪'}</p>
                     )}
                   </div>
                 )}
