@@ -25,6 +25,12 @@ import {
   initialSelectedIndex, beginCapture, completeCapture, cancelCapture,
   lyricContext, previewIndex, captureStatus, visibleWithSelected, shouldFollowPlayback,
 } from '@/lib/phraseCapture';
+import {
+  EDITING_MODE, REVIEW_MARGIN_SEC, phraseReviewWindow, canReviewLocally,
+  reviewBlockedReason, issueTarget,
+} from '@/lib/karaokeWorkshop';
+import { useLocalTransport } from '@/hooks/useLocalTransport';
+import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
 import { distributeWords } from '@/lib/wordDistribution';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
@@ -1727,6 +1733,60 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   const previewWordProgress = onPlayedLine ? activeWordProgress : 0;
   const allTimed = lines.length > 0 && syncedCount === lines.length;
 
+  // ══════════════════ ATELIÊ : transport de l'audio local ══════════════════
+  // L'audio local sert à RÉÉCOUTER et inspecter (outil d'édition) ; la CAPTURE de frases
+  // reste sur l'horloge canonique de la vidéo. Les deux temps sont affichés côte à côte
+  // pour que le rôle de chaque horloge soit sans ambiguïté.
+  const localTransport = useLocalTransport({ session: localAudio, offsetSeconds: fullCal.offsetSeconds });
+  // Le MODE d'édition est DÉRIVÉ de l'unique état existant (`ballStudioIndex`) — pas un
+  // second état concurrent — et n'a aucun effet sur la frase sélectionnée.
+  const editingMode = ballStudioIndex != null ? EDITING_MODE.WORD : EDITING_MODE.PHRASE;
+  const wordModeDisabledReason = lines[cursor]?.time == null
+    ? 'Marque o início desta frase primeiro.'
+    : null;
+  const changeEditingMode = useCallback((next) => {
+    if (next === EDITING_MODE.WORD) {
+      if (lines[cursorRef.current]?.time == null) return; // rien à affiner sans frase marquée
+      setBallStudioIndex(cursorRef.current);              // MÊME index : la sélection ne bouge pas
+    } else {
+      setBallStudioIndex(null);
+    }
+  }, [lines]);
+
+  const reviewCtx = {
+    calibrationStatus: fullCal.status,
+    hasAudio: Boolean(localAudio.fileName) && localAudio.ready,
+    line: lines[cursor],
+  };
+  const canReviewPhrase = canReviewLocally(reviewCtx);
+  const reviewBlocked = reviewBlockedReason(reviewCtx);
+
+  /** Réécoute la frase sélectionnée sur l'audio local — ne modifie AUCUN timing. */
+  const handleReviewPhrase = useCallback(() => {
+    const i = cursorRef.current;
+    const win = phraseReviewWindow(linesRef.current[i], fullCal.offsetSeconds, {
+      duration: localAudio.duration,
+      margin: REVIEW_MARGIN_SEC,
+      fallbackEnd: effectiveEnd(i) ?? undefined,
+    });
+    if (!win) return;
+    // Jamais deux sources audio en même temps.
+    try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ }
+    localTransport.reviewWindow(win);
+  }, [fullCal.offsetSeconds, localAudio.duration, effectiveEnd, localTransport]);
+
+  // Lecture locale libre : met aussi la vidéo en pause (une seule source à la fois).
+  const workshopTransport = useMemo(() => ({
+    ...localTransport,
+    togglePlay: () => {
+      if (!localTransport.isPlaying) {
+        try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ }
+        localTransport.stopReview(); // lecture libre : plus de borne de frase
+      }
+      localTransport.togglePlay();
+    },
+  }), [localTransport]);
+
   // ── Sauvegarde ──
   // Persiste le LRC dans `songs`, PUIS crée une version durable (song_timing_versions)
   // — au contraire de l'autosave qui n'écrit QUE le brouillon local. Garde anti
@@ -1900,12 +1960,15 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     }
   }, [song.id, commitLines, clearDraft, loadVersions, onSaved, toast]);
 
-  // Sélectionne et centre une ligne signalée par la validation.
+  // Sélectionne et centre une ligne signalée par la validation. Ne CORRIGE rien : la
+  // cible passe par issueTarget(), qui borne l'index d'origine et ne laisse filtrer que
+  // l'index + le temps canonique (aucune métadonnée de calibration).
   const focusIssueLine = useCallback((lineIndex, time) => {
-    setCursor(lineIndex);
-    if (time != null) seekTo(time);
-    listItemRefs.current[lineIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, [seekTo]);
+    const target = issueTarget({ lineIndex, time }, linesRef.current.length);
+    selectLineManually(target.selectedLineIndex);
+    if (target.canonicalTime != null) seekTo(target.canonicalTime);
+    listItemRefs.current[target.selectedLineIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [seekTo, selectLineManually]);
 
   const noVideo = !videoId;
 
@@ -2258,6 +2321,9 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
                       key={i}
                       ref={(el) => { listItemRefs.current[i] = el; }}
                       onClick={() => { selectLineManually(i); if (line.time != null) seekTo(line.time); }}
+                      // La frase sélectionnée est annoncée aux lecteurs d'écran — pas
+                      // seulement signalée par une couleur de bordure.
+                      aria-current={isCursor ? 'true' : undefined}
                       className={`group flex cursor-pointer items-start gap-2.5 border-l-2 px-3 py-2 transition-colors ${
                         isCursor && isHolding ? 'border-red-500 bg-red-500/15'
                           : isCursor ? 'border-purple-500 bg-purple-500/12'
@@ -2821,6 +2887,29 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
                 <input type="checkbox" checked={syncLyricsToo} onChange={(e) => setSyncLyricsToo(e.target.checked)} className="accent-purple-600" /> Atualizar letra também
               </label>
             </div>
+
+            {/* ══ Barra do ateliê : áudio local, calibração, revisão, modo ══ */}
+            <KaraokeWorkshopBar
+              fileName={localAudio.fileName}
+              localDuration={localAudio.duration}
+              canonicalDuration={duration}
+              calibrationStatus={fullCal.status}
+              offsetSeconds={fullCal.offsetSeconds}
+              onPickAudio={pickLocalAudio}
+              onOpenCalibration={() => changeEditingMode(EDITING_MODE.WORD)}
+              transport={workshopTransport}
+              canReview={canReviewPhrase}
+              reviewReason={reviewBlocked}
+              onReviewPhrase={handleReviewPhrase}
+              selectedLabel={`Frase ${cursor + 1} de ${lines.length}`}
+              canPrev={cursor > 0}
+              canNext={cursor < lines.length - 1}
+              onPrev={() => selectLineManually(Math.max(0, cursor - 1))}
+              onNext={() => selectLineManually(Math.min(lines.length - 1, cursor + 1))}
+              editingMode={editingMode}
+              onChangeMode={changeEditingMode}
+              wordModeDisabledReason={wordModeDisabledReason}
+            />
           </div>
 
           {isCalibrating && (
