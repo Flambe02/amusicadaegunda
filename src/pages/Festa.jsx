@@ -2,12 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { useSEO } from '@/hooks/useSEO';
-import { hasLrcContent } from '@/lib/lrc';
+import { isKaraokePublished } from '@/lib/lrc';
 import { useFestaSession } from '@/hooks/useFestaSession';
 import {
   getFestaSessionByCode, addToFestaQueue, skipFestaQueueEntry, incrementApplause, incrementTomato,
 } from '@/lib/festa';
 import FestaJoinForm from '@/components/festa/FestaJoinForm';
+import FestaLivePanel from '@/components/festa/FestaLivePanel';
 import FestaCatalogTab from '@/components/festa/FestaCatalogTab';
 import FestaQueueTab from '@/components/festa/FestaQueueTab';
 import '@/styles/festa.css';
@@ -116,7 +117,7 @@ export default function Festa() {
   }, []);
 
   const karaokeSongs = useMemo(
-    () => songs.filter((s) => hasLrcContent(s.lrc_content) && (s.youtube_url || s.youtube_music_url)),
+    () => songs.filter((s) => isKaraokePublished(s) && (s.youtube_url || s.youtube_music_url)),
     [songs],
   );
   const songsById = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs]);
@@ -178,6 +179,17 @@ export default function Festa() {
         </div>
       )}
 
+      {/* Painel « Ao vivo » — sempre visível (independente da aba) : reações reais
+          (aplaudir/tomate) + micro emprestado para quem está cantando na TV agora. */}
+      <FestaLivePanel
+        queue={queue}
+        songsById={songsById}
+        guestName={guestName}
+        onApplaud={handleApplaud}
+        onTomato={handleTomato}
+        sendEnergyReading={sendEnergyReading}
+      />
+
       <nav className="festa-tabs">
         <button type="button" className={tab === 'catalogo' ? 'is-active' : ''} onClick={() => setTab('catalogo')}>Catálogo</button>
         <button type="button" className={tab === 'fila' ? 'is-active' : ''} onClick={() => setTab('fila')}>
@@ -193,11 +205,7 @@ export default function Festa() {
             songsById={songsById}
             queue={queue}
             myEntryIds={myEntryIds}
-            guestName={guestName}
             onRemove={handleRemove}
-            onApplaud={handleApplaud}
-            onTomato={handleTomato}
-            sendEnergyReading={sendEnergyReading}
           />
         )}
       </main>

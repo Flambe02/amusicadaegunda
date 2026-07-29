@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+import { resolveLyricsText } from '@/lib/lrc';
 
 const SWIPE_THRESHOLD = 72;
 
@@ -257,7 +258,7 @@ export default function HomeMobileImmersive({
             ) : null}
 
             <ActionBtn icon={Music} label="Ouvir em outras plataformas" onClick={onShowPlatforms} accent />
-            {displayedSong.lyrics?.trim() ? (
+            {resolveLyricsText(displayedSong).trim() ? (
               <ActionBtn icon={FileText} label="Ver letras" onClick={onShowLyrics} />
             ) : null}
             {/* Mute — toujours visible, grisé avant activation */}

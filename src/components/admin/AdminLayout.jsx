@@ -1,10 +1,12 @@
 // Full-screen admin shell: header + sidebar + routed content (Outlet) + the
 // shared overlays (details drawer, song form, karaoke tool, delete dialog).
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
+import { useLocalAudioSession } from '@/hooks/useLocalAudioSession';
 import KaraokeSyncTool from '@/components/karaoke/KaraokeSyncTool';
+import PitchMapModal from './pitch/PitchMapModal';
 import AdminHeader from './AdminHeader';
 import AdminSidebar from './AdminSidebar';
 import SongDetailsDrawer from './SongDetailsDrawer';
@@ -19,10 +21,28 @@ export default function AdminLayout() {
     published, drafts, adminEmail, selectedView, closeDrawer,
     openEdit, openKaraoke, publishSong, requestDelete, applySongPatch,
     karaokeSong, closeKaraoke, confirmDelete, deleting, cancelDelete, performDelete,
+    pitchMapSong, openPitchMap, closePitchMap,
   } = useAdminData();
 
   const handleLogout = async () => { await supabase.auth.signOut(); window.location.href = '/login'; };
   const manageLinks = (view) => navigate(`/admin/links?song=${view.id}`);
+
+  // Sessão de áudio local PARTILHADA entre « Sincronizar karaokê » e « Guia de tom »
+  // (mesma música): evita pedir o mesmo ficheiro vocal duas vezes ao saltar de um
+  // para o outro pelo link cruzado. A persistência entre sessões (IndexedDB) fica
+  // como reforço opcional em cada componente; isto garante que funciona SEMPRE
+  // dentro da mesma sessão do admin, sem depender da API File System Access.
+  const sharedVocalAudio = useLocalAudioSession();
+  const sharedVocalSongIdRef = useRef(null);
+  useEffect(() => {
+    const activeId = karaokeSong?.id ?? pitchMapSong?.id ?? null;
+    if (activeId == null) { sharedVocalSongIdRef.current = null; return; }
+    if (sharedVocalSongIdRef.current != null && sharedVocalSongIdRef.current !== activeId) {
+      sharedVocalAudio.clear(); // trocou de música: não arrastar o áudio da anterior
+    }
+    sharedVocalSongIdRef.current = activeId;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sharedVocalAudio é estável (refs internos)
+  }, [karaokeSong?.id, pitchMapSong?.id]);
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -43,6 +63,7 @@ export default function AdminLayout() {
             onClose={closeDrawer}
             onEdit={openEdit}
             onKaraoke={(v) => openKaraoke(v.raw)}
+            onPitchMap={(v) => openPitchMap(v.raw)}
             onPublish={publishSong}
             onManageLinks={manageLinks}
             onDelete={requestDelete}
@@ -58,6 +79,18 @@ export default function AdminLayout() {
             song={karaokeSong}
             onClose={closeKaraoke}
             onSaved={(updated) => applySongPatch(updated.id, updated)}
+            onOpenPitchMap={() => openPitchMap(karaokeSong)}
+            sharedAudio={sharedVocalAudio}
+          />
+        )}
+
+        {pitchMapSong && (
+          <PitchMapModal
+            key={pitchMapSong.id}
+            song={pitchMapSong}
+            onClose={closePitchMap}
+            onSaved={(id, patch) => applySongPatch(id, patch)}
+            sharedAudio={sharedVocalAudio}
           />
         )}
 

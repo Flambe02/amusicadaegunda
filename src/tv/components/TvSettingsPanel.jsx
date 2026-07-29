@@ -52,9 +52,12 @@ export default function TvSettingsPanel({ opts, setOpts, onExitApp }) {
             <OptChoiceLine focusKey="HSET_0" label="Tamanho da letra" options={FONT_SCALES} value={opts.fontScale} onChange={(v) => set({ fontScale: v })} wrap={false} />
             <OptToggleLine focusKey="HSET_1" label="Bolinha" on={opts.showBall} onToggle={() => set({ showBall: !opts.showBall })} />
             <OptToggleLine focusKey="HSET_2" label="Modo dueto (P1 / P2)" icon={Users} on={opts.dueto} onToggle={() => set({ dueto: !opts.dueto })} />
-            {/* PAS de toggle « Medidor de energia » sur TV (pas de micro — le toggle
-                se désactivait silencieusement). L'énergie vient du celular en Modo Festa. */}
-            <p className="tv-opts-note"><Flame size={15} /> Medidor de energia: disponível no Modo Festa, usando o microfone do celular.</p>
+            {/* Medidor de energia · Beta — a preferência é sondada quando o karaokê
+                arranca (TENTA o microfone da TV, se houver). A confirmação (« não
+                detectado ») aparece no painel de opções DENTRO do karaokê. No Modo
+                Festa, o microfone do celular continua a ser o caminho fiável. */}
+            <OptToggleLine focusKey="HSET_3" label="Medidor de energia (microfone da TV) · Beta" icon={Flame} on={opts.energy} onToggle={() => set({ energy: !opts.energy })} />
+            <p className="tv-opts-note"><Flame size={15} /> Se a sua TV tiver microfone, mede a energia ao cantar. No Modo Festa também dá para usar o do celular.</p>
             <OptChoiceLine focusKey="HSET_4" label="Tradução" icon={Globe} options={TRANSLATION_LANGS} value={opts.translate} onChange={(v) => set({ translate: v })} wrap />
             <OptChoiceLine focusKey="HSET_5" label="Velocidade" options={PLAYBACK_RATES} value={opts.rate} onChange={(v) => set({ rate: v })} wrap={false} />
           </div>

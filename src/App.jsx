@@ -5,8 +5,10 @@ import { Toaster } from "@/components/ui/toaster"
 import OfflineIndicator from "@/components/OfflineIndicator"
 import ErrorBoundary from "@/components/ErrorBoundary"
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { hideNativeSplash } from '@/utils/splash';
 import { isTV } from '@/tv/platform';
+import { useAppUpdate } from '@/hooks/useAppUpdate';
 
 const PushCTA = lazy(() => import('@/components/PushCTA'));
 const InstallAppBanner = lazy(() => import('@/components/InstallAppBanner'));
@@ -15,11 +17,34 @@ const TvApp = lazy(() => import('@/tv/TvApp'));
 // Écran d'erreur TV (sortie de secours navigable au D-pad) — remplace le fallback
 // web générique quand le crash survient dans le bundle TV.
 const TvErrorFallback = lazy(() => import('@/tv/TvErrorFallback'));
+// Contrôle de version distant — écrans « required » (bloquant) par plateforme,
+// chargés à la demande (status === 'required' est rare). Le dialogue
+// « recommended » TV vit DANS TvApp (cf. src/tv/TvApp.jsx) pour partager son
+// Retour matériel ; sur mobile il est monté ci-dessous à côté de <Pages/>.
+const TvRequiredUpdateScreen = lazy(() => import('@/tv/TvRequiredUpdateScreen'));
+const RequiredUpdateScreen = lazy(() => import('@/components/AppUpdate/RequiredUpdateScreen'));
+const RecommendedUpdateDialog = lazy(() => import('@/components/AppUpdate/RecommendedUpdateDialog'));
+
+// Écran de transition pour status === 'checking' (1er lancement natif SANS
+// cache local, borné par le timeout réseau Supabase ~7s, cf. useAppUpdate.jsx).
+// Un simple fond noir sans retour visuel avait l'air figé sur un réseau lent —
+// ce spinner comble ce trou, sans jamais afficher l'accueil avant la décision.
+function AppUpdateCheckingScreen({ background }) {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}
+    >
+      <Loader2 className="h-8 w-8 animate-spin text-white/40" aria-hidden="true" />
+    </div>
+  );
+}
 
 function App() {
   const [deferredUiReady, setDeferredUiReady] = useState(false);
   // Décision figée au montage (une TV ne devient pas un mobile en cours de session).
   const [tvMode] = useState(() => { try { return isTV(); } catch { return false; } });
+  const { status: updateStatus } = useAppUpdate();
 
   // Masque le splash natif dès que le 1er contenu a peint (double rAF = au moins
   // une frame rendue). Évite l'écran noir de la WebView au cold start via widget/
@@ -67,10 +92,32 @@ function App() {
         )}
       >
         <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#05070c' }} />}>
-          <TvApp />
-          <Toaster />
+          {updateStatus === 'checking' ? (
+            <AppUpdateCheckingScreen background="#0a0a0a" />
+          ) : updateStatus === 'required' ? (
+            <TvRequiredUpdateScreen />
+          ) : (
+            <>
+              <TvApp />
+              <Toaster />
+            </>
+          )}
         </Suspense>
       </ErrorBoundary>
+    );
+  }
+
+  // Version bloquante (mobile natif uniquement — useAppUpdate reste 'none' sur
+  // web/PWA/desktop, cf. src/hooks/useAppUpdate.jsx) : ni l'accueil, ni le
+  // routeur, ni l'historique du navigateur ne sont jamais montés en dessous.
+  if (updateStatus === 'checking') {
+    return <AppUpdateCheckingScreen background="#050505" />;
+  }
+  if (updateStatus === 'required') {
+    return (
+      <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#050505' }} />}>
+        <RequiredUpdateScreen />
+      </Suspense>
     );
   }
 
@@ -79,6 +126,9 @@ function App() {
       <OfflineIndicator />
       <Pages />
       <Toaster />
+      <Suspense fallback={null}>
+        <RecommendedUpdateDialog />
+      </Suspense>
       {deferredUiReady ? (
         <Suspense fallback={null}>
           <InstallAppBanner />

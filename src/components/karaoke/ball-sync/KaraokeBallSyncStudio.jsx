@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft, ChevronLeft, ChevronRight, Play, Pause, Repeat, RotateCcw,
-  Undo2, Redo2, Check, Upload, Music, Crosshair, Wand2, Volume2, VolumeX,
+  Undo2, Redo2, Check, Upload, Music, Mic, Crosshair, Wand2, Volume2, VolumeX,
   ZoomIn, ZoomOut, Maximize, Monitor, Eye, AlertTriangle, Trash2,
 } from 'lucide-react';
 import { distributeWords } from '@/lib/wordDistribution';
@@ -38,15 +38,28 @@ export default function KaraokeBallSyncStudio({
   videoDuration = 0, onCommit, onNavigate, canPrev, canNext, onClose,
   audioSession, offsetMs = 0, onOffsetChange,
   onPickAudio, onReopenAudio, onRemoveAudio, pendingAudioName,
+  vocalsAudio, onPickVocals, onReopenVocals, onRemoveVocals, pendingVocalsName,
+  vocalsOffsetMs = 0, onVocalsOffsetChange,
 }) {
   const reducedMotion = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
     [],
   );
-  // Session audio locale FOURNIE PAR LE PARENT (persiste entre les lignes et à la
-  // fermeture du studio — l'élément <audio> et l'onde décodée ne sont jamais recréés).
-  const audio = audioSession;
+  // Deux sessions audio locales FOURNIES PAR LE PARENT (persistent entre les lignes
+  // et à la fermeture du studio) : « completo » (mix intégral) et « voz » (stem vocal
+  // isolé, optionnel). L'utilisateur peut charger les deux et alterner — utile pour
+  // repérer une syllabe noyée dans le mix complet en écoutant la voix seule.
+  const [activeTrack, setActiveTrack] = useState(() => (audioSession?.fileName ? 'full' : (vocalsAudio?.fileName ? 'vocals' : 'full')));
+  // Ne reste jamais bloqué à afficher « sem áudio » si l'AUTRE piste est déjà prête.
+  useEffect(() => {
+    if (activeTrack === 'full' && !audioSession?.fileName && vocalsAudio?.fileName) setActiveTrack('vocals');
+    else if (activeTrack === 'vocals' && !vocalsAudio?.fileName && audioSession?.fileName) setActiveTrack('full');
+  }, [activeTrack, audioSession?.fileName, vocalsAudio?.fileName]);
+
+  const audio = activeTrack === 'vocals' ? vocalsAudio : audioSession;
   const audioEl = audio.audioRef.current;
+  const pickActiveAudio = useCallback(() => (activeTrack === 'vocals' ? onPickVocals?.() : onPickAudio?.()), [activeTrack, onPickVocals, onPickAudio]);
+  const removeActiveAudio = useCallback(() => (activeTrack === 'vocals' ? onRemoveVocals?.() : onRemoveAudio?.()), [activeTrack, onRemoveVocals, onRemoveAudio]);
 
   // ── Bornes de frase (début/fin) — éditables dans le studio (poignées jaunes sur
   // l'onde + champs numériques). Initialisées depuis le parent ; renvoyées au
@@ -99,10 +112,14 @@ export default function KaraokeBallSyncStudio({
     setCanRedo(futureRef.current.length > 0); setCanUndo(true);
   }, [snapshot, restore]);
 
-  // ── Offset audio local ↔ vidéo — contrôlé par le parent (persiste + partagé avec
-  // l'aperçu d'onde de l'écran principal). Le parent le persiste en localStorage.
-  const setOffsetMs = onOffsetChange;
-  const offsetSec = offsetMs / 1000;
+  // ── Offset audio local ↔ vidéo — SÉPARÉ par piste (contrôlé par le parent, qui
+  // persiste chacun en localStorage). Un stem vocal exporté à part a très souvent
+  // son propre décalage par rapport au mix complet (delay de codage différent) —
+  // réutiliser le même offset pour les deux pistes désynchronise en changeant de
+  // piste (voir switchTrack, qui convertit toujours via le temps VIDÉO commun).
+  const activeOffsetMs = activeTrack === 'vocals' ? vocalsOffsetMs : offsetMs;
+  const setOffsetMs = activeTrack === 'vocals' ? onVocalsOffsetChange : onOffsetChange;
+  const offsetSec = activeOffsetMs / 1000;
 
   // ── Intensité de la boule ──
   const [intensity, setIntensity] = useState(() => localStorage.getItem(INTENSITY_KEY) || 'classica');
@@ -156,6 +173,34 @@ export default function KaraokeBallSyncStudio({
   const togglePlay = useCallback(() => { if (isPlayingRef.current) pause(); else play(); }, [play, pause]);
   const restartPhrase = useCallback(() => { seekAudio(loopStart); }, [seekAudio, loopStart]);
 
+  // ── Troca de pista (completo ↔ voz) ── pausa a pista ANTERIOR (fecho sobre o
+  // audioEl atual, antes da troca de estado) e sincroniza a posição na pista nova
+  // assim que ela estiver disponível — nunca duas pistas a tocar ao mesmo tempo,
+  // nunca a posição perdida ao alternar. A conversão passa SEMPRE pelo tempo de
+  // VÍDEO (referência comum às duas pistas): cada pista pode ter o seu PRÓPRIO
+  // offset em relação ao vídeo (delay de codificação diferente entre o mix
+  // completo e o stem vocal exportado à parte) — reutilizar diretamente o
+  // `currentTime` de uma pista na outra assumiria offset zero entre elas, o que
+  // não é garantido.
+  const pendingSeekOnSwitchRef = useRef(null);
+  const switchTrack = useCallback((track) => {
+    if (track === activeTrack) return;
+    try { audioEl?.pause(); } catch { /* noop */ }
+    setIsPlaying(false);
+    pendingSeekOnSwitchRef.current = audioTimeRef.current + offsetSec; // tempo de vídeo (offset da pista ATUAL, antes da troca)
+    setActiveTrack(track);
+  }, [activeTrack, audioEl, offsetSec]);
+  useEffect(() => {
+    const videoTime = pendingSeekOnSwitchRef.current;
+    if (videoTime == null) return;
+    pendingSeekOnSwitchRef.current = null;
+    const t = Math.max(0, videoTime - offsetSec); // offsetSec já reflete a pista NOVA (pós-troca)
+    audioTimeRef.current = t;
+    videoTimeRef.current = videoTime;
+    setScrubTime(videoTime);
+    if (audioEl && audio.ready) { try { audioEl.currentTime = t; } catch { /* noop */ } }
+  }, [activeTrack, audioEl, audio.ready, offsetSec]);
+
   // Au montage / changement de ligne : place la tête de lecture au début de la frase
   // (l'audio persistant du parent peut être resté à la position d'une autre ligne).
   const didInitRef = useRef(false);
@@ -180,13 +225,33 @@ export default function KaraokeBallSyncStudio({
         if (loop) { try { audioEl.currentTime = loopStart; } catch { /* noop */ } }
         else { audioEl?.pause(); setIsPlaying(false); return; }
       }
+      // Suit automaticamente a cabeça de leitura APENAS quando o utilizador fez um
+      // zoom mais apertado do que a vista « ajustar à frase » — nessa vista por
+      // omissão a frase inteira já está visível e a janela deve ficar FIXA (como
+      // antes); só faz sentido "seguir" quando a janela é mais estreita do que a
+      // frase e o playhead sairia do enquadramento.
+      const v = viewRef.current;
+      const vSpan = v.end - v.start;
+      const fitPad = 0.6;
+      const fitSpan = (Number.isFinite(audio.duration) ? Math.min(audio.duration, loopEnd + fitPad) : loopEnd + fitPad)
+        - Math.max(0, loopStart - fitPad);
+      if (vSpan < fitSpan - 0.05) {
+        const margin = vSpan * 0.12;
+        if (a < v.start + margin || a > v.end - margin) {
+          let s = a - vSpan / 2;
+          let e = a + vSpan / 2;
+          if (s < 0) { e -= s; s = 0; }
+          if (Number.isFinite(audio.duration) && e > audio.duration) { s -= (e - audio.duration); e = audio.duration; s = Math.max(0, s); }
+          setView({ start: s, end: e });
+        }
+      }
       const now = performance.now();
       if (now - lastDispRef.current > 90) { lastDispRef.current = now; setScrubTime(a + offsetSec); }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [isPlaying, loop, loopStart, loopEnd, offsetSec, audioEl]);
+  }, [isPlaying, loop, loopStart, loopEnd, offsetSec, audioEl, audio.duration]);
 
   // Hors lecture : le scrubber pilote l'aperçu.
   useEffect(() => {
@@ -276,6 +341,7 @@ export default function KaraokeBallSyncStudio({
 
   // ── Vue de l'onde (zoom/pan) ──
   const [view, setView] = useState({ start: 0, end: 0 });
+  const viewRef = useRef(view); viewRef.current = view;
   useEffect(() => {
     // Ajuste la vue par défaut une fois l'onde disponible / la région connue.
     if (view.end > view.start) return;
@@ -298,6 +364,20 @@ export default function KaraokeBallSyncStudio({
     const e = (audio.duration ? Math.min(audio.duration, loopEnd + pad) : loopEnd + pad);
     return { start: s, end: Math.max(s + 0.2, e) };
   });
+  // Navigation manuelle SANS changer le zoom (§ « permet moi de naviguer sur la
+  // ligne ») — décale la fenêtre visible de ~35% de sa largeur, toujours dans les
+  // limites du fichier.
+  const pan = useCallback((direction) => {
+    setView((v) => {
+      const span = v.end - v.start;
+      const delta = span * 0.35 * direction;
+      let s = v.start + delta;
+      let e = v.end + delta;
+      if (s < 0) { e -= s; s = 0; }
+      if (audio.duration && e > audio.duration) { s -= (e - audio.duration); e = audio.duration; s = Math.max(0, s); }
+      return { start: Math.max(0, s), end: e };
+    });
+  }, [audio.duration]);
 
   // ── Sortie (définie avant le clavier global qui l'utilise) ──
   const handleClose = useCallback(() => {
@@ -369,8 +449,6 @@ export default function KaraokeBallSyncStudio({
 
   const stateLabel = captureActive ? 'Capturando' : isPlaying ? 'Reproduzindo' : dirty ? 'Alterações não salvas' : 'Pronto';
 
-  const pickAudio = () => onPickAudio?.();
-
   return createPortal(
     <div className="fixed inset-0 z-[10000] flex flex-col bg-[#0d0a12] text-white" role="dialog" aria-label="Afinar palavras e bola">
       {/* ══════════ HEADER ══════════ */}
@@ -435,20 +513,50 @@ export default function KaraokeBallSyncStudio({
       {/* ══════════ ONDA + MARCADORES (30–40%) ══════════ */}
       <section className="shrink-0 border-y border-white/10 bg-black/30 px-4 py-2">
         {!audio.fileName ? (
-          <LocalAudioLoader onPick={pickAudio} onReopen={onReopenAudio} pendingAudioName={pendingAudioName} loading={audio.loading} />
+          <LocalAudioLoader
+            onPickFull={onPickAudio} onReopenFull={onReopenAudio} pendingFullName={pendingAudioName} loadingFull={audioSession?.loading}
+            onPickVocals={onPickVocals} onReopenVocals={onReopenVocals} pendingVocalsName={pendingVocalsName} loadingVocals={vocalsAudio?.loading}
+          />
         ) : (
           <>
             <div className="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
-              <span className="inline-flex items-center gap-1 font-semibold text-gray-200"><Music size={12} /> {audio.fileName}</span>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 p-0.5">
+                <button
+                  onClick={() => {
+                    if (audioSession?.fileName) switchTrack('full');
+                    else if (pendingAudioName) onReopenAudio?.();
+                    else onPickAudio?.();
+                  }}
+                  aria-pressed={activeTrack === 'full'}
+                  className={`karaoke-focusable inline-flex items-center gap-1 rounded px-2 py-1 font-semibold transition-colors ${activeTrack === 'full' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-white/10'}`}
+                >
+                  <Music size={12} /> {audioSession?.fileName ? 'Completo' : pendingAudioName ? 'Reabrir completo' : 'Carregar completo'}
+                </button>
+                <button
+                  onClick={() => {
+                    if (vocalsAudio?.fileName) switchTrack('vocals');
+                    else if (pendingVocalsName) onReopenVocals?.();
+                    else onPickVocals?.();
+                  }}
+                  aria-pressed={activeTrack === 'vocals'}
+                  className={`karaoke-focusable inline-flex items-center gap-1 rounded px-2 py-1 font-semibold transition-colors ${activeTrack === 'vocals' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:bg-white/10'}`}
+                >
+                  <Mic size={12} /> {vocalsAudio?.fileName ? 'Voz' : pendingVocalsName ? 'Reabrir voz' : 'Carregar voz'}
+                </button>
+              </div>
+              <span className="inline-flex items-center gap-1 font-semibold text-gray-200">{audio.fileName}</span>
               <span>{fmt(audio.duration)}</span>
               <span className="text-emerald-300/80">Este áudio permanece neste computador e não é enviado ao servidor.</span>
-              <button onClick={pickAudio} className="karaoke-focusable ml-auto inline-flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 hover:bg-white/10">
-                <Upload size={11} /> Trocar áudio
+              <button onClick={pickActiveAudio} className="karaoke-focusable ml-auto inline-flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 hover:bg-white/10">
+                <Upload size={11} /> Trocar
               </button>
-              <button onClick={() => onRemoveAudio?.()} className="karaoke-focusable inline-flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 hover:bg-white/10"><Trash2 size={11} /> Remover áudio</button>
+              <button onClick={removeActiveAudio} className="karaoke-focusable inline-flex items-center gap-1 rounded bg-white/5 px-2 py-0.5 hover:bg-white/10"><Trash2 size={11} /> Remover</button>
               <IconBtn onClick={() => zoom(0.7)} label="Zoom +"><ZoomIn size={14} /></IconBtn>
               <IconBtn onClick={() => zoom(1.4)} label="Zoom −"><ZoomOut size={14} /></IconBtn>
               <IconBtn onClick={fitView} label="Ajustar à frase"><Maximize size={14} /></IconBtn>
+              <span className="mx-0.5 h-5 w-px bg-white/10" />
+              <IconBtn onClick={() => pan(-1)} label="Navegar para trás (sem alterar o zoom)"><ChevronLeft size={14} /></IconBtn>
+              <IconBtn onClick={() => pan(1)} label="Navegar para a frente (sem alterar o zoom)"><ChevronRight size={14} /></IconBtn>
             </div>
             {durMismatch && (
               <p className="mb-1.5 inline-flex items-center gap-1.5 rounded bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
@@ -568,16 +676,16 @@ export default function KaraokeBallSyncStudio({
           </div>
         </ControlGroup>
 
-        {/* Offset áudio / vídeo */}
-        <ControlGroup label="Offset áudio / vídeo">
+        {/* Offset áudio / vídeo — SEPARADO por pista (completo vs voz) */}
+        <ControlGroup label={`Offset ${activeTrack === 'vocals' ? 'voz' : 'completo'} / vídeo`}>
           <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 p-0.5">
             {[-100, -25, 25, 100].map((ms) => (
-              <button key={ms} onClick={() => setOffsetMs((o) => o + ms)} className="karaoke-focusable rounded px-1.5 py-1 text-[10px] font-semibold text-gray-300 hover:bg-white/10 hover:text-white">{ms > 0 ? '+' : ''}{ms}</button>
+              <button key={ms} onClick={() => setOffsetMs?.((o) => o + ms)} className="karaoke-focusable rounded px-1.5 py-1 text-[10px] font-semibold text-gray-300 hover:bg-white/10 hover:text-white">{ms > 0 ? '+' : ''}{ms}</button>
             ))}
           </div>
-          <input type="number" step="5" value={offsetMs} onChange={(e) => { const v = parseInt(e.target.value, 10); setOffsetMs(Number.isFinite(v) ? v : 0); }} className="w-16 rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[11px] outline-none" aria-label="Offset em ms" />
+          <input type="number" step="5" value={activeOffsetMs} onChange={(e) => { const v = parseInt(e.target.value, 10); setOffsetMs?.(Number.isFinite(v) ? v : 0); }} className="w-16 rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[11px] outline-none" aria-label="Offset em ms" />
           <span className="text-[11px] text-gray-500">ms</span>
-          <IconBtn onClick={() => setOffsetMs(0)} label="Repor offset (0)"><RotateCcw size={13} /></IconBtn>
+          <IconBtn onClick={() => setOffsetMs?.(0)} label="Repor offset (0)"><RotateCcw size={13} /></IconBtn>
         </ControlGroup>
       </section>
 
@@ -623,24 +731,38 @@ function ControlGroup({ label, children }) {
   );
 }
 
-function LocalAudioLoader({ onPick, onReopen, pendingAudioName, loading }) {
+function LocalAudioLoader({
+  onPickFull, onReopenFull, pendingFullName, loadingFull,
+  onPickVocals, onReopenVocals, pendingVocalsName, loadingVocals,
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 py-6 text-center">
       <Music size={26} className="text-violet-300/60" />
-      {pendingAudioName ? (
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <button onClick={() => onReopen?.()} className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-app-yellow px-4 py-2 text-sm font-bold text-black hover:brightness-110">
-            <Upload size={16} /> Reabrir áudio: {pendingAudioName}
-          </button>
-          <button onClick={() => onPick?.()} className="karaoke-focusable inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold hover:bg-white/10">Escolher outro</button>
-        </div>
-      ) : (
-        <button onClick={() => onPick?.()} className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-bold hover:bg-purple-700">
-          <Upload size={16} /> {loading ? 'A carregar…' : 'Carregar áudio local'}
-        </button>
-      )}
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <TrackLoaderButton icon={Music} label="áudio completo" onPick={onPickFull} onReopen={onReopenFull} pendingName={pendingFullName} loading={loadingFull} />
+        <span className="text-[11px] text-gray-600">ou</span>
+        <TrackLoaderButton icon={Mic} label="voz isolada" onPick={onPickVocals} onReopen={onReopenVocals} pendingName={pendingVocalsName} loading={loadingVocals} />
+      </div>
       <p className="max-w-md text-[11px] text-emerald-300/80">Este áudio permanece neste computador e não é enviado ao servidor.</p>
-      <p className="max-w-md text-[11px] text-gray-500">O áudio é memorizado neste aparelho — ao reabrir a música, basta um clique. Formatos: MP3, WAV, M4A, AAC, OGG (conforme o navegador).</p>
+      <p className="max-w-md text-[11px] text-gray-500">
+        Pode carregar os dois e alternar entre eles depois (útil para ouvir uma palavra abafada no áudio completo isoladamente na voz).
+        O áudio é memorizado neste aparelho. Formatos: MP3, WAV, M4A, AAC, OGG (conforme o navegador).
+      </p>
     </div>
+  );
+}
+
+function TrackLoaderButton({ icon: Icon, label, onPick, onReopen, pendingName, loading }) {
+  if (pendingName) {
+    return (
+      <button onClick={() => onReopen?.()} className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-app-yellow px-3.5 py-2 text-sm font-bold text-black hover:brightness-110">
+        <Icon size={14} /> Reabrir {label}: {pendingName}
+      </button>
+    );
+  }
+  return (
+    <button onClick={() => onPick?.()} className="karaoke-focusable inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-3.5 py-2 text-sm font-semibold hover:bg-white/10">
+      <Icon size={14} /> {loading ? 'A carregar…' : `Carregar ${label}`}
+    </button>
   );
 }

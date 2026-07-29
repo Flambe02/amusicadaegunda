@@ -419,6 +419,8 @@ html.tv-mode, html.tv-mode body, html.tv-mode #root {
   font-size: 0.92rem; line-height: 1.35; color: rgba(255, 255, 255, 0.45);
 }
 .tv-opts-note svg { flex: 0 0 auto; margin-top: 0.15em; color: rgba(253, 224, 71, 0.6); }
+.tv-opts-note-warn { color: rgba(248, 113, 113, 0.85); }
+.tv-opts-note-warn svg { color: rgba(248, 113, 113, 0.85); }
 .tv-opts-hint { margin-top: auto; text-align: center; font-size: 0.95rem; color: rgba(255, 255, 255, 0.4); }
 .tv-opts-divider { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 0.4rem 0; }
 .tv-opt-action { justify-content: flex-start; }

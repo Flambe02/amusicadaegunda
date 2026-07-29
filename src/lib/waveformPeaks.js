@@ -4,15 +4,26 @@
  * conservé au-delà du calcul : seule cette petite table de crêtes est gardée en mémoire.
  */
 
+// Résolution cible : ~3ms par colonne — assez fin pour qu'un zoom serré sur un
+// seul mot (quelques centaines de ms) ait encore plusieurs dizaines de colonnes
+// SOURCE distinctes à afficher (au lieu de réutiliser les mêmes ~30ms/colonne
+// d'avant, qui donnaient une onde "en escalier" une fois zoomée). Le nombre de
+// colonnes s'adapte donc à la durée réelle du fichier ; plafonné pour rester
+// raisonnable en mémoire même sur un très long fichier.
+const TARGET_BUCKET_SEC = 0.003;
+const MAX_BUCKETS = 200000;
+
 /**
  * @param {AudioBuffer} audioBuffer
- * @param {number} buckets  nombre de colonnes de l'enveloppe (résolution)
+ * @param {number} [buckets]  nombre de colonnes de l'enveloppe — si omis, calculé
+ *   automatiquement à partir de la durée pour une résolution fine et constante.
  * @returns {{ min: Float32Array, max: Float32Array, buckets: number }}
  */
-export function computePeaks(audioBuffer, buckets = 6000) {
+export function computePeaks(audioBuffer, buckets) {
   const channels = audioBuffer.numberOfChannels;
   const length = audioBuffer.length;
-  const cols = Math.max(1, Math.min(buckets, length));
+  const autoBuckets = Math.min(MAX_BUCKETS, Math.max(1, Math.round(audioBuffer.duration / TARGET_BUCKET_SEC)));
+  const cols = Math.max(1, Math.min(buckets || autoBuckets, length));
   const min = new Float32Array(cols);
   const max = new Float32Array(cols);
   const samplesPerBucket = length / cols;

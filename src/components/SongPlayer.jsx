@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Share2, Music, ExternalLink, AlertCircle, X, Play, Globe, Video, FileText, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import LyricsDialog from './LyricsDialog';
+import { resolveLyricsText } from '@/lib/lrc';
 
 // Composant d'intégration YouTube (identique à Home.jsx)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
@@ -230,7 +231,7 @@ export default function SongPlayer({ song, onClose, onShowDescription }) {
             </div>
             
             {/* Letras Button - conditionnel */}
-            {song.lyrics && song.lyrics.trim() ? (
+            {resolveLyricsText(song).trim() ? (
               <button 
                 onClick={() => setShowDescription(true)}
                 className="w-full bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-3 px-2 rounded-xl font-bold transition-all duration-200 flex flex-col items-center justify-center space-y-1 shadow-lg hover:shadow-xl transform hover:scale-105"

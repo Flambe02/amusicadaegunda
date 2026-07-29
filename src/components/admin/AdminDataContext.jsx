@@ -32,6 +32,7 @@ export function AdminDataProvider({ children }) {
   const [formSong, setFormSong] = useState(null); // null | 'new' | song
   const [isSaving, setIsSaving] = useState(false);
   const [karaokeSong, setKaraokeSong] = useState(null);
+  const [pitchMapSong, setPitchMapSong] = useState(null); // Guia de tom (pitch-map) manager
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const lastFocusedRow = useRef(null);
@@ -104,6 +105,8 @@ export function AdminDataProvider({ children }) {
   const closeForm = useCallback(() => setFormSong(null), []);
   const openKaraoke = useCallback((song) => setKaraokeSong(song), []);
   const closeKaraoke = useCallback(() => setKaraokeSong(null), []);
+  const openPitchMap = useCallback((song) => setPitchMapSong(song), []);
+  const closePitchMap = useCallback(() => setPitchMapSong(null), []);
   const requestDelete = useCallback((song) => setConfirmDelete({ id: song.id, title: song.title }), []);
   const cancelDelete = useCallback(() => setConfirmDelete(null), []);
 
@@ -177,6 +180,8 @@ export function AdminDataProvider({ children }) {
     formSong, isSaving, openCreate, openEdit, closeForm, saveSong,
     // karaoke
     karaokeSong, openKaraoke, closeKaraoke,
+    // guia de tom (pitch-map)
+    pitchMapSong, openPitchMap, closePitchMap,
     // delete
     confirmDelete, deleting, requestDelete, cancelDelete, performDelete,
     // mutations

@@ -33,7 +33,7 @@ import { MobileHomeApp } from '@/components/mobile';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
-import { hasLrcContent } from '@/lib/lrc';
+import { isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
 
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths, isSameMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -701,7 +701,7 @@ export default function Home() {
                       </button>
                     )}
                     {displayedSong
-                      && hasLrcContent(displayedSong.lrc_content)
+                      && isKaraokePublished(displayedSong)
                       && (displayedSong.youtube_url || displayedSong.youtube_music_url) && (
                       <button
                         type="button"
@@ -1364,7 +1364,7 @@ export default function Home() {
       <LyricsDrawer
         open={showLyricsDrawer}
         onOpenChange={setShowLyricsDrawer}
-        lyrics={displayedSong?.lyrics}
+        lyrics={resolveLyricsText(displayedSong)}
         songTitle={displayedSong?.title}
       />
 
@@ -1382,7 +1382,7 @@ export default function Home() {
       />
 
       {/* Lecteur karaoké (desktop) — overlay plein écran via portal */}
-      {isKaraokeOpen && displayedSong && hasLrcContent(displayedSong.lrc_content) && (
+      {isKaraokeOpen && displayedSong && isKaraokePublished(displayedSong) && (
         <KaraokePlayer song={displayedSong} onClose={() => setIsKaraokeOpen(false)} />
       )}
 

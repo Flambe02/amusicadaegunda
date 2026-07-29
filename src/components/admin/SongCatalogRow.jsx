@@ -1,14 +1,15 @@
 // A single catalog row. Clicking the body opens the details drawer; the quick
 // action icons stop propagation so they never trigger the row selection.
 import { memo } from 'react';
-import { Music, Mic, ExternalLink, Edit2, Trash2 } from 'lucide-react';
+import { Music, Mic, ExternalLink, Edit2, Trash2, AudioLines } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { StatusBadge, CategoryTag, KaraokeTag } from './badges';
 import { formatDayMonth, publicSongUrl } from './adminData';
 
-function IconAction({ label, onClick, href, children, danger }) {
-  const cls = `rounded p-1.5 text-gray-400 transition-colors ${
-    danger ? 'hover:bg-red-500/15 hover:text-red-400' : 'hover:bg-white/10 hover:text-white'
+function IconAction({ label, onClick, href, children, danger, active }) {
+  const cls = `rounded p-1.5 transition-colors ${
+    active ? 'text-app-yellow hover:bg-app-yellow/15'
+      : danger ? 'text-gray-400 hover:bg-red-500/15 hover:text-red-400' : 'text-gray-400 hover:bg-white/10 hover:text-white'
   }`;
   const stop = (e) => e.stopPropagation();
   const inner = (
@@ -30,7 +31,7 @@ function IconAction({ label, onClick, href, children, danger }) {
   return inner;
 }
 
-function SongCatalogRow({ view, selected, onSelect, onKaraoke, onEdit, onDelete }) {
+function SongCatalogRow({ view, selected, onSelect, onKaraoke, onPitchMap, onEdit, onDelete }) {
   const openDrawer = () => onSelect(view);
 
   return (
@@ -89,6 +90,13 @@ function SongCatalogRow({ view, selected, onSelect, onKaraoke, onEdit, onDelete 
       <div className="flex w-[168px] flex-shrink-0 items-center justify-end gap-0.5">
         {view.hasLyrics && (
           <IconAction label="Abrir karaokê" onClick={() => onKaraoke(view)}><Mic size={14} /></IconAction>
+        )}
+        {view.hasLyrics && onPitchMap && (
+          <IconAction
+            label={view.hasPitchMap ? `Guia de tom · ${view.pitchNoteCount} notas` : 'Guia de tom (sem dados)'}
+            onClick={() => onPitchMap(view)}
+            active={view.hasPitchMap}
+          ><AudioLines size={14} /></IconAction>
         )}
         <IconAction label="Ver no site" href={publicSongUrl(view)}><ExternalLink size={14} /></IconAction>
         <IconAction label="Editar música" onClick={() => onEdit(view)}><Edit2 size={14} /></IconAction>

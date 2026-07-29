@@ -9,7 +9,7 @@
 // couche autorisée à « inventer » ces valeurs ; les composants ne devinent jamais.
 // ==========================================================================
 
-import { hasLrcContent, hasDuetTags } from '@/lib/lrc';
+import { hasDuetTags, isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
 import { MONTHS_PT } from '../tvMonths';
 
 export const DIFFICULTY = { EASY: 'Fácil', MEDIUM: 'Médio', HARD: 'Difícil' };
@@ -108,9 +108,9 @@ export function isDuetReady(song) {
   return isSingable(song) && getMode(song) === MODE.DUET;
 }
 
-/** Une chanson est « chantable » (karaokê) si elle a un LRC + une source média. */
+/** Une chanson est « chantable » (karaokê) si elle a un LRC publié + une source média. */
 export function isSingable(song) {
-  return hasLrcContent(song?.lrc_content) && Boolean(song?.youtube_url || song?.youtube_music_url);
+  return isKaraokePublished(song) && Boolean(song?.youtube_url || song?.youtube_music_url);
 }
 
 /** Badge du hero : « NOVA · JULHO 2026 » (mois/année de sortie). */
@@ -256,7 +256,7 @@ export function getConceptContext(song) {
 
 /** Jusqu'à `n` lignes chantées des paroles (prévia). */
 export function getLyricPreviewLines(song, n = 4) {
-  return (song?.lyrics || '')
+  return resolveLyricsText(song)
     .replace(/\r/g, '')
     .split('\n')
     .map((l) => l.trim())
@@ -266,7 +266,7 @@ export function getLyricPreviewLines(song, n = 4) {
 
 /** La chanson a-t-elle plus de paroles que la prévia (→ « Ver letra completa ») ? */
 export function hasFullLyrics(song, previewCount = 4) {
-  const total = (song?.lyrics || '').replace(/\r/g, '').split('\n').map((l) => l.trim()).filter(Boolean).length;
+  const total = resolveLyricsText(song).replace(/\r/g, '').split('\n').map((l) => l.trim()).filter(Boolean).length;
   return total > previewCount;
 }
 

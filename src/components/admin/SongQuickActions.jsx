@@ -1,9 +1,9 @@
 // "Ações rápidas" for the selected song in the drawer.
-import { Edit2, Mic, ExternalLink, Trash2, CheckCircle2, Link2 } from 'lucide-react';
+import { Edit2, Mic, ExternalLink, Trash2, CheckCircle2, Link2, AudioLines } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { publicSongUrl } from './adminData';
 
-export default function SongQuickActions({ view, onEdit, onKaraoke, onPublish, onManageLinks, onDelete }) {
+export default function SongQuickActions({ view, onEdit, onKaraoke, onPitchMap, onPublish, onManageLinks, onDelete }) {
   return (
     <div>
       <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-500">Ações rápidas</h3>
@@ -21,6 +21,13 @@ export default function SongQuickActions({ view, onEdit, onKaraoke, onPublish, o
         {view.hasLyrics && (
           <Button onClick={() => onKaraoke(view)} variant="outline" className="w-full justify-center gap-2">
             <Mic size={15} /> Abrir karaokê
+          </Button>
+        )}
+
+        {view.hasLyrics && onPitchMap && (
+          <Button onClick={() => onPitchMap(view)} variant="outline"
+            className={`w-full justify-center gap-2 ${view.hasPitchMap ? 'border-app-yellow/30 text-app-yellow hover:bg-app-yellow/10' : ''}`}>
+            <AudioLines size={15} /> Guia de tom {view.hasPitchMap ? `(${view.pitchNoteCount})` : ''}
           </Button>
         )}
 

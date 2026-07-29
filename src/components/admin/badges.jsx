@@ -39,5 +39,12 @@ export function KaraokeTag({ state }) {
       </span>
     );
   }
+  if (state === 'draft') {
+    return (
+      <span className="inline-flex items-center rounded border border-amber-500/25 bg-amber-500/5 px-2 py-0.5 text-xs text-amber-300/90">
+        Karaokê (rascunho)
+      </span>
+    );
+  }
   return <span className="text-xs text-gray-600">Não configurado</span>;
 }

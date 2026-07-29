@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import LyricsDialog from '../components/LyricsDialog';
+import { resolveLyricsText } from '@/lib/lrc';
 import YouTubePlayer from '../components/YouTubePlayer';
 import YouTubePlaylist from '../components/YouTubePlaylist';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
@@ -552,7 +553,7 @@ export default function Youtube() {
                     Plataformas
                   </Button>
                   
-                  {displayedSong.lyrics && displayedSong.lyrics.trim() && (
+                  {resolveLyricsText(displayedSong).trim() && (
                     <Button
                       variant="outline"
                       className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 px-4 rounded-xl font-medium transition-colors"

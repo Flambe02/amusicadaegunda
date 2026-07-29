@@ -8,6 +8,7 @@ import CatalogPage from '@/components/admin/CatalogPage';
 import LinksPage from '@/components/admin/LinksPage';
 import LocalLibraryPage from '@/components/admin/LocalLibraryPage';
 import SettingsPage from '@/components/admin/SettingsPage';
+import AppUpdatesPage from '@/components/admin/AppUpdatesPage';
 
 export default function AdminPage() {
   return (
@@ -18,6 +19,7 @@ export default function AdminPage() {
           <Route path="links" element={<LinksPage />} />
           <Route path="biblioteca" element={<LocalLibraryPage />} />
           <Route path="configuracoes" element={<SettingsPage />} />
+          <Route path="atualizacoes" element={<AppUpdatesPage />} />
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
       </Routes>

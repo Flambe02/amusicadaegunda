@@ -3,6 +3,7 @@ import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { Lightbulb, Calendar, Music, Quote, ChevronRight } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId } from '@/lib/utils';
+import { resolveLyricsText } from '@/lib/lrc';
 import { useTvArtworkManifest, getTvCardArtwork } from './tvArtwork';
 import { toTvSong } from './lib/tvSongRepository';
 import { trackTv } from './lib/tvAnalytics';
@@ -229,12 +230,21 @@ export default function TvSongDetailPage({
     return () => { window.removeEventListener('keydown', onKey); SpatialNavigation.resume(); };
   }, [playing, stopTeaser, parkFocus]);
 
-  // ── Focus initial : CANTAR AGORA (ou Adicionar à fila si non chantable) ────
+  // ── Focus initial : CANTAR AGORA si chantable, sinon la 1ʳᵉ action RÉELLEMENT
+  // montée (Ver contexto → Prévia → Ver letra), en dernier recours la nav. ──────
+  // Bug 2026-07 : on visait « DETAIL_FILA », un bouton RETIRÉ de la rangée d'actions
+  // (cf. TvSongActions) → quand une chanson n'a PAS de karaokê, `setFocus` échouait
+  // en silence, aucun élément n'était focalisé, et NI « Ver contexto completo » NI
+  // « Prévia do clipe » n'étaient atteignables au D-pad (pourtant bien affichés).
   useEffect(() => {
-    const target = vm.isSingable ? 'DETAIL_CANTAR' : 'DETAIL_FILA';
+    let target = 'HOME_NAV_INICIO'; // filet de sécurité : toujours focusable
+    if (vm.isSingable) target = 'DETAIL_CANTAR';
+    else if (hasContext) target = 'DETAIL_CONTEXT';
+    else if (hasTeaser) target = 'DETAIL_CLIPE';
+    else if (vm.hasFullLyrics) target = 'DETAIL_LYRICS';
     const t = setTimeout(() => { try { SpatialNavigation.setFocus(target); } catch { /* ignore */ } }, 0);
     return () => clearTimeout(t);
-  }, [vm.isSingable]);
+  }, [vm.isSingable, vm.hasFullLyrics, hasContext, hasTeaser]);
 
   // ── Back : teaser → stop ; overlay → close ; sinon → TvApp pop (retour carte) ─
   useEffect(() => {
@@ -350,7 +360,7 @@ export default function TvSongDetailPage({
         <TvContextOverlay title={vm.title} text={(song?.description || '').replace(/\s+/g, ' ').trim()} onClose={closeOverlay} />
       )}
       {overlay === 'lyrics' && (
-        <TvFullLyricsOverlay title={vm.title} lyrics={song?.lyrics || ''} onClose={closeOverlay} />
+        <TvFullLyricsOverlay title={vm.title} lyrics={resolveLyricsText(song)} onClose={closeOverlay} />
       )}
     </div>
   );

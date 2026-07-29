@@ -208,6 +208,31 @@
   transition: width 75ms linear;
 }
 
+/* ── Painel « Ao vivo » (topo da página, sempre visível) ───────────────────── */
+.festa-live {
+  margin: 0 1.25rem 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: rgba(253, 224, 71, 0.1);
+  border: 1px solid rgba(253, 224, 71, 0.3);
+}
+.festa-live-idle {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.festa-live-idle-title { font-weight: 800; font-size: 0.95rem; }
+.festa-live-idle-sub { margin-top: 0.25rem; font-size: 0.82rem; color: rgba(255, 255, 255, 0.55); }
+
+.festa-live-head { display: flex; align-items: flex-start; gap: 0.6rem; }
+.festa-live-mic { color: #FDE047; flex-shrink: 0; margin-top: 0.15rem; }
+.festa-live-text { min-width: 0; }
+.festa-live-eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.5); }
+.festa-live-song { font-weight: 800; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.festa-live-singer { font-size: 0.85rem; color: #FDE047; font-weight: 700; }
+
+.festa-live-reactions { display: flex; gap: 0.6rem; margin-top: 0.75rem; }
+.festa-live-reactions .festa-vote-btn { height: 3rem; font-size: 1rem; }
+
 .festa-vote-row { display: flex; gap: 0.6rem; margin-top: 0.6rem; }
 .festa-vote-btn {
   flex: 1;

@@ -2,13 +2,14 @@
 // Only implemented routes are listed (no dead nav): Catálogo, Biblioteca, Links,
 // Configurações.
 import { NavLink } from 'react-router-dom';
-import { Library, FolderOpen, Link2, Settings, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Library, FolderOpen, Link2, Settings, RefreshCw, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const ITEMS = [
   { to: '/admin', end: true, icon: Library, label: 'Catálogo' },
   { to: '/admin/biblioteca', icon: FolderOpen, label: 'Biblioteca' },
   { to: '/admin/links', icon: Link2, label: 'Links' },
   { to: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
+  { to: '/admin/atualizacoes', icon: RefreshCw, label: 'Atualizações do app' },
 ];
 
 export default function AdminSidebar({ collapsed, onToggleCollapse, adminEmail }) {

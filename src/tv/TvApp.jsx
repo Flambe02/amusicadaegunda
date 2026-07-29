@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { init, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { Loader2 } from 'lucide-react';
 import { Song } from '@/api/entities';
-import { hasLrcContent } from '@/lib/lrc';
+import { isKaraokePublished } from '@/lib/lrc';
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
 import { onBackPress, exitApp } from './adapters/backButton';
 import { applyTvFlag } from './platform';
+import { useAppUpdate } from '@/hooks/useAppUpdate';
+import TvRecommendedUpdateDialog from './components/TvRecommendedUpdateDialog';
 import {
   createFestaSession, endFestaSession, updateFestaSessionCurrentSong,
   markFestaQueueStatus, buildFestaJoinUrl,
@@ -83,6 +85,26 @@ export default function TvApp() {
     ? festaQueue.filter((q) => q.status === 'waiting').length
     : 0;
 
+  // « Pessoas na festa » = présence Realtime ∪ prénoms ayant une entrée ACTIVE dans la
+  // fila. La présence seule retombe à 0 dès qu'un téléphone verrouille son écran ou
+  // passe en arrière-plan (WebSocket Realtime coupé) → la TV affichait « 0 pessoas »
+  // alors que des invités avaient bien des músicas na fila, et le prénom disparaissait.
+  // Or `festa_queue.singer_name` est stocké en base et persiste : tant qu'une personne
+  // a une música em espera/tocando, elle est « à la festa » même déconnectée (bug
+  // « on perd le nom quand le portable se déconnecte », 2026-07).
+  const festaPeopleNames = useMemo(() => {
+    if (!festaSession) return [];
+    const names = [...festaPresentNames];
+    const seen = new Set(names);
+    festaQueue.forEach((q) => {
+      if ((q.status === 'waiting' || q.status === 'playing') && q.singer_name && !seen.has(q.singer_name)) {
+        seen.add(q.singer_name);
+        names.push(q.singer_name);
+      }
+    });
+    return names;
+  }, [festaSession, festaPresentNames, festaQueue]);
+
   const openFestaInvite = useCallback(async () => {
     if (!festaSessionRef.current) {
       setFestaLoading(true);
@@ -152,6 +174,18 @@ export default function TvApp() {
   const [tvSettingsOpen, setTvSettingsOpen] = useState(false);
   const tvSettingsOpenRef = useRef(false);
   tvSettingsOpenRef.current = tvSettingsOpen;
+
+  // ── Recommandation de mise à jour (contrôle de version distant) ────────────
+  // Overlay global au-dessus de TOUT écran (comme le panneau de réglages) —
+  // rendu ici (pas depuis src/App.jsx) pour intégrer son Retour matériel dans
+  // le même abonnement onBackPress ci-dessous plutôt que d'en ouvrir un second
+  // (deux listeners actifs déclencheraient chacun leur propre action au même
+  // appui). L'écran BLOQUANT (status === 'required') est géré par App.jsx, qui
+  // remplace TvApp entièrement — jamais monté en même temps que lui.
+  const { status: updateStatus, recommendedDismissed, dismissRecommendedUpdate } = useAppUpdate();
+  const updateDialogOpen = updateStatus === 'recommended' && !recommendedDismissed;
+  const updateDialogOpenRef = useRef(false);
+  updateDialogOpenRef.current = updateDialogOpen;
   const [karaokeOpts, setKaraokeOpts] = useState(loadKaraokeOptions);
   useEffect(() => { saveKaraokeOptions(karaokeOpts); }, [karaokeOpts]);
   const openTvSettings = useCallback(() => setTvSettingsOpen(true), []);
@@ -168,13 +202,14 @@ export default function TvApp() {
   const stackRef = useRef(stack);
   stackRef.current = stack;
   useEffect(() => onBackPress(() => {
-    // Le panneau de réglages global est prioritaire sur TOUT écran (fermeture,
-    // jamais un pop de pile ni une sortie d'app pendant qu'il est ouvert).
+    // La recommandation de mise à jour est prioritaire sur tout (jamais de piège
+    // au Back — équivalent de « Mais tarde »), suivie du panneau de réglages.
+    if (updateDialogOpenRef.current) { dismissRecommendedUpdate(); return; }
     if (tvSettingsOpenRef.current) { closeTvSettings(); return; }
     if (backInterceptorRef.current?.()) return; // l'écran courant a géré le Back
     if (stackRef.current.length > 1) pop();
     else exitApp();
-  }), [pop, closeTvSettings]);
+  }), [pop, closeTvSettings, dismissRecommendedUpdate]);
 
   // Overlays plein écran (watch/karaoke) : on met la nav spatiale en pause pour
   // laisser flèches/OK au lecteur, puis on la réactive au retour.
@@ -196,7 +231,7 @@ export default function TvApp() {
   );
   const getCat = useCallback((s) => (s.category ? (CATEGORY_LABELS[s.category] || s.category) : ''), []);
   const getHasKaraoke = useCallback(
-    (s) => hasLrcContent(s.lrc_content) && Boolean(s.youtube_url || s.youtube_music_url),
+    (s) => isKaraokePublished(s) && Boolean(s.youtube_url || s.youtube_music_url),
     [],
   );
 
@@ -440,7 +475,7 @@ export default function TvApp() {
           loading={loading}
           loadError={loadError}
           queue={localQueue}
-          festaPeople={festaSession ? festaPresentNames.length : null}
+          festaPeople={festaSession ? festaPeopleNames.length : null}
           festaQueueCount={festaWaitingCount}
           familiarIds={familiarIdsRef.current}
           initialState={catalogStateRef.current}
@@ -467,7 +502,7 @@ export default function TvApp() {
           song={top.song}
           source={top.source || 'catalog'}
           getThumb={getThumb}
-          festaPeople={festaSession ? festaPresentNames.length : null}
+          festaPeople={festaSession ? festaPeopleNames.length : null}
           queue={localQueue}
           onStartKaraoke={startKaraoke}
           onAddToQueue={addToQueue}
@@ -545,7 +580,7 @@ export default function TvApp() {
         <TvFestaInvite
           code={festaSession?.code}
           joinUrl={festaSession?.code ? buildFestaJoinUrl(festaSession.code) : ''}
-          presentNames={festaPresentNames}
+          presentNames={festaPeopleNames}
           loading={festaLoading}
           offline={festaOffline}
           queuedCount={festaQueue.filter((q) => q.status === 'waiting').length}
@@ -600,7 +635,7 @@ export default function TvApp() {
     onChooseFesta, openKaraokeLanding, openClipsLanding,
     onRequestKaraoke, openSoloGrid, openDuetGrid, openFestaGrid,
     goHome, pop, getCat, setHomeFocusKey, setKaraokeFocusKey, openTvSettings,
-    festaSession, festaPresentNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
+    festaSession, festaPeopleNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
     liveEnergyByEntry, festaQueue, festaWaitingCount,
     // Catálogo
     loading, loadError, localQueue, setCatalogState, markFamiliar,
@@ -626,6 +661,7 @@ export default function TvApp() {
         {tvSettingsOpen && (
           <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} />
         )}
+        {updateDialogOpen && <TvRecommendedUpdateDialog />}
       </div>
     </TvStage>
   );

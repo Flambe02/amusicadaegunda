@@ -48,7 +48,8 @@
     "qa:prod": "npm run qa:jsonld && npm run qa:sitemap",
     "optimize:images": "node scripts/optimize-images.cjs",
     "optimize:brand-images": "node scripts/optimize-brand-images.cjs",
-    "generate:tv-artwork": "node scripts/generate-tv-artwork.mjs"
+    "generate:tv-artwork": "node scripts/generate-tv-artwork.mjs",
+    "pitch:map": "node scripts/generate-pitch-map.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^8.1.0",

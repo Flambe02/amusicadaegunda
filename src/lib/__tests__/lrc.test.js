@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   splitLyricsLines, formatTimestamp, buildLrc, parseLrc, activeLineIndex,
-  hasLrcContent, hasDuetTags,
+  hasLrcContent, hasDuetTags, isKaraokePublished,
 } from '../lrc';
 
 // Tests de caractérisation : verrouillent le comportement ACTUEL du parser/serializer
@@ -93,5 +93,28 @@ describe('hasLrcContent / hasDuetTags', () => {
   it('detects real duet tags', () => {
     expect(hasDuetTags('[00:01.00]{A}x\n[00:02.00]{B}y')).toBe(true);
     expect(hasDuetTags('[00:01.00]x')).toBe(false);
+  });
+});
+
+describe('isKaraokePublished', () => {
+  const timed = { lrc_content: '[00:01.00]x' };
+
+  it('publicado por omissão quando karaoke_published está ausente/null (compatibilidade retroativa)', () => {
+    expect(isKaraokePublished(timed)).toBe(true);
+    expect(isKaraokePublished({ ...timed, karaoke_published: null })).toBe(true);
+    expect(isKaraokePublished({ ...timed, karaoke_published: undefined })).toBe(true);
+  });
+
+  it('publicado quando karaoke_published é true', () => {
+    expect(isKaraokePublished({ ...timed, karaoke_published: true })).toBe(true);
+  });
+
+  it('escondido quando karaoke_published é explicitamente false, mesmo com lrc_content', () => {
+    expect(isKaraokePublished({ ...timed, karaoke_published: false })).toBe(false);
+  });
+
+  it('nunca publicado sem lrc_content utilizável, independentemente de karaoke_published', () => {
+    expect(isKaraokePublished({ lrc_content: null, karaoke_published: true })).toBe(false);
+    expect(isKaraokePublished({})).toBe(false);
   });
 });

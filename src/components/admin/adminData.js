@@ -8,6 +8,7 @@
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
+import { isKaraokePublished } from '@/lib/lrc';
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
@@ -94,6 +95,9 @@ export function groupByYearMonth(items, getDate = (s) => s.release_date) {
 export function toSongAdminView(song, categories) {
   const hasLyrics = Boolean(song.lyrics?.trim());
   const isSynced = Boolean(song.lrc_content) || Boolean(song.timing_data);
+  // Guia de tom (pitch-map) : nº de notas se existir, senão 0.
+  const pitchNotes = Array.isArray(song.pitch_map?.notes) ? song.pitch_map.notes.length : 0;
+  const hasPitchMap = pitchNotes > 0;
   return {
     id: song.id,
     title: song.title || 'Sem título',
@@ -106,7 +110,12 @@ export function toSongAdminView(song, categories) {
     slug: song.slug || null,
     hasLyrics,
     isSynced,
-    karaokeState: !hasLyrics ? 'unconfigured' : isSynced ? 'active' : 'pending',
+    hasPitchMap,
+    pitchNoteCount: pitchNotes,
+    // 'draft' : já sincronizado mas escondido do público (karaoke_published:false) —
+    // distinção pedida porque a lista geral mostrava "Karaokê" mesmo quando a
+    // música estava despublicada, sugerindo (erradamente) que estava online.
+    karaokeState: !hasLyrics ? 'unconfigured' : !isSynced ? 'pending' : isKaraokePublished(song) ? 'active' : 'draft',
     platforms: {
       spotifyUrl: song.spotify_url || null,
       appleMusicUrl: song.apple_music_url || null,

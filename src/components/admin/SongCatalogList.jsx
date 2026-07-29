@@ -45,7 +45,7 @@ function EmptyState({ title, cta, onCta }) {
 
 export default function SongCatalogList({
   loading, error, onRetry, views, totalSongs, searchActive, selectedId,
-  onSelect, onKaraoke, onEdit, onDelete, onCreate, onClearSearch,
+  onSelect, onKaraoke, onPitchMap, onEdit, onDelete, onCreate, onClearSearch,
 }) {
   if (loading) return <ListSkeleton />;
 
@@ -96,6 +96,7 @@ export default function SongCatalogList({
                       selected={selectedId === view.id}
                       onSelect={onSelect}
                       onKaraoke={onKaraoke}
+                      onPitchMap={onPitchMap}
                       onEdit={onEdit}
                       onDelete={onDelete}
                     />

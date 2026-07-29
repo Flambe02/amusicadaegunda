@@ -6,6 +6,7 @@ import { useSEO } from '@/hooks/useSEO';
 import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 import LyricsDialog from '@/components/LyricsDialog';
 import LyricsDrawer from '@/components/LyricsDrawer';
+import { resolveLyricsText } from '@/lib/lrc';
 
 const CATEGORY_LABELS = {
   politica:      'Política',
@@ -155,7 +156,7 @@ function SongCard({ song, isActive, isPlaying, onTogglePlay, onOpenLyrics, isDes
           )}
 
           {/* Streaming links + lyrics */}
-          {(song.spotify_url || song.apple_music_url || song.youtube_url || song.lyrics) && (
+          {(song.spotify_url || song.apple_music_url || song.youtube_url || resolveLyricsText(song)) && (
             <div className="mt-3 flex flex-wrap gap-2">
               {song.spotify_url && (
                 <a href={song.spotify_url} target="_blank" rel="noopener noreferrer"
@@ -178,7 +179,7 @@ function SongCard({ song, isActive, isPlaying, onTogglePlay, onOpenLyrics, isDes
                   YouTube
                 </a>
               )}
-              {song.lyrics?.trim() && (
+              {resolveLyricsText(song).trim() && (
                 <button
                   type="button"
                   onClick={() => onOpenLyrics(song)}
@@ -534,7 +535,7 @@ export default function SearchPage() {
       <LyricsDrawer
         open={showLyricsDrawer}
         onOpenChange={setShowLyricsDrawer}
-        lyrics={selectedLyricsSong?.lyrics}
+        lyrics={resolveLyricsText(selectedLyricsSong)}
         songTitle={selectedLyricsSong?.title}
       />
     </div>

@@ -161,6 +161,37 @@ export function hasLrcContent(lrc) {
 }
 
 /**
+ * true si o karaokê desta música está sincronizado E publicado ao público. Usa
+ * SEMPRE isto (não `hasLrcContent` diretamente) em qualquer sítio que decide se
+ * o público vê karaokê (catálogo, TV, Festa, botão « Cantar »…) — a sincronização
+ * pode existir mas ficar como rascunho não publicado (alternador « Publicar
+ * karaokê » no admin). `karaoke_published` ausente/null = publicado (comportamento
+ * histórico antes deste alternador existir — nunca esconde karaokê já existente
+ * sem ação explícita do administrador).
+ * @param {{ lrc_content?: string|null, karaoke_published?: boolean|null }} song
+ */
+export function isKaraokePublished(song) {
+  return hasLrcContent(song?.lrc_content) && song?.karaoke_published !== false;
+}
+
+/**
+ * Texto de letra a USAR — para leitura pública (diálogos/drawers de letra) E como
+ * fonte para a sincronização karaokê (§ pedido 2026-07-16). Prefere
+ * `lyrics_karaoke` (versão revista com espaçamento correto entre palavras,
+ * editada a partir de « Sincronizar karaokê » → « Guardar letra ») quando
+ * preenchida; senão cai para `lyrics` (o campo original, nunca escrito pelo
+ * editor de karaokê a partir de agora — cada música migra para
+ * `lyrics_karaoke` a primeira vez que a letra for guardada dali).
+ * @param {{ lyrics?: string|null, lyrics_karaoke?: string|null }} song
+ * @returns {string}
+ */
+export function resolveLyricsText(song) {
+  const karaoke = song?.lyrics_karaoke;
+  if (typeof karaoke === 'string' && karaoke.trim()) return karaoke;
+  return song?.lyrics || '';
+}
+
+/**
  * true si la chanson a au moins une ligne taguée par chanteur (`{A}`/`{B}`) — condition
  * pour proposer la Duet View réelle (paroles alignées par chanteur). Une chanson sans
  * tag reste utilisable en Modo Dueto « historique » (couleurs en alternance par index),

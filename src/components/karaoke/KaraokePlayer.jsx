@@ -14,6 +14,12 @@ import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import KaraokeMixerSheet from '@/components/karaoke/KaraokeMixerSheet';
+import KaraokePitchGuide from '@/components/karaoke/pitch/KaraokePitchGuide';
+import PitchStatusPill from '@/components/karaoke/pitch/PitchStatusPill';
+import MicrophonePermissionDialog from '@/components/karaoke/pitch/MicrophonePermissionDialog';
+import { statusMeta } from '@/components/karaoke/pitch/pitchStatusMeta';
+import { usePitchReference } from '@/hooks/usePitchReference';
+import { usePitchGuide } from '@/hooks/usePitchGuide';
 import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
 import TvDuetLyricsView from '@/tv/components/TvDuetLyricsView';
 import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
@@ -158,10 +164,69 @@ export default function KaraokePlayer({
   // Medidor de energia → note finale : stats accumulées pendant le chant.
   const energyStatsRef = useRef({ active: 0, sung: 0, sum: 0, count: 0 });
   const [scoreResult, setScoreResult] = useState(null); // { score, grade, emoji } | null
+  // Sonde micro TV (Modo Festa / karaokê TV) : certaines Android TV / soundbars /
+  // micros USB exposent une entrée audio, la plupart non. Quand le toggle « Medidor
+  // de energia » est activé sur TV, on TENTE getUserMedia ; si ça échoue, on le
+  // désactive et on l'affiche clairement (avant, ça se désactivait en silence →
+  // « ne fonctionne pas »). Le micro du celular reste le chemin fiable en Festa.
+  const [energyMicUnavailable, setEnergyMicUnavailable] = useState(false);
 
   // Traduction (bandeau bas) : texte courant + cache par (langue|texte).
   const [translation, setTranslation] = useState('');
   const transCacheRef = useRef(new Map());
+
+  // ── Guia de tom · Beta (só móvel/web ; nunca em TV) ──
+  // Melodia de referência opcional (pitch-map) + orquestrador do microfone.
+  const pitchRef = usePitchReference(song);
+  const pitchAvailable = !tvMode && pitchRef.available;
+  const getMediaTimeMs = useCallback(
+    () => (playerRef.current?.getCurrentTime?.() || 0) * 1000,
+    [],
+  );
+  const pitch = usePitchGuide({
+    enabled: !tvMode && opts.pitchGuide,
+    notes: pitchAvailable ? pitchRef.notes : null,
+    getMediaTimeMs,
+    isPlaying,
+  });
+  const [micDialog, setMicDialog] = useState(null); // null | 'privacy' | 'error'
+  const [micBusy, setMicBusy] = useState(false);
+
+  // Pede a ativação do microfone (gesto explícito). Mostra a explicação de
+  // privacidade na 1ª vez (§13/§33), depois ativa diretamente.
+  const pitchActivate = pitch.activate;
+  const pitchDeactivate = pitch.deactivate;
+  const requestPitchActivation = useCallback(async () => {
+    setMicBusy(true);
+    setOpts((o) => (o.pitchGuideSeen ? o : { ...o, pitchGuideSeen: true }));
+    const ok = await pitchActivate();
+    setMicBusy(false);
+    setMicDialog(ok ? null : 'error');
+  }, [pitchActivate]);
+
+  const promptPitchActivation = useCallback(() => {
+    if (opts.pitchGuideSeen) requestPitchActivation();
+    else setMicDialog('privacy');
+  }, [opts.pitchGuideSeen, requestPitchActivation]);
+
+  // Toggle vindo do mixer : liga/desliga a preferência e arranca/para o micro.
+  const handleTogglePitchGuide = useCallback((next) => {
+    if (next) {
+      setOpts((o) => ({ ...o, pitchGuide: true }));
+      setShowOpts(false); // fecha o mixer para mostrar o diálogo por cima do leitor
+      promptPitchActivation();
+    } else {
+      setOpts((o) => ({ ...o, pitchGuide: false }));
+      pitchDeactivate();
+      setMicDialog(null);
+    }
+  }, [promptPitchActivation, pitchDeactivate]);
+
+  // Liberta o microfone quando saímos do modo « live » ou ao mostrar a nota final
+  // (§32: sem uso do micro em segundo plano / fora do karaokê ativo).
+  useEffect(() => {
+    if ((phase !== 'live' || scoreResult) && pitch.active) pitchDeactivate();
+  }, [phase, scoreResult, pitch.active, pitchDeactivate]);
 
   const videoId = useMemo(
     () => extractYouTubeId(song?.youtube_url) || extractYouTubeId(song?.youtube_music_url),
@@ -243,8 +308,10 @@ export default function KaraokePlayer({
             // d'afficher l'écran de fin, jamais les deux superposés.
             if (showOptsRef.current) setShowOpts(false);
             // Fin naturelle : si le medidor de energia est actif et qu'on n'est pas en
-            // mode fila, on affiche la note plutôt que d'enchaîner.
-            if (optsRef.current.energy && !queueInfoRef.current) finishAndScoreRef.current?.();
+            // mode fila, on affiche la note plutôt que d'enchaîner. JAMAIS en tvMode :
+            // l'écran de note n'est pas navigable au D-pad (la jauge live suffit ; en
+            // Festa la nota vient du micro du celular, cf. remoteEnergyGrade).
+            if (optsRef.current.energy && !queueInfoRef.current && !tvMode) finishAndScoreRef.current?.();
             else onEndedRef.current?.();
           }
         },
@@ -257,7 +324,7 @@ export default function KaraokePlayer({
       try { player.destroy(); } catch { /* ignore */ }
       playerRef.current = null;
     };
-  }, [apiReady, YT, videoId]);
+  }, [apiReady, YT, videoId, tvMode]);
 
   useEffect(() => {
     if (!playerReady) return;
@@ -349,6 +416,10 @@ export default function KaraokePlayer({
     return () => cancelAnimationFrame(raf);
   }, [playerReady, lines]);
 
+  // Le toggle repart « disponible » à chaque changement d'état (ré-essai propre) —
+  // sinon la note « micro indisponível » resterait collée après une désactivation.
+  useEffect(() => { if (!opts.energy) setEnergyMicUnavailable(false); }, [opts.energy]);
+
   // ── Energy meter (micro) ──
   const energyBarRef = useRef(null);
   useEffect(() => {
@@ -356,7 +427,9 @@ export default function KaraokePlayer({
     let raf; let ctx; let stream; let stopped = false;
     (async () => {
       try {
+        if (!navigator.mediaDevices?.getUserMedia) throw new Error('getUserMedia indisponível');
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        setEnergyMicUnavailable(false); // sonde réussie (micro TV présent)
         ctx = new (window.AudioContext || window.webkitAudioContext)();
         const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
@@ -384,7 +457,12 @@ export default function KaraokePlayer({
           raf = requestAnimationFrame(loop);
         };
         loop();
-      } catch { setOpts((o) => ({ ...o, energy: false })); } // permission refusée
+      } catch {
+        // Permission refusée OU aucune entrée audio (cas fréquent sur TV) → on
+        // désactive le toggle et, en tvMode, on le signale (note dans le panneau).
+        setOpts((o) => ({ ...o, energy: false }));
+        if (tvMode) setEnergyMicUnavailable(true);
+      }
     })();
     return () => {
       stopped = true;
@@ -392,7 +470,7 @@ export default function KaraokePlayer({
       try { stream?.getTracks().forEach((tr) => tr.stop()); } catch { /* ignore */ }
       try { ctx?.close(); } catch { /* ignore */ }
     };
-  }, [opts.energy, phase]);
+  }, [opts.energy, phase, tvMode]);
 
   // ── Barre de progression + temps (mise à jour légère, mutation directe, sans re-render) ──
   // Mêmes refs pour TV et mobile : une seule des deux séries de nœuds est montée à la
@@ -549,14 +627,14 @@ export default function KaraokePlayer({
   // qu'on a assez de données, on montre la note (« terminar e ver a nota ») au lieu de
   // revenir directement à l'intro.
   const handleStop = useCallback(() => {
-    if (optsRef.current.energy && energyStatsRef.current.count > 30) {
+    if (optsRef.current.energy && energyStatsRef.current.count > 30 && !tvMode) {
       finishAndScore();
       return;
     }
     try { playerRef.current?.pauseVideo?.(); playerRef.current?.seekTo?.(0, true); } catch { /* ignore */ }
     setCountdown(null);
     setPhase('intro');
-  }, [finishAndScore]);
+  }, [finishAndScore, tvMode]);
 
   const handleClose = useCallback(() => {
     try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ }
@@ -759,6 +837,27 @@ export default function KaraokePlayer({
         </div>
       )}
 
+      {/* Guia de tom · Beta — timeline compacto entre a barra e a letra (§6/§10).
+          Só quando a preferência está ligada E a música tem melodia de referência.
+          Não empurra a letra demasiado (altura limitada por CSS). */}
+      {phase === 'live' && pitchAvailable && opts.pitchGuide && (
+        <div className="km-pitch-slot">
+          <KaraokePitchGuide
+            status={pitch.status}
+            guideRef={pitch.guideRef}
+            notes={pitchRef.notes}
+            getMediaTimeMs={getMediaTimeMs}
+            isPlaying={isPlaying}
+            active={pitch.active}
+          />
+          {!pitch.active && (
+            <button type="button" className="km-pitch-activate" onClick={promptPitchActivation} disabled={micBusy}>
+              <Mic className="h-4 w-4" /> Ativar microfone
+            </button>
+          )}
+        </div>
+      )}
+
       {phase === 'intro' ? (
         <div className="relative flex flex-1 flex-col items-center justify-center gap-5 overflow-hidden px-6 text-center">
           <div className="karaoke-spotlights" aria-hidden="true" />
@@ -832,8 +931,10 @@ export default function KaraokePlayer({
             </div>
           )}
 
-          {/* Energia à distance (téléphone → TV, la TV n'a pas de micro) — jauge séparée
-              du medidor de energia local ci-dessus, jamais les deux en même temps en tvMode. */}
+          {/* Energia à distance (téléphone → TV) — jauge à GAUCHE, séparée du medidor
+              local (à droite). En Festa, si la TV a AUSSI un micro (opts.energy sondé
+              OK), les deux peuvent coexister : micro do celular à gauche, micro da TV à
+              droite. Sinon (cas courant, pas de micro TV) seule celle-ci s'affiche. */}
           {remoteEnergyLevel != null && (
             <div className="pointer-events-none absolute left-4 top-1/2 z-20 flex h-40 w-3 -translate-y-1/2 items-end overflow-hidden rounded-full border border-white/10 bg-white/5 md:left-8 md:h-56">
               <div
@@ -922,6 +1023,15 @@ export default function KaraokePlayer({
               <p className="text-sm">Não foi possível carregar o leitor. Tenta recarregar a página.</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Pílula de estado do pitch por baixo da letra (§26) — só quando o micro está
+          ativo. Escondida em ecrãs baixos por CSS (o cabeçalho do guia já mostra o
+          estado → evita duplicação). */}
+      {phase === 'live' && !tvMode && pitchAvailable && opts.pitchGuide && pitch.active && (
+        <div className="km-pitch-pill-wrap">
+          <PitchStatusPill status={pitch.status} />
         </div>
       )}
 
@@ -1014,7 +1124,31 @@ export default function KaraokePlayer({
 
       {/* Mixer (bottom-sheet) — só móvel/web ; a música continua a tocar */}
       {phase === 'live' && !tvMode && showOpts && (
-        <KaraokeMixerSheet opts={opts} setOpts={setOpts} onClose={() => setShowOpts(false)} />
+        <KaraokeMixerSheet
+          opts={opts}
+          setOpts={setOpts}
+          onClose={() => setShowOpts(false)}
+          pitchAvailable={pitchAvailable}
+          pitchActive={pitch.active}
+          pitchStatusLabel={pitch.active ? statusMeta(pitch.status).label : null}
+          onTogglePitchGuide={handleTogglePitchGuide}
+        />
+      )}
+
+      {/* Diálogo de ativação/erro do microfone (guia de tom) — por cima de tudo */}
+      {!tvMode && micDialog && (
+        <MicrophonePermissionDialog
+          mode={micDialog}
+          errorCode={pitch.error?.code}
+          busy={micBusy}
+          onActivate={requestPitchActivation}
+          onDismiss={() => {
+            setMicDialog(null);
+            // Se o utilizador recusou/cancelou sem ativar, desliga a preferência
+            // para não ficar num estado « ligado mas inativo » sem sentido.
+            if (!pitch.active) setOpts((o) => ({ ...o, pitchGuide: false }));
+          }}
+        />
       )}
 
       {/* Confirmação « Finalizar » (evita toque acidental) */}
@@ -1037,6 +1171,7 @@ export default function KaraokePlayer({
           <KaraokeTvOptions
             opts={opts}
             setOpts={setOpts}
+            micUnavailable={energyMicUnavailable}
             onRestart={handleRestartControl}
             onExit={() => { setShowOpts(false); handleClose(); }}
           />

@@ -1,0 +1,121 @@
+/* ==========================================================================
+   Contrôle de version distant — écrans TV (src/tv/TvRequiredUpdateScreen.jsx,
+   src/tv/components/TvRecommendedUpdateDialog.jsx). Même langage visuel que
+   tv-error.css (écran plein écran, focus DOM natif) et tvd-overlay/tvd-mode-box
+   (src/styles/tv-song-detail.css — overlay compact au-dessus de TvApp).
+   ========================================================================== */
+
+/* ── Required : écran plein écran, remplace TvApp (jamais de contenu derrière) ── */
+.tv-update-required-root {
+  position: fixed; inset: 0; z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  padding: clamp(2rem, 64.8px, 4rem) clamp(2rem, 115.2px, 5rem);
+  background:
+    radial-gradient(120% 90% at 80% -10%, rgba(253, 224, 71, 0.12), transparent 55%),
+    #0a0a0a;
+  color: #fff;
+  font-family: inherit;
+}
+
+.tv-update-required-card {
+  width: min(760px, 100%);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 1.1rem;
+  padding: clamp(1.75rem, 57.6px, 3rem);
+  background: #0d0f16; border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+}
+
+.tv-update-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 96px; height: 96px; border-radius: 9999px;
+  color: #FDE047; background: rgba(253, 224, 71, 0.14);
+}
+
+.tv-update-title {
+  margin: 0; font-size: clamp(2rem, 65.3px, 3rem); font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.tv-update-text {
+  margin: 0; max-width: 34rem;
+  font-size: clamp(1.15rem, 28.8px, 1.5rem); line-height: 1.45;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.tv-update-btn {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  height: clamp(54px, 58.3px, 66px); padding: 0 clamp(1.5rem, 38.4px, 2.2rem);
+  border: 2px solid transparent; border-radius: 16px; cursor: pointer;
+  font-size: clamp(1.05rem, 25px, 1.4rem); font-weight: 800;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.14s ease;
+  background: #FDE047; color: #17150a;
+}
+.tv-update-btn:focus { outline: none; }
+/* :focus/:hover → écran Required (focus DOM natif) ; .is-focused → dialogue
+   Recommended (FocusableButton/norigin, focus virtuel — jamais de :focus DOM réel). */
+.tv-update-btn:focus, .tv-update-btn:hover, .tv-update-btn.is-focused {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.35), 0 0 34px rgba(253, 224, 71, 0.5);
+}
+.tv-update-btn:disabled { opacity: 0.7; cursor: default; transform: none; }
+
+.tv-update-hint {
+  margin: 0.4rem 0 0; font-size: clamp(0.9rem, 19.2px, 1.05rem);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.tv-update-error {
+  margin: 0; font-size: clamp(0.95rem, 20px, 1.1rem); font-weight: 700; color: #fca5a5;
+}
+
+@keyframes tv-update-spin { to { transform: rotate(360deg); } }
+.tv-update-spin { animation: tv-update-spin 0.8s linear infinite; }
+
+/* ── Recommended : overlay compact au-dessus de TvApp (D-pad reste dans la boîte) ── */
+.tv-update-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  padding: clamp(1.5rem, 43.2px, 3rem) clamp(1.75rem, 76.8px, 4rem);
+  background: rgba(6, 7, 11, 0.84); backdrop-filter: blur(4px);
+  animation: tv-update-fade 150ms ease-out;
+}
+@keyframes tv-update-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.tv-update-box {
+  width: min(880px, 94%);
+  background: rgba(12, 14, 20, 0.98); border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px; padding: clamp(1.6rem, 40px, 2.6rem);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: clamp(0.9rem, 21.6px, 1.3rem);
+}
+
+.tv-update-box .tv-update-icon { width: 72px; height: 72px; }
+
+.tv-update-box-title {
+  margin: 0; color: #fff; font-weight: 900; font-size: clamp(1.5rem, 38.4px, 2.1rem);
+}
+
+.tv-update-box-text {
+  margin: 0; max-width: 42rem; color: rgba(255, 255, 255, 0.8);
+  font-size: clamp(1rem, 22.7px, 1.3rem); line-height: 1.5;
+}
+
+.tv-update-actions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+  gap: 1rem; margin-top: 0.4rem;
+}
+
+.tv-update-btn--secondary {
+  background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.tv-update-btn--secondary:focus, .tv-update-btn--secondary:hover, .tv-update-btn--secondary.is-focused {
+  transform: scale(1.04); background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-update-btn, .tv-update-overlay { transition: none; animation: none; }
+  .tv-update-spin { animation-duration: 1.6s; }
+}

@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import ErrorBoundary from './components/ErrorBoundary'
 import { logBuildInfo } from '@/lib/buildInfo'
 import { isTV } from '@/tv/platform'
+import { AppUpdateProvider } from '@/hooks/useAppUpdate'
 
 const helmetContext = {}
 
@@ -45,7 +46,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary onError={handleError}>
       <HelmetProvider context={helmetContext}>
-        <App />
+        <AppUpdateProvider>
+          <App />
+        </AppUpdateProvider>
       </HelmetProvider>
     </ErrorBoundary>
   </React.StrictMode>,

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Song } from '@/api/entities';
-import { hasLrcContent } from '@/lib/lrc';
+import { isKaraokePublished } from '@/lib/lrc';
 import {
   buildSearchIndex,
   deriveThemes,
@@ -55,7 +55,7 @@ export function useKaraokeCatalog() {
     try {
       const all = await Song.list('-release_date');
       const eligible = (all || [])
-        .filter((s) => hasLrcContent(s.lrc_content))
+        .filter((s) => isKaraokePublished(s))
         // pré-calcule l'index de recherche une seule fois par chanson
         .map((s) => ({ ...s, __searchIndex: buildSearchIndex(s) }));
       setSongs(eligible);

@@ -12,8 +12,11 @@ import { OptChoiceLine, OptToggleLine, OptActionLine } from './components/TvOpti
  * de transport / gear restent inatteignables tant qu'il est ouvert). Il RÉACTIVE la
  * nav spatiale à l'ouverture et la remet en PAUSE à la fermeture (retour aux touches
  * de lecture). Ordre : Tamanho → Bolinha → Dueto → Energia → Tradução → Velocidade.
+ *
+ * `micUnavailable` (posé par KaraokePlayer après une sonde getUserMedia ratée) → note
+ * explicite au lieu d'une désactivation silencieuse du toggle « Medidor de energia ».
  */
-export default function KaraokeTvOptions({ opts, setOpts, onRestart, onExit }) {
+export default function KaraokeTvOptions({ opts, setOpts, micUnavailable = false, onRestart, onExit }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'KTV_OPTS', isFocusBoundary: true, trackChildren: true, saveLastFocusedChild: true,
   });
@@ -37,11 +40,15 @@ export default function KaraokeTvOptions({ opts, setOpts, onRestart, onExit }) {
             <OptChoiceLine focusKey="KTV_OPT_0" label="Tamanho da letra" options={FONT_SCALES} value={opts.fontScale} onChange={(v) => set({ fontScale: v })} wrap={false} />
             <OptToggleLine label="Bolinha" on={opts.showBall} onToggle={() => set({ showBall: !opts.showBall })} />
             <OptToggleLine label="Modo dueto (P1 / P2)" icon={Users} on={opts.dueto} onToggle={() => set({ dueto: !opts.dueto })} />
-            {/* PAS de toggle « Medidor de energia » ici : la TV n'a pas de micro —
-                getUserMedia échouait et le toggle se désactivait silencieusement
-                (bug « ne fonctionne pas », 2026-07). En Modo Festa, l'énergie vient
-                du micro du CELULAR (jauge remoteEnergyLevel de KaraokePlayer). */}
-            <p className="tv-opts-note"><Flame size={15} /> Medidor de energia: disponível no Modo Festa, usando o microfone do celular.</p>
+            {/* Medidor de energia · Beta — TENTE o microfone da TV (algumas TVs /
+                soundbars / micros USB expõem uma entrada de áudio, a maioria não). Se
+                não houver, o toggle volta a desligar e mostramos a nota abaixo, em vez
+                de falhar em silêncio (bug 2026-07). No Modo Festa, o caminho fiável
+                continua a ser o microfone do celular (jauge remoteEnergyLevel). */}
+            <OptToggleLine label="Medidor de energia (microfone da TV) · Beta" icon={Flame} on={opts.energy} onToggle={() => set({ energy: !opts.energy })} />
+            {micUnavailable
+              ? <p className="tv-opts-note tv-opts-note-warn"><Flame size={15} /> Microfone não detectado nesta TV. No Modo Festa, use o microfone do celular.</p>
+              : <p className="tv-opts-note"><Flame size={15} /> Se a sua TV tiver microfone, mede a energia ao cantar. No Modo Festa também dá para usar o do celular.</p>}
             <OptChoiceLine label="Tradução" icon={Globe} options={TRANSLATION_LANGS} value={opts.translate} onChange={(v) => set({ translate: v })} wrap />
             <OptChoiceLine label="Velocidade" options={PLAYBACK_RATES} value={opts.rate} onChange={(v) => set({ rate: v })} wrap={false} />
           </div>

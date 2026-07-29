@@ -11,7 +11,7 @@ const norm = (s) => (s || '').toString().toLowerCase().normalize('NFD').replace(
 export default function CatalogPage() {
   const {
     songs, loading, error, refreshing, reload, categories, published, drafts,
-    openDrawer, selectedSongId, openCreate, openEdit, openKaraoke, requestDelete,
+    openDrawer, selectedSongId, openCreate, openEdit, openKaraoke, openPitchMap, requestDelete,
   } = useAdminData();
 
   const [search, setSearch] = useState('');
@@ -48,6 +48,7 @@ export default function CatalogPage() {
         selectedId={selectedSongId}
         onSelect={(v) => openDrawer(v.id)}
         onKaraoke={(v) => openKaraoke(v.raw)}
+        onPitchMap={(v) => openPitchMap(v.raw)}
         onEdit={(v) => openEdit(v.raw)}
         onDelete={requestDelete}
         onCreate={openCreate}

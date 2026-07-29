@@ -29,7 +29,7 @@ function SummaryRow({ label, children }) {
   );
 }
 
-function DrawerBody({ view, closeRef, onClose, onEdit, onKaraoke, onPublish, onManageLinks, onDelete }) {
+function DrawerBody({ view, closeRef, onClose, onEdit, onKaraoke, onPitchMap, onPublish, onManageLinks, onDelete }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -56,6 +56,11 @@ function DrawerBody({ view, closeRef, onClose, onEdit, onKaraoke, onPublish, onM
         <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3">
           <SummaryRow label="Categoria"><CategoryTag label={view.categoryLabel} /></SummaryRow>
           <SummaryRow label="Karaokê"><KaraokeTag state={view.karaokeState} /></SummaryRow>
+          <SummaryRow label="Guia de tom">
+            {view.hasPitchMap
+              ? <span className="text-xs text-app-yellow">{view.pitchNoteCount} notas</span>
+              : <span className="text-xs text-gray-600">—</span>}
+          </SummaryRow>
           <SummaryRow label="Status">
             <StatusBadge status={view.status} scheduled={Boolean(view.publishAt) && view.status !== 'published'} />
           </SummaryRow>
@@ -63,13 +68,13 @@ function DrawerBody({ view, closeRef, onClose, onEdit, onKaraoke, onPublish, onM
 
         <SongPlatformLinks platforms={view.platforms} onEdit={() => onManageLinks(view)} />
         <SongLocalAudioStatus view={view} />
-        <SongQuickActions view={view} onEdit={onEdit} onKaraoke={onKaraoke} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
+        <SongQuickActions view={view} onEdit={onEdit} onKaraoke={onKaraoke} onPitchMap={onPitchMap} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
       </div>
     </div>
   );
 }
 
-export default function SongDetailsDrawer({ view, onClose, onEdit, onKaraoke, onPublish, onManageLinks, onDelete }) {
+export default function SongDetailsDrawer({ view, onClose, onEdit, onKaraoke, onPitchMap, onPublish, onManageLinks, onDelete }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const closeRef = useRef(null);
 
@@ -89,7 +94,7 @@ export default function SongDetailsDrawer({ view, onClose, onEdit, onKaraoke, on
   if (!view) return null;
 
   const body = (
-    <DrawerBody view={view} closeRef={closeRef} onClose={onClose} onEdit={onEdit} onKaraoke={onKaraoke} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
+    <DrawerBody view={view} closeRef={closeRef} onClose={onClose} onEdit={onEdit} onKaraoke={onKaraoke} onPitchMap={onPitchMap} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
   );
 
   if (isDesktop) {

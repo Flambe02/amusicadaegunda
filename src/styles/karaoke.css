@@ -635,6 +635,158 @@
   .km-ctrl-icon, .km-switch-knob, .km-seg { transition: none; }
 }
 
+/* ============================================================================
+   GUIA DE TOM · BETA (só móvel/web — KaraokePitchGuide / PitchStatusPill / diálogo)
+   ⚠️ Cada filho DIRETO de .karaoke-overlay (ramo móvel) TEM de ter position+z-index
+   senão .karaoke-clean-bg (gradiente opaco, z-index:0) pinta por cima (bug real
+   documentado em MEMORY). Por isso .km-pitch-slot / .km-pitch-pill-wrap têm z-index.
+   ========================================================================== */
+.km-pitch-slot {
+  position: relative;
+  z-index: 15;
+  padding: 0.1rem 1rem 0.25rem;
+}
+.km-pitch {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 0.5rem 0.7rem 0.6rem;
+}
+/* Desktop (mesmo leitor !tvMode): centra e limita a largura do guia para não
+   esticar num ecrã largo — o micro usado é o do PC (getUserMedia). */
+@media (min-width: 768px) {
+  .km-pitch { max-width: 44rem; margin-inline: auto; }
+}
+.km-pitch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.km-pitch-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+.km-pitch-beta {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.05rem 0.35rem;
+  border-radius: 9999px;
+  background: rgba(253, 224, 71, 0.16);
+  color: #fde047;
+  text-transform: uppercase;
+}
+.km-pitch-live {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: #f87171;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.9);
+  animation: km-pitch-pulse 1.4s ease-in-out infinite;
+}
+@keyframes km-pitch-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+.km-pitch-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+}
+.km-pitch-state.is-good { color: #fde047; }
+.km-pitch-state.is-off { color: rgba(255, 255, 255, 0.4); }
+.km-pitch-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: clamp(104px, 21vh, 172px);
+}
+.km-pitch-canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+.km-pitch--compact .km-pitch-canvas-wrap { height: clamp(92px, 15vh, 128px); }
+.km-pitch-activate {
+  margin: 0.5rem auto 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  padding: 0 1.1rem;
+  border-radius: 9999px;
+  border: none;
+  background: #fde047;
+  color: #111;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.km-pitch-activate:disabled { opacity: 0.5; cursor: default; }
+
+/* Pílula de estado por baixo da letra (§26). */
+.km-pitch-pill-wrap {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  padding: 0.1rem 1rem 0.3rem;
+}
+.km-pitch-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.5);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.7);
+}
+.km-pitch-pill.is-good {
+  color: #fde047;
+  border-color: rgba(253, 224, 71, 0.4);
+  background: rgba(253, 224, 71, 0.1);
+}
+.km-pitch-pill.is-off { color: rgba(255, 255, 255, 0.45); }
+
+/* Diálogo de ativação/erro do microfone. */
+.km-mic-dialog-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.75rem;
+  border-radius: 9999px;
+  background: rgba(253, 224, 71, 0.14);
+  color: #fde047;
+}
+.km-confirm-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+/* Ecrãs baixos (§26/§39): esconde a pílula duplicada; reduz o guia. */
+@media (max-height: 720px) { .km-pitch-pill-wrap { display: none; } }
+@media (max-height: 680px) { .km-pitch-canvas-wrap { height: clamp(88px, 13vh, 116px); } }
+/* Paisagem: guia mais baixo, sem pílula, sem scroll de página (§39). */
+@media (orientation: landscape) and (max-height: 500px) {
+  .km-pitch-canvas-wrap { height: 78px; }
+  .km-pitch-pill-wrap { display: none; }
+  .km-pitch-head { margin-bottom: 0.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .km-pitch-live { animation: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .karaoke-lyrics { scroll-behavior: auto; }
   .karaoke-line-active,

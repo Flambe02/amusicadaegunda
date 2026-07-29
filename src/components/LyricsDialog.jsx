@@ -2,6 +2,7 @@ import React from 'react';
 import { FileText, X } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import { ScrollArea } from './ui/scroll-area';
+import { resolveLyricsText } from '@/lib/lrc';
 
 export default function LyricsDialog({
   open,
@@ -11,6 +12,7 @@ export default function LyricsDialog({
   showIcon = true
 }) {
   if (!song) return null;
+  const lyricsText = resolveLyricsText(song);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -40,11 +42,11 @@ export default function LyricsDialog({
 
         {/* Lyrics */}
         <div className="px-6 pb-6 pt-4">
-          {song.lyrics ? (
+          {lyricsText ? (
             <ScrollArea className="h-[55vh]">
               <div className="pr-4">
                 <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-white/80">
-                  {song.lyrics}
+                  {lyricsText}
                 </pre>
               </div>
             </ScrollArea>

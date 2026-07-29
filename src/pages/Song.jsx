@@ -29,6 +29,7 @@ import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import { extractYouTubeId, getYouTubeEmbedInfo, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+import { isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
 
 const CATEGORY_LABELS = {
   internacional: 'Internacional',
@@ -293,9 +294,9 @@ export default function SongPage() {
     youtubeVideoInfo || youtubeAudioInfo
   );
 
-  // Karaoké dispo si la chanson a un LRC synchronisé + un lien vidéo exploitable.
+  // Karaoké dispo si la chanson a un LRC synchronisé + publié + un lien vidéo exploitable.
   const hasKaraoke = Boolean(
-    song?.lrc_content && (youtubeAudioInfo || youtubeVideoInfo)
+    isKaraokePublished(song) && (youtubeAudioInfo || youtubeVideoInfo)
   );
 
   const descriptionPreview = song?.description
@@ -329,8 +330,8 @@ export default function SongPage() {
       icon: Music,
       title: 'Letra',
       subtitle: 'Cante junto e compartilhe',
-      content: song?.lyrics?.trim() || 'Letra indisponivel para esta musica.',
-      action: song?.lyrics?.trim() ? () => setIsLyricsOpen(true) : null,
+      content: resolveLyricsText(song).trim() || 'Letra indisponivel para esta musica.',
+      action: resolveLyricsText(song).trim() ? () => setIsLyricsOpen(true) : null,
     },
   ];
 
@@ -517,7 +518,7 @@ export default function SongPage() {
               >
                 <Mic className="h-5 w-5" /> Cantar (Karaokê)
               </button>
-            ) : song?.lyrics?.trim() ? (
+            ) : resolveLyricsText(song).trim() ? (
               <p className="mt-3 text-center text-[11px] font-medium text-white/38">
                 🎤 Karaokê sincronizado em breve
               </p>
@@ -677,7 +678,7 @@ export default function SongPage() {
                     >
                       {showFullDescription ? 'Ver menos' : 'Ver descrição completa'}
                     </button>
-                    {song.lyrics?.trim() ? (
+                    {resolveLyricsText(song).trim() ? (
                       <button
                         type="button"
                         onClick={() => setIsLyricsOpen(true)}
@@ -846,7 +847,7 @@ export default function SongPage() {
                       className="text-sm font-semibold text-[#FDE047] transition hover:text-[#fde047]/80">
                       {showFullDescription ? 'Ver menos' : 'Ver descrição completa'}
                     </button>
-                    {song.lyrics?.trim() && (
+                    {resolveLyricsText(song).trim() && (
                       <button type="button" onClick={() => setIsLyricsOpen(true)}
                         className="flex items-center gap-1.5 text-sm font-semibold text-white/45 transition hover:text-white/70">
                         <FileText className="h-4 w-4" />

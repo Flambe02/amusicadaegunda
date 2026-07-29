@@ -5,6 +5,7 @@ import { Gift, Lock, Music, Play, Sparkles, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useSEO } from '@/hooks/useSEO';
+import { resolveLyricsText } from '@/lib/lrc';
 
 // Composant d'intégration YouTube générique (identique à Home.jsx)
 function YouTubeEmbed({ youtube_music_url, youtube_url, title }) {
@@ -555,10 +556,10 @@ export default function AdventCalendar() {
               </div>
 
               {/* Letras */}
-              {selectedSongForDialog.lyrics ? (
+              {resolveLyricsText(selectedSongForDialog) ? (
                 <div className="bg-white rounded-xl p-4 border border-gray-200">
                   <pre className="whitespace-pre-wrap text-gray-700 font-medium leading-relaxed">
-                    {selectedSongForDialog.lyrics}
+                    {resolveLyricsText(selectedSongForDialog)}
                   </pre>
                 </div>
               ) : (

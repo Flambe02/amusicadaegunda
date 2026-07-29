@@ -5,13 +5,14 @@ import {
   Plus, Copy, Trash2, Undo2, Redo2, Crosshair, Save, Loader2, Music, Minus, FileText,
   RotateCcw, History, ClipboardPaste, ArrowLeft, Gauge, X, Sparkles, AlertTriangle, Pencil,
   Repeat, Clock, ShieldCheck, CheckCircle2, AlertCircle, Info, Type, Wand2,
-  ListMusic, Search, Video, Maximize2, Minimize2, Keyboard, MoreHorizontal,
+  ListMusic, Search, Video, Maximize2, Minimize2, Keyboard, MoreHorizontal, AudioLines,
+  Eye, EyeOff,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId } from '@/lib/utils';
-import { splitLyricsLines, parseLrc, buildLrc, formatTimestamp, activeLineIndex } from '@/lib/lrc';
+import { splitLyricsLines, parseLrc, buildLrc, formatTimestamp, activeLineIndex, resolveLyricsText } from '@/lib/lrc';
 import { validateTiming } from '@/lib/timingValidation';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { useTimingDraft, linesSignature } from '@/hooks/useTimingDraft';
@@ -23,6 +24,8 @@ import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import KaraokeBallSyncStudio from '@/components/karaoke/ball-sync/KaraokeBallSyncStudio';
 import TimelineWaveform from '@/components/karaoke/ball-sync/TimelineWaveform';
 import { useLocalAudioSession } from '@/hooks/useLocalAudioSession';
+import { usePitchAnalysisWorker } from '@/hooks/usePitchAnalysisWorker';
+import { preAlignLines } from '@/lib/pitch/preAlign';
 import { saveAudioHandle, getAudioHandle, deleteAudioHandle } from '@/lib/audioHandleStore';
 import { putAssociation, deleteAssociation } from '@/lib/localMediaDb';
 import { getSessionAudioFile, setSessionAudioFile, deleteSessionAudioFile } from '@/lib/localAudioSessionCache';
@@ -58,7 +61,7 @@ const MAX_LATENCY = 600;      // borne haute raisonnable (ms)
  * suivante), comme avant. Le lecteur karaoké public respecte les deux cas
  * (via activeLineIndex, partagé avec cet outil).
  */
-export default function KaraokeSyncTool({ song, onClose, onSaved }) {
+export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap = null, sharedAudio = null }) {
   const { toast } = useToast();
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
@@ -128,7 +131,14 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
   // Session audio LOCALE partagée (écran principal + studio) — montée une fois par
   // chanson, elle persiste quand on ouvre/ferme le studio ou qu'on change de ligne.
   // L'audio n'est JAMAIS envoyé au serveur (voir useLocalAudioSession).
-  const localAudio = useLocalAudioSession();
+  // Si `sharedAudio` est fourni (AdminLayout), on l'utilise à la place de notre
+  // propre instance — permet au vocal déjà chargé dans « Guia de tom » d'être
+  // immédiatement reconnu ici, sans redemander le fichier (§ session partagée).
+  const ownLocalAudio = useLocalAudioSession();
+  const localAudio = sharedAudio || ownLocalAudio;
+  // Módulo B-v1 : pré-alinhamento por sinal vocal (segmentos) — worker partilhado.
+  const { analyze: analyzePitch } = usePitchAnalysisWorker();
+  const [preAligning, setPreAligning] = useState(false);
   const audioOffsetKey = `karaoke-audio-offset-${song?.id}`;
   const [audioOffsetMs, setAudioOffsetMs] = useState(() => {
     const v = parseInt(typeof localStorage !== 'undefined' ? localStorage.getItem(audioOffsetKey) : '', 10);
@@ -136,6 +146,18 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
   });
   useEffect(() => { try { localStorage.setItem(audioOffsetKey, String(audioOffsetMs)); } catch { /* noop */ } }, [audioOffsetMs, audioOffsetKey]);
   const audioOffsetSec = audioOffsetMs / 1000;
+
+  // Offset SÉPARÉ pour la piste « voz » du studio « Afinar palavras e bola » — un
+  // stem vocal exporté à part (Suno/UVR/Demucs) a très souvent son propre décalage
+  // par rapport au mix complet (delay d'encodage MP3, recadrage à l'export…), donc
+  // réutiliser l'offset du mix complet pour la voix désynchronise les deux pistes
+  // en changeant de piste. Mémorisé séparément, par chanson.
+  const vocalsOffsetKey = `karaoke-vocals-offset-${song?.id}`;
+  const [vocalsOffsetMs, setVocalsOffsetMs] = useState(() => {
+    const v = parseInt(typeof localStorage !== 'undefined' ? localStorage.getItem(vocalsOffsetKey) : '', 10);
+    return Number.isFinite(v) ? v : 0;
+  });
+  useEffect(() => { try { localStorage.setItem(vocalsOffsetKey, String(vocalsOffsetMs)); } catch { /* noop */ } }, [vocalsOffsetMs, vocalsOffsetKey]);
 
   // Le fichier audio est MÉMORISÉ localement (File System Access API + IndexedDB, par
   // chanson, sur cet appareil) pour éviter de le re-sélectionner à chaque session.
@@ -209,15 +231,19 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
   //      funciona mesmo sem File System Access (modo manual).
   //   2) Handle persistente (File System Access) — reabre automaticamente se a
   //      permissão ainda vale, senão propõe « Reabrir áudio ».
+  //   3) Fallback: reutiliza o VOCAL já carregado no modal « Guia de tom » (chave
+  //      `vocals-<id>`) se o editor de sincronização ainda não tem áudio próprio —
+  //      evita pedir o mesmo ficheiro duas vezes.
   useEffect(() => {
     if (!song?.id) return undefined;
+    if (localAudioRef.current.fileName) return undefined; // já há áudio (ex.: sessão partilhada) — não sobrepor
     let cancelled = false;
     (async () => {
       const cached = getSessionAudioFile(song.id);
       if (cached) { if (!cancelled) { localAudioRef.current.load(cached); setPendingAudioName(null); } return; }
       if (!supportsFsApi) return;
       try {
-        const handle = await getAudioHandle(song.id);
+        const handle = (await getAudioHandle(song.id)) || (await getAudioHandle(`vocals-${song.id}`));
         if (!handle || cancelled) return;
         pendingHandleRef.current = handle;
         const perm = await handle.queryPermission?.({ mode: 'read' });
@@ -231,6 +257,88 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
     })();
     return () => { cancelled = true; };
   }, [supportsFsApi, song?.id]);
+
+  // ── Segunda pista LOCAL, específica de « Afinar palavras e bola » : voz isolada,
+  // opcional, selecionável junto ao áudio completo (o utilizador pode alternar entre
+  // os dois sem os perder). Usa a MESMA chave de handle que « Guia de tom »
+  // (`vocals-<id>`) — se já escolhida lá, reabre aqui automaticamente. Vive neste
+  // componente (não dentro do studio) para sobreviver à navegação entre linhas, que
+  // remonta o studio (`key={idx}`).
+  const ballVocalsAudio = useLocalAudioSession();
+  const ballVocalsRef = useRef(ballVocalsAudio); ballVocalsRef.current = ballVocalsAudio;
+  const ballVocalsHandleKey = `vocals-${song?.id}`;
+  const ballVocalsPendingHandleRef = useRef(null);
+  const [pendingBallVocalsName, setPendingBallVocalsName] = useState(null);
+  const ballVocalsFileInputRef = useRef(null);
+
+  const onBallVocalsPick = (e) => {
+    const f = e.target.files?.[0];
+    if (f) ballVocalsRef.current.load(f);
+    e.target.value = '';
+  };
+
+  const pickBallVocals = useCallback(async () => {
+    if (supportsFsApi) {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          multiple: false, excludeAcceptAllOption: false,
+          types: [{ description: 'Voz', accept: {
+            'audio/mpeg': ['.mp3'], 'audio/wav': ['.wav'], 'audio/x-wav': ['.wav'],
+            'audio/mp4': ['.m4a'], 'audio/aac': ['.aac'], 'audio/ogg': ['.ogg'], 'audio/flac': ['.flac'],
+          } }],
+        });
+        const file = await handle.getFile();
+        await ballVocalsRef.current.load(file);
+        setPendingBallVocalsName(null);
+        ballVocalsPendingHandleRef.current = handle;
+        try { await saveAudioHandle(ballVocalsHandleKey, handle); } catch { /* IndexedDB indisponível */ }
+      } catch { /* cancelado pelo utilizador */ }
+    } else {
+      ballVocalsFileInputRef.current?.click();
+    }
+  }, [supportsFsApi, ballVocalsHandleKey]);
+
+  const reopenBallVocals = useCallback(async () => {
+    const handle = ballVocalsPendingHandleRef.current;
+    if (!handle) return;
+    try {
+      const perm = await handle.requestPermission?.({ mode: 'read' });
+      if (perm && perm !== 'granted') return;
+      const file = await handle.getFile();
+      await ballVocalsRef.current.load(file);
+      setPendingBallVocalsName(null);
+    } catch { /* ficheiro movido/renomeado */ }
+  }, []);
+
+  const removeBallVocals = useCallback(async () => {
+    ballVocalsRef.current.clear();
+    setPendingBallVocalsName(null);
+    ballVocalsPendingHandleRef.current = null;
+    try { await deleteAudioHandle(ballVocalsHandleKey); } catch { /* noop */ }
+  }, [ballVocalsHandleKey]);
+
+  // Reabre automaticamente ao entrar na música (mesma chave que Guia de tom).
+  useEffect(() => {
+    if (!song?.id || !supportsFsApi) return undefined;
+    if (ballVocalsRef.current.fileName) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const handle = await getAudioHandle(ballVocalsHandleKey);
+        if (!handle || cancelled) return;
+        ballVocalsPendingHandleRef.current = handle;
+        const perm = await handle.queryPermission?.({ mode: 'read' });
+        if (perm === 'granted') {
+          const file = await handle.getFile();
+          if (!cancelled) ballVocalsRef.current.load(file);
+        } else if (!cancelled) {
+          setPendingBallVocalsName(handle.name || 'voz');
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [supportsFsApi, song?.id, ballVocalsHandleKey]);
+
   const [selectedWordIndex, setSelectedWordIndex] = useState(0);
   const captureIndexRef = useRef(0); // prochain mot à capturer (0-based)
 
@@ -277,18 +385,35 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
   const effectiveSong = freshSong || song;
   const userEditedLyricsRef = useRef(false);
 
+  // ── Publicação do karaokê — alternador (§ pedido: hoje é automático) ──
+  // `false` = rascunho: o Guardar continua a escrever lrc_content/timing_data
+  // normalmente (nunca perde trabalho), mas o karaokê fica escondido do público
+  // (ver isKaraokePublished() em @/lib/lrc, o único ponto que decide isso).
+  const [karaokePublished, setKaraokePublished] = useState(() => song?.karaoke_published !== false);
+  useEffect(() => {
+    if (freshSong && typeof freshSong.karaoke_published === 'boolean') setKaraokePublished(freshSong.karaoke_published);
+  }, [freshSong]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('songs')
-        .select('id, title, lyrics, lrc_content, youtube_url, youtube_music_url')
+        .select('id, title, lyrics, lyrics_karaoke, lrc_content, youtube_url, youtube_music_url, karaoke_published')
         .eq('id', song.id)
         .maybeSingle();
-      if (!cancelled && data) setFreshSong(data);
+      if (cancelled) return;
+      // Sem isto, um erro aqui (ex.: coluna nova ainda não migrada) falhava em
+      // silêncio — o editor ficava preso nos dados obsoletos da prop `song`
+      // (letra incompleta, alternador de publicação sem efeito) sem aviso nenhum.
+      if (error) {
+        toast({ title: 'Não foi possível atualizar os dados da música', description: describeSaveError(error), variant: 'destructive' });
+        return;
+      }
+      if (data) setFreshSong(data);
     })();
     return () => { cancelled = true; };
-  }, [song?.id]);
+  }, [song?.id, toast]);
 
   const videoId = useMemo(
     () => extractYouTubeId(effectiveSong?.youtube_url) || extractYouTubeId(effectiveSong?.youtube_music_url),
@@ -374,19 +499,26 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
     setStep('lyrics');
   }, [lines]);
 
-  // Sauvegarde SEULE la letra (colonne `lyrics`) dans Supabase, sans toucher au LRC —
-  // pour corriger/compléter les paroles complètes stockées et les réutiliser ailleurs.
+  // Sauvegarde SEULE a letra — em DUAS colunas possíveis (o utilizador escolhe):
+  //   'lyrics'         → campo original, visível na leitura pública do site (DEFAULT).
+  //   'lyrics_karaoke' → cópia de trabalho, só para a sincronização karaokê (não
+  //                      altera o texto oficial do site) — ver resolveLyricsText() em @/lib/lrc.
   const [isSavingLyrics, setIsSavingLyrics] = useState(false);
-  const handleSaveLyricsOnly = useCallback(async () => {
+  const handleSaveLyricsOnly = useCallback(async (column = 'lyrics') => {
     const joined = splitLyricsLines(lyricsDraft).join('\n');
     if (!joined) return;
     setIsSavingLyrics(true);
     try {
       try { await supabase.auth.refreshSession(); } catch { /* diagnostic plus bas */ }
-      const { data, error } = await supabase.from('songs').update({ lyrics: joined }).eq('id', song.id).select();
+      const { data, error } = await supabase.from('songs').update({ [column]: joined }).eq('id', song.id).select();
       if (error) throw new Error(describeSaveError(error));
       if (!data || data.length === 0) throw new Error(await diagnoseZeroRows());
-      toast({ title: '✅ Letra guardada', description: 'A letra completa foi atualizada no Supabase.' });
+      toast({
+        title: '✅ Letra guardada',
+        description: column === 'lyrics_karaoke'
+          ? 'Cópia de trabalho para o karaokê atualizada (não altera a letra pública do site).'
+          : 'A letra pública do site foi atualizada no Supabase.',
+      });
     } catch (err) {
       toast({ title: 'Erro ao guardar letra', description: err.message, variant: 'destructive' });
     } finally {
@@ -453,6 +585,70 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
       return nextState;
     });
   }, []);
+
+  // ── Módulo B-v1 : Pré-alinhar com áudio (nível frase) ──
+  // Deteta os segmentos cantados nos vocais LOCAIS e preenche time/endTime das
+  // linhas (atribuição 1:1 se as contagens baterem, senão « snap » dos marcadores
+  // existentes). NUNCA guarda: aplica ao editor (com undo) e o « Guardar » habitual
+  // é que persiste. Não altera o texto nem toca no timing por palavra.
+  const handlePreAlign = useCallback(async () => {
+    if (preAligning) return;
+    setPreAligning(true);
+    try {
+      if (typeof localAudio.getMonoSamples !== 'function') {
+        toast({ title: 'Recarrega a página', description: 'Análise de áudio indisponível nesta sessão.', variant: 'destructive' });
+        return;
+      }
+      let decoded;
+      try {
+        decoded = await localAudio.getMonoSamples();
+      } catch (e) {
+        toast({ title: 'Não foi possível ler o áudio', description: e?.message || 'Formato não suportado.', variant: 'destructive' });
+        return;
+      }
+      if (!decoded) { toast({ title: 'Carrega primeiro o áudio (vocais) local', variant: 'destructive' }); return; }
+
+      const segments = await analyzePitch('segments', decoded.samples, decoded.sampleRate, {});
+      if (!segments || segments.length === 0) {
+        toast({ title: 'Nenhuma voz detetada', description: 'Usa o stem VOCAL isolado (não a mistura completa).', variant: 'destructive' });
+        return;
+      }
+      if (segments.length === 1) {
+        toast({
+          title: 'Áudio sem silêncios claros',
+          description: 'Parece a mistura completa (1 só bloco). Carrega o stem vocal isolado para separar as frases.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const result = preAlignLines(segments, lines);
+      commitLines(() => result.lines);
+      const msg = result.mode === 'assign'
+        ? `${result.matched} frases alinhadas (1:1)`
+        : `${result.matched}/${result.total} marcadores ajustados · ${result.segments} segmentos detetados`;
+      toast({ title: '✔ Pré-alinhado', description: `${msg}. Revê na frise e Guarda.` });
+    } catch (err) {
+      toast({ title: 'Erro no pré-alinhamento', description: err?.message || 'Falha inesperada.', variant: 'destructive' });
+    } finally {
+      setPreAligning(false);
+    }
+  }, [preAligning, localAudio, analyzePitch, lines, commitLines, toast]);
+
+  // ── Importação manual de um JSON de timing (ferramenta avançada de recuperação) ──
+  const presyncInputRef = useRef(null);
+  const onImportManualTiming = useCallback((e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    f.text().then((txt) => {
+      const model = parseTimingModel(txt);
+      if (!model) { toast({ title: 'JSON inválido', description: 'Não é um timing_data reconhecível.', variant: 'destructive' }); return; }
+      const editorLines = timingModelToEditorLines(model);
+      if (editorLines.length === 0) { toast({ title: 'Sem linhas no ficheiro', variant: 'destructive' }); return; }
+      commitLines(() => editorLines);
+      toast({ title: '✔ Sincronização importada', description: `${editorLines.length} linhas. Revê e Guarda.` });
+    }).catch(() => toast({ title: 'Erro ao ler o ficheiro', variant: 'destructive' }));
+  }, [commitLines, toast]);
 
   // ── Player (monté seulement une fois l'étape « Sincronizar » atteinte) ──
   useEffect(() => {
@@ -1452,21 +1648,21 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
 
   const currentLine = activeIdx >= 0 ? lines[activeIdx] : null;
   const nextLine = activeIdx + 1 < lines.length ? lines[activeIdx + 1] : null;
+  // Dans um trecho instrumental (sem linha ativa), mostra sempre a PRÓXIMA linha
+  // cantada em grande — nunca um placeholder genérico « ♪ (música) » — mais fácil
+  // de seguir/preparar a marcação durante a sincronização manual.
+  const afterPreviewLine = currentLine ? nextLine : (activeIdx + 2 < lines.length ? lines[activeIdx + 2] : null);
 
   // ── Sauvegarde ──
   // Persiste le LRC dans `songs`, PUIS crée une version durable (song_timing_versions)
-  // — au contraire de l'autosave qui n'écrit QUE le brouillon local. Bloque si la
-  // validation contient des erreurs (fin<début, mot hors ligne…). Garde anti double-clic.
+  // — au contraire de l'autosave qui n'écrit QUE le brouillon local. Garde anti
+  // double-clic. NUNCA bloqueia por erros de validação (o painel é só um guia
+  // visual — o administrador tem sempre de poder Guardar o seu trabalho).
   const handleSave = async () => {
     if (savingRef.current) return; // évite deux sauvegardes concurrentes
     const lrc = buildLrc(lines);
     if (!lrc) {
       toast({ title: 'Nada para guardar', description: 'Marca pelo menos uma linha antes de guardar.', variant: 'destructive' });
-      return;
-    }
-    if (validation.errors > 0) {
-      setShowValidation(true);
-      toast({ title: 'Corrige os erros antes de guardar', description: `${validation.errors} erro(s) de timing bloqueiam a gravação. Vê o painel de validação.`, variant: 'destructive' });
       return;
     }
     savingRef.current = true;
@@ -1489,14 +1685,14 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
       const timingModel = buildTimingModel(lines);
       const hasWordTiming = Boolean(timingModel && timingModel.timingMode !== 'line');
 
-      const payload = { lrc_content: lrc, karaoke_synced_at: new Date().toISOString() };
+      const payload = { lrc_content: lrc, karaoke_synced_at: new Date().toISOString(), karaoke_published: karaokePublished };
       if (hasWordTiming) {
         payload.timing_data = timingModel;
         payload.timing_mode = timingModel.timingMode;
       }
       if (syncLyricsToo) {
         const joined = lines.map((l) => l.text.trim()).filter(Boolean).join('\n');
-        if (joined) payload.lyrics = joined;
+        if (joined) payload.lyrics = joined; // letra pública do site (opção padrão — ver « Guardar p/ karaokê » na etapa Letra completa para a cópia de trabalho)
       }
 
       const { data, error } = await supabase
@@ -1681,6 +1877,22 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
         <div className="flex shrink-0 items-center gap-2">
           {step === 'sync' && <SaveStatusPill state={saveState} lastSavedAt={lastSavedAt} draftSavedAt={draftSavedAt} />}
           {step === 'sync' && (
+            <button
+              type="button"
+              onClick={() => setKaraokePublished((v) => !v)}
+              title={karaokePublished
+                ? 'Publicado — clica para tornar RASCUNHO (esconder do público ao Guardar).'
+                : 'Rascunho — clica para PUBLICAR (visível ao público ao Guardar).'}
+              className={`karaoke-focusable hidden items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors sm:inline-flex ${
+                karaokePublished
+                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                  : 'border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20'
+              }`}
+            >
+              {karaokePublished ? <Eye size={12} /> : <EyeOff size={12} />} {karaokePublished ? 'Publicado' : 'Rascunho'}
+            </button>
+          )}
+          {step === 'sync' && (
             <>
               <button
                 onClick={() => setShowValidation((v) => !v)}
@@ -1732,6 +1944,15 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
                 )}
               </div>
             </>
+          )}
+          {onOpenPitchMap && (
+            <button
+              onClick={() => onOpenPitchMap()}
+              title="Abrir o Guia de tom (pitch-map) desta música — usa o mesmo áudio vocal"
+              className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-app-yellow/30 bg-app-yellow/10 px-3 py-1.5 text-sm font-semibold text-app-yellow hover:bg-app-yellow/20"
+            >
+              <AudioLines size={14} /> Guia de tom
+            </button>
           )}
           <button onClick={handleClose} className="rounded-lg px-3 py-1.5 text-sm text-gray-300 hover:bg-white/10">
             Cancelar
@@ -1868,12 +2089,20 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
                 })()}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={handleSaveLyricsOnly}
+                    onClick={() => handleSaveLyricsOnly('lyrics')}
                     disabled={isSavingLyrics || splitLyricsLines(lyricsDraft).length === 0}
-                    title="Guardar apenas a letra completa no Supabase (sem tocar na sincronização)"
+                    title="Guardar como letra pública do site (coluna lyrics) — opção padrão, sem tocar na sincronização"
                     className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-gray-300 hover:bg-white/10 disabled:opacity-40"
                   >
                     {isSavingLyrics ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar letra
+                  </button>
+                  <button
+                    onClick={() => handleSaveLyricsOnly('lyrics_karaoke')}
+                    disabled={isSavingLyrics || splitLyricsLines(lyricsDraft).length === 0}
+                    title="Guardar só como cópia de trabalho para o karaokê (coluna lyrics_karaoke) — não altera a letra pública do site"
+                    className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-500/20 disabled:opacity-40"
+                  >
+                    <AudioLines size={14} /> Guardar p/ karaokê
                   </button>
                   <button
                     onClick={proceedToSync}
@@ -2067,10 +2296,10 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
                         ? (Array.isArray(currentLine.words) && currentLine.words.length > 0
                           ? <KaraokeWordLine words={currentLine.words} activeIndex={activeWordIdx} progress={activeWordProgress} />
                           : <KaraokeWipeLine text={currentLine.text || '♪'} progress={activeProgress} />)
-                        : <span className="text-app-yellow/70">{activeIdx < 0 ? '♪ (música)' : ''}</span>}
+                        : (nextLine ? <span className="text-white/50">{nextLine.text || '♪'}</span> : null)}
                     </p>
-                    {nextLine && (
-                      <p className="max-w-2xl text-lg font-semibold text-white/35">{nextLine.text || '♪'}</p>
+                    {afterPreviewLine && (
+                      <p className="max-w-2xl text-lg font-semibold text-white/35">{afterPreviewLine.text || '♪'}</p>
                     )}
                   </div>
                 )}
@@ -2466,12 +2695,44 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
                     <button onClick={pickLocalAudio} className="karaoke-focusable rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-semibold hover:bg-white/10">Escolher outro</button>
                   </>
                 ) : (
-                  <button onClick={pickLocalAudio} className="karaoke-focusable inline-flex items-center gap-1 rounded border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 font-semibold text-violet-100 hover:bg-violet-500/25">
+                  <button onClick={pickLocalAudio}
+                    title="Por segurança do navegador, escolhe o ficheiro uma vez por sessão. Depois fica também disponível no Guia de tom, sem repetir."
+                    className="karaoke-focusable inline-flex items-center gap-1 rounded border border-violet-400/40 bg-violet-500/15 px-2 py-0.5 font-semibold text-violet-100 hover:bg-violet-500/25">
                     <Music size={11} /> {localAudio.loading ? 'A carregar…' : 'Carregar áudio local'}
                   </button>
                 )}
+                {/* Módulo B-v1 : pré-alinhamento por sinal vocal (só com áudio carregado). */}
+                {localAudio.fileName && (
+                  <button
+                    onClick={handlePreAlign}
+                    disabled={preAligning}
+                    title="Instantâneo, no navegador: deteta as frases cantadas nos vocais e preenche os tempos (nível frase). Revê antes de guardar."
+                    className="karaoke-focusable inline-flex items-center gap-1 rounded border border-app-yellow/40 bg-app-yellow/15 px-2 py-0.5 font-semibold text-app-yellow hover:bg-app-yellow/25 disabled:opacity-40"
+                  >
+                    {preAligning ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}
+                    {preAligning ? 'A analisar…' : 'Pré-alinhar com áudio (instantâneo)'}
+                  </button>
+                )}
+                {/* Ferramenta avançada de recuperação: importar um timing_data já pronto (ex.:
+                    exportado doutra sessão). O caminho normal é o painel « Sincronização
+                    automática » acima, que corre o alinhamento diretamente no navegador. */}
+                <input ref={presyncInputRef} type="file" accept="application/json,.json" className="hidden" onChange={onImportManualTiming} />
+                <button
+                  onClick={() => presyncInputRef.current?.click()}
+                  title="Ferramenta avançada: importa um ficheiro timing_data já pronto. Para gerar um novo, usa « Sincronização automática » acima."
+                  className="karaoke-focusable inline-flex items-center gap-1 rounded border border-white/15 bg-white/5 px-2 py-0.5 font-semibold text-gray-300 hover:bg-white/10"
+                >
+                  <FileText size={11} /> Importar JSON manual
+                </button>
               </div>
-              <label className="ml-auto flex cursor-pointer items-center gap-1.5">
+              <label
+                title={karaokePublished ? 'O karaokê fica visível ao público ao Guardar.' : 'Rascunho: Guardar continua a funcionar normalmente, mas o karaokê fica ESCONDIDO do público até reativares isto.'}
+                className={`ml-auto flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 font-semibold ${karaokePublished ? 'border-white/10 bg-white/5 text-gray-300' : 'border-amber-400/40 bg-amber-500/10 text-amber-200'}`}
+              >
+                <input type="checkbox" checked={karaokePublished} onChange={(e) => setKaraokePublished(e.target.checked)} className="accent-purple-600" />
+                {karaokePublished ? <Eye size={13} /> : <EyeOff size={13} />} Publicar karaokê
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5">
                 <input type="checkbox" checked={syncLyricsToo} onChange={(e) => setSyncLyricsToo(e.target.checked)} className="accent-purple-600" /> Atualizar letra também
               </label>
             </div>
@@ -2508,10 +2769,17 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
             audioSession={localAudio}
             offsetMs={audioOffsetMs}
             onOffsetChange={setAudioOffsetMs}
+            vocalsOffsetMs={vocalsOffsetMs}
+            onVocalsOffsetChange={setVocalsOffsetMs}
             onPickAudio={pickLocalAudio}
             onReopenAudio={reopenLocalAudio}
             onRemoveAudio={removeLocalAudio}
             pendingAudioName={pendingAudioName}
+            vocalsAudio={ballVocalsAudio}
+            onPickVocals={pickBallVocals}
+            onReopenVocals={reopenBallVocals}
+            onRemoveVocals={removeBallVocals}
+            pendingVocalsName={pendingBallVocalsName}
             canPrev={neighbor(-1) >= 0}
             canNext={neighbor(1) >= 0}
             onCommit={(res) => {
@@ -2531,6 +2799,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved }) {
           />
         );
       })()}
+      <input ref={ballVocalsFileInputRef} type="file" accept="audio/*" className="hidden" onChange={onBallVocalsPick} />
     </div>,
     document.body
   );
@@ -3133,6 +3402,15 @@ function describeSaveError(error) {
   if (code === '42703' || /column .*(lrc_content|karaoke_synced_at).* does not exist/i.test(msg)) {
     return 'A coluna lrc_content/karaoke_synced_at ainda não existe. Aplica a migração Supabase 20260708120000_add_karaoke_to_songs.sql.';
   }
+  if (code === '42703' && /karaoke_published/i.test(msg)) {
+    return 'A coluna karaoke_published ainda não existe. Aplica a migração Supabase 20260716150000_add_karaoke_published_to_songs.sql.';
+  }
+  if (code === '42703' && /lyrics_karaoke/i.test(msg)) {
+    return 'A coluna lyrics_karaoke ainda não existe. Aplica a migração Supabase 20260716160000_add_lyrics_karaoke_to_songs.sql.';
+  }
+  if (code === '42703' || /column .* does not exist/i.test(msg)) {
+    return `${msg} — falta aplicar uma migração Supabase (ver pasta supabase/migrations).`;
+  }
   return msg || 'Erro ao guardar.';
 }
 
@@ -3145,7 +3423,7 @@ function buildInitialLines(song) {
   if (model) return timingModelToEditorLines(model);
   const parsed = parseLrc(song?.lrc_content);
   if (parsed.length > 0) return parsed.map((l) => ({ text: l.text, time: l.time, endTime: l.endTime ?? null }));
-  return splitLyricsLines(song?.lyrics).map((text) => ({ text, time: null, endTime: null }));
+  return splitLyricsLines(resolveLyricsText(song)).map((text) => ({ text, time: null, endTime: null }));
 }
 
 // Fusionne un nouveau texte (liste de lignes) avec les lignes déjà synchronisées en

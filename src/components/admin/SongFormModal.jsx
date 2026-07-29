@@ -2,7 +2,7 @@
 // and "Editar música" work from any admin page.
 import { useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Mic } from 'lucide-react';
+import { X, Mic, AudioLines } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import SongForm from './SongForm';
@@ -11,7 +11,7 @@ import { useAdminData } from './AdminDataContext';
 
 export default function SongFormModal() {
   const { toast } = useToast();
-  const { formSong, isSaving, categories, closeForm, saveSong, openKaraoke, applySongPatch } = useAdminData();
+  const { formSong, isSaving, categories, closeForm, saveSong, openKaraoke, openPitchMap, applySongPatch } = useAdminData();
 
   const onAutoSaveHashtags = useCallback(async ({ hashtags, category, subtitle }) => {
     if (!formSong || formSong === 'new') return;
@@ -42,6 +42,15 @@ export default function SongFormModal() {
                 className="flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-semibold text-purple-300 transition-colors hover:bg-purple-500/20"
               >
                 <Mic size={13} /> Sincronizar karaokê
+              </button>
+            )}
+            {!isNew && formSong?.lyrics?.trim() && (
+              <button
+                type="button"
+                onClick={() => openPitchMap(formSong)}
+                className="flex items-center gap-1.5 rounded-full border border-app-yellow/30 bg-app-yellow/10 px-3 py-1.5 text-xs font-semibold text-app-yellow transition-colors hover:bg-app-yellow/20"
+              >
+                <AudioLines size={13} /> Guia de tom
               </button>
             )}
             <button onClick={closeForm} aria-label="Fechar" className="rounded p-1 text-gray-400 hover:bg-white/10 hover:text-white"><X size={18} /></button>

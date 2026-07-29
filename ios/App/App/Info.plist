@@ -47,5 +47,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>O microfone é usado para analisar sua voz durante o karaokê. O áudio não é gravado.</string>
 </dict>
 </plist>

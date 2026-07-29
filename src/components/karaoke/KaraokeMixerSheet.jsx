@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  X, Volume2, Gauge, Timer, Type, Circle, Users, Flame, Globe, RotateCcw, Minus, Plus,
+  X, Volume2, Gauge, Timer, Type, Circle, Users, Flame, Globe, RotateCcw, Minus, Plus, Mic,
 } from 'lucide-react';
 import {
   FONT_SCALES, PLAYBACK_RATES, TRANSLATION_LANGS,
@@ -21,9 +21,18 @@ import {
  *  - NÃO há « Guia » (não existem stems separados), nem « Tom » (o YouTube não
  *    expõe pitch shifting fiável) — omitidos de propósito.
  *
+ * « Guia de tom · Beta » (§28): secção opcional, só quando a música tem uma
+ * melodia de referência (`pitchAvailable`). O toggle não pede o microfone
+ * diretamente — delega em `onTogglePitchGuide` para o leitor mostrar a
+ * explicação de privacidade e pedir a permissão no gesto do utilizador (§13).
+ *
  * NÃO usado pela TV (o shell TV tem o seu próprio painel D-pad).
  */
-export default function KaraokeMixerSheet({ opts, setOpts, onClose }) {
+export default function KaraokeMixerSheet({
+  opts, setOpts, onClose,
+  pitchAvailable = false, pitchActive = false, pitchStatusLabel = null,
+  onTogglePitchGuide = null,
+}) {
   const panelRef = useRef(null);
   const [dragY, setDragY] = useState(0);
   const dragRef = useRef({ active: false, startY: 0 });
@@ -192,6 +201,42 @@ export default function KaraokeMixerSheet({ opts, setOpts, onClose }) {
               onClick={() => setOpts((o) => ({ ...o, dueto: !o.dueto }))} />
             <MixerToggle label="Medidor de energia (micro)" icon={Flame} on={opts.energy}
               onClick={() => setOpts((o) => ({ ...o, energy: !o.energy }))} />
+          </section>
+
+          {/* ── Guia de tom · Beta (só quando a música tem melodia de referência) ── */}
+          <section className="km-section">
+            <p className="km-section-title">
+              <Mic className="h-3.5 w-3.5" /> Guia de tom <span className="km-pitch-beta">Beta</span>
+            </p>
+            {pitchAvailable ? (
+              <>
+                <p className="km-help">Use o microfone para mostrar se sua voz está acima, abaixo ou próxima da nota esperada. O áudio não é gravado.</p>
+                <div className="km-toggle-row">
+                  <span className="km-toggle-label"><Mic className="h-4 w-4" /> Ativar guia de tom</span>
+                  <button type="button"
+                    onClick={() => onTogglePitchGuide?.(!opts.pitchGuide)}
+                    aria-pressed={opts.pitchGuide}
+                    aria-label={opts.pitchGuide ? 'Desativar guia de tom' : 'Ativar guia de tom'}
+                    className={`km-switch ${opts.pitchGuide ? 'is-on' : ''}`}>
+                    <span className="km-switch-knob" />
+                  </button>
+                </div>
+                {opts.pitchGuide && (
+                  <div className="km-row" style={{ marginTop: '0.4rem' }}>
+                    <span className="km-row-label">Estado do microfone</span>
+                    <span className="km-row-value">{pitchActive ? (pitchStatusLabel || 'Ativo') : 'Aguarda ativação'}</span>
+                  </div>
+                )}
+                {opts.pitchGuide && pitchActive && (
+                  <button type="button" className="km-reset" style={{ marginTop: '0.5rem' }}
+                    onClick={() => onTogglePitchGuide?.(false)} aria-label="Desativar microfone">
+                    <X className="h-4 w-4" /> Desativar microfone
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="km-help">O guia de tom não está disponível para esta música.</p>
+            )}
           </section>
 
           <section className="km-section">

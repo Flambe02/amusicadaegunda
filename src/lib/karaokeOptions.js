@@ -21,6 +21,13 @@ export const DEFAULT_KARAOKE_OPTIONS = {
   // Compensação de exibição das letras, em ms. Apenas no render (nunca modifica a
   // sincronização oficial guardada). effT = tempoDaMídia + lyricsOffsetMs.
   lyricsOffsetMs: 0,
+  // Guia de tom · Beta (§13/§33) : preferência ligada/desligada. Desligado por
+  // defeito. Ligado ≠ microfone ativo — o micro só arranca com gesto explícito
+  // e nunca é reativado automaticamente numa nova sessão sem toque.
+  pitchGuide: false,
+  // Se o utilizador já viu a explicação de privacidade do microfone (§13/§33) —
+  // evita repetir o diálogo em ativações seguintes.
+  pitchGuideSeen: false,
 };
 
 // Ajuste das letras (bottom-sheet mixer) — limites e passo.

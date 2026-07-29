@@ -19,6 +19,7 @@ export function useLocalAudioSession() {
     audioRef.current.preload = 'auto';
   }
   const urlRef = useRef(null);
+  const fileRef = useRef(null); // File atual, para decode sob demanda (getMonoSamples)
 
   const [fileName, setFileName] = useState(null);
   const [duration, setDuration] = useState(0);
@@ -42,6 +43,7 @@ export function useLocalAudioSession() {
       el.load();
     }
     releaseUrl();
+    fileRef.current = null;
     setFileName(null);
     setDuration(0);
     setPeaks(null);
@@ -62,6 +64,7 @@ export function useLocalAudioSession() {
     setPeaks(null);
     setLoading(true);
     setFileName(file.name || 'áudio local');
+    fileRef.current = file;
 
     // 1) Lecture : object URL local (toujours, même si le décodage d'onde échoue).
     const url = URL.createObjectURL(file);
@@ -77,7 +80,7 @@ export function useLocalAudioSession() {
       ctx = new AC();
       const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
       setDuration(buffer.duration);
-      setPeaks(computePeaks(buffer, 6000));
+      setPeaks(computePeaks(buffer));
       setReady(true);
     } catch {
       // Le décodage peut échouer (certains m4a/aac) : la lecture reste possible sans onde.
@@ -98,6 +101,34 @@ export function useLocalAudioSession() {
     return () => el.removeEventListener('loadedmetadata', onMeta);
   }, []);
 
+  // Décode le fichier courant en amostras mono, à la demande (analyse pitch/segments).
+  // Ne retient RIEN entre les appels (pas de 32 Mo en mémoire) ; décode puis ferme.
+  // Renvoie null si aucun fichier chargé. L'audio ne quitte jamais l'appareil.
+  const getMonoSamples = useCallback(async () => {
+    const file = fileRef.current;
+    if (!file) return null;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    let ctx = null;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      ctx = new AC();
+      const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      const { numberOfChannels, length, sampleRate: sr } = buffer;
+      const mono = new Float32Array(length);
+      for (let c = 0; c < numberOfChannels; c += 1) {
+        const ch = buffer.getChannelData(c);
+        for (let i = 0; i < length; i += 1) mono[i] += ch[i];
+      }
+      if (numberOfChannels > 1) for (let i = 0; i < length; i += 1) mono[i] /= numberOfChannels;
+      return { samples: mono, sampleRate: sr };
+    } catch {
+      return null;
+    } finally {
+      if (ctx) { try { await ctx.close(); } catch { /* noop */ } }
+    }
+  }, []);
+
   // Nettoyage au démontage.
   useEffect(() => () => {
     const el = audioRef.current;
@@ -105,5 +136,5 @@ export function useLocalAudioSession() {
     releaseUrl();
   }, [releaseUrl]);
 
-  return { audioRef, fileName, duration, peaks, ready, loading, error, load, clear };
+  return { audioRef, fileName, duration, peaks, ready, loading, error, load, clear, getMonoSamples };
 }
