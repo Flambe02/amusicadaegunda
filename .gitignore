@@ -66,3 +66,7 @@ push-sender/.env
 # Android signing keys (never commit)
 *.keystore
 *.jks
+
+# Python bytecode cache
+__pycache__/
+*.pyc
