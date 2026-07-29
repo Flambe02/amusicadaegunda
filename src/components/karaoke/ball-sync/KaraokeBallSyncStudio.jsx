@@ -10,6 +10,10 @@ import {
   normalizeWords, setWordStart, nudgeWordStart, validateLineWords,
   loadStudioWords, capInferredLastEnd,
 } from '@/lib/ballMotion';
+import {
+  localAudioTimeToCanonical, canonicalTimeToLocalAudio, clampLocalSeek,
+  computeAnchorOffset, formatOffsetSeconds, durationMismatch,
+} from '@/lib/audioClock';
 import BallSyncPreview from '@/components/karaoke/ball-sync/BallSyncPreview';
 import WaveformCanvas from '@/components/karaoke/ball-sync/WaveformCanvas';
 import '@/styles/karaoke.css';
@@ -37,10 +41,9 @@ export default function KaraokeBallSyncStudio({
   song, lineIndex, totalLines, line,
   phraseStart: phraseStartProp, phraseEnd: phraseEndProp,
   videoDuration = 0, onCommit, onNavigate, canPrev, canNext, onClose,
-  audioSession, offsetMs = 0, onOffsetChange,
+  audioSession, fullCalibration, vocalsCalibration, getCanonicalTime,
   onPickAudio, onReopenAudio, onRemoveAudio, pendingAudioName,
   vocalsAudio, onPickVocals, onReopenVocals, onRemoveVocals, pendingVocalsName,
-  vocalsOffsetMs = 0, onVocalsOffsetChange,
 }) {
   const reducedMotion = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
@@ -122,24 +125,39 @@ export default function KaraokeBallSyncStudio({
     setCanRedo(futureRef.current.length > 0); setCanUndo(true);
   }, [snapshot, restore]);
 
-  // ── Offset audio local ↔ vidéo — SÉPARÉ par piste (contrôlé par le parent, qui
-  // persiste chacun en localStorage). Un stem vocal exporté à part a très souvent
-  // son propre décalage par rapport au mix complet (delay de codage différent) —
-  // réutiliser le même offset pour les deux pistes désynchronise en changeant de
-  // piste (voir switchTrack, qui convertit toujours via le temps VIDÉO commun).
-  const activeOffsetMs = activeTrack === 'vocals' ? vocalsOffsetMs : offsetMs;
-  const setOffsetMs = activeTrack === 'vocals' ? onVocalsOffsetChange : onOffsetChange;
-  const offsetSec = activeOffsetMs / 1000;
+  // ── CALIBRATION audio local ↔ horloge CANONIQUE — par piste ET par fichier ──
+  // Un stem vocal exporté à part a très souvent son propre décalage par rapport au mix
+  // complet (delay d'encodage différent) : chaque piste a donc sa propre calibration, et
+  // switchTrack convertit toujours via le temps CANONIQUE, commun aux deux.
+  //
+  // `offsetSec` vaut null tant que la piste ACTIVE n'est pas calibrée pour CE fichier :
+  // aucune valeur par défaut, aucun zéro implicite. `offsetOrZero` ne sert qu'à
+  // l'AFFICHAGE (onde, scrubber) — jamais à créer du timing, la capture étant bloquée.
+  const cal = activeTrack === 'vocals' ? vocalsCalibration : fullCalibration;
+  const calStatus = cal?.status ?? 'missing';
+  const isCalibrated = calStatus === 'calibrated';
+  const offsetSec = cal?.offsetSeconds ?? null;
+  const offsetOrZero = offsetSec ?? 0;
+  const toCanonical = useCallback((tLocal) => localAudioTimeToCanonical(tLocal, offsetOrZero), [offsetOrZero]);
+  const toLocal = useCallback((tCanonical) => canonicalTimeToLocalAudio(tCanonical, offsetOrZero), [offsetOrZero]);
+
+  // Deux repères du MÊME événement musical : offset = canonique − local.
+  const [canonicalAnchor, setCanonicalAnchor] = useState('');
+  const [localAnchor, setLocalAnchor] = useState('');
+  const anchorOffset = computeAnchorOffset(parseFloat(canonicalAnchor), parseFloat(localAnchor));
+  const durMismatchInfo = durationMismatch(audio?.duration, videoDuration);
 
   // ── Intensité de la boule ──
   const [intensity, setIntensity] = useState(() => localStorage.getItem(INTENSITY_KEY) || 'classica');
   useEffect(() => { try { localStorage.setItem(INTENSITY_KEY, intensity); } catch { /* noop */ } }, [intensity]);
 
-  // ── Horloge : refs haute fréquence (video = audio + offset) ──
-  const audioTimeRef = useRef(Math.max(0, phraseStart - offsetSec));
+  // ── Horloge : refs haute fréquence. `videoTimeRef` est le temps CANONIQUE (celui des
+  // frases et de tout ce qui est enregistré) ; `audioTimeRef` est la position dans le
+  // fichier local. On passe TOUJOURS par toCanonical()/toLocal() entre les deux.
+  const audioTimeRef = useRef(clampLocalSeek(canonicalTimeToLocalAudio(phraseStart, offsetOrZero), 0));
   const videoTimeRef = useRef(phraseStart);
   const isPlayingRef = useRef(false);
-  const [scrubTime, setScrubTime] = useState(phraseStart); // temps VIDÉO affiché
+  const [scrubTime, setScrubTime] = useState(phraseStart); // temps CANONIQUE affiché
   const lastDispRef = useRef(0);
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -154,20 +172,21 @@ export default function KaraokeBallSyncStudio({
   const captureActiveRef = useRef(false); captureActiveRef.current = captureActive;
   const captureIdxRef = useRef(0);
 
-  const audioPhraseStart = phraseStart - offsetSec;
-  const audioPhraseEnd = phraseEnd - offsetSec;
+  const audioPhraseStart = toLocal(phraseStart);
+  const audioPhraseEnd = toLocal(phraseEnd);
   const loopStart = Math.max(0, audioPhraseStart - preRoll);
   const loopEnd = audio.duration ? Math.min(audio.duration, audioPhraseEnd + postRoll) : audioPhraseEnd + postRoll;
 
   useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
 
   const seekAudio = useCallback((tAudio) => {
-    const t = Math.max(0, tAudio);
+    // Seule la CIBLE MÉDIA est bornée ; les temps canoniques ne sont jamais réécrits.
+    const t = clampLocalSeek(tAudio, audio.duration);
     if (audioEl && audio.ready) { try { audioEl.currentTime = t; } catch { /* noop */ } }
     audioTimeRef.current = t;
-    videoTimeRef.current = t + offsetSec;
-    setScrubTime(t + offsetSec);
-  }, [audioEl, audio.ready, offsetSec]);
+    videoTimeRef.current = toCanonical(t);
+    setScrubTime(toCanonical(t));
+  }, [audioEl, audio.ready, audio.duration, toCanonical]);
 
   const play = useCallback(() => {
     if (!audio.ready || !audioEl) return;
@@ -197,19 +216,19 @@ export default function KaraokeBallSyncStudio({
     if (track === activeTrack) return;
     try { audioEl?.pause(); } catch { /* noop */ }
     setIsPlaying(false);
-    pendingSeekOnSwitchRef.current = audioTimeRef.current + offsetSec; // tempo de vídeo (offset da pista ATUAL, antes da troca)
+    pendingSeekOnSwitchRef.current = toCanonical(audioTimeRef.current); // calibration de la piste ACTUELLE, avant la bascule
     setActiveTrack(track);
-  }, [activeTrack, audioEl, offsetSec]);
+  }, [activeTrack, audioEl, toCanonical]);
   useEffect(() => {
-    const videoTime = pendingSeekOnSwitchRef.current;
-    if (videoTime == null) return;
+    const canonical = pendingSeekOnSwitchRef.current;
+    if (canonical == null) return;
     pendingSeekOnSwitchRef.current = null;
-    const t = Math.max(0, videoTime - offsetSec); // offsetSec já reflete a pista NOVA (pós-troca)
+    const t = clampLocalSeek(toLocal(canonical), audio.duration); // toLocal reflète déjà la piste NOUVELLE
     audioTimeRef.current = t;
-    videoTimeRef.current = videoTime;
-    setScrubTime(videoTime);
+    videoTimeRef.current = canonical;
+    setScrubTime(canonical);
     if (audioEl && audio.ready) { try { audioEl.currentTime = t; } catch { /* noop */ } }
-  }, [activeTrack, audioEl, audio.ready, offsetSec]);
+  }, [activeTrack, audioEl, audio.ready, audio.duration, toLocal]);
 
   // Au montage / changement de ligne : place la tête de lecture au début de la frase
   // (l'audio persistant du parent peut être resté à la position d'une autre ligne).
@@ -230,7 +249,7 @@ export default function KaraokeBallSyncStudio({
     const tick = () => {
       const a = audioEl ? audioEl.currentTime : 0;
       audioTimeRef.current = a;
-      videoTimeRef.current = a + offsetSec;
+      videoTimeRef.current = toCanonical(a);
       if (a >= loopEnd) {
         if (loop) { try { audioEl.currentTime = loopStart; } catch { /* noop */ } }
         else { audioEl?.pause(); setIsPlaying(false); return; }
@@ -256,19 +275,19 @@ export default function KaraokeBallSyncStudio({
         }
       }
       const now = performance.now();
-      if (now - lastDispRef.current > 90) { lastDispRef.current = now; setScrubTime(a + offsetSec); }
+      if (now - lastDispRef.current > 90) { lastDispRef.current = now; setScrubTime(toCanonical(a)); }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [isPlaying, loop, loopStart, loopEnd, offsetSec, audioEl, audio.duration]);
+  }, [isPlaying, loop, loopStart, loopEnd, toCanonical, audioEl, audio.duration]);
 
-  // Hors lecture : le scrubber pilote l'aperçu.
+  // Hors lecture : le scrubber (en temps CANONIQUE) pilote l'aperçu.
   useEffect(() => {
     if (isPlaying) return;
     videoTimeRef.current = scrubTime;
-    audioTimeRef.current = scrubTime - offsetSec;
-  }, [scrubTime, offsetSec, isPlaying]);
+    audioTimeRef.current = toLocal(scrubTime);
+  }, [scrubTime, toLocal, isPlaying]);
 
   // ── Capture par toque (Espaço) ──
   const captureNext = useCallback(() => {
@@ -283,14 +302,16 @@ export default function KaraokeBallSyncStudio({
   }, [commitWords, phraseStart, phraseEnd, restartPhrase, play, audio.ready]);
 
   const startCapture = useCallback(() => {
-    if (!audio.ready) return;
+    // Sans calibration valide pour CE fichier, chaque mot capté serait décalé du même
+    // écart inconnu : on ne crée jamais de timing depuis une horloge locale non calibrée.
+    if (!audio.ready || !isCalibrated) return;
     captureIdxRef.current = 0;
     setSelectedWord(0);
     seekAudio(loopStart);
     setCaptureActive(true);
     if (typeof document !== 'undefined') document.activeElement?.blur?.();
     play();
-  }, [audio.ready, seekAudio, loopStart, play]);
+  }, [audio.ready, isCalibrated, seekAudio, loopStart, play]);
   const stopCapture = useCallback(() => setCaptureActive(false), []);
 
   // ── Édition de mots ──
@@ -310,20 +331,50 @@ export default function KaraokeBallSyncStudio({
   const reviewWord = useCallback(() => {
     const w = wordsRef.current[selectedWordRef.current];
     if (!w || !audio.ready) return;
-    seekAudio(Math.max(0, w.start - offsetSec - 0.5));
+    // `w.start` est CANONIQUE → on cherche la position locale correspondante.
+    seekAudio(toLocal(w.start) - 0.5);
     play();
-  }, [audio.ready, seekAudio, offsetSec, play]);
+  }, [audio.ready, seekAudio, toLocal, play]);
 
-  // ── Waveform : glisser un marqueur de mot ──
+  // ── Calibration par repères (aucun timing karaokê n'est touché ici) ──
+  const markCanonicalAnchor = useCallback(() => {
+    const t = getCanonicalTime?.();
+    if (Number.isFinite(t)) setCanonicalAnchor(t.toFixed(2));
+  }, [getCanonicalTime]);
+  const markLocalAnchor = useCallback(() => {
+    if (audio.ready) setLocalAnchor(audioTimeRef.current.toFixed(2));
+  }, [audio.ready]);
+  const confirmAnchorCalibration = useCallback(() => {
+    if (anchorOffset === null) return;
+    cal?.saveCalibration?.({
+      offsetSeconds: anchorOffset, method: 'manual-anchor',
+      localDuration: audio.duration, canonicalDuration: videoDuration,
+    });
+  }, [anchorOffset, cal, audio.duration, videoDuration]);
+  const confirmZeroCalibration = useCallback(() => {
+    cal?.saveCalibration?.({
+      offsetSeconds: 0, method: 'explicit-zero',
+      localDuration: audio.duration, canonicalDuration: videoDuration,
+    });
+  }, [cal, audio.duration, videoDuration]);
+  // « Testar alinhamento » : navigue seulement, ne sauvegarde RIEN, ne touche ni au
+  // timing de frase, ni aux mots, ni au curseur du parent.
+  const testAlignment = useCallback(() => {
+    if (!audio.ready) return;
+    seekAudio(toLocal(phraseStartRef.current) - 0.5);
+    play();
+  }, [audio.ready, seekAudio, toLocal, play]);
+
+  // ── Waveform : glisser un marqueur de mot (l'onde est en temps LOCAL) ──
   const onMarkerDragStart = useCallback(() => { pushHistory(); }, [pushHistory]);
   const onMarkerDrag = useCallback((idx, tAudio) => {
-    setWords((w) => setWordStart(w, idx, tAudio + offsetSec, phraseStartRef.current, phraseEndRef.current));
-  }, [offsetSec]);
+    setWords((w) => setWordStart(w, idx, toCanonical(tAudio), phraseStartRef.current, phraseEndRef.current));
+  }, [toCanonical]);
 
   // ── Bornes de frase : glisser les poignées jaunes (início/fim) sur l'onde ──
   const onRegionDragStart = useCallback(() => { pushHistory(); }, [pushHistory]);
   const onRegionDrag = useCallback((edge, tAudio) => {
-    const tVideo = tAudio + offsetSec;
+    const tVideo = toCanonical(tAudio);
     if (edge === 'start') {
       const ns = Math.max(0, Math.min(tVideo, phraseEndRef.current - 0.1));
       setPhraseStart(ns);
@@ -333,7 +384,7 @@ export default function KaraokeBallSyncStudio({
       setPhraseEnd(ne);
       setWords((w) => normalizeWords(w, phraseStartRef.current, ne));
     }
-  }, [offsetSec]);
+  }, [toCanonical]);
   // Édition numérique d'une borne (un pas d'historique).
   const setPhraseBound = useCallback((edge, tVideo) => {
     if (!Number.isFinite(tVideo)) return;
@@ -464,11 +515,14 @@ export default function KaraokeBallSyncStudio({
   }, [pause, onNavigate, hasChange, buildResult]);
 
   // ── Dérivés d'affichage ──
-  const markers = useMemo(() => words.map((w) => ({ time: w.start - offsetSec, text: w.text })), [words, offsetSec]);
+  // Les marqueurs sont dessinés sur l'onde, donc en temps LOCAL : les débuts de mots
+  // (canoniques) y sont convertis, jamais l'inverse.
+  const markers = useMemo(() => words.map((w) => ({ time: toLocal(w.start), text: w.text })), [words, toLocal]);
   const issues = useMemo(() => validateLineWords(words, phraseStart, phraseEnd), [words, phraseStart, phraseEnd]);
   const errorCount = issues.filter((i) => i.level === 'error').length;
-  const durMismatch = audio.duration && videoDuration
-    && (Math.abs(audio.duration - videoDuration) > 2 || Math.abs(audio.duration - videoDuration) / videoDuration > 0.015);
+  // Écart de DURÉE — indépendant de la calibration : deux fichiers de durée identique
+  // peuvent avoir des débuts décalés, et un écart sévère reste signalé même calibré.
+  const durMismatch = durMismatchInfo.level === 'warn' || durMismatchInfo.level === 'severe';
   const selected = words[selectedWord];
 
   const stateLabel = captureActive ? 'Capturando' : isPlaying ? 'Reproduzindo' : dirty ? 'Alterações não salvas' : 'Pronto';
@@ -641,7 +695,8 @@ export default function KaraokeBallSyncStudio({
         <ControlGroup label="Palavras">
           <button
             onClick={captureActive ? stopCapture : startCapture}
-            disabled={!audio.ready}
+            disabled={!audio.ready || !isCalibrated}
+            title={!isCalibrated ? 'A captura de palavras está bloqueada até a calibração.' : undefined}
             aria-pressed={captureActive}
             className={`karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-40 ${captureActive ? 'animate-pulse border-red-400/60 bg-red-500/20 text-red-200' : 'border-purple-500/40 bg-purple-600/20 text-purple-200 hover:bg-purple-600/30'}`}
           >
@@ -707,16 +762,74 @@ export default function KaraokeBallSyncStudio({
           </div>
         </ControlGroup>
 
-        {/* Offset áudio / vídeo — SEPARADO por pista (completo vs voz) */}
-        <ControlGroup label={`Offset ${activeTrack === 'vocals' ? 'voz' : 'completo'} / vídeo`}>
-          <div className="flex items-center gap-0.5 rounded-lg border border-white/10 bg-white/5 p-0.5">
-            {[-100, -25, 25, 100].map((ms) => (
-              <button key={ms} onClick={() => setOffsetMs?.((o) => o + ms)} className="karaoke-focusable rounded px-1.5 py-1 text-[10px] font-semibold text-gray-300 hover:bg-white/10 hover:text-white">{ms > 0 ? '+' : ''}{ms}</button>
-            ))}
+        {/* Calibração áudio local ↔ vídeo — por pista E por ficheiro */}
+        <ControlGroup label={`Calibração — ${activeTrack === 'vocals' ? 'voz' : 'áudio local'}`}>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${
+              isCalibrated ? 'bg-emerald-500/20 text-emerald-200'
+                : calStatus === 'stale-file' ? 'bg-amber-500/20 text-amber-200'
+                : 'bg-red-500/20 text-red-200'
+            }`}>
+              {isCalibrated ? `Calibrado ${formatOffsetSeconds(offsetSec)}` : 'Não calibrado'}
+            </span>
+            {isCalibrated ? (
+              <>
+                <button onClick={testAlignment} disabled={!audio.ready} className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold hover:bg-white/10 disabled:opacity-40">
+                  <Crosshair size={12} /> Testar alinhamento
+                </button>
+                <button onClick={() => cal?.clearCalibration?.()} className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold hover:bg-white/10">
+                  <RotateCcw size={12} /> Refazer calibração
+                </button>
+              </>
+            ) : (
+              <>
+                <label className="flex items-center gap-1 text-[11px] text-gray-400">
+                  YouTube
+                  <input
+                    type="number" step="0.01" value={canonicalAnchor} placeholder="12.50"
+                    onChange={(e) => setCanonicalAnchor(e.target.value)}
+                    className="w-16 rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[11px] outline-none"
+                    aria-label="Ponto no YouTube em segundos"
+                  />s
+                </label>
+                <button onClick={markCanonicalAnchor} disabled={!getCanonicalTime} title="Lê a posição atual do vídeo YouTube" className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-semibold hover:bg-white/10 disabled:opacity-40">
+                  Marcar ponto no YouTube
+                </button>
+                <label className="flex items-center gap-1 text-[11px] text-gray-400">
+                  Áudio
+                  <input
+                    type="number" step="0.01" value={localAnchor} placeholder="10.75"
+                    onChange={(e) => setLocalAnchor(e.target.value)}
+                    className="w-16 rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[11px] outline-none"
+                    aria-label="Mesmo ponto no áudio local em segundos"
+                  />s
+                </label>
+                <button onClick={markLocalAnchor} disabled={!audio.ready} title="Usa a posição atual do áudio local" className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[10px] font-semibold hover:bg-white/10 disabled:opacity-40">
+                  Marcar o mesmo ponto no áudio
+                </button>
+                <span className="text-[11px] font-bold text-app-yellow">
+                  Diferença: {formatOffsetSeconds(anchorOffset)}
+                </span>
+                <button onClick={confirmAnchorCalibration} disabled={anchorOffset === null} className="karaoke-focusable inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-700 disabled:opacity-40">
+                  <Check size={12} /> Confirmar calibração
+                </button>
+                <button onClick={confirmZeroCalibration} disabled={!audio.fileName} title="Usa quando o MP3 e o vídeo começam exatamente no mesmo instante" className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-semibold hover:bg-white/10 disabled:opacity-40">
+                  Confirmar que os dois áudios começam juntos
+                </button>
+              </>
+            )}
           </div>
-          <input type="number" step="5" value={activeOffsetMs} onChange={(e) => { const v = parseInt(e.target.value, 10); setOffsetMs?.(Number.isFinite(v) ? v : 0); }} className="w-16 rounded border border-white/10 bg-white/5 px-1 py-0.5 text-[11px] outline-none" aria-label="Offset em ms" />
-          <span className="text-[11px] text-gray-500">ms</span>
-          <IconBtn onClick={() => setOffsetMs?.(0)} label="Repor offset (0)"><RotateCcw size={13} /></IconBtn>
+          {calStatus === 'stale-file' && (
+            <p className="inline-flex items-center gap-1.5 text-[11px] text-amber-200">
+              <AlertTriangle size={12} /> O arquivo de áudio mudou. Calibre novamente.
+            </p>
+          )}
+          {!isCalibrated && durMismatchInfo.level === 'ok' && (
+            <p className="text-[11px] text-gray-400">A duração é parecida, mas o início ainda precisa ser calibrado.</p>
+          )}
+          {!isCalibrated && (
+            <p className="text-[11px] text-red-200">A captura de palavras está bloqueada até a calibração.</p>
+          )}
         </ControlGroup>
       </section>
 
@@ -725,7 +838,7 @@ export default function KaraokeBallSyncStudio({
         <span className="tabular-nums text-gray-400">{fmt(scrubTime)} <span className="text-gray-600">/ {fmt(phraseEnd)}</span></span>
         <input
           type="range" min={Math.max(0, phraseStart - preRoll)} max={phraseEnd + postRoll} step={0.01} value={Math.min(Math.max(scrubTime, phraseStart - preRoll), phraseEnd + postRoll)}
-          onChange={(e) => { const v = parseFloat(e.target.value); setScrubTime(v); if (audio.ready) seekAudio(v - offsetSec); }}
+          onChange={(e) => { const v = parseFloat(e.target.value); setScrubTime(v); if (audio.ready) seekAudio(toLocal(v)); }}
           className="h-1.5 flex-1 accent-purple-500" aria-label="Posição na frase"
         />
         {captureActive && (

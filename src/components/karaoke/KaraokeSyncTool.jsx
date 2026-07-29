@@ -31,6 +31,7 @@ import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import KaraokeBallSyncStudio from '@/components/karaoke/ball-sync/KaraokeBallSyncStudio';
 import TimelineWaveform from '@/components/karaoke/ball-sync/TimelineWaveform';
 import { useLocalAudioSession } from '@/hooks/useLocalAudioSession';
+import { useAudioCalibration } from '@/hooks/useAudioCalibration';
 import { usePitchAnalysisWorker } from '@/hooks/usePitchAnalysisWorker';
 import { preAlignLines } from '@/lib/pitch/preAlign';
 import { saveAudioHandle, getAudioHandle, deleteAudioHandle } from '@/lib/audioHandleStore';
@@ -146,25 +147,11 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // Módulo B-v1 : pré-alinhamento por sinal vocal (segmentos) — worker partilhado.
   const { analyze: analyzePitch } = usePitchAnalysisWorker();
   const [preAligning, setPreAligning] = useState(false);
-  const audioOffsetKey = `karaoke-audio-offset-${song?.id}`;
-  const [audioOffsetMs, setAudioOffsetMs] = useState(() => {
-    const v = parseInt(typeof localStorage !== 'undefined' ? localStorage.getItem(audioOffsetKey) : '', 10);
-    return Number.isFinite(v) ? v : 0;
-  });
-  useEffect(() => { try { localStorage.setItem(audioOffsetKey, String(audioOffsetMs)); } catch { /* noop */ } }, [audioOffsetMs, audioOffsetKey]);
-  const audioOffsetSec = audioOffsetMs / 1000;
-
-  // Offset SÉPARÉ pour la piste « voz » du studio « Afinar palavras e bola » — un
-  // stem vocal exporté à part (Suno/UVR/Demucs) a très souvent son propre décalage
-  // par rapport au mix complet (delay d'encodage MP3, recadrage à l'export…), donc
-  // réutiliser l'offset du mix complet pour la voix désynchronise les deux pistes
-  // en changeant de piste. Mémorisé séparément, par chanson.
-  const vocalsOffsetKey = `karaoke-vocals-offset-${song?.id}`;
-  const [vocalsOffsetMs, setVocalsOffsetMs] = useState(() => {
-    const v = parseInt(typeof localStorage !== 'undefined' ? localStorage.getItem(vocalsOffsetKey) : '', 10);
-    return Number.isFinite(v) ? v : 0;
-  });
-  useEffect(() => { try { localStorage.setItem(vocalsOffsetKey, String(vocalsOffsetMs)); } catch { /* noop */ } }, [vocalsOffsetMs, vocalsOffsetKey]);
+  // L'offset audio local ↔ horloge canonique n'est PLUS un simple nombre par chanson :
+  // c'est une CALIBRATION par chanson, par piste ET par fichier (voir
+  // `useAudioCalibration` + `@/lib/audioClock`). Deux pistes séparées car un stem vocal
+  // exporté à part (Suno/UVR/Demucs) a très souvent son propre décalage par rapport au
+  // mix complet. Les hooks sont déclarés plus bas, après les deux sessions audio.
 
   // Le fichier audio est MÉMORISÉ localement (File System Access API + IndexedDB, par
   // chanson, sur cet appareil) pour éviter de le re-sélectionner à chaque session.
@@ -277,6 +264,20 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   const ballVocalsPendingHandleRef = useRef(null);
   const [pendingBallVocalsName, setPendingBallVocalsName] = useState(null);
   const ballVocalsFileInputRef = useRef(null);
+
+  // ── Calibration audio local ↔ horloge canonique (par chanson / piste / FICHIER) ──
+  // Aucune valeur par défaut : sans enregistrement pour CE fichier, `offsetSeconds` vaut
+  // null et la capture de mots est bloquée — « pas encore calibré » n'est plus confondu
+  // avec « calibré à zéro ». Rien de tout ceci ne part en base ni dans `timing_data`.
+  const fullCal = useAudioCalibration(song?.id, 'full', {
+    fileName: localAudio.fileName, fileSize: localAudio.fileSize, lastModified: localAudio.lastModified,
+  });
+  const vocalsCal = useAudioCalibration(song?.id, 'vocals', {
+    fileName: ballVocalsAudio.fileName, fileSize: ballVocalsAudio.fileSize, lastModified: ballVocalsAudio.lastModified,
+  });
+  // Alignement du tracé d'onde sur la frise de l'éditeur principal — AFFICHAGE seul
+  // (aucune capture n'en dépend), donc 0 tant que la piste n'est pas calibrée.
+  const audioOffsetSec = fullCal.offsetSeconds ?? 0;
 
   const onBallVocalsPick = (e) => {
     const f = e.target.files?.[0];
@@ -2851,10 +2852,9 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
             phraseEnd={effectiveEnd(idx) ?? (lines[idx].time + DEFAULT_LINE_WIDTH_SEC)}
             videoDuration={duration}
             audioSession={localAudio}
-            offsetMs={audioOffsetMs}
-            onOffsetChange={setAudioOffsetMs}
-            vocalsOffsetMs={vocalsOffsetMs}
-            onVocalsOffsetChange={setVocalsOffsetMs}
+            fullCalibration={fullCal}
+            vocalsCalibration={vocalsCal}
+            getCanonicalTime={getTime}
             onPickAudio={pickLocalAudio}
             onReopenAudio={reopenLocalAudio}
             onRemoveAudio={removeLocalAudio}

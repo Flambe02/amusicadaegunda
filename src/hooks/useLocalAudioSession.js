@@ -22,6 +22,10 @@ export function useLocalAudioSession() {
   const fileRef = useRef(null); // File atual, para decode sob demanda (getMonoSamples)
 
   const [fileName, setFileName] = useState(null);
+  // Métadonnées LOCALES du fichier (jamais envoyées) : servent à l'identité de
+  // calibration — une calibration ne doit jamais être réutilisée pour un autre fichier.
+  const [fileSize, setFileSize] = useState(null);
+  const [lastModified, setLastModified] = useState(null);
   const [duration, setDuration] = useState(0);
   const [peaks, setPeaks] = useState(null);
   const [ready, setReady] = useState(false);
@@ -45,6 +49,8 @@ export function useLocalAudioSession() {
     releaseUrl();
     fileRef.current = null;
     setFileName(null);
+    setFileSize(null);
+    setLastModified(null);
     setDuration(0);
     setPeaks(null);
     setReady(false);
@@ -64,6 +70,8 @@ export function useLocalAudioSession() {
     setPeaks(null);
     setLoading(true);
     setFileName(file.name || 'áudio local');
+    setFileSize(Number.isFinite(file.size) ? file.size : null);
+    setLastModified(Number.isFinite(file.lastModified) ? file.lastModified : null);
     fileRef.current = file;
 
     // 1) Lecture : object URL local (toujours, même si le décodage d'onde échoue).
@@ -136,5 +144,8 @@ export function useLocalAudioSession() {
     releaseUrl();
   }, [releaseUrl]);
 
-  return { audioRef, fileName, duration, peaks, ready, loading, error, load, clear, getMonoSamples };
+  return {
+    audioRef, fileName, fileSize, lastModified, duration, peaks, ready, loading, error,
+    load, clear, getMonoSamples,
+  };
 }
