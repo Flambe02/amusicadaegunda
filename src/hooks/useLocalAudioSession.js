@@ -20,6 +20,11 @@ export function useLocalAudioSession() {
   }
   const urlRef = useRef(null);
   const fileRef = useRef(null); // File atual, para decode sob demanda (getMonoSamples)
+  // Génération de chargement : le décodage est asynchrone (arrayBuffer + decodeAudioData).
+  // Un décodage encore en vol quand un AUTRE fichier est chargé, quand la piste est
+  // retirée (clear) ou après démontage doit être IGNORÉ — sinon il écrase les
+  // métadonnées du nouveau fichier, ou ressuscite une piste retirée.
+  const loadGenRef = useRef(0);
 
   const [fileName, setFileName] = useState(null);
   // Métadonnées LOCALES du fichier (jamais envoyées) : servent à l'identité de
@@ -40,6 +45,7 @@ export function useLocalAudioSession() {
   }, []);
 
   const clear = useCallback(() => {
+    loadGenRef.current += 1; // invalide tout décodage en vol
     const el = audioRef.current;
     if (el) {
       try { el.pause(); } catch { /* noop */ }
@@ -61,6 +67,9 @@ export function useLocalAudioSession() {
     if (!file) return;
     const el = audioRef.current;
     if (!el) { setError('Áudio não suportado neste navegador.'); return; }
+    loadGenRef.current += 1;
+    const gen = loadGenRef.current;
+    const isCurrent = () => loadGenRef.current === gen;
 
     // Nettoie une éventuelle session précédente avant de charger la nouvelle.
     try { el.pause(); } catch { /* noop */ }
@@ -87,16 +96,18 @@ export function useLocalAudioSession() {
       const AC = window.AudioContext || window.webkitAudioContext;
       ctx = new AC();
       const buffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      if (!isCurrent()) return; // fichier remplacé/retiré entre-temps → on n'écrase rien
       setDuration(buffer.duration);
       setPeaks(computePeaks(buffer));
       setReady(true);
     } catch {
+      if (!isCurrent()) return;
       // Le décodage peut échouer (certains m4a/aac) : la lecture reste possible sans onde.
       setError('Não foi possível gerar a forma de onda deste ficheiro. A reprodução continua disponível.');
       setReady(true);
     } finally {
       if (ctx) { try { await ctx.close(); } catch { /* noop */ } }
-      setLoading(false);
+      if (isCurrent()) setLoading(false);
     }
   }, [releaseUrl]);
 
@@ -139,6 +150,7 @@ export function useLocalAudioSession() {
 
   // Nettoyage au démontage.
   useEffect(() => () => {
+    loadGenRef.current += 1; // aucun décodage tardif ne doit toucher un état démonté
     const el = audioRef.current;
     if (el) { try { el.pause(); } catch { /* noop */ } el.removeAttribute('src'); }
     releaseUrl();

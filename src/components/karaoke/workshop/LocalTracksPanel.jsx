@@ -21,6 +21,10 @@ export default function LocalTracksPanel({
   previewRole, syncRole,
   onPick, onRemove, onPreview, onUseForSync, onCalibrate, onCopyOriginalCalibration,
   onVerifyAlignment,
+  // Calibration LIÉE À UN RÔLE (cible gelée) — étape 6.1
+  calTarget, calAnchors, calAnchorOffset, onMarkCalAnchor, onApplyCalibration, onCancelCalibration,
+  // Comparaison original ↔ stem — étape 6.1
+  verifySession, canConfirm, onListen, onConfirmAligned, onRejectAligned,
 }) {
   return (
     <section aria-label="Faixas locais" className="border-t border-white/10 bg-black/20 px-3 py-2">
@@ -28,6 +32,90 @@ export default function LocalTracksPanel({
         <h3 className="text-[9px] font-bold uppercase tracking-wider text-white/35">Faixas locais</h3>
         <p className="text-[10px] text-emerald-300/80">{LOCAL_ONLY_NOTICE}</p>
       </div>
+
+      {/* ══ Calibração da faixa selecionada — alvo CONGELADO no clique ══ */}
+      {calTarget && (
+        <div
+          role="group"
+          aria-label={`Calibrar ${TRACK_LABEL[calTarget.role]}`}
+          className="mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-app-yellow/40 bg-app-yellow/[0.07] p-2 text-[10px]"
+        >
+          <span className="font-bold text-app-yellow">Calibrar · {TRACK_LABEL[calTarget.role]}</span>
+          <label className="flex items-center gap-1 text-gray-300">
+            YouTube
+            <input
+              type="number" step="0.01" readOnly value={calAnchors.canonical}
+              aria-label="Ponto no YouTube em segundos"
+              className="w-16 rounded border border-white/10 bg-white/5 px-1 py-0.5 outline-none"
+            />s
+          </label>
+          <button type="button" onClick={() => onMarkCalAnchor('canonical')}
+            className="karaoke-focusable rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-semibold hover:bg-white/10">
+            Marcar ponto no YouTube
+          </button>
+          <label className="flex items-center gap-1 text-gray-300">
+            Faixa
+            <input
+              type="number" step="0.01" readOnly value={calAnchors.local}
+              aria-label="Mesmo ponto nesta faixa em segundos"
+              className="w-16 rounded border border-white/10 bg-white/5 px-1 py-0.5 outline-none"
+            />s
+          </label>
+          <button type="button" onClick={() => onMarkCalAnchor('local')}
+            className="karaoke-focusable rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-semibold hover:bg-white/10">
+            Marcar o mesmo ponto na faixa
+          </button>
+          <span className="font-bold text-app-yellow">Diferença: {formatOffsetSeconds(calAnchorOffset)}</span>
+          <button type="button" onClick={() => onApplyCalibration(calAnchorOffset, 'manual-anchor')}
+            disabled={calAnchorOffset === null}
+            className="karaoke-focusable rounded-lg bg-emerald-600 px-2 py-1 font-bold text-white hover:bg-emerald-700 disabled:opacity-40">
+            Confirmar calibração
+          </button>
+          <button type="button" onClick={() => onApplyCalibration(0, 'explicit-zero')}
+            className="karaoke-focusable rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-semibold hover:bg-white/10">
+            Começam juntos (0 s)
+          </button>
+          <button type="button" onClick={onCancelCalibration}
+            className="karaoke-focusable ml-auto rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-semibold hover:bg-white/10">
+            Cancelar
+          </button>
+        </div>
+      )}
+
+      {/* ══ Comparação original ↔ faixa — as DUAS escutas são obrigatórias ══ */}
+      {verifySession && (
+        <div
+          role="group"
+          aria-label={`Verificar alinhamento de ${TRACK_LABEL[verifySession.role]}`}
+          className="mb-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/[0.07] p-2 text-[10px]"
+        >
+          <span className="font-bold text-emerald-200">
+            Verificar alinhamento · {TRACK_LABEL[verifySession.role]}
+          </span>
+          <span className="text-gray-400">{ALIGNMENT_HINT}</span>
+          <button type="button" onClick={() => onListen('original')} aria-pressed={verifySession.heardOriginal}
+            className={`karaoke-focusable inline-flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold ${
+              verifySession.heardOriginal ? 'border-emerald-500/50 bg-emerald-600/20 text-emerald-100' : 'border-white/10 bg-white/5 hover:bg-white/10'
+            }`}>
+            {verifySession.heardOriginal && <Check size={10} />} Ouvir original
+          </button>
+          <button type="button" onClick={() => onListen('stem')} aria-pressed={verifySession.heardStem}
+            className={`karaoke-focusable inline-flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold ${
+              verifySession.heardStem ? 'border-emerald-500/50 bg-emerald-600/20 text-emerald-100' : 'border-white/10 bg-white/5 hover:bg-white/10'
+            }`}>
+            {verifySession.heardStem && <Check size={10} />} Ouvir esta faixa
+          </button>
+          <button type="button" onClick={onConfirmAligned} disabled={!canConfirm}
+            title={canConfirm ? undefined : 'Ouça as duas faixas antes de confirmar.'}
+            className="karaoke-focusable rounded-lg bg-emerald-600 px-2 py-1 font-bold text-white hover:bg-emerald-700 disabled:opacity-40">
+            Está alinhada
+          </button>
+          <button type="button" onClick={onRejectAligned}
+            className="karaoke-focusable rounded-lg border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-semibold text-amber-200 hover:bg-amber-500/20">
+            Precisa recalibrar
+          </button>
+        </div>
+      )}
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {ROLES.map((role) => {

@@ -32,10 +32,16 @@ import {
   captureSourceLabel, compensateLatency,
 } from '@/lib/karaokeWorkshop';
 import {
-  TRACK_ROLE, emptyTrack, compareTrackDuration, canUseForSync, switchTrackSeek,
+  TRACK_ROLE, TRACK_LABEL, emptyTrack, compareTrackDuration, canUseForSync, switchTrackSeek,
   sharedCalibrationPayload, syncSourceLabelForRole, captureSourceForTracks,
-  REMOVE_TRACK_CONFIRM, SHARED_CALIBRATION_CONFIRM, ALIGNMENT_HINT, TRACK_CAPTURE_BLOCKED,
+  REMOVE_TRACK_CONFIRM, SHARED_CALIBRATION_CONFIRM, ALIGNMENT_HINT,
+  TRACK_CAPTURE_BLOCKED, TRACK_REVIEW_BLOCKED,
 } from '@/lib/localTracks';
+import {
+  CALIBRATION_STALE_MESSAGE, startCalibrationTarget, calibrationTargetValid,
+  startVerification, markHeard, canConfirmAlignment, verificationIsStale, comparisonSeekFor,
+} from '@/lib/trackVerification';
+import { computeAnchorOffset, formatOffsetSeconds } from '@/lib/audioClock';
 import { useLocalTransport } from '@/hooks/useLocalTransport';
 import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
 import LocalTracksPanel from '@/components/karaoke/workshop/LocalTracksPanel';
@@ -2000,20 +2006,150 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     toast({ title: 'Calibração copiada', description: ALIGNMENT_HINT });
   }, [sessionForRole, localAudio.duration, fullCal.record, tracks, calForRole, duration, toast]);
 
-  /** Confirme l'alignement après une écoute comparée (métadonnée locale uniquement). */
-  const verifyTrackAlignment = useCallback((role) => {
-    const cal = calForRole(role);
-    if (cal.offsetSeconds == null) return;
+  // ── Calibration LIÉE À UN RÔLE (étape 6.1) ──
+  // Auparavant « Calibrar » ouvrait le studio de mots sans transmettre le rôle : la
+  // calibration atterrissait sur la piste que le studio avait sous la main, et
+  // l'INSTRUMENTAL n'était donc jamais calibrable. La cible (rôle + identité de fichier)
+  // est maintenant GELÉE à l'ouverture et revalidée avant écriture.
+  const [calTarget, setCalTarget] = useState(null);
+  const [calAnchors, setCalAnchors] = useState({ canonical: '', local: '' });
+
+  const openCalibrationFor = useCallback((role) => {
+    const identity = calForRole(role).identity;
+    const target = startCalibrationTarget({ role, fileIdentity: identity });
+    if (!target) {
+      toast({ title: 'Selecione um arquivo', description: 'Escolha o arquivo desta faixa antes de calibrar.', variant: 'destructive' });
+      return;
+    }
+    setCalAnchors({ canonical: '', local: '' });
+    setCalTarget(target);
+    selectPreviewRole(role); // on écoute la piste qu'on calibre
+  }, [calForRole, selectPreviewRole, toast]);
+
+  const markCalAnchor = useCallback((which) => {
+    if (!calTarget) return;
+    if (which === 'canonical') {
+      const t = getTime();
+      if (Number.isFinite(t)) setCalAnchors((a) => ({ ...a, canonical: t.toFixed(2) }));
+      return;
+    }
+    const el = sessionForRole(calTarget.role)?.audioRef?.current;
+    if (el && Number.isFinite(el.currentTime)) setCalAnchors((a) => ({ ...a, local: el.currentTime.toFixed(2) }));
+  }, [calTarget, sessionForRole]);
+
+  const calAnchorOffset = calTarget
+    ? computeAnchorOffset(parseFloat(calAnchors.canonical), parseFloat(calAnchors.local))
+    : null;
+
+  const applyRoleCalibration = useCallback((offsetSeconds, method) => {
+    if (!calTarget) return;
+    const role = calTarget.role;
     const s = sessionForRole(role);
+    // Revalidation : le fichier a-t-il changé pendant que le panneau était ouvert ?
+    const check = calibrationTargetValid(calTarget, {
+      role, fileIdentity: calForRole(role).identity, ready: Boolean(s?.ready),
+    });
+    if (!check.ok) {
+      setCalTarget(null);
+      toast({ title: 'Calibração rejeitada', description: check.message, variant: 'destructive' });
+      return;
+    }
+    calForRole(role).saveCalibration({
+      offsetSeconds, method,
+      verification: method === 'copied-from-original' ? 'pending' : 'verified',
+      localDuration: s?.duration, canonicalDuration: duration,
+    });
+    setCalTarget(null);
+    setVerifySession(null);
+    toast({ title: 'Calibração guardada', description: `${TRACK_LABEL[role]} · ${formatOffsetSeconds(offsetSeconds)}` });
+  }, [calTarget, sessionForRole, calForRole, duration, toast]);
+
+  // ── Session de comparaison original ↔ stem (étape 6.1) ──
+  // Confirmer un alignement exige d'avoir RÉELLEMENT écouté les deux pistes au même point
+  // canonique. Un clic seul ne prouvait rien.
+  const [verifySession, setVerifySession] = useState(null);
+
+  const verifyContext = useCallback((role) => ({
+    role,
+    canonicalPoint: linesRef.current[cursorRef.current]?.time ?? null,
+    fileIdentity: calForRole(role).identity,
+    offsetSeconds: offsetOf(role),
+  }), [calForRole, offsetOf]);
+
+  /** Ouvre (ou réinitialise) la comparaison pour ce stem. */
+  const openVerification = useCallback((role) => {
+    const ctx = verifyContext(role);
+    if (!Number.isFinite(ctx.canonicalPoint)) {
+      toast({ title: 'Escolha uma frase marcada', description: 'Selecione uma frase com início marcado para comparar.', variant: 'destructive' });
+      return;
+    }
+    setVerifySession(startVerification(ctx));
+  }, [verifyContext, toast]);
+
+  /** Une des deux écoutes : même point canonique, offset de la piste visée. */
+  const listenComparison = useCallback((which) => {
+    setVerifySession((prev) => {
+      if (!prev) return prev;
+      const role = which === 'original' ? TRACK_ROLE.ORIGINAL : prev.role;
+      const session = sessionForRole(role);
+      const seek = comparisonSeekFor(prev, offsetOf(role), which, session?.duration);
+      if (seek.targetLocalTime == null) {
+        toast({ title: 'Faixa não calibrada', description: TRACK_REVIEW_BLOCKED, variant: 'destructive' });
+        return prev;
+      }
+      // Une seule piste à la fois ; toute boucle de réécoute est arrêtée avant de basculer.
+      localTransport.pause();
+      localTransport.stopReview();
+      selectPreviewRole(role);
+      pendingPreviewSeekRef.current = seek.targetLocalTime;
+      return markHeard(prev, which);
+    });
+  }, [sessionForRole, offsetOf, localTransport, selectPreviewRole, toast]);
+
+  /** « Está alinhada » — disponible seulement après les DEUX écoutes. */
+  const confirmAlignment = useCallback(() => {
+    const s = verifySession;
+    if (!canConfirmAlignment(s)) return;
+    if (verificationIsStale(s, verifyContext(s.role))) {
+      setVerifySession(null);
+      toast({ title: 'Comparação expirada', description: CALIBRATION_STALE_MESSAGE, variant: 'destructive' });
+      return;
+    }
+    const cal = calForRole(s.role);
     cal.saveCalibration({
       offsetSeconds: cal.offsetSeconds,
       method: cal.record?.method || 'manual-anchor',
       verification: 'verified',
-      localDuration: s?.duration,
+      localDuration: sessionForRole(s.role)?.duration,
       canonicalDuration: duration,
     });
+    setVerifySession(null);
     toast({ title: 'Alinhamento confirmado', description: 'Nenhum tempo do karaokê foi alterado.' });
-  }, [calForRole, sessionForRole, duration, toast]);
+  }, [verifySession, verifyContext, calForRole, sessionForRole, duration, toast]);
+
+  /** « Precisa recalibrar » — revient à un état non vérifié et propose la calibration. */
+  const rejectAlignment = useCallback(() => {
+    const s = verifySession;
+    setVerifySession(null);
+    if (!s) return;
+    const cal = calForRole(s.role);
+    if (cal.offsetSeconds != null) {
+      cal.saveCalibration({
+        offsetSeconds: cal.offsetSeconds,
+        method: cal.record?.method || 'manual-anchor',
+        verification: 'pending',
+        localDuration: sessionForRole(s.role)?.duration,
+        canonicalDuration: duration,
+      });
+    }
+    openCalibrationFor(s.role);
+  }, [verifySession, calForRole, sessionForRole, duration, openCalibrationFor]);
+
+  // Périmée dès que le fichier, la calibration ou le point de comparaison change.
+  useEffect(() => {
+    if (!verifySession) return;
+    if (verificationIsStale(verifySession, verifyContext(verifySession.role))) setVerifySession(null);
+  }, [verifySession, verifyContext]);
 
   const onInstrumentalPick = (e) => {
     const f = e.target.files?.[0];
@@ -3140,9 +3276,20 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
               onRemove={removeTrackRole}
               onPreview={selectPreviewRole}
               onUseForSync={selectSyncRole}
-              onCalibrate={() => changeEditingMode(EDITING_MODE.WORD)}
+              onCalibrate={openCalibrationFor}
               onCopyOriginalCalibration={copyOriginalCalibration}
-              onVerifyAlignment={verifyTrackAlignment}
+              onVerifyAlignment={openVerification}
+              calTarget={calTarget}
+              calAnchors={calAnchors}
+              calAnchorOffset={calAnchorOffset}
+              onMarkCalAnchor={markCalAnchor}
+              onApplyCalibration={applyRoleCalibration}
+              onCancelCalibration={() => setCalTarget(null)}
+              verifySession={verifySession}
+              canConfirm={canConfirmAlignment(verifySession)}
+              onListen={listenComparison}
+              onConfirmAligned={confirmAlignment}
+              onRejectAligned={rejectAlignment}
             />
 
             {/* ══ Barra do ateliê : áudio local, calibração, revisão, modo ══ */}
