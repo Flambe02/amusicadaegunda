@@ -199,9 +199,16 @@ class PWAInstaller {
   listenForServiceWorkerControllerChange() {
     if (!('serviceWorker' in navigator)) return
 
+    // On ne recharge QUE si la page avait deja un controller : un changement de
+    // controller sans controller prealable = premiere prise de controle du SW
+    // (clients.claim), pas une mise a jour acceptee par l'utilisateur. Recharger
+    // dans ce cas coupe la page en plein chargement et fait avorter les requetes
+    // Supabase en vol -> catalogue karaoke vide.
+    const hadController = Boolean(navigator.serviceWorker.controller)
+
     let refreshing = false
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (refreshing) return
+      if (refreshing || !hadController) return
       refreshing = true
       window.location.reload()
     })

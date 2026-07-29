@@ -79,7 +79,7 @@ async function exportSongs() {
           slug: slug,
           name: song.title,
           datePublished: song.release_date,
-          image: song.cover_image || '/icons/icon-512x512.png',
+          image: song.cover_image || '/icons/pwa/icon-512x512.png',
           audioUrl: song.spotify_url || song.youtube_url || '',
           duration: song.duration || 'PT3M',
           inLanguage: 'pt-BR',

@@ -43,6 +43,12 @@ export default function usePWAInstall() {
     if (!('serviceWorker' in navigator)) return undefined;
 
     let refreshing = false;
+    // On ne recharge QUE si la page avait déjà un controller : un changement de
+    // controller sans controller préalable = première prise de contrôle du SW,
+    // pas une mise à jour acceptée. Recharger dans ce cas coupe la page en plein
+    // chargement et fait avorter les requêtes Supabase en vol → l'app retombe sur
+    // le catalogue statique (sans `lrc_content`) et /karaoke se vide.
+    const hadController = Boolean(navigator.serviceWorker.controller);
 
     navigator.serviceWorker.register('/sw.js', {
       scope: '/',
@@ -65,7 +71,7 @@ export default function usePWAInstall() {
     }).catch(() => {});
 
     const onControllerChange = () => {
-      if (refreshing) return;
+      if (refreshing || !hadController) return;
       refreshing = true;
       window.location.reload();
     };

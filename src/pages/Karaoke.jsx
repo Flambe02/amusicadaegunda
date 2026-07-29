@@ -33,6 +33,8 @@ export default function KaraokePage() {
     results,
     totalEligible,
     isLoading,
+    error,
+    reload,
     themes,
     months,
     filters,
@@ -150,6 +152,8 @@ export default function KaraokePage() {
             <div className="flex items-center justify-center gap-2 py-20 text-white/50">
               <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" /> A montar o palco…
             </div>
+          ) : error ? (
+            <KaraokeEmptyState variant="error" onRetry={reload} />
           ) : totalEligible === 0 ? (
             <KaraokeEmptyState variant="empty" />
           ) : results.length === 0 ? (

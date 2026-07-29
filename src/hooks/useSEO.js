@@ -104,7 +104,7 @@ export function useSEO({
           "url": siteUrl,
           "logo": {
             "@type": "ImageObject",
-            "url": `${siteUrl}/icons/icon-512x512.png`,
+            "url": `${siteUrl}/icons/pwa/icon-512x512.png`,
             "width": 512,
             "height": 512
           },

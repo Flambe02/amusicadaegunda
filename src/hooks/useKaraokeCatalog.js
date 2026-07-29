@@ -53,11 +53,22 @@ export function useKaraokeCatalog() {
     setIsLoading(true);
     setError(null);
     try {
-      const all = await Song.list('-release_date');
-      const eligible = (all || [])
+      const rows = (await Song.list('-release_date')) || [];
+      const eligible = rows
         .filter((s) => isKaraokePublished(s))
         // pré-calcule l'index de recherche une seule fois par chanson
         .map((s) => ({ ...s, __searchIndex: buildSearchIndex(s) }));
+
+      // `Song.list` avale ses erreurs : en cas de panne il retombe sur le catalogue
+      // statique (`__staticFallback`, sans `lrc_content`) ou renvoie []. Dans les
+      // deux cas on obtient 0 éligible. Sans ce test, une panne réseau s'afficherait
+      // comme « Nenhuma música disponível para karaokê » — un mensonge, puisque les
+      // karaokês existent. On remonte donc une erreur pour proposer « tentar de novo ».
+      const reachedSupabase = rows.some((s) => s && !s.__staticFallback);
+      if (eligible.length === 0 && !reachedSupabase) {
+        throw new Error('Catálogo karaokê indisponível (falha ao carregar as músicas)');
+      }
+
       setSongs(eligible);
     } catch (err) {
       setError(err);

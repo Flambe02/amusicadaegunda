@@ -17,7 +17,13 @@ let currentStorageMode = 'supabase';
 let useSupabase = true; // Forcer Supabase
 let staticSongsCache = null;
 
+// ⚠️ Le catalogue statique `content/songs.json` est un filet de secours PARTIEL :
+// il ne contient ni `lrc_content`, ni `karaoke_published`, ni `timing_data`. Toute
+// vue qui dépend du karaokê (ex. /karaoke) verra donc 0 chanson éligible avec ces
+// données. Le drapeau `__staticFallback` permet à ces vues de distinguer
+// « vraiment aucun karaokê publié » d'une simple panne de chargement Supabase.
 const normalizeStaticSong = (song, index) => ({
+  __staticFallback: true,
   id: song.id ?? `static-${index + 1}`,
   slug: song.slug || null,
   title: song.name || song.title || 'Sans titre',

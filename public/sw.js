@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9.0.2';
+const CACHE_VERSION = 'v9.1.0';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
 const SHELL_MANIFEST_URL = '/sw-assets.json';
 
@@ -54,8 +54,17 @@ async function precacheShell() {
   );
 }
 
+// ⚠️ PAS de `skipWaiting()` ici, et PAS de `clients.claim()` dans `activate`.
+// Prendre le contrôle d'une page DÉJÀ en cours de chargement fait avorter par le
+// navigateur toutes ses requêtes réseau en vol (net::ERR_ABORTED), y compris les
+// appels Supabase → l'app bascule sur le catalogue statique et /karaoke affiche
+// « Nenhuma música disponível para karaokê ». Le `controllerchange` déclenchait
+// en plus un `location.reload()` (pwa-install.js) en plein chargement.
+// Une nouvelle version reste donc en `waiting` jusqu'à ce que l'utilisateur
+// accepte la bannière de mise à jour (message SKIP_WAITING ci-dessous) ou ferme
+// tous ses onglets — comportement standard et sûr.
 self.addEventListener('install', (event) => {
-  event.waitUntil(precacheShell().then(() => self.skipWaiting()));
+  event.waitUntil(precacheShell());
 });
 
 self.addEventListener('activate', (event) => {
@@ -68,8 +77,7 @@ self.addEventListener('activate', (event) => {
             .map((cacheName) => caches.delete(cacheName))
         )
       ),
-      self.registration.navigationPreload?.enable?.().catch(() => undefined),
-      self.clients.claim()
+      self.registration.navigationPreload?.enable?.().catch(() => undefined)
     ])
   );
 });
@@ -100,7 +108,12 @@ self.addEventListener('fetch', (event) => {
       (async () => {
         try {
           const preloadResponse = await event.preloadResponse;
-          if (preloadResponse) {
+          // Une réponse `opaqueredirect` (navigation preload = redirect:'manual')
+          // ne peut PAS être renvoyée à une navigation en mode redirect:'follow' :
+          // le navigateur transforme ça en erreur réseau. GitHub Pages redirige
+          // `/karaoke` → `/karaoke/`, donc le cas est courant → on ignore le
+          // preload et on refait un fetch normal qui, lui, suit la redirection.
+          if (preloadResponse && preloadResponse.type !== 'opaqueredirect' && !preloadResponse.redirected) {
             const copy = preloadResponse.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
             return preloadResponse;
@@ -111,9 +124,11 @@ self.addEventListener('fetch', (event) => {
 
         return fetch(request)
           .then((response) => {
-            if (response && response.ok) {
+            // `cache.put` rejette sur une réponse redirigée → on ne met en cache
+            // que les réponses directes (le /karaoke → /karaoke/ est déjà suivi).
+            if (response && response.ok && !response.redirected) {
               const copy = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
             }
             return response;
           })

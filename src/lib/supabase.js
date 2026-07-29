@@ -25,8 +25,18 @@ const supabaseAnonKey = (envKey && !envKey.startsWith('eyJ'))
 // statique s'affiche vite. Chaîne un éventuel signal appelant (auth) pour ne pas
 // casser ses propres annulations.
 const SUPABASE_FETCH_TIMEOUT_MS = 7000
-function fetchWithTimeout(input, init = {}) {
-  if (typeof AbortController === 'undefined') return fetch(input, init)
+// 🔁 Une seule nouvelle tentative pour les lectures (GET/HEAD). Motif principal :
+// le navigateur AVORTE les requêtes en vol (net::ERR_ABORTED → « TypeError: Failed
+// to fetch ») quand un Service Worker prend le contrôle de la page pendant son
+// chargement (install/update). Sans retry, ce hoquet purement transitoire fait
+// basculer l'app sur le catalogue statique `content/songs.json` — qui ne contient
+// PAS `lrc_content` — et la page /karaoke affiche alors « Nenhuma música
+// disponível para karaokê » alors que Supabase répond parfaitement.
+// Uniquement GET/HEAD : idempotent, et le body d'un POST/PATCH peut être un
+// stream déjà consommé (non rejouable).
+const SUPABASE_RETRY_DELAY_MS = 400
+
+function fetchOnce(input, init) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(new DOMException('Supabase request timeout', 'TimeoutError')), SUPABASE_FETCH_TIMEOUT_MS)
   const callerSignal = init.signal
@@ -35,6 +45,23 @@ function fetchWithTimeout(input, init = {}) {
     else callerSignal.addEventListener('abort', () => controller.abort(callerSignal.reason), { once: true })
   }
   return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
+async function fetchWithTimeout(input, init = {}) {
+  if (typeof AbortController === 'undefined') return fetch(input, init)
+
+  const method = String(init.method || 'GET').toUpperCase()
+  const canRetry = method === 'GET' || method === 'HEAD'
+
+  try {
+    return await fetchOnce(input, init)
+  } catch (error) {
+    // L'appelant a annulé lui-même (navigation, cleanup React…) → on respecte.
+    if (!canRetry || init.signal?.aborted) throw error
+    await new Promise((resolve) => setTimeout(resolve, SUPABASE_RETRY_DELAY_MS))
+    if (init.signal?.aborted) throw error
+    return fetchOnce(input, init)
+  }
 }
 
 // Client Supabase avec persistance de session.
