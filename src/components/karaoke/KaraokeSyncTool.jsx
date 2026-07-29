@@ -28,11 +28,17 @@ import {
 import {
   EDITING_MODE, REVIEW_MARGIN_SEC, phraseReviewWindow, canReviewLocally,
   reviewBlockedReason, issueTarget,
-  CAPTURE_SOURCE, captureSourceFor, canonicalCaptureTime, captureBlockedMessage,
+  CAPTURE_SOURCE, canonicalCaptureTime, captureBlockedMessage,
   captureSourceLabel, compensateLatency,
 } from '@/lib/karaokeWorkshop';
+import {
+  TRACK_ROLE, emptyTrack, compareTrackDuration, canUseForSync, switchTrackSeek,
+  sharedCalibrationPayload, syncSourceLabelForRole, captureSourceForTracks,
+  REMOVE_TRACK_CONFIRM, SHARED_CALIBRATION_CONFIRM, ALIGNMENT_HINT, TRACK_CAPTURE_BLOCKED,
+} from '@/lib/localTracks';
 import { useLocalTransport } from '@/hooks/useLocalTransport';
 import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
+import LocalTracksPanel from '@/components/karaoke/workshop/LocalTracksPanel';
 import { distributeWords } from '@/lib/wordDistribution';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
@@ -283,6 +289,61 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   const vocalsCal = useAudioCalibration(song?.id, 'vocals', {
     fileName: ballVocalsAudio.fileName, fileSize: ballVocalsAudio.fileSize, lastModified: ballVocalsAudio.lastModified,
   });
+  // ── Troisième rôle : INSTRUMENTAL (stem UVR5) ──
+  // Le dépôt avait déjà deux sessions locales (mix complet = « áudio original », voix) et
+  // un magasin de calibration scopé par piste. On ajoute le rôle manquant, avec sa propre
+  // session et sa propre calibration — jamais partagée sans action explicite.
+  const instrumentalAudio = useLocalAudioSession();
+  const instrumentalRef = useRef(instrumentalAudio); instrumentalRef.current = instrumentalAudio;
+  const instrumentalFileInputRef = useRef(null);
+  const instrumentalCal = useAudioCalibration(song?.id, 'instrumental', {
+    fileName: instrumentalAudio.fileName,
+    fileSize: instrumentalAudio.fileSize,
+    lastModified: instrumentalAudio.lastModified,
+  });
+
+  // Registre des trois pistes — vue unique, dérivée des sessions existantes.
+  const sessionForRole = useCallback((role) => {
+    if (role === TRACK_ROLE.INSTRUMENTAL) return instrumentalRef.current;
+    if (role === TRACK_ROLE.VOCALS) return ballVocalsRef.current;
+    return localAudioRef.current;
+  }, []);
+  const calForRole = useCallback((role) => {
+    if (role === TRACK_ROLE.INSTRUMENTAL) return instrumentalCal;
+    if (role === TRACK_ROLE.VOCALS) return vocalsCal;
+    return fullCal;
+  }, [instrumentalCal, vocalsCal, fullCal]);
+
+  const trackFor = (role, session) => ({
+    ...emptyTrack(role),
+    fileName: session.fileName,
+    fileSize: session.fileSize,
+    lastModified: session.lastModified,
+    objectUrl: session.fileName ? 'session' : null,
+    duration: session.duration,
+    loadStatus: session.loading ? 'loading' : session.fileName ? (session.ready ? 'ready' : 'loading') : 'empty',
+    error: session.error || null,
+  });
+  // Mémoïsé : sans ça l'objet change à chaque render et invalide les useCallback qui en
+  // dépendent (choix de source, retrait de piste…).
+  const tracks = useMemo(() => ({
+    [TRACK_ROLE.ORIGINAL]: trackFor(TRACK_ROLE.ORIGINAL, localAudio),
+    [TRACK_ROLE.INSTRUMENTAL]: trackFor(TRACK_ROLE.INSTRUMENTAL, instrumentalAudio),
+    [TRACK_ROLE.VOCALS]: trackFor(TRACK_ROLE.VOCALS, ballVocalsAudio),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [
+    localAudio.fileName, localAudio.fileSize, localAudio.lastModified, localAudio.duration, localAudio.ready, localAudio.loading, localAudio.error,
+    instrumentalAudio.fileName, instrumentalAudio.fileSize, instrumentalAudio.lastModified, instrumentalAudio.duration, instrumentalAudio.ready, instrumentalAudio.loading, instrumentalAudio.error,
+    ballVocalsAudio.fileName, ballVocalsAudio.fileSize, ballVocalsAudio.lastModified, ballVocalsAudio.duration, ballVocalsAudio.ready, ballVocalsAudio.loading, ballVocalsAudio.error,
+  ]);
+  const calibrationStatusOf = useCallback((role) => calForRole(role).status, [calForRole]);
+  const offsetOf = useCallback((role) => calForRole(role).offsetSeconds, [calForRole]);
+  const verificationOf = useCallback((role) => calForRole(role).record?.verification ?? null, [calForRole]);
+
+  // Piste de LECTURE et piste de SYNCHRONISATION — deux notions distinctes. Changer la
+  // lecture ne change jamais la source de capture.
+  const [previewRole, setPreviewRole] = useState(TRACK_ROLE.ORIGINAL);
+  const [syncRole, setSyncRole] = useState(TRACK_ROLE.ORIGINAL);
   // Alignement du tracé d'onde sur la frise de l'éditeur principal — AFFICHAGE seul
   // (aucune capture n'en dépend), donc 0 tant que la piste n'est pas calibrée.
   const audioOffsetSec = fullCal.offsetSeconds ?? 0;
@@ -720,16 +781,19 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // l'atelier ne puisse jamais annoncer « áudio local » tout en captant YouTube.
   // Sans fichier local → YouTube (inchangé) ; fichier calibré → audio local converti en
   // canonique ; fichier NON calibré → bloqué, jamais de repli silencieux.
-  const captureSource = captureSourceFor({
-    hasLocalFile: Boolean(localAudio.fileName),
-    calibrationStatus: fullCal.status,
-  });
+  // La source tient compte des TROIS rôles : la piste délibérément choisie doit être
+  // chargée ET calibrée pour SON identité, sinon la capture est bloquée — jamais de repli
+  // silencieux sur YouTube dès qu'un fichier local existe.
+  const captureSource = captureSourceForTracks({ tracks, syncRole, calibrationStatusOf });
   const captureSourceRef = useRef(captureSource); captureSourceRef.current = captureSource;
-  const captureBlocked = captureBlockedMessage(captureSource);
+  const captureBlocked = captureSource === CAPTURE_SOURCE.BLOCKED
+    ? (Object.values(tracks).some((t) => t.loadStatus === 'ready') ? TRACK_CAPTURE_BLOCKED : captureBlockedMessage(captureSource))
+    : null;
 
   // Refs pour que les handlers clavier (non ré-enregistrés à chaque frappe) lisent
-  // toujours l'offset et la vitesse de la source ACTIVE.
-  const captureOffsetRef = useRef(fullCal.offsetSeconds); captureOffsetRef.current = fullCal.offsetSeconds;
+  // toujours l'élément, l'offset et la vitesse de la piste de SYNCHRONISATION active.
+  const syncRoleRef = useRef(syncRole); syncRoleRef.current = syncRole;
+  const captureOffsetRef = useRef(null); captureOffsetRef.current = offsetOf(syncRole);
   const captureRateRef = useRef(1);
 
   /**
@@ -739,7 +803,8 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
    */
   const canonicalNow = useCallback((compensate = false) => {
     const source = captureSourceRef.current;
-    const el = localAudioRef.current?.audioRef?.current;
+    // L'élément lu est celui de la piste de SYNCHRONISATION (pas celui de la lecture).
+    const el = sessionForRole(syncRoleRef.current)?.audioRef?.current;
     const raw = canonicalCaptureTime({
       source,
       localTime: el ? el.currentTime : 0,
@@ -748,11 +813,11 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     });
     if (!compensate) return raw;
     return compensateLatency(raw, latencyMs, captureRateRef.current);
-  }, [latencyMs]);
+  }, [latencyMs, sessionForRole]);
 
   /** Signale le blocage une seule fois par tentative. */
   const warnCaptureBlocked = useCallback(() => {
-    toast({ title: 'Sincronização bloqueada', description: captureBlockedMessage(CAPTURE_SOURCE.BLOCKED), variant: 'destructive' });
+    toast({ title: 'Sincronização bloqueada', description: TRACK_CAPTURE_BLOCKED, variant: 'destructive' });
   }, [toast]);
   const seekTo = useCallback((t) => {
     const p = playerRef.current;
@@ -1797,7 +1862,14 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // L'audio local sert à RÉÉCOUTER et inspecter (outil d'édition) ; la CAPTURE de frases
   // reste sur l'horloge canonique de la vidéo. Les deux temps sont affichés côte à côte
   // pour que le rôle de chaque horloge soit sans ambiguïté.
-  const localTransport = useLocalTransport({ session: localAudio, offsetSeconds: fullCal.offsetSeconds });
+  // UN SEUL propriétaire de lecture, sur la piste de PREVIEW active. Changer de piste
+  // remonte une nouvelle session au hook, qui met l'ancienne en pause et migre ses
+  // écouteurs (prouvé par useLocalTransport.test.js).
+  const previewSession = previewRole === TRACK_ROLE.INSTRUMENTAL ? instrumentalAudio
+    : previewRole === TRACK_ROLE.VOCALS ? ballVocalsAudio
+    : localAudio;
+  const previewOffset = offsetOf(previewRole);
+  const localTransport = useLocalTransport({ session: previewSession, offsetSeconds: previewOffset });
   // Le MODE d'édition est DÉRIVÉ de l'unique état existant (`ballStudioIndex`) — pas un
   // second état concurrent — et n'a aucun effet sur la frase sélectionnée.
   const editingMode = ballStudioIndex != null ? EDITING_MODE.WORD : EDITING_MODE.PHRASE;
@@ -1813,9 +1885,10 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     }
   }, [lines]);
 
+  // La réécoute utilise la piste de PREVIEW et SA propre calibration.
   const reviewCtx = {
-    calibrationStatus: fullCal.status,
-    hasAudio: Boolean(localAudio.fileName) && localAudio.ready,
+    calibrationStatus: calibrationStatusOf(previewRole),
+    hasAudio: Boolean(previewSession.fileName) && previewSession.ready,
     line: lines[cursor],
   };
   const canReviewPhrase = canReviewLocally(reviewCtx);
@@ -1824,8 +1897,8 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   /** Réécoute la frase sélectionnée sur l'audio local — ne modifie AUCUN timing. */
   const handleReviewPhrase = useCallback(() => {
     const i = cursorRef.current;
-    const win = phraseReviewWindow(linesRef.current[i], fullCal.offsetSeconds, {
-      duration: localAudio.duration,
+    const win = phraseReviewWindow(linesRef.current[i], previewOffset, {
+      duration: previewSession.duration,
       margin: REVIEW_MARGIN_SEC,
       fallbackEnd: effectiveEnd(i) ?? undefined,
     });
@@ -1833,7 +1906,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     // Jamais deux sources audio en même temps.
     try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ }
     localTransport.reviewWindow(win);
-  }, [fullCal.offsetSeconds, localAudio.duration, effectiveEnd, localTransport]);
+  }, [previewOffset, previewSession.duration, effectiveEnd, localTransport]);
 
   // Lecture locale libre : met aussi la vidéo en pause (une seule source à la fois).
   const workshopTransport = useMemo(() => ({
@@ -1850,6 +1923,103 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // La compensation de latence doit utiliser la vitesse de la source ACTIVE : celle du
   // lecteur local quand on capte dessus, celle de YouTube sinon.
   captureRateRef.current = captureSource === CAPTURE_SOURCE.LOCAL ? localTransport.rate : playbackRate;
+
+  // ══════════════════ FAIXAS LOCAIS : actions du panneau ══════════════════
+  /** Bascule la piste de LECTURE en préservant la position canonique. */
+  const selectPreviewRole = useCallback((role) => {
+    if (role === previewRole) return;
+    const sw = switchTrackSeek({
+      fromLocalTime: localTransport.localTime,
+      fromOffset: previewOffset,
+      toOffset: offsetOf(role),
+      toDuration: sessionForRole(role)?.duration,
+    });
+    localTransport.pause();      // une seule piste à la fois
+    localTransport.stopReview(); // une bascule annule proprement la boucle en cours
+    setPreviewRole(role);
+    pendingPreviewSeekRef.current = sw.targetLocalTime; // appliqué quand la session a changé
+  }, [previewRole, previewOffset, localTransport, offsetOf, sessionForRole]);
+
+  // Applique la position préservée APRÈS que le hook ait pris la nouvelle session.
+  const pendingPreviewSeekRef = useRef(null);
+  useEffect(() => {
+    const t = pendingPreviewSeekRef.current;
+    if (t == null) return;
+    pendingPreviewSeekRef.current = null;
+    localTransport.seekTo(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewRole]);
+
+  /** Choisit délibérément la piste de SYNCHRONISATION (jamais implicite). */
+  const selectSyncRole = useCallback((role) => {
+    if (!canUseForSync(tracks[role], calibrationStatusOf(role))) {
+      toast({ title: 'Faixa não calibrada', description: TRACK_CAPTURE_BLOCKED, variant: 'destructive' });
+      return;
+    }
+    setSyncRole(role);
+  }, [tracks, calibrationStatusOf, toast]);
+
+  /** Ouvre le sélecteur de fichier du rôle. */
+  const pickTrackFile = useCallback((role) => {
+    if (role === TRACK_ROLE.INSTRUMENTAL) instrumentalFileInputRef.current?.click();
+    else if (role === TRACK_ROLE.VOCALS) pickBallVocals();
+    else pickLocalAudio();
+  }, [pickBallVocals, pickLocalAudio]);
+
+  /** Retire la piste de la SESSION (aucun timing modifié, aucun fichier supprimé). */
+  const removeTrackRole = useCallback((role) => {
+    if (!window.confirm(REMOVE_TRACK_CONFIRM)) return;
+    if (previewRole === role) { localTransport.pause(); localTransport.stopReview(); setPreviewRole(TRACK_ROLE.ORIGINAL); }
+    if (syncRole === role) setSyncRole(null); // capture bloquée, jamais de repli silencieux
+    if (role === TRACK_ROLE.INSTRUMENTAL) instrumentalRef.current.clear();
+    else if (role === TRACK_ROLE.VOCALS) removeBallVocals();
+    else removeLocalAudio();
+  }, [previewRole, syncRole, localTransport, removeBallVocals, removeLocalAudio]);
+
+  /** Raccourci UVR : copie la calibration de l'original, sur confirmation EXPLICITE. */
+  const copyOriginalCalibration = useCallback((role) => {
+    const cmp = compareTrackDuration(sessionForRole(role)?.duration, localAudio.duration);
+    const payload = sharedCalibrationPayload({
+      originalCalibration: fullCal.record,
+      track: tracks[role],
+      durationLevel: cmp.level,
+      confirmed: window.confirm(SHARED_CALIBRATION_CONFIRM),
+    });
+    if (!payload) {
+      toast({
+        title: 'Não foi possível copiar a calibração',
+        description: 'O áudio original precisa estar calibrado e a duração das faixas precisa ser compatível.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const s = sessionForRole(role);
+    calForRole(role).saveCalibration({
+      ...payload, localDuration: s?.duration, canonicalDuration: duration,
+    });
+    toast({ title: 'Calibração copiada', description: ALIGNMENT_HINT });
+  }, [sessionForRole, localAudio.duration, fullCal.record, tracks, calForRole, duration, toast]);
+
+  /** Confirme l'alignement après une écoute comparée (métadonnée locale uniquement). */
+  const verifyTrackAlignment = useCallback((role) => {
+    const cal = calForRole(role);
+    if (cal.offsetSeconds == null) return;
+    const s = sessionForRole(role);
+    cal.saveCalibration({
+      offsetSeconds: cal.offsetSeconds,
+      method: cal.record?.method || 'manual-anchor',
+      verification: 'verified',
+      localDuration: s?.duration,
+      canonicalDuration: duration,
+    });
+    toast({ title: 'Alinhamento confirmado', description: 'Nenhum tempo do karaokê foi alterado.' });
+  }, [calForRole, sessionForRole, duration, toast]);
+
+  const onInstrumentalPick = (e) => {
+    const f = e.target.files?.[0];
+    if (f) instrumentalRef.current.load(f);
+    e.target.value = '';
+  };
 
   // ── Sauvegarde ──
   // Persiste le LRC dans `songs`, PUIS crée une version durable (song_timing_versions)
@@ -2952,20 +3122,47 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
               </label>
             </div>
 
+            {/* ══ Faixas locais : original / instrumental / voz isolada ══ */}
+            <input
+              ref={instrumentalFileInputRef} type="file" accept="audio/*"
+              className="hidden" onChange={onInstrumentalPick}
+              aria-label="Selecionar arquivo instrumental"
+            />
+            <LocalTracksPanel
+              tracks={tracks}
+              referenceDuration={localAudio.duration}
+              calibrationStatusOf={calibrationStatusOf}
+              offsetOf={offsetOf}
+              verificationOf={verificationOf}
+              previewRole={previewRole}
+              syncRole={syncRole}
+              onPick={pickTrackFile}
+              onRemove={removeTrackRole}
+              onPreview={selectPreviewRole}
+              onUseForSync={selectSyncRole}
+              onCalibrate={() => changeEditingMode(EDITING_MODE.WORD)}
+              onCopyOriginalCalibration={copyOriginalCalibration}
+              onVerifyAlignment={verifyTrackAlignment}
+            />
+
             {/* ══ Barra do ateliê : áudio local, calibração, revisão, modo ══ */}
             <KaraokeWorkshopBar
-              fileName={localAudio.fileName}
-              localDuration={localAudio.duration}
+              fileName={previewSession.fileName}
+              localDuration={previewSession.duration}
               canonicalDuration={duration}
-              calibrationStatus={fullCal.status}
-              offsetSeconds={fullCal.offsetSeconds}
-              onPickAudio={pickLocalAudio}
+              calibrationStatus={calibrationStatusOf(previewRole)}
+              offsetSeconds={previewOffset}
+              onPickAudio={() => pickTrackFile(previewRole)}
               onOpenCalibration={() => changeEditingMode(EDITING_MODE.WORD)}
               transport={workshopTransport}
               canReview={canReviewPhrase}
               reviewReason={reviewBlocked}
               onReviewPhrase={handleReviewPhrase}
-              captureSourceLabel={captureSourceLabel(captureSource)}
+              captureSourceLabel={
+                captureSource === CAPTURE_SOURCE.LOCAL ? syncSourceLabelForRole(syncRole)
+                  : captureSource === CAPTURE_SOURCE.BLOCKED ? syncSourceLabelForRole('blocked')
+                  : captureSourceLabel(captureSource)
+              }
               captureBlockedMessage={captureBlocked}
               selectedLabel={`Frase ${cursor + 1} de ${lines.length}`}
               canPrev={cursor > 0}
