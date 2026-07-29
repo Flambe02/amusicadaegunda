@@ -12,12 +12,15 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId } from '@/lib/utils';
-import { splitLyricsLines, parseLrc, buildLrc, formatTimestamp, activeLineIndex, resolveLyricsText } from '@/lib/lrc';
+import { splitLyricsLines, parseLrc, formatTimestamp, activeLineIndex, resolveLyricsText } from '@/lib/lrc';
 import { validateTiming } from '@/lib/timingValidation';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { useTimingDraft, linesSignature } from '@/hooks/useTimingDraft';
 import { listTimingVersions, getTimingVersion, createTimingVersion } from '@/lib/timingVersions';
-import { parseTimingModel, timingModelToEditorLines, buildTimingModel } from '@/lib/timingModel';
+import { parseTimingModel, timingModelToEditorLines } from '@/lib/timingModel';
+import {
+  isParentKeyboardActive, buildTimingPayload, buildRestoreTimingPayload, applyWordEditorResult,
+} from '@/lib/karaokeSyncContract';
 import { distributeWords } from '@/lib/wordDistribution';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
@@ -907,8 +910,18 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     setCursor((c) => Math.min(c + 1, lines.length - 1));
   }, [markLineEnd, lines.length]);
 
+  // PROPRIÉTÉ EXCLUSIVE DU CLAVIER : tant que le studio « Afinar palavras e bola » est
+  // ouvert (monté en portail DEPUIS ce composant), il possède seul le clavier et ce
+  // parent n'enregistre AUCUN écouteur — sinon chaque touche déclenchait les deux
+  // handlers `window` : Espaço capturait un mot ET réécrivait le début/fin de la frase
+  // sélectionnée puis avançait le curseur, Backspace/Ctrl+Z annulaient l'état du
+  // parent, Escape fermait tout l'éditeur, k/p/s/← pilotaient le YouTube sous
+  // l'overlay. Ne pas se reposer sur `stopPropagation()` (deux écouteurs `window`
+  // frères) ni sur `isEditable(e.target)` (le studio fait blur() → events depuis <body>).
   useEffect(() => {
-    if (step !== 'sync') return undefined; // aucune capture avant l'étape de synchronisation
+    if (!isParentKeyboardActive({ step, wordStudioOpen: ballStudioIndex != null, isCalibrating })) {
+      return undefined;
+    }
     const isEditable = (el) => {
       if (!el) return false;
       const tag = el.tagName;
@@ -916,7 +929,6 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     };
 
     const onKeyDown = (e) => {
-      if (isCalibrating) return; // la calibration capture Espace pour son propre test
       if (isEditable(e.target)) return;
 
       if (e.key === ' ' || e.code === 'Space') {
@@ -964,7 +976,6 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     };
 
     const onKeyUp = (e) => {
-      if (isCalibrating) return;
       if (isEditable(e.target)) return;
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
@@ -985,7 +996,7 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [step, cursor, mode, markLineStart, markCursor, finishHold, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
+  }, [step, ballStudioIndex, cursor, mode, markLineStart, markCursor, finishHold, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
 
   // Compteur live (durée du maintien) affiché pendant la capture — rAF, un seul petit
   // state, actif seulement le temps bref d'un maintien d'Espaço.
@@ -1233,16 +1244,13 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     commitLines((prev) => prev.map((l, i) => (i === index ? { ...l, words: typeof updater === 'function' ? updater(l.words || []) : updater } : l)));
   }, [commitLines]);
 
-  // Applique le résultat du studio « Afinar palavras e bola » : mots + bornes de frase
-  // (time/endTime seulement si l'admin les a modifiées), en un seul pas d'historique.
+  // Applique le résultat du studio « Afinar palavras e bola » : ENRICHIT la ligne de ses
+  // mots sans jamais toucher au timing de frase, sauf édition explicite ET valide des
+  // bornes (voir applyWordEditorResult, testé à part). Un studio refermé sans
+  // modification ne pousse aucun pas d'historique et ne salit pas le brouillon.
   const applyBallStudioResult = useCallback((index, res) => {
-    commitLines((prev) => prev.map((l, i) => {
-      if (i !== index) return l;
-      const nl = { ...l, words: res.words };
-      if (res.startEdited && Number.isFinite(res.phraseStart)) nl.time = res.phraseStart;
-      if (res.endEdited && Number.isFinite(res.phraseEnd)) nl.endTime = res.phraseEnd;
-      return nl;
-    }));
+    if (!res || res.changed === false) return;
+    commitLines((prev) => prev.map((l, i) => (i === index ? applyWordEditorResult(l, res) : l)));
   }, [commitLines]);
 
   // Ao abrir o estúdio focado : pausa o vídeo do YouTube do editor principal — senão a
@@ -1660,7 +1668,12 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
   // visual — o administrador tem sempre de poder Guardar o seu trabalho).
   const handleSave = async () => {
     if (savingRef.current) return; // évite deux sauvegardes concurrentes
-    const lrc = buildLrc(lines);
+    // Payload de timing CENTRALISÉ (même règle qu'à la restauration de version) :
+    // `timing_data` est TOUJOURS écrit — avec la valeur null dès qu'il n'y a plus de
+    // timing par mot. Sans ça, un ancien timing structuré restait en base et
+    // `resolveSongTiming()` continuait de le préférer au `lrc_content` corrigé.
+    const timing = buildTimingPayload(lines);
+    const lrc = timing.lrc_content;
     if (!lrc) {
       toast({ title: 'Nada para guardar', description: 'Marca pelo menos uma linha antes de guardar.', variant: 'destructive' });
       return;
@@ -1679,17 +1692,13 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
         throw new Error('Sem sessão Supabase — recarrega /admin, faz login com a conta admin e guarda de novo.');
       }
 
-      // Timing structuré (Stage 2) : seulement si au moins une ligne a des mots — sinon
-      // `timing_data` reste NULL et le lecteur retombe sur lrc_content (comportement
-      // historique inchangé pour toute chanson purement ligne).
-      const timingModel = buildTimingModel(lines);
-      const hasWordTiming = Boolean(timingModel && timingModel.timingMode !== 'line');
-
-      const payload = { lrc_content: lrc, karaoke_synced_at: new Date().toISOString(), karaoke_published: karaokePublished };
-      if (hasWordTiming) {
-        payload.timing_data = timingModel;
-        payload.timing_mode = timingModel.timingMode;
-      }
+      const payload = {
+        lrc_content: lrc,
+        timing_data: timing.timing_data,   // null = frase seule → lrc_content redevient autoritaire
+        timing_mode: timing.timing_mode,   // colonne NOT NULL (migration 20260712170000)
+        karaoke_synced_at: new Date().toISOString(),
+        karaoke_published: karaokePublished,
+      };
       if (syncLyricsToo) {
         const joined = lines.map((l) => l.text.trim()).filter(Boolean).join('\n');
         if (joined) payload.lyrics = joined; // letra pública do site (opção padrão — ver « Guardar p/ karaokê » na etapa Letra completa para a cópia de trabalho)
@@ -1711,8 +1720,8 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       try {
         const res = await createTimingVersion(song.id, {
           lrc_content: lrc,
-          timing_data: hasWordTiming ? timingModel : null,
-          timing_mode: hasWordTiming ? timingModel.timingMode : 'line',
+          timing_data: timing.timing_data,
+          timing_mode: timing.timing_mode,
           source: 'manual_save',
         });
         if (res?.unavailable) versionNote = ' (histórico de versões indisponível até aplicar a migração)';
@@ -1774,17 +1783,21 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     try {
       const { version, unavailable } = await getTimingVersion(versionId);
       if (unavailable || !version) throw new Error('Versão indisponível.');
-      // Restaure le timing structuré (mots) quand la version en avait un ; sinon
-      // comportement historique (LRC ligne uniquement).
-      const restoredModel = parseTimingModel(version.timing_data);
-      const restoredLines = restoredModel
-        ? timingModelToEditorLines(restoredModel)
-        : parseLrc(version.lrc_content).map((l) => ({ text: l.text, time: l.time, endTime: l.endTime ?? null }));
-      const lrc = version.lrc_content || buildLrc(restoredLines);
+      // Restaure le timing structuré (mots) quand la version en avait un ; sinon LRC
+      // ligne uniquement — et dans CE cas `timing_data` est explicitement remis à NULL,
+      // sans quoi restaurer une version « frase seule » par-dessus une chanson hybride
+      // n'aurait aucun effet visible (le timing structuré périmé resterait prioritaire).
+      const restored = buildRestoreTimingPayload(version);
+      const restoredLines = restored.lines;
+      const lrc = restored.lrc_content;
 
       try { await supabase.auth.refreshSession(); } catch { /* diagnostic plus bas */ }
-      const updatePayload = { lrc_content: lrc, karaoke_synced_at: new Date().toISOString() };
-      if (restoredModel) { updatePayload.timing_data = restoredModel; updatePayload.timing_mode = restoredModel.timingMode; }
+      const updatePayload = {
+        lrc_content: lrc,
+        timing_data: restored.timing_data,
+        timing_mode: restored.timing_mode,
+        karaoke_synced_at: new Date().toISOString(),
+      };
       const { data, error } = await supabase
         .from('songs')
         .update(updatePayload)
@@ -1796,8 +1809,8 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
       try {
         await createTimingVersion(song.id, {
           lrc_content: lrc,
-          timing_data: restoredModel || null,
-          timing_mode: version.timing_mode || 'line',
+          timing_data: restored.timing_data,
+          timing_mode: restored.timing_mode,
           source: 'restore',
           note: `Restaurado de #${versionNumber}`,
         });
@@ -3398,6 +3411,11 @@ function describeSaveError(error) {
   const msg = error.message || '';
   if (code === '42501' || /row-level security|permission denied/i.test(msg)) {
     return 'Direitos insuficientes ou sessão expirada. Faz Sair e volta a entrar, depois tenta de novo.';
+  }
+  // NB : la branche lrc_content ci-dessous attrape TOUT code 42703 (`||`), donc les
+  // diagnostics de colonne PLUS PRÉCIS doivent passer avant elle, sinon ils sont morts.
+  if (code === '42703' && /timing_data|timing_mode|timing_version/i.test(msg)) {
+    return 'As colunas timing_data/timing_mode ainda não existem. Aplica a migração Supabase 20260712170000_add_hybrid_timing.sql (o Guardar escreve sempre timing_data, mesmo a NULL, para não deixar timing antigo mandar no karaokê).';
   }
   if (code === '42703' || /column .*(lrc_content|karaoke_synced_at).* does not exist/i.test(msg)) {
     return 'A coluna lrc_content/karaoke_synced_at ainda não existe. Aplica a migração Supabase 20260708120000_add_karaoke_to_songs.sql.';

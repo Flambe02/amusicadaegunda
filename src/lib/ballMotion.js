@@ -44,6 +44,76 @@ export function normalizeWords(words, phraseStart, phraseEnd) {
   return normalizeEnds(out, phraseEnd);
 }
 
+// Tolérance d'arrondi partagée avec validateLineWords() (bords de mots).
+const WORD_EPS = 1e-3;
+
+/**
+ * true si `words` est déjà exploitable tel quel dans [phraseStart, phraseEnd] :
+ * temps finis, ordre croissant, fin ≥ début, et bornes respectées. `phraseEnd` peut
+ * être `null`/`Infinity` quand la frase n'a PAS de fin explicite (on ne contrôle alors
+ * que l'ordre et la borne de début).
+ *
+ * Sert de garde-fou d'IDEMPOTENCE au chargement du studio : des mots déjà valides ne
+ * doivent JAMAIS être re-normalisés (sinon `normalizeEnds` colle la fin du dernier mot
+ * sur la borne de frase — inférée depuis la ligne suivante quand `endTime` est null —
+ * et rouvrir l'éditeur modifie des données que l'utilisateur n'a pas touchées).
+ * @returns {boolean}
+ */
+export function wordsAreValid(words, phraseStart, phraseEnd) {
+  if (!Array.isArray(words) || words.length === 0) return false;
+  const lo = Number.isFinite(phraseStart) ? phraseStart : -Infinity;
+  const hi = Number.isFinite(phraseEnd) ? phraseEnd : Infinity;
+  let prevStart = -Infinity;
+  for (const w of words) {
+    if (!w || !Number.isFinite(w.start) || !Number.isFinite(w.end)) return false;
+    if (w.end < w.start - WORD_EPS) return false;
+    if (w.start < lo - WORD_EPS) return false;
+    if (w.end > hi + WORD_EPS) return false;
+    if (w.start < prevStart - WORD_EPS) return false;
+    prevStart = w.start;
+  }
+  return true;
+}
+
+/**
+ * Mots à charger dans le studio « Afinar palavras e bola ».
+ *
+ * Règle d'IDEMPOTENCE : des mots stockés déjà valides sont renvoyés TELS QUELS (même
+ * référence — ni copie, ni renormalisation, donc aucun « faux dirty »). La réparation
+ * par `normalizeWords()` est réservée aux données héritées réellement cassées (ordre
+ * brisé, temps non finis, mots hors frase). Sans ça, ouvrir le studio sur une ligne
+ * sans `endTime` explicite collait la fin du dernier mot sur le début de la ligne
+ * suivante — silence instrumental compris — et la re-commitait.
+ *
+ * @returns {{repaired: boolean, words: Array}}
+ */
+export function loadStudioWords(words, phraseStart, phraseEnd) {
+  if (wordsAreValid(words, phraseStart, phraseEnd)) return { repaired: false, words };
+  return { repaired: Array.isArray(words) && words.length > 0, words: normalizeWords(words, phraseStart, phraseEnd) };
+}
+
+/**
+ * Empêche une borne de frase INFÉRÉE (début de la ligne suivante, quand la ligne n'a
+ * pas de `endTime` persisté) de devenir une donnée : ramène la fin du DERNIER mot à
+ * `storedLastEnd` (sa fin telle qu'elle était stockée) si la normalisation l'a étirée
+ * au-delà. Ne raccourcit jamais sous le début du mot, ne touche à rien d'autre, et
+ * renvoie le tableau d'origine quand il n'y a rien à faire (pas de « faux dirty »).
+ * @param {{start:number,end:number}[]} words
+ * @param {number|null} storedLastEnd  fin du dernier mot AVANT édition (null = inconnue)
+ */
+export function capInferredLastEnd(words, storedLastEnd) {
+  if (!Array.isArray(words) || words.length === 0) return words;
+  if (!Number.isFinite(storedLastEnd)) return words;
+  const i = words.length - 1;
+  const last = words[i];
+  if (!last || !Number.isFinite(last.end) || last.end <= storedLastEnd) return words;
+  const end = Math.max(last.start + MIN_WORD_GAP, storedLastEnd);
+  if (end >= last.end) return words;
+  const out = words.slice();
+  out[i] = { ...last, end };
+  return out;
+}
+
 /**
  * Fixe le début du mot `index` à `t` (drag, clic « posicionar », capture par toque).
  * Borne le mot entre ses voisins (jamais de croisement) et recalcule les fins — la

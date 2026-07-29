@@ -8,6 +8,7 @@ import {
 import { distributeWords } from '@/lib/wordDistribution';
 import {
   normalizeWords, setWordStart, nudgeWordStart, validateLineWords,
+  loadStudioWords, capInferredLastEnd,
 } from '@/lib/ballMotion';
 import BallSyncPreview from '@/components/karaoke/ball-sync/BallSyncPreview';
 import WaveformCanvas from '@/components/karaoke/ball-sync/WaveformCanvas';
@@ -72,14 +73,23 @@ export default function KaraokeBallSyncStudio({
   const endEdited = phraseEnd !== phraseEndProp;
 
   // ── Mots de travail (copie locale) ──
-  const [words, setWords] = useState(() => (
-    Array.isArray(line.words) && line.words.length > 0
-      ? normalizeWords(line.words, phraseStartProp, phraseEndProp)
-      : distributeWords(line.text, phraseStartProp, phraseEndProp)
-  ));
+  // CHARGEMENT IDEMPOTENT : des mots stockés déjà valides passent INTACTS. Ils étaient
+  // auparavant systématiquement renormalisés contre `phraseEndProp` — qui vaut la fin
+  // INFÉRÉE (début de la ligne suivante) quand la frase n'a pas de `endTime` persisté :
+  // rouvrir le studio étirait alors la fin du dernier mot à travers tout le silence
+  // instrumental, puis la re-commitait. Ouvrir/refermer sans rien toucher ne doit rien
+  // changer. La réparation reste réservée aux données héritées réellement cassées, et
+  // n'est persistée que si l'utilisateur enregistre une vraie modification.
+  const hasExplicitPhraseEnd = line.endTime != null;
+  const storedWords = Array.isArray(line.words) && line.words.length > 0 ? line.words : null;
+  const storedLastEnd = storedWords ? storedWords[storedWords.length - 1]?.end ?? null : null;
+  const [initialLoad] = useState(() => (storedWords
+    ? loadStudioWords(storedWords, phraseStartProp, phraseEndProp)
+    : { repaired: false, words: distributeWords(line.text, phraseStartProp, phraseEndProp) }));
+  const [words, setWords] = useState(initialLoad.words);
   const wordsRef = useRef(words); wordsRef.current = words;
-  const autoDistributed = !(Array.isArray(line.words) && line.words.length > 0);
-  const initialSig = useRef(wordsSignature(words));
+  const autoDistributed = !storedWords;
+  const initialSig = useRef(wordsSignature(initialLoad.words));
   const dirty = wordsSignature(words) !== initialSig.current || startEdited || endEdited;
 
   const [selectedWord, setSelectedWord] = useState(0);
@@ -421,23 +431,37 @@ export default function KaraokeBallSyncStudio({
   }, [captureNext, togglePlay, restartPhrase, undo, redo, nudge, stopCapture, handleClose]);
 
   // ── Sortie ──
-  const buildResult = useCallback(() => ({
-    words: normalizeWords(wordsRef.current, phraseStartRef.current, phraseEndRef.current),
-    phraseStart: phraseStartRef.current,
-    phraseEnd: phraseEndRef.current,
-    startEdited: phraseStartRef.current !== phraseStartProp,
-    endEdited: phraseEndRef.current !== phraseEndProp,
-  }), [phraseStartProp, phraseEndProp]);
+  // `changed` dit au parent s'il doit toucher à la ligne : une sortie sans modification
+  // ne pousse aucun pas d'historique et ne rend pas le brouillon « sale ».
+  // On commite aussi une distribution automatique fraîche (autoDistributed) : c'est
+  // précisément l'acte de passer la ligne en mode mot.
+  const hasChange = dirty || autoDistributed;
+  const buildResult = useCallback(() => {
+    const endEditedNow = phraseEndRef.current !== phraseEndProp;
+    let out = normalizeWords(wordsRef.current, phraseStartRef.current, phraseEndRef.current);
+    // La fin de frase seulement INFÉRÉE (début de la ligne suivante) ne doit jamais
+    // devenir une donnée : sans fin explicite ni édition de la borne, le dernier mot
+    // reste borné par sa fin stockée.
+    if (!endEditedNow && !hasExplicitPhraseEnd) out = capInferredLastEnd(out, storedLastEnd);
+    return {
+      changed: true,
+      words: out,
+      phraseStart: phraseStartRef.current,
+      phraseEnd: phraseEndRef.current,
+      startEdited: phraseStartRef.current !== phraseStartProp,
+      endEdited: endEditedNow,
+    };
+  }, [phraseStartProp, phraseEndProp, hasExplicitPhraseEnd, storedLastEnd]);
   const handleConcluir = useCallback(() => {
     pause();
-    onCommit?.(buildResult());
-  }, [pause, onCommit, buildResult]);
+    onCommit?.(hasChange ? buildResult() : { changed: false });
+  }, [pause, onCommit, hasChange, buildResult]);
   // Prev/Next : commite la ligne courante SEULEMENT si modifiée (pas de perte silencieuse),
   // puis le parent bascule sur la ligne voisine (le studio est remonté à neuf via `key`).
   const navigate = useCallback((dir) => {
     pause();
-    onNavigate?.(dir, dirty ? buildResult() : null);
-  }, [pause, onNavigate, dirty, buildResult]);
+    onNavigate?.(dir, hasChange ? buildResult() : null);
+  }, [pause, onNavigate, hasChange, buildResult]);
 
   // ── Dérivés d'affichage ──
   const markers = useMemo(() => words.map((w) => ({ time: w.start - offsetSec, text: w.text })), [words, offsetSec]);
@@ -493,6 +517,13 @@ export default function KaraokeBallSyncStudio({
         {autoDistributed && !dirty && (
           <div className="absolute right-3 top-3 rounded-lg bg-violet-500/15 px-2.5 py-1 text-[11px] text-violet-200">
             Distribuição inicial. Ajuste ouvindo a música.
+          </div>
+        )}
+        {/* Réparation d'une donnée héritée cassée : signalée, et NON persistée tant que
+            l'administrateur n'enregistre pas une vraie modification. */}
+        {initialLoad.repaired && !dirty && (
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 px-2.5 py-1 text-[11px] text-amber-200">
+            <AlertTriangle size={12} /> Tempos de palavra inválidos foram corrigidos aqui. Só ficam guardados se editar e gravar.
           </div>
         )}
         <BallSyncPreview
