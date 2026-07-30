@@ -5,6 +5,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { supabase } from '@/lib/supabase';
 import { useLocalAudioSession } from '@/hooks/useLocalAudioSession';
+import { sharedAudioAction, SHARED_AUDIO_ACTION } from '@/lib/sharedAudioOwner';
 import KaraokeSyncTool from '@/components/karaoke/KaraokeSyncTool';
 import PitchMapModal from './pitch/PitchMapModal';
 import AdminHeader from './AdminHeader';
@@ -32,17 +33,30 @@ export default function AdminLayout() {
   // para o outro pelo link cruzado. A persistência entre sessões (IndexedDB) fica
   // como reforço opcional em cada componente; isto garante que funciona SEMPRE
   // dentro da mesma sessão do admin, sem depender da API File System Access.
+  // A decisão de manter/atribuir/limpar está em `sharedAudioAction()` (pura, testada em
+  // src/lib/__tests__/sharedAudioOwner.test.js). A versão anterior só limpava numa troca
+  // DIRETA de música: ao fechar o editor punha o dono a null sem limpar o áudio, e a
+  // música seguinte herdava o ficheiro da anterior (KaraokeSyncTool via um `fileName` já
+  // preenchido e saltava a sua própria restauração).
   const sharedVocalAudio = useLocalAudioSession();
-  const sharedVocalSongIdRef = useRef(null);
+  const sharedVocalOwnerRef = useRef(null);
   useEffect(() => {
     const activeId = karaokeSong?.id ?? pitchMapSong?.id ?? null;
-    if (activeId == null) { sharedVocalSongIdRef.current = null; return; }
-    if (sharedVocalSongIdRef.current != null && sharedVocalSongIdRef.current !== activeId) {
-      sharedVocalAudio.clear(); // trocou de música: não arrastar o áudio da anterior
+    const { action } = sharedAudioAction({
+      ownerId: sharedVocalOwnerRef.current,
+      activeId,
+      hasAudio: Boolean(sharedVocalAudio.fileName),
+    });
+    if (action === SHARED_AUDIO_ACTION.CLEAR) {
+      sharedVocalAudio.clear();
+      sharedVocalOwnerRef.current = null;
+    } else if (action === SHARED_AUDIO_ACTION.CLAIM) {
+      sharedVocalOwnerRef.current = activeId;
+    } else if (action === SHARED_AUDIO_ACTION.RELEASE) {
+      sharedVocalOwnerRef.current = null;
     }
-    sharedVocalSongIdRef.current = activeId;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sharedVocalAudio é estável (refs internos)
-  }, [karaokeSong?.id, pitchMapSong?.id]);
+  }, [karaokeSong?.id, pitchMapSong?.id, sharedVocalAudio.fileName]);
 
   return (
     <TooltipProvider delayDuration={200}>
