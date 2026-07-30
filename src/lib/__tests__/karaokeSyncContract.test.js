@@ -57,6 +57,14 @@ describe('A. propriété exclusive du clavier', () => {
     expect(isParentKeyboardActive({ ...base, step: 'lyrics' })).toBe(false);
   });
 
+  it("le parent N'écoute PAS en mode Quick Sync", () => {
+    // Quick Sync est un mode de PRÉSENTATION du même composant : l'arbre avancé reste
+    // monté (il porte l'hôte du player YouTube), donc son handler clavier doit être
+    // désactivé, sinon Espaço serait traité deux fois.
+    expect(isParentKeyboardActive({ ...base, quickMode: true })).toBe(false);
+    expect(isParentKeyboardActive({ ...base, quickMode: false })).toBe(true);
+  });
+
   it('le studio l’emporte sur tout autre état', () => {
     for (const step of ['sync', 'lyrics']) {
       for (const isCalibrating of [true, false]) {

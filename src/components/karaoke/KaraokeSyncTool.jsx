@@ -159,6 +159,9 @@ export default function KaraokeSyncTool({
   // Défaut sûr : une chanson déjà synchronisée s'ouvre en « review » (Espaço = Play/Pause,
   // aucun risque d'écraser un timing existant) ; une chanson vierge s'ouvre « armée » en
   // capture-lines (le geste central est immédiatement prêt).
+  // MODE DE PRÉSENTATION ('advanced' | 'quick'). Déclaré ICI, au-dessus de l'effet
+  // clavier, parce que celui-ci doit être désactivé quand Quick Sync possède le clavier.
+  const [presentation, setPresentation] = useState(initialPresentation === 'quick' ? 'quick' : 'advanced');
   const [mode, setMode] = useState(() => (buildInitialLines(song).some((l) => l.time != null) ? 'review' : 'capture-lines'));
   const wordCaptureActive = mode === 'capture-words'; // dérivé — le panneau palavras s'y réfère
   const prevModeRef = useRef('capture-lines'); // mode à restaurer en sortant de la capture palavra
@@ -537,6 +540,10 @@ export default function KaraokeSyncTool({
   // Uma música já sincronizada abre diretamente no editor de sincronização (não força
   // o ecrã «Letra» de cada vez) — «Letra completa» no header volta lá quando preciso.
   const [step, setStep] = useState(() => (buildInitialLines(song).some((l) => l.time != null) ? 'sync' : 'lyrics')); // 'lyrics' | 'sync'
+
+  // Quick Sync actif = même composant, présentation focalisée. L'arbre avancé reste
+  // MONTÉ (il porte l'hôte du player YouTube) mais visuellement retiré.
+  const quickActive = presentation === 'quick' && step === 'sync';
   const [lyricsDraft, setLyricsDraft] = useState(() => lines.map((l) => l.text).join('\n'));
 
   // Dès que la donnée FRAÎCHE de Supabase arrive, si l'utilisateur n'a encore rien
@@ -1114,7 +1121,9 @@ export default function KaraokeSyncTool({
   // l'overlay. Ne pas se reposer sur `stopPropagation()` (deux écouteurs `window`
   // frères) ni sur `isEditable(e.target)` (le studio fait blur() → events depuis <body>).
   useEffect(() => {
-    if (!isParentKeyboardActive({ step, wordStudioOpen: ballStudioIndex != null, isCalibrating })) {
+    if (!isParentKeyboardActive({
+      step, wordStudioOpen: ballStudioIndex != null, isCalibrating, quickMode: quickActive,
+    })) {
       return undefined;
     }
     const isEditable = (el) => {
@@ -1192,7 +1201,7 @@ export default function KaraokeSyncTool({
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [step, ballStudioIndex, mode, startHold, finishHold, cancelHold, markCursor, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
+  }, [step, quickActive, ballStudioIndex, mode, startHold, finishHold, cancelHold, markCursor, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
 
   // Compteur live (durée du maintien) affiché pendant la capture — rAF, un seul petit
   // state, actif seulement le temps bref d'un maintien d'Espaço.
@@ -2165,7 +2174,6 @@ export default function KaraokeSyncTool({
   // ══════════════════ QUICK SYNC — mode de présentation ══════════════════
   // Aucun second brouillon, aucune seconde horloge : on réutilise `lines`, `cursor`,
   // startHold/finishHold/cancelHold et la source de capture déjà décidée.
-  const [presentation, setPresentation] = useState(initialPresentation === 'quick' ? 'quick' : 'advanced');
   const quickBlock = useMemo(() => quickSyncBlock({
     hasLyrics: lines.some((l) => l.text && l.text.trim()),
     lines,
@@ -2609,7 +2617,7 @@ export default function KaraokeSyncTool({
         />
       )}
 
-      {presentation === 'quick' && step === 'sync' ? (
+      {quickActive && (
         <QuickSyncView
           songTitle={effectiveSong?.title || 'Karaokê'}
           lines={lines}
@@ -2636,7 +2644,19 @@ export default function KaraokeSyncTool({
           onSave={handleSave}
           onPrepareAudio={() => setPresentation('advanced')}
         />
-      ) : step === 'lyrics' ? (
+      )}
+
+      {/* L'arbre avancé reste TOUJOURS monté : il contient l'hôte du player YouTube
+          (hostRef). Le démonter en Quick Sync détruisait le player — plus de son, ni
+          d'horloge. On le retire VISUELLEMENT sans `display:none` (qui peut suspendre la
+          lecture), et son handler clavier est neutralisé par isParentKeyboardActive. */}
+      <div
+        aria-hidden={quickActive || undefined}
+        className={quickActive
+          ? 'pointer-events-none absolute left-0 top-0 -z-10 h-px w-px overflow-hidden opacity-0'
+          : 'contents'}
+      >
+      {step === 'lyrics' ? (
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-8">
           <div className="w-full max-w-4xl space-y-4">
             {/* En-tête */}
@@ -3442,6 +3462,7 @@ export default function KaraokeSyncTool({
           )}
         </>
       )}
+      </div>
 
       {showShortcuts && <KeyboardShortcutsDialog onClose={() => setShowShortcuts(false)} />}
 

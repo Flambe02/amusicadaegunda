@@ -54,6 +54,7 @@ export const PHRASE_ONLY_TIMING_MODE = 'line';
 export function isParentKeyboardActive(state) {
   if (!state) return false;
   if (state.wordStudioOpen) return false;   // le studio de mots possède le clavier
+  if (state.quickMode) return false;        // Quick Sync possède le clavier (Espaço, Esc…)
   if (state.isCalibrating) return false;    // le test de réaction capture Espaço
   return state.step === 'sync';
 }
