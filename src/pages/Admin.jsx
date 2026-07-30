@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminDataProvider } from '@/components/admin/AdminDataContext';
 import AdminLayout from '@/components/admin/AdminLayout';
 import CatalogPage from '@/components/admin/CatalogPage';
+import WorkshopPage from '@/components/admin/WorkshopPage';
 import LinksPage from '@/components/admin/LinksPage';
 import LocalLibraryPage from '@/components/admin/LocalLibraryPage';
 import SettingsPage from '@/components/admin/SettingsPage';
@@ -16,6 +17,8 @@ export default function AdminPage() {
       <Routes>
         <Route element={<AdminLayout />}>
           <Route index element={<CatalogPage />} />
+          {/* Entrée de l'ateliê : ouvre l'overlay EXISTANT via openKaraoke (pas de second éditeur). */}
+          <Route path="atelie" element={<WorkshopPage />} />
           <Route path="links" element={<LinksPage />} />
           <Route path="biblioteca" element={<LocalLibraryPage />} />
           <Route path="configuracoes" element={<SettingsPage />} />

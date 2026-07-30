@@ -1,38 +1,18 @@
 // A single catalog row. Clicking the body opens the details drawer; the quick
 // action icons stop propagation so they never trigger the row selection.
 import { memo } from 'react';
-import { Music, Mic, ExternalLink, Edit2, Trash2, AudioLines } from 'lucide-react';
+import { Music, Mic, ExternalLink, Edit2, Trash2, AudioLines, MoreHorizontal, Info } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { StatusBadge, CategoryTag, KaraokeTag } from './badges';
 import { formatDayMonth, publicSongUrl } from './adminData';
-
-function IconAction({ label, onClick, href, children, danger, active }) {
-  const cls = `rounded p-1.5 transition-colors ${
-    active ? 'text-app-yellow hover:bg-app-yellow/15'
-      : danger ? 'text-gray-400 hover:bg-red-500/15 hover:text-red-400' : 'text-gray-400 hover:bg-white/10 hover:text-white'
-  }`;
-  const stop = (e) => e.stopPropagation();
-  const inner = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        {href ? (
-          <a href={href} target="_blank" rel="noopener noreferrer" onClick={stop} aria-label={label} className={cls}>
-            {children}
-          </a>
-        ) : (
-          <button onClick={(e) => { stop(e); onClick(); }} aria-label={label} className={cls}>
-            {children}
-          </button>
-        )}
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-  return inner;
-}
+import { catalogPrepAction } from '@/lib/workshopUi';
 
 function SongCatalogRow({ view, selected, onSelect, onKaraoke, onPitchMap, onEdit, onDelete }) {
   const openDrawer = () => onSelect(view);
+  const prepAction = catalogPrepAction(view);
 
   return (
     <div
@@ -86,21 +66,59 @@ function SongCatalogRow({ view, selected, onSelect, onKaraoke, onPitchMap, onEdi
         <StatusBadge status={view.status} scheduled={Boolean(view.publishAt) && view.status !== 'published'} />
       </div>
 
-      {/* AÇÕES */}
-      <div className="flex w-[168px] flex-shrink-0 items-center justify-end gap-0.5">
-        {view.hasLyrics && (
-          <IconAction label="Abrir karaokê" onClick={() => onKaraoke(view)}><Mic size={14} /></IconAction>
-        )}
-        {view.hasLyrics && onPitchMap && (
-          <IconAction
-            label={view.hasPitchMap ? `Guia de tom · ${view.pitchNoteCount} notas` : 'Guia de tom (sem dados)'}
-            onClick={() => onPitchMap(view)}
-            active={view.hasPitchMap}
-          ><AudioLines size={14} /></IconAction>
-        )}
-        <IconAction label="Ver no site" href={publicSongUrl(view)}><ExternalLink size={14} /></IconAction>
-        <IconAction label="Editar música" onClick={() => onEdit(view)}><Edit2 size={14} /></IconAction>
-        <IconAction label="Excluir música" onClick={() => onDelete(view)} danger><Trash2 size={14} /></IconAction>
+      {/* AÇÕES — l'action principale du karaokê porte un TEXTE visible : elle ne se
+          devine plus dans une icône. Le reste passe dans « Mais ações ». */}
+      <div className="flex w-[248px] flex-shrink-0 items-center justify-end gap-1">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); if (prepAction.action === 'editLyrics') onEdit(view); else onKaraoke(view); }}
+          className="min-h-[32px] whitespace-nowrap rounded-lg bg-purple-600/90 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-purple-600 focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-400"
+        >
+          {prepAction.label}
+        </button>
+
+        <DropdownMenu>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button" onClick={(e) => e.stopPropagation()} aria-label={`Mais ações para ${view.title}`}
+                  className="rounded p-1.5 text-gray-400 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-1 focus-visible:ring-purple-500/60"
+                >
+                  <MoreHorizontal size={15} />
+                </button>
+              </DropdownMenuTrigger>
+            </TooltipTrigger>
+            <TooltipContent>Mais ações</TooltipContent>
+          </Tooltip>
+          <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()} className="min-w-[190px]">
+            {view.hasLyrics && (
+              <DropdownMenuItem onClick={() => onKaraoke(view)}>
+                <Mic size={14} className="mr-2" /> Sincronizar karaokê
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => onEdit(view)}>
+              <Edit2 size={14} className="mr-2" /> Editar letra
+            </DropdownMenuItem>
+            {view.hasLyrics && onPitchMap && (
+              <DropdownMenuItem onClick={() => onPitchMap(view)}>
+                <AudioLines size={14} className="mr-2" />
+                Guia de tom{view.hasPitchMap ? ` · ${view.pitchNoteCount} notas` : ''}
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem asChild>
+              <a href={publicSongUrl(view)} target="_blank" rel="noopener noreferrer">
+                <ExternalLink size={14} className="mr-2" /> Pré-visualizar
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onSelect(view)}>
+              <Info size={14} className="mr-2" /> Ver detalhes
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDelete(view)} className="text-red-400 focus:text-red-300">
+              <Trash2 size={14} className="mr-2" /> Excluir música
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

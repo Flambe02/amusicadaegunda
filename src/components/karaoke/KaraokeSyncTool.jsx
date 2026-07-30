@@ -2151,6 +2151,24 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     if (verificationIsStale(verifySession, verifyContext(verifySession.role))) setVerifySession(null);
   }, [verifySession, verifyContext]);
 
+  // ── Présentation guidée (aucun état persisté, aucun timing touché) ──
+  const [tracksCollapsed, setTracksCollapsed] = useState(false);
+  const [detailsRole, setDetailsRole] = useState(null);
+
+  /** Exécute la « prochaine action » recommandée en réutilisant les actions existantes. */
+  const runNextAction = useCallback((next) => {
+    if (!next) return;
+    if (next.action === 'pick') pickTrackFile(next.role);
+    else if (next.action === 'calibrate') openCalibrationFor(next.role);
+    else if (next.action === 'verify') openVerification(next.role);
+    else if (next.action === 'synchronize') {
+      // Réutilise l'éditeur EXISTANT : on replie juste la préparation et on revient à la
+      // capture de frases. Aucun nouvel état de timing n'est créé.
+      setTracksCollapsed(true);
+      setMode('capture-lines');
+    }
+  }, [pickTrackFile, openCalibrationFor, openVerification]);
+
   const onInstrumentalPick = (e) => {
     const f = e.target.files?.[0];
     if (f) instrumentalRef.current.load(f);
@@ -3290,6 +3308,13 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
               onListen={listenComparison}
               onConfirmAligned={confirmAlignment}
               onRejectAligned={rejectAlignment}
+              playing={localTransport.isPlaying}
+              hasDraft={isDirty}
+              collapsed={tracksCollapsed}
+              onToggleCollapse={() => setTracksCollapsed((c) => !c)}
+              detailsRole={detailsRole}
+              onToggleDetails={(role) => setDetailsRole((r) => (r === role ? null : role))}
+              onNextAction={runNextAction}
             />
 
             {/* ══ Barra do ateliê : áudio local, calibração, revisão, modo ══ */}

@@ -2,10 +2,13 @@
 // Only implemented routes are listed (no dead nav): Catálogo, Biblioteca, Links,
 // Configurações.
 import { NavLink } from 'react-router-dom';
-import { Library, FolderOpen, Link2, Settings, RefreshCw, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Library, FolderOpen, Link2, Settings, RefreshCw, ChevronsLeft, ChevronsRight, SlidersHorizontal } from 'lucide-react';
 
 const ITEMS = [
   { to: '/admin', end: true, icon: Library, label: 'Catálogo' },
+  // Accès EXPLICITE à l'ateliê : avant, on ne pouvait y entrer qu'en devinant une
+  // icône de micro dans une ligne du catálogo.
+  { to: '/admin/atelie', icon: SlidersHorizontal, label: 'Ateliê de karaokê' },
   { to: '/admin/biblioteca', icon: FolderOpen, label: 'Biblioteca' },
   { to: '/admin/links', icon: Link2, label: 'Links' },
   { to: '/admin/configuracoes', icon: Settings, label: 'Configurações' },
@@ -32,11 +35,11 @@ export default function AdminSidebar({ collapsed, onToggleCollapse, adminEmail }
             }
           >
             {({ isActive }) => (
-              <>
+              <span aria-current={isActive ? 'page' : undefined} className="flex w-full items-center gap-3">
                 <Icon size={17} className="flex-shrink-0" />
                 {!collapsed && <span className="truncate">{label}</span>}
                 {isActive && !collapsed && <span className="ml-auto h-4 w-1 rounded-full bg-purple-400" />}
-              </>
+              </span>
             )}
           </NavLink>
         ))}

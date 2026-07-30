@@ -1,12 +1,18 @@
-import { Music, Upload, Trash2, Play, Crosshair, RotateCcw, AlertTriangle, Check, ShieldCheck } from 'lucide-react';
+import { Music, Play, AlertTriangle, Check, ShieldCheck, MoreHorizontal } from 'lucide-react';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { formatOffsetSeconds } from '@/lib/audioClock';
 import { formatBytes, formatDuration } from '@/lib/localAudioMetadata';
+import { TRACK_ROLE, compareTrackDuration } from '@/lib/localTracks';
 import {
-  TRACK_ROLE, TRACK_LABEL, trackStatusLabel, compareTrackDuration,
-  canUseForSync, canReviewWithTrack, LOCAL_ONLY_NOTICE, ALIGNMENT_HINT,
-} from '@/lib/localTracks';
+  ROLE_UI, roleOrder, roleLabel, trackCardStatus, trackPrimaryAction, trackSecondaryActions,
+  preparationProgress, preparationStage, nextWorkshopAction, syncSourceOptions, workshopSummary,
+  SECTION_COPY, HELP_COPY, ALIGNMENT_COPY,
+} from '@/lib/workshopUi';
 
-const ROLES = [TRACK_ROLE.ORIGINAL, TRACK_ROLE.INSTRUMENTAL, TRACK_ROLE.VOCALS];
+// Libellé conservé pour les deux barres (calibration / vérification).
+const TRACK_LABEL = Object.fromEntries(roleOrder().map((r) => [r, roleLabel(r)]));
 
 /**
  * LocalTracksPanel — « Faixas locais » : les trois pistes audio importées à la main
@@ -25,13 +31,62 @@ export default function LocalTracksPanel({
   calTarget, calAnchors, calAnchorOffset, onMarkCalAnchor, onApplyCalibration, onCancelCalibration,
   // Comparaison original ↔ stem — étape 6.1
   verifySession, canConfirm, onListen, onConfirmAligned, onRejectAligned,
+  // Présentation guidée
+  playing, hasDraft, collapsed, onToggleCollapse, detailsRole, onToggleDetails, onNextAction,
 }) {
+  const progress = preparationProgress(tracks, calibrationStatusOf);
+  const stage = preparationStage(tracks, calibrationStatusOf, { syncRole, verificationOf });
+  const next = nextWorkshopAction(tracks, calibrationStatusOf, { syncRole, verificationOf, hasDraft });
+  const summary = workshopSummary(tracks, calibrationStatusOf, { syncRole, verificationOf });
+  const sourceOptions = syncSourceOptions(tracks, calibrationStatusOf, { verificationOf, offsetOf });
+
   return (
-    <section aria-label="Faixas locais" className="border-t border-white/10 bg-black/20 px-3 py-2">
-      <div className="mb-1.5 flex flex-wrap items-center gap-2">
-        <h3 className="text-[9px] font-bold uppercase tracking-wider text-white/35">Faixas locais</h3>
-        <p className="text-[10px] text-emerald-300/80">{LOCAL_ONLY_NOTICE}</p>
+    <section aria-label={SECTION_COPY.title} className="border-t border-white/10 bg-black/20 px-3 py-2">
+      {/* ══ En-tête guidé : titre, but, progression, étapes ══ */}
+      <div className="mb-2 space-y-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <h3 className="text-[12px] font-bold text-white">{SECTION_COPY.title}</h3>
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-gray-300">
+            {SECTION_COPY.progressTitle}: {progress.label}
+          </span>
+          <button
+            type="button" onClick={onToggleCollapse} aria-expanded={!collapsed}
+            className="karaoke-focusable ml-auto rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold hover:bg-white/10"
+          >
+            {collapsed ? 'Mostrar faixas' : 'Recolher'}
+          </button>
+        </div>
+        <p className="text-[10px] text-emerald-300/80">{SECTION_COPY.intro}</p>
+        <p className="text-[10px] text-gray-400">{SECTION_COPY.optionalNote}</p>
+
+        {/* Étapes — présentation de l'état existant, pas un assistant rigide. */}
+        <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+          {stage.stages.map((s) => (
+            <li
+              key={s.step}
+              aria-current={s.active ? 'step' : undefined}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold ${
+                s.active ? 'bg-app-yellow/20 text-app-yellow'
+                  : s.done ? 'bg-emerald-500/15 text-emerald-200'
+                  : 'bg-white/5 text-gray-500'
+              }`}
+            >
+              {s.done ? <Check size={10} /> : <span>{s.step}.</span>} {s.label}
+            </li>
+          ))}
+        </ol>
+        {stage.blockedReason && <p className="text-[10px] text-amber-200/90">{stage.blockedReason}</p>}
       </div>
+
+      {collapsed && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-2 text-[10px] text-gray-300">
+          <p className="font-bold text-white">{summary.title}</p>
+          {summary.details.length > 0 && <p className="mt-0.5 text-gray-400">{summary.details.join(' · ')}</p>}
+        </div>
+      )}
+      {!collapsed && (
+      <>
+
 
       {/* ══ Calibração da faixa selecionada — alvo CONGELADO no clique ══ */}
       {calTarget && (
@@ -92,12 +147,12 @@ export default function LocalTracksPanel({
           <span className="font-bold text-emerald-200">
             Verificar alinhamento · {TRACK_LABEL[verifySession.role]}
           </span>
-          <span className="text-gray-400">{ALIGNMENT_HINT}</span>
+          <span className="text-gray-400">{ALIGNMENT_COPY}</span>
           <button type="button" onClick={() => onListen('original')} aria-pressed={verifySession.heardOriginal}
             className={`karaoke-focusable inline-flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold ${
               verifySession.heardOriginal ? 'border-emerald-500/50 bg-emerald-600/20 text-emerald-100' : 'border-white/10 bg-white/5 hover:bg-white/10'
             }`}>
-            {verifySession.heardOriginal && <Check size={10} />} Ouvir original
+            {verifySession.heardOriginal && <Check size={10} />} Ouvir música completa
           </button>
           <button type="button" onClick={() => onListen('stem')} aria-pressed={verifySession.heardStem}
             className={`karaoke-focusable inline-flex items-center gap-1 rounded-lg border px-2 py-1 font-semibold ${
@@ -118,163 +173,177 @@ export default function LocalTracksPanel({
       )}
 
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {ROLES.map((role) => {
+        {roleOrder().map((role) => {
+          const ui = ROLE_UI[role];
           const track = tracks[role] || {};
           const status = calibrationStatusOf(role);
           const verification = verificationOf(role);
           const offset = offsetOf(role);
           const loaded = track.loadStatus === 'ready';
-          const calibrated = canUseForSync(track, status);
           const isPreview = previewRole === role;
           const isSync = syncRole === role;
+          const isPlaying = isPreview && playing;
           const cmp = role === TRACK_ROLE.ORIGINAL
             ? { level: 'unknown', label: '' }
             : compareTrackDuration(track.duration, referenceDuration);
-          const statusLabel = trackStatusLabel(track, status, verification);
+          const card = trackCardStatus(track, status, verification, {
+            isSync, isPlaying, durationLevel: cmp.level,
+          });
+          const primary = trackPrimaryAction(track, status, verification, isPlaying);
+          const secondary = trackSecondaryActions(track, status, verification, { isSync });
+          const run = (action) => {
+            if (action === 'pick' || action === 'replace') onPick(role);
+            else if (action === 'calibrate' || action === 'recalibrate') onCalibrate(role);
+            else if (action === 'verify') onVerifyAlignment(role);
+            else if (action === 'listen' || action === 'pause') onPreview(role);
+            else if (action === 'useForSync') onUseForSync(role);
+            else if (action === 'remove') onRemove(role);
+            else if (action === 'details') onToggleDetails(role);
+          };
+          const toneCls = {
+            neutral: 'text-gray-400', action: 'text-app-yellow',
+            ready: 'text-emerald-200', error: 'text-red-200', accent: 'text-violet-200',
+          }[card.tone];
 
           return (
             <article
               key={role}
               className={`rounded-xl border p-2.5 ${
-                isSync ? 'border-violet-400/50 bg-violet-500/10'
-                  : isPreview ? 'border-purple-400/40 bg-purple-500/[0.07]'
-                  : 'border-white/10 bg-white/[0.03]'
+                isSync ? 'border-violet-400/50 bg-violet-500/[0.08]' : 'border-white/10 bg-white/[0.03]'
               }`}
             >
-              <header className="mb-1.5 flex items-center gap-1.5">
-                <Music size={13} className="shrink-0 text-violet-300" />
-                <h4 className="text-[12px] font-bold text-white">{TRACK_LABEL[role]}</h4>
-                {isPreview && (
-                  <span className="rounded-full bg-purple-500/25 px-1.5 py-0.5 text-[9px] font-bold text-purple-100">
-                    Fonte de reprodução
-                  </span>
-                )}
-                {isSync && (
-                  <span className="rounded-full bg-violet-500/30 px-1.5 py-0.5 text-[9px] font-bold text-violet-100">
-                    Fonte de sincronização
-                  </span>
-                )}
+              <header className="mb-1 flex flex-wrap items-center gap-1.5">
+                <h4 className="text-[12px] font-bold text-white">{ui.cardTitle}</h4>
+                <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-bold text-gray-300">
+                  {ui.purposeBadge}
+                </span>
               </header>
 
-              {/* État textuel — jamais une couleur seule */}
-              <p
-                aria-live="polite"
-                className={`mb-1 inline-flex items-center gap-1 text-[10px] font-semibold ${
-                  track.loadStatus === 'error' ? 'text-red-200'
-                    : calibrated && verification !== 'pending' ? 'text-emerald-200'
-                    : calibrated ? 'text-amber-200'
-                    : loaded ? 'text-amber-200'
-                    : 'text-gray-500'
-                }`}
-              >
-                {track.loadStatus === 'error' && <AlertTriangle size={11} />}
-                {calibrated && verification !== 'pending' && <ShieldCheck size={11} />}
-                {statusLabel}
-                {calibrated && <span className="text-gray-400">· {formatOffsetSeconds(offset)}</span>}
+              <p className="mb-1 text-[10px] leading-snug text-gray-400">{ui.description}</p>
+              <p className={`mb-1 text-[10px] font-semibold ${ui.required ? 'text-app-yellow/90' : 'text-gray-500'}`}>
+                {ui.requirement}
+              </p>
+
+              {/* UN seul statut principal — texte + icône, jamais la couleur seule. */}
+              <p aria-live="polite" className={`mb-1 inline-flex flex-wrap items-center gap-1 text-[10px] font-semibold ${toneCls}`}>
+                {card.icon === 'error' || card.icon === 'warn' ? <AlertTriangle size={11} />
+                  : card.icon === 'ready' ? <ShieldCheck size={11} />
+                  : card.icon === 'playing' ? <Play size={11} />
+                  : <Music size={11} />}
+                {card.label}
+                {card.badges.map((b) => (
+                  <span key={b} className="rounded-full bg-violet-500/25 px-1.5 py-0.5 text-[9px] font-bold text-violet-100">{b}</span>
+                ))}
               </p>
 
               {loaded && (
-                <dl className="mb-1.5 space-y-0.5 text-[10px] text-gray-400">
-                  <div className="flex gap-1 truncate">
-                    <dt className="sr-only">Arquivo</dt>
-                    <dd className="truncate font-semibold text-gray-200">{track.fileName}</dd>
-                  </div>
-                  <div className="flex gap-2">
-                    <dt className="sr-only">Duração</dt>
-                    <dd>{formatDuration(track.duration)}</dd>
-                    <dt className="sr-only">Tamanho</dt>
-                    <dd>{formatBytes(track.fileSize)}</dd>
-                  </div>
-                  {role !== TRACK_ROLE.ORIGINAL && cmp.level !== 'unknown' && (
-                    <div>
-                      <dt className="sr-only">Comparação de duração</dt>
-                      <dd className={cmp.level === 'ok' ? 'text-emerald-300/80' : 'text-amber-200'}>
-                        {cmp.label}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
+                <p className="mb-1.5 truncate text-[10px] text-gray-500" title={track.fileName}>
+                  {track.fileName} · {formatDuration(track.duration)}
+                </p>
               )}
-
               {track.error && <p className="mb-1.5 text-[10px] text-red-200">{track.error}</p>}
 
-              <div className="flex flex-wrap gap-1">
+              {/* UNE action primaire + « Mais opções » */}
+              <div className="flex flex-wrap items-center gap-1">
                 <button
-                  type="button" onClick={() => onPick(role)}
-                  className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold hover:bg-white/10"
+                  type="button" onClick={() => run(primary.action)} disabled={primary.action === 'busy'}
+                  className="karaoke-focusable inline-flex min-h-[32px] items-center gap-1 rounded-lg bg-purple-600 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-purple-700 disabled:opacity-40"
                 >
-                  <Upload size={11} /> {loaded ? 'Trocar arquivo' : 'Selecionar arquivo'}
+                  {primary.label}
                 </button>
 
-                {loaded && (
-                  <>
-                    <button
-                      type="button" onClick={() => onPreview(role)} aria-pressed={isPreview}
-                      className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold hover:bg-white/10"
-                    >
-                      <Play size={11} /> Ouvir
-                    </button>
-                    <button
-                      type="button" onClick={() => onUseForSync(role)}
-                      aria-pressed={isSync} disabled={!calibrated}
-                      title={calibrated ? 'Usar esta faixa para sincronizar' : 'Calibre esta faixa primeiro.'}
-                      className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold hover:bg-white/10 disabled:opacity-30"
-                    >
-                      <Crosshair size={11} /> Usar para sincronização
-                    </button>
-                    <button
-                      type="button" onClick={() => onCalibrate(role)}
-                      className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold hover:bg-white/10"
-                    >
-                      <RotateCcw size={11} /> {calibrated ? 'Refazer calibração' : 'Calibrar'}
-                    </button>
-
-                    {/* Raccourci UVR : copier la calibration de l'original, sur confirmation */}
-                    {role !== TRACK_ROLE.ORIGINAL && !calibrated && (
+                {secondary.length > 0 && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                       <button
-                        type="button" onClick={() => onCopyOriginalCalibration(role)}
-                        className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-app-yellow/40 bg-app-yellow/10 px-2 py-1 text-[10px] font-semibold text-app-yellow hover:bg-app-yellow/20"
+                        type="button" aria-label={`Mais opções para ${ui.label}`}
+                        className="karaoke-focusable inline-flex min-h-[32px] items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold hover:bg-white/10"
                       >
-                        Usar a calibração do áudio original
+                        Mais opções <MoreHorizontal size={12} />
                       </button>
-                    )}
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-[180px]">
+                      {secondary.map((a) => (
+                        <DropdownMenuItem key={a.action} onClick={() => run(a.action)}>{a.label}</DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
 
-                    {/* Vérification manuelle d'alignement */}
-                    {role !== TRACK_ROLE.ORIGINAL && calibrated && verification === 'pending' && (
-                      <button
-                        type="button" onClick={() => onVerifyAlignment(role)}
-                        title={ALIGNMENT_HINT}
-                        className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-2 py-1 text-[10px] font-semibold text-emerald-200 hover:bg-emerald-600/25"
-                      >
-                        <Check size={11} /> Verificar alinhamento
-                      </button>
-                    )}
-
-                    <button
-                      type="button" onClick={() => onRemove(role)}
-                      className="karaoke-focusable inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[10px] font-semibold hover:bg-white/10"
-                    >
-                      <Trash2 size={11} /> Remover
-                    </button>
-                  </>
+                {/* Raccourci UVR — copie explicite, jamais automatique. */}
+                {role !== TRACK_ROLE.ORIGINAL && loaded && status !== 'calibrated' && (
+                  <button
+                    type="button" onClick={() => onCopyOriginalCalibration(role)}
+                    className="karaoke-focusable inline-flex min-h-[32px] items-center rounded-lg border border-app-yellow/40 bg-app-yellow/10 px-2 py-1 text-[10px] font-semibold text-app-yellow hover:bg-app-yellow/20"
+                  >
+                    Usar a calibração da música completa
+                  </button>
                 )}
               </div>
 
-              {loaded && !calibrated && (
-                <p className="mt-1 text-[10px] text-amber-200/90">
-                  Calibre esta faixa para ouvir a frase no ponto correto.
-                </p>
-              )}
-              {role !== TRACK_ROLE.ORIGINAL && calibrated && verification === 'pending' && (
-                <p className="mt-1 text-[10px] text-amber-200/90">{ALIGNMENT_HINT}</p>
-              )}
-              {loaded && calibrated && !canReviewWithTrack(track, calibrationStatusOf(role)) && (
-                <p className="mt-1 text-[10px] text-amber-200/90">Faixa indisponível para revisão.</p>
+              <p className="mt-1 text-[10px] text-gray-500">{ui.recommendation}</p>
+
+              {/* Détails techniques — utiles au diagnostic, jamais la hiérarchie principale. */}
+              {detailsRole === role && (
+                <dl className="mt-1.5 space-y-0.5 rounded-lg bg-black/30 p-1.5 text-[10px] text-gray-400">
+                  <div><dt className="inline text-gray-500">Arquivo: </dt><dd className="inline">{track.fileName || '—'}</dd></div>
+                  <div><dt className="inline text-gray-500">Duração: </dt><dd className="inline">{formatDuration(track.duration)}</dd></div>
+                  <div><dt className="inline text-gray-500">Tamanho: </dt><dd className="inline">{formatBytes(track.fileSize)}</dd></div>
+                  {cmp.level !== 'unknown' && (
+                    <div><dt className="inline text-gray-500">Diferença de duração: </dt><dd className="inline">{cmp.label}</dd></div>
+                  )}
+                  <div><dt className="inline text-gray-500">Calibração: </dt><dd className="inline">{formatOffsetSeconds(offset)}</dd></div>
+                  <div><dt className="inline text-gray-500">Verificação: </dt><dd className="inline">{verification || 'não verificada'}</dd></div>
+                  <div><dt className="inline text-gray-500">Função interna: </dt><dd className="inline">{role}</dd></div>
+                </dl>
               )}
             </article>
           );
         })}
       </div>
+
+      {/* ══ Como usar cada faixa ══ */}
+      <div className="mt-2 rounded-xl border border-white/10 bg-white/[0.03] p-2">
+        <h4 className="text-[11px] font-bold text-white">{HELP_COPY.title}</h4>
+        <p className="mt-0.5 text-[10px] leading-snug text-gray-400">{HELP_COPY.body}</p>
+      </div>
+
+      {/* ══ Próxima ação ══ */}
+      <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-purple-400/30 bg-purple-500/[0.08] p-2">
+        <button
+          type="button" onClick={() => onNextAction(next)}
+          className="karaoke-focusable inline-flex min-h-[36px] items-center rounded-lg bg-purple-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-purple-700"
+        >
+          {next.label}
+        </button>
+        <span className="text-[10px] font-semibold text-gray-300">{next.sourceSummary}</span>
+      </div>
+
+      {/* ══ Configuração de sincronização (avançado) ══ */}
+      <details className="mt-2 rounded-xl border border-white/10 bg-white/[0.03]">
+        <summary className="cursor-pointer px-2 py-1.5 text-[11px] font-bold text-white">
+          {SECTION_COPY.advancedTitle}
+        </summary>
+        <div className="space-y-1 px-2 pb-2">
+          <p className="text-[10px] text-gray-400">{SECTION_COPY.advancedSubtitle}</p>
+          {sourceOptions.map((o) => (
+            <div key={o.label} className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button" onClick={() => onUseForSync(o.role)} disabled={o.disabled}
+                aria-pressed={syncRole === o.role}
+                className={`karaoke-focusable inline-flex min-h-[32px] items-center rounded-lg border px-2 py-1 text-[10px] font-semibold disabled:opacity-30 ${
+                  syncRole === o.role ? 'border-violet-400/60 bg-violet-500/20 text-violet-100' : 'border-white/10 bg-white/5 hover:bg-white/10'
+                }`}
+              >
+                {o.label}
+              </button>
+              <span className="text-[10px] text-gray-500">{o.disabled && o.reason ? o.reason : o.help}</span>
+            </div>
+          ))}
+        </div>
+      </details>
+      </>
+      )}
     </section>
   );
 }

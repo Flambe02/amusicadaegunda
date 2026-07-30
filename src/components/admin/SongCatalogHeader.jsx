@@ -7,7 +7,7 @@ export default function SongCatalogHeader() {
       <div className="hidden w-[130px] flex-shrink-0 sm:block">Categoria</div>
       <div className="hidden w-[115px] flex-shrink-0 md:block">Karaokê</div>
       <div className="hidden w-[120px] flex-shrink-0 sm:block">Status</div>
-      <div className="w-[168px] flex-shrink-0 text-right">Ações</div>
+      <div className="w-[248px] flex-shrink-0 text-right">Ações</div>
     </div>
   );
 }
