@@ -111,7 +111,6 @@ export default function KaraokePlayer({
   const [playerReady, setPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [displayIdx, setDisplayIdx] = useState(-1);
-  const [entryDots, setEntryDots] = useState(0); // 0 = pas de compte à rebours d'entrée
   const [phase, setPhase] = useState('intro'); // 'intro' | 'live'
   const [countdown, setCountdown] = useState(null);
 
@@ -347,7 +346,7 @@ export default function KaraokePlayer({
     return () => { if (hideControlsTimerRef.current) { clearTimeout(hideControlsTimerRef.current); hideControlsTimerRef.current = null; } };
   }, [tvMode, isPlaying, controlsVisible]);
 
-  // ── Poll : temps + ligne affichée (continuité) + compte à rebours d'entrée ──
+  // ── Poll : temps + ligne affichée (continuité) ──
   useEffect(() => {
     if (!playerReady) return undefined;
     pollRef.current = setInterval(() => {
@@ -364,18 +363,6 @@ export default function KaraokePlayer({
       }
       displayIdxRef.current = di;
       setDisplayIdx((prev) => (prev === di ? prev : di));
-
-      // Compte à rebours d'entrée : prochaine ligne dans ≤3s alors qu'aucune n'est en cours
-      // (avant la 1re ligne, ou pendant un silence après une fin captée).
-      const cur = di >= 0 ? lines[di] : null;
-      const next = lines[di + 1] ?? (di === -1 ? lines[0] : null);
-      const inGap = !cur || (cur.endTime != null && t >= cur.endTime);
-      let dots = 0;
-      if (inGap && next && next.time != null) {
-        const to = next.time - t;
-        if (to > 0.15 && to <= 3) dots = Math.min(3, Math.ceil(to));
-      }
-      setEntryDots((prev) => (prev === dots ? prev : dots));
     }, 120);
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   }, [playerReady, lines]);
@@ -612,7 +599,6 @@ export default function KaraokePlayer({
     seekTo(0);
     displayIdxRef.current = -1;
     setDisplayIdx(-1);
-    setEntryDots(0);
     energyStatsRef.current = { active: 0, sung: 0, sum: 0, count: 0 };
     setScoreResult(null);
     revealControls();
@@ -912,15 +898,6 @@ export default function KaraokePlayer({
           {countdown != null && (
             <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
               <span key={countdown} className="karaoke-countdown">{countdown > 0 ? countdown : 'CANTA!'}</span>
-            </div>
-          )}
-
-          {/* Compte à rebours d'entrée ●●● (pendant un silence avant une ligne) */}
-          {countdown == null && entryDots > 0 && (
-            <div className="pointer-events-none absolute inset-x-0 top-[16vh] z-20 flex items-center justify-center gap-3">
-              {[1, 2, 3].map((n) => (
-                <span key={n} className={`h-3.5 w-3.5 rounded-full transition-all duration-200 md:h-4 md:w-4 ${n <= entryDots ? 'bg-app-yellow shadow-[0_0_14px_rgba(253,224,71,0.8)]' : 'bg-white/15'}`} />
-              ))}
             </div>
           )}
 
