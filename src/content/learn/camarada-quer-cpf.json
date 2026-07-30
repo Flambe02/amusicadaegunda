@@ -1,0 +1,121 @@
+{
+  "slug": "camarada-quer-cpf",
+  "title": "Camarada Quer CPF",
+  "lrcLineCount": 62,
+  "segments": [
+    { "from": 0, "to": 0, "fr": "Victor est arrivé au Brésil" },
+    { "from": 1, "to": 1, "fr": "Avec un jeitinho bien répété", "expression_id": "jeitinho" },
+    { "from": 2, "to": 2, "fr": "Il voulait devenir un gars du coin" },
+    { "from": 3, "to": 3, "fr": "Mais il est arrivé sous-titré" },
+    { "from": 4, "to": 4, "fr": "Il est venu de Russie discrètement" },
+    { "from": 5, "to": 5, "fr": "Il est devenu Victor sur le papier" },
+    { "from": 6, "to": 6, "fr": "Il a appris tout Niterói par cœur" },
+    { "from": 7, "to": 7, "fr": "Mais il se figeait devant un pastel" },
+    { "from": 8, "to": 8, "fr": "Il a fait du tourisme, du change" },
+    { "from": 9, "to": 9, "fr": "Avec un sourire de comptoir" },
+    { "from": 10, "to": 10, "fr": "Et il est allé à un cours de forró" },
+    { "from": 11, "to": 11, "fr": "Pour avoir l'air brésilien" },
+    { "from": 12, "to": 12, "fr": "Mais pour être brésilien" },
+    { "from": 13, "to": 13, "fr": "Ça ne suffit pas de suer sur la piste" },
+    { "from": 14, "to": 14, "fr": "Il faut rire de sa facture" },
+    { "from": 15, "to": 15, "fr": "Et s'émouvoir devant son feijão" },
+    { "from": 16, "to": 16, "fr": "Il est prêt pour parler de Bolsonaro" },
+    { "from": 17, "to": 17, "fr": "Partager le grand barbecue" },
+    { "from": 18, "to": 18, "fr": "Et voir Neymar tomber tout seul" },
+    { "from": 19, "to": 19, "fr": "Sans que personne ne le touche" },
+    { "from": 20, "to": 20, "fr": "Si tu as crié faute" },
+    { "from": 21, "to": 21, "fr": "Tu peux déjà te faire naturaliser" },
+    { "from": 22, "to": 22, "fr": "Le camarade veut son CPF", "expression_id": "cpf" },
+    { "from": 23, "to": 23, "fr": "Mais il est arrivé sous-titré" },
+    { "from": 24, "to": 24, "fr": "Oh Victor, ne pleure pas" },
+    { "from": 25, "to": 25, "fr": "Il a voulu devenir brésilien" },
+    { "from": 26, "to": 26, "fr": "Pour échapper à La Haye" },
+    { "from": 27, "to": 27, "fr": "Le camarade veut son CPF", "expression_id": "cpf" },
+    { "from": 28, "to": 28, "fr": "Il a tenté le xote, ça a mal tourné" },
+    { "from": 29, "to": 29, "fr": "Où est ton passeport" },
+    { "from": 30, "to": 30, "fr": "Au test du forró" },
+    { "from": 31, "to": 31, "fr": "Le tampon a dit stop" },
+    { "from": 32, "to": 32, "fr": "Il est allé à La Haye en étudiant" },
+    { "from": 33, "to": 33, "fr": "Avec une tête de héros de novela" },
+    { "from": 34, "to": 34, "fr": "Mais la porte s'est méfiée" },
+    { "from": 35, "to": 35, "fr": "Et lui a claqué au nez" },
+    { "from": 36, "to": 36, "fr": "Il y avait du barbecue au programme" },
+    { "from": 37, "to": 37, "fr": "Il y avait feijoada et de la sueur" },
+    { "from": 38, "to": 38, "fr": "Mais le Brésil n'a pas de mode d'emploi" },
+    { "from": 39, "to": 39, "fr": "Et ne se télécharge pas en dansant" },
+    { "from": 40, "to": 40, "fr": "Il a déjà dit « aí complica »" },
+    { "from": 41, "to": 41, "fr": "Pour fuir un problème" },
+    { "from": 42, "to": 42, "fr": "Il a déjà emprunté un Pix" },
+    { "from": 43, "to": 43, "fr": "Pour en payer un autre d'abord" },
+    { "from": 44, "to": 44, "fr": "Le camarade veut son CPF", "expression_id": "cpf" },
+    { "from": 45, "to": 45, "fr": "Mais il est arrivé sous-titré" },
+    { "from": 46, "to": 46, "fr": "Oh Victor, ne pleure pas" },
+    { "from": 47, "to": 47, "fr": "Il a fait un stage de malandro", "expression_id": "malandro" },
+    { "from": 48, "to": 48, "fr": "Mais il est reparti tamponné" },
+    { "from": 49, "to": 49, "fr": "Le camarade veut son CPF", "expression_id": "cpf" },
+    { "from": 50, "to": 50, "fr": "Il est allé danser, ça a mal tourné" },
+    { "from": 51, "to": 51, "fr": "Où est ton passeport" },
+    { "from": 52, "to": 52, "fr": "Le russe est tombé pendant le xote" },
+    { "from": 53, "to": 53, "fr": "Et le plan a pris fin" },
+    { "from": 54, "to": 54, "fr": "Et la preuve ultime" },
+    { "from": 55, "to": 55, "fr": "Pour devenir un brésilien outré" },
+    { "from": 56, "to": 56, "fr": "Si l'Argentine gagne la Coupe" },
+    { "from": 57, "to": 57, "fr": "Et que tu cries « on nous a volés »" },
+    { "from": 58, "to": 58, "fr": "Félicitations camarade" },
+    { "from": 59, "to": 59, "fr": "Tu peux signer chez le notaire" },
+    { "from": 60, "to": 60, "fr": "Félicitations camarade" },
+    { "from": 61, "to": 61, "fr": "Tu peux signer chez le notaire" }
+  ],
+  "expressions": [
+    {
+      "id": "cpf",
+      "term": "CPF",
+      "meaning_fr": "Numéro fiscal brésilien. Sans lui, impossible d'ouvrir un compte, de louer un logement ou de prendre un abonnement téléphonique. Dans la chanson, c'est le symbole ultime : avoir un CPF, c'est exister administrativement au Brésil.",
+      "register": "courant"
+    },
+    {
+      "id": "jeitinho",
+      "term": "jeitinho brasileiro",
+      "meaning_fr": "L'art de contourner une règle ou une difficulté avec charme et débrouille, sans que ce soit vu comme malhonnête. Victor arrive avec un « jeitinho répété » : il a préparé sa version brésilienne, mais un vrai jeitinho ne s'apprend pas, il se vit.",
+      "register": "courant"
+    },
+    {
+      "id": "malandro",
+      "term": "malandro",
+      "meaning_fr": "Figure culturelle brésilienne du débrouillard rusé, séducteur, qui s'en sort toujours par l'intelligence de la rue. « Fez estágio de malandro » est une blague : on ne devient pas malandro par un cours, c'est une identité, pas une compétence.",
+      "register": "familier"
+    }
+  ],
+  "cultural_context_fr": "Cette chanson s'inspire d'une histoire réelle : un supposé espion russe aurait tenté de devenir citoyen brésilien sous une fausse identité, probablement pour échapper à une procédure devant la Cour de La Haye. La chanson tourne cette tentative en dérision en listant tout ce qu'il faudrait vraiment maîtriser pour « devenir brésilien » — bien au-delà des papiers : rire de ses dettes, pleurer d'émotion devant un plat simple, connaître Neymar par cœur, et surtout, crier au vol si l'Argentine gagne la Coupe du monde.",
+  "study_sheet": {
+    "objective_fr": "Apprendre à utiliser le verbe virar (devenir) et trois mots du quotidien brésilien.",
+    "grammar_note": {
+      "title_pt": "virar + nome",
+      "explanation_fr": "Construction très courante à l'oral pour dire devenir quelque chose. Plus fréquent que tornar-se, plus formel et littéraire.",
+      "examples": ["virar brasileiro", "virar cria"]
+    },
+    "exercises": [
+      {
+        "type": "fill_blank",
+        "prompt_pt": "Ele quis ____ brasileiro.",
+        "answer": "virar",
+        "distractors": ["ser", "estar"]
+      },
+      {
+        "type": "fill_blank",
+        "prompt_pt": "Sem ____, você não abre conta no banco.",
+        "answer": "CPF"
+      },
+      {
+        "type": "multiple_choice",
+        "prompt_pt": "jeitinho brasileiro quer dizer:",
+        "options": [
+          { "text": "um documento oficial", "correct": false },
+          { "text": "a arte de contornar regras com charme", "correct": true },
+          { "text": "um tipo de dança", "correct": false }
+        ]
+      }
+    ],
+    "summary_terms": ["virar", "CPF", "jeitinho", "malandro"]
+  }
+}

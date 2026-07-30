@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   ArrowLeft, Play, Pause, Music, Loader2, Settings2, Mic,
   SkipBack, SkipForward, Square, RotateCcw, X,
-  SlidersHorizontal, Repeat, Check,
+  SlidersHorizontal, Repeat, Check, Sparkles, BookOpen,
 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
@@ -11,6 +11,10 @@ import { hasDuetTags } from '@/lib/lrc';
 import { resolveSongTiming } from '@/lib/timingModel';
 import { distributeWords } from '@/lib/wordDistribution';
 import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
+import {
+  buildLearnIndex, deriveSongSlug, hasLearnContent, loadLearnContent, lookupExpression, lookupFr,
+} from '@/lib/learnContent';
+import { addEntry as addVocabEntry } from '@/lib/vocabNotebook';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import KaraokeMixerSheet from '@/components/karaoke/KaraokeMixerSheet';
@@ -29,6 +33,12 @@ import '@/styles/karaoke.css';
 
 // Panneau d'options TV (D-pad) — lazy → chargé seulement en tvMode, hors bundle mobile.
 const KaraokeTvOptions = lazy(() => import('@/tv/KaraokeTvOptions'));
+// Caderno de vocabulário (Modo Aprender, bêta) — lazy pour la même raison que ci-dessus :
+// KaraokePlayer.jsx est atteint de façon EAGER via l'import statique de Home.jsx (pas
+// derrière un lazy() de route), donc tout import statique ici finirait dans le bundle
+// principal, chargé sur CHAQUE page (§9 de la spec). lazy() garde son code dans son
+// propre chunk, chargé seulement quand un utilisateur ouvre effectivement le carnet.
+const VocabNotebookSheet = lazy(() => import('@/components/learn/VocabNotebookSheet'));
 
 const FALLBACK_LINE_DURATION_SEC = 4;
 // Couleurs des parties en modo dueto (P1 / P2).
@@ -124,6 +134,8 @@ export default function KaraokePlayer({
   ));
   const [showOpts, setShowOpts] = useState(false);
   const showOptsRef = useRef(showOpts); showOptsRef.current = showOpts;
+  // Modo Aprender (bêta) : caderno de vocabulário, indépendant du mixer.
+  const [showNotebook, setShowNotebook] = useState(false);
   const skipNextSaveRef = useRef(Boolean(initialSessionOptions));
   useEffect(() => {
     if (skipNextSaveRef.current) { skipNextSaveRef.current = false; return; }
@@ -172,7 +184,12 @@ export default function KaraokePlayer({
 
   // Traduction (bandeau bas) : texte courant + cache par (langue|texte).
   const [translation, setTranslation] = useState('');
+  // 'learn' = fiche curatée Modo Aprender (bêta) | 'api' = traduction à la volée.
+  // Distingue visuellement les deux (§6.3 : la fiche est prioritaire ligne par ligne).
+  const [translationSource, setTranslationSource] = useState(null);
   const transCacheRef = useRef(new Map());
+  const [collectedIds, setCollectedIds] = useState(() => new Set());
+  const [collectAck, setCollectAck] = useState(false);
 
   // ── Guia de tom · Beta (só móvel/web ; nunca em TV) ──
   // Melodia de referência opcional (pitch-map) + orquestrador do microfone.
@@ -253,6 +270,46 @@ export default function KaraokePlayer({
   }, [baseLines, tvMode]);
   const artwork = song?.cover_image
     || getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault');
+
+  // ── Modo Aprender · fiche de traduction curatée (bêta, 2 chansons) ──
+  // Le slug est DÉRIVÉ DU TITRE (pas `song.slug`) : voir `deriveSongSlug` dans
+  // learnContent.js — reproduit l'algorithme du build, indépendant de l'état de la
+  // colonne `slug` en base. Import dynamique : aucune des 57 autres chansons ne
+  // télécharge de fiche (§9 de la spec).
+  const learnSlug = useMemo(() => deriveSongSlug(song), [song]);
+  const [learnEntry, setLearnEntry] = useState(null);
+  // Slug pour lequel `learnEntry` est à jour (fiche chargée, OU confirmée absente).
+  // Comparé à `learnSlug` à CHAQUE RENDU (pas via un `useState` séparé qui pourrait
+  // rester périmé un rendu de trop) : ça garantit que le statut « en cours de
+  // résolution » est vrai dès le tout premier rendu qui suit un changement de
+  // chanson, avant même que l'effet ci-dessous n'ait eu la chance de s'exécuter.
+  const [learnEntrySlug, setLearnEntrySlug] = useState(null);
+  // Tant que le statut n'est pas 'ready', les deux effets de traduction plus bas
+  // n'appellent PAS l'API : sans cette garde, l'import dynamique de la fiche est plus
+  // lent qu'une boucle de préchargement qui tourne déjà — elle aurait le temps
+  // d'appeler l'API sur des dizaines de lignes avant que la fiche arrive et ne prenne
+  // le relais (constaté en test : ~60 appels réseau gaspillés au montage sur une
+  // chanson pourtant 100% couverte). Une chanson sans fiche (`hasLearnContent` faux,
+  // synchrone) est 'ready' dès le premier rendu — aucun délai pour les 57 autres.
+  const learnStatus = learnEntrySlug === learnSlug ? 'ready' : (hasLearnContent(learnSlug) ? 'loading' : 'ready');
+  useEffect(() => {
+    let cancelled = false;
+    if (!hasLearnContent(learnSlug)) { setLearnEntry(null); setLearnEntrySlug(learnSlug); return undefined; }
+    loadLearnContent(learnSlug).then((data) => {
+      if (cancelled) return;
+      setLearnEntry(data);
+      setLearnEntrySlug(learnSlug);
+    });
+    return () => { cancelled = true; };
+  }, [learnSlug]);
+  // null si pas de fiche, fiche illisible, désalignée des paroles actuelles
+  // (resynchronisation depuis sa rédaction), OU pas encore résolue — fail-closed,
+  // jamais de traduction décalée ni d'expression affichée pendant un changement de
+  // chanson en cours de résolution.
+  const learnIndex = useMemo(
+    () => (learnStatus === 'ready' ? buildLearnIndex(learnEntry, baseLines) : null),
+    [learnStatus, learnEntry, baseLines],
+  );
 
   // Couleur d'une ligne selon le mode (dueto → part color, sinon jaune).
   const lineColor = useCallback((i) => (opts.dueto ? DUET_COLORS[i % 2] : YELLOW), [opts.dueto]);
@@ -700,29 +757,46 @@ export default function KaraokePlayer({
   }, [displayIdx, tvMode]);
 
   // ── Traduction de la ligne courante (bandeau bas), avec cache ──
+  // Modo Aprender (bêta) : quand la fiche curative couvre la ligne active ET que la
+  // langue choisie est le français, sa traduction est PRIORITAIRE — jamais d'appel API
+  // pour une ligne déjà couverte. Hors couverture (langue ≠ fr, ligne non couverte,
+  // fiche absente/désalignée sur les 57 autres chansons), comportement API inchangé.
   useEffect(() => {
     const lang = opts.translate;
-    if (lang === 'off') { setTranslation(''); return undefined; }
+    if (lang === 'off') { setTranslation(''); setTranslationSource(null); return undefined; }
+    // Tant que le statut de la fiche n'est pas résolu ('loading'), on ne sait pas
+    // encore si cette ligne sera couverte : ne rien faire plutôt que d'appeler l'API
+    // puis de l'écraser une fois la fiche arrivée (flash + appel réseau gaspillé).
+    if (learnStatus === 'loading') return undefined;
+    if (lang === 'fr') {
+      const curated = lookupFr(learnIndex, displayIdx);
+      if (curated != null) { setTranslation(curated); setTranslationSource('learn'); return undefined; }
+    }
     const line = displayIdx >= 0 ? lines[displayIdx] : null;
     const text = line?.text?.trim();
-    if (!text) { setTranslation(''); return undefined; }
+    if (!text) { setTranslation(''); setTranslationSource(null); return undefined; }
     const key = `${lang}|${text}`;
     const cached = transCacheRef.current.get(key);
-    if (cached != null) { setTranslation(cached); return undefined; }
+    if (cached != null) { setTranslation(cached); setTranslationSource('api'); return undefined; }
     let cancelled = false;
     translateText(text, lang)
-      .then((out) => { if (!cancelled) { transCacheRef.current.set(key, out); setTranslation(out); } })
-      .catch(() => { if (!cancelled) setTranslation(''); });
+      .then((out) => { if (!cancelled) { transCacheRef.current.set(key, out); setTranslation(out); setTranslationSource('api'); } })
+      .catch(() => { if (!cancelled) { setTranslation(''); setTranslationSource(null); } });
     return () => { cancelled = true; };
-  }, [displayIdx, opts.translate, lines]);
+  }, [displayIdx, opts.translate, lines, learnIndex, learnStatus]);
 
   // ── Préchargement des traductions (supprime le délai) ──
   // Dès qu'une langue est choisie, on traduit TOUTES les lignes en tâche de fond
   // (séquentiel → pas de rate-limit), en commençant par la ligne courante. Quand une
   // ligne devient active, sa traduction est déjà en cache → affichage instantané.
+  // Les lignes couvertes par la fiche Modo Aprender (lang='fr') sont SAUTÉES : leur
+  // traduction est déjà connue, ça ne fait qu'économiser des appels API inutiles.
   useEffect(() => {
     const lang = opts.translate;
     if (lang === 'off' || lines.length === 0) return undefined;
+    // Même garde que l'effet ci-dessus : sans elle, cette boucle a le temps de taper
+    // l'API sur des dizaines de lignes avant que la fiche (import dynamique) arrive.
+    if (learnStatus === 'loading') return undefined;
     let cancelled = false;
     (async () => {
       const start = Math.max(0, displayIdxRef.current);
@@ -731,7 +805,9 @@ export default function KaraokePlayer({
       for (let i = 0; i < start; i += 1) order.push(i);
       for (let j = 0; j < order.length; j += 1) {
         if (cancelled) return;
-        const text = lines[order[j]]?.text?.trim();
+        const i = order[j];
+        if (lang === 'fr' && lookupFr(learnIndex, i) != null) continue;
+        const text = lines[i]?.text?.trim();
         if (!text) continue;
         const key = `${lang}|${text}`;
         if (transCacheRef.current.has(key)) continue;
@@ -739,12 +815,35 @@ export default function KaraokePlayer({
           const out = await translateText(text, lang);
           if (cancelled) return;
           transCacheRef.current.set(key, out);
-          if (displayIdxRef.current === order[j]) setTranslation(out);
+          if (displayIdxRef.current === i) { setTranslation(out); setTranslationSource('api'); }
         } catch { /* ligne ignorée, on continue */ }
       }
     })();
     return () => { cancelled = true; };
-  }, [opts.translate, lines]);
+  }, [opts.translate, lines, learnIndex, learnStatus]);
+
+  // ── Collecte d'expression Modo Aprender (bêta) — tap sur la pastille de traduction
+  // quand la ligne active porte une expression. Écrit dans le carnet (§6.4) ;
+  // l'écran liste/révision arrive dans une étape séparée, mais l'écriture doit déjà
+  // fonctionner pendant qu'on chante. Accusé visuel bref, pas de modal (§6.3).
+  const activeExpression = lookupExpression(learnIndex, displayIdx);
+  const collectAckTimerRef = useRef(null);
+  useEffect(() => () => { if (collectAckTimerRef.current) clearTimeout(collectAckTimerRef.current); }, []);
+  const collectActiveExpression = useCallback(() => {
+    if (!activeExpression || !learnSlug) return;
+    const wrote = addVocabEntry({
+      expressionId: activeExpression.id,
+      term: activeExpression.term,
+      meaningFr: activeExpression.meaning_fr,
+      register: activeExpression.register,
+      songSlug: learnSlug,
+      songTitle: song?.title,
+    });
+    if (wrote) setCollectedIds((prev) => new Set(prev).add(activeExpression.id));
+    setCollectAck(true);
+    if (collectAckTimerRef.current) clearTimeout(collectAckTimerRef.current);
+    collectAckTimerRef.current = setTimeout(() => setCollectAck(false), 1400);
+  }, [activeExpression, learnSlug, song?.title]);
 
   const hasLines = lines.length > 0;
   const scale = opts.fontScale;
@@ -785,6 +884,16 @@ export default function KaraokePlayer({
             aria-label="Abrir opções do karaokê"
             className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/70 transition hover:bg-white/10">
             <Settings2 className="h-4 w-4" /> ▲ Opções
+          </button>
+        )}
+        {/* Modo Aprender (bêta) : accès au caderno de vocabulário — seulement sur les
+            chansons pourvues d'une fiche (§9 : pas d'entrée qui ne mène nulle part
+            sur les 57 autres chansons). */}
+        {phase === 'live' && !tvMode && hasLearnContent(learnSlug) && (
+          <button type="button" onClick={() => setShowNotebook(true)}
+            className="karaoke-focusable flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/85 transition hover:bg-white/10"
+            aria-label="Abrir caderno de vocabulário">
+            <BookOpen className="h-5 w-5" />
           </button>
         )}
         {phase === 'live' && !tvMode && (
@@ -1024,8 +1133,25 @@ export default function KaraokePlayer({
             <p>{translation}</p>
           </div>
         ) : (
-          <div className="km-translation" aria-live="polite">
+          <div className={`km-translation${translationSource === 'learn' ? ' km-translation--learn' : ''}`} aria-live="polite">
             <p>{translation}</p>
+            {/* Modo Aprender (bêta) : tap pour ajouter l'expression de la ligne active au
+                carnet. Jamais en TV — hors périmètre de cette bêta (§10 de la spec). */}
+            {activeExpression && (
+              <button
+                type="button"
+                onClick={collectActiveExpression}
+                className="km-translation-collect"
+                aria-label={
+                  collectedIds.has(activeExpression.id)
+                    ? `${activeExpression.term} já guardado no caderno`
+                    : `Guardar « ${activeExpression.term} » no caderno de vocabulário`
+                }
+              >
+                <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+                {collectAck ? 'Guardado!' : activeExpression.term}
+              </button>
+            )}
           </div>
         )
       )}
@@ -1110,6 +1236,13 @@ export default function KaraokePlayer({
           pitchStatusLabel={pitch.active ? statusMeta(pitch.status).label : null}
           onTogglePitchGuide={handleTogglePitchGuide}
         />
+      )}
+
+      {/* Caderno de vocabulário (bêta) — só móvel/web ; a música continua a tocar */}
+      {showNotebook && (
+        <Suspense fallback={null}>
+          <VocabNotebookSheet onClose={() => setShowNotebook(false)} />
+        </Suspense>
       )}
 
       {/* Diálogo de ativação/erro do microfone (guia de tom) — por cima de tudo */}

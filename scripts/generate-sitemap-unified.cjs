@@ -48,6 +48,7 @@ const staticPages = [
   { path: '/guia', priority: 0.8, changefreq: 'monthly' },
   { path: '/tv', priority: 0.7, changefreq: 'monthly' },
   { path: '/adventcalendar', priority: 0.8, changefreq: 'weekly' },
+  { path: '/apprendre', priority: 0.7, changefreq: 'monthly' },
   // Category pages — only include categories with ≥2 songs (thin pages excluded)
   // Managed dynamically: categories with 1 song (outros, seguranca, gastronomia) get lower priority
   // tecnologia and saude excluded until they have songs again

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { createPageUrl } from '@/utils';
 import {
+  GraduationCap,
   Home,
   Library,
   Gift,
@@ -66,6 +67,7 @@ function getMobileActiveTab(pathname) {
   if (pathname === '/blog') return 'blog';
   if (pathname === '/search') return 'pesquisa';
   if (pathname === '/sobre') return 'sobre';
+  if (pathname === '/apprendre') return 'apprender';
   if (
     pathname === '/musica' ||
     pathname.startsWith('/musica/') ||
@@ -100,7 +102,16 @@ export default function Layout({ children }) {
     { name: 'Blog', url: createPageUrl('Blog'), icon: FileText },
     { name: 'Pesquisa', url: createPageUrl('Search'), icon: Search },
     { name: 'TV', url: createPageUrl('Tv'), icon: Tv },
-    { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info }
+    { name: 'Sobre', url: createPageUrl('Sobre'), icon: Info },
+    // URL en dur (pas createPageUrl('Apprender')) : la route existante est '/apprendre'
+    // (orthographe française), alors que createPageUrl('Apprender') calculerait
+    // '/apprender' — un lien mort. Voir routes.js : name:'Apprender' / path:'/apprendre'.
+    // Libellé « Aprender » seul (pas « Aprender Beta », ni badge séparé) : à 260px de
+    // large, la sidebar tronque tout ce qui dépasse — vérifié visuellement avec les
+    // deux variantes. La mention « Beta » reste très visible une fois sur la page
+    // (bandeau ambre en tête) et dans le menu mobile/PWA, où « Aprender Beta » tient
+    // sans troncature.
+    { name: 'Aprender', url: '/apprendre', icon: GraduationCap }
   ];
 
   const isActive = (page) => {
@@ -125,6 +136,7 @@ export default function Layout({ children }) {
         { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
         { value: 'tv', label: 'App para TV', href: '/tv', icon: Tv },
         { value: 'sobre', label: 'Sobre', href: '/sobre', icon: Info },
+        { value: 'apprender', label: 'Aprender Beta', href: '/apprendre', icon: GraduationCap },
       ],
     },
   ];

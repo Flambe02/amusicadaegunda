@@ -314,6 +314,42 @@
   color: rgba(255, 255, 255, 0.92);
 }
 
+/* Modo Aprender (bêta) : traduction curatée de la fiche — distincte de la traduction
+   API à la volée (bord doré discret), pour que l'utilisateur sache que c'est du
+   contenu vérifié plutôt qu'une traduction automatique. */
+.km-translation--learn p {
+  border-color: rgba(253, 224, 71, 0.35);
+}
+
+/* Pastille « collecter l'expression » — sous la traduction. Le parent .km-translation
+   a pointer-events:none (pour laisser passer les taps sur la letra derrière la
+   pastille de traduction) : ce bouton doit réactiver pointer-events explicitement,
+   sinon il est visible mais impossible à taper. */
+.km-translation-collect {
+  /* display:flex (pas inline-flex) → boîte de bloc propre, sur sa PROPRE LIGNE sous
+     le <p> de traduction (deux inline-block côte à côte se chevaucheraient sinon,
+     s'il y a la place) ; width:fit-content + margin:auto la centre horizontalement. */
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.4rem auto 0;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(253, 224, 71, 0.14);
+  border: 1px solid rgba(253, 224, 71, 0.3);
+  color: #FDE047;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  pointer-events: auto;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.km-translation-collect:active {
+  transform: scale(0.96);
+  background: rgba(253, 224, 71, 0.24);
+}
+
 /* ── Controlos inferiores móveis (5 ações com etiqueta PT) ── */
 .km-controls {
   position: relative;
@@ -800,3 +836,101 @@
   .karaoke-start-btn { animation: none; }
   .karaoke-card { transition: none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Caderno de vocabulário — Modo Aprender (bêta, §6.4)
+   ========================================================================== */
+.vocab-tabs {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.3rem 1.15rem 0.7rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.vocab-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.vocab-tab.is-on {
+  border-color: rgba(253, 224, 71, 0.4);
+  background: rgba(253, 224, 71, 0.12);
+  color: #fde047;
+}
+.vocab-tab:focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
+
+.vocab-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+.vocab-empty p:first-of-type { font-weight: 700; color: rgba(255, 255, 255, 0.85); }
+
+.vocab-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.vocab-list-item {
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+.vocab-list-item-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.vocab-term { font-size: 0.95rem; font-weight: 800; color: #fde047; }
+.vocab-meaning {
+  margin-top: 0.3rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.72);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.vocab-source { margin-top: 0.35rem; font-size: 0.72rem; color: rgba(255, 255, 255, 0.4); }
+
+.vocab-review { display: flex; flex-direction: column; align-items: center; gap: 0.9rem; padding-top: 0.4rem; }
+.vocab-card {
+  width: 100%;
+  min-height: 8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(253, 224, 71, 0.25);
+  background: rgba(253, 224, 71, 0.05);
+  text-align: center;
+}
+.vocab-card:focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
+.vocab-card-term { font-size: 1.4rem; font-weight: 900; color: #fff; }
+.vocab-card-hint { font-size: 0.8rem; color: rgba(255, 255, 255, 0.4); }
+.vocab-card-meaning { font-size: 0.9rem; line-height: 1.4; color: rgba(255, 255, 255, 0.82); }
+
+.vocab-review-actions { display: flex; gap: 0.6rem; width: 100%; }
+.vocab-action {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.7rem 0.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.vocab-action--known { border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.12); color: #34d399; }
+.vocab-action:focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }

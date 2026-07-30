@@ -1062,6 +1062,7 @@ export default function SongPage() {
         open={isLyricsOpen}
         onOpenChange={setIsLyricsOpen}
         song={song}
+        slug={slug}
         title={`Letras — ${song.title}`}
       />
 

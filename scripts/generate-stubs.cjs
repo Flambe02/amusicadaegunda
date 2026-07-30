@@ -16,6 +16,20 @@ const cfg = require('./seo.config.json');
 const songsPath = path.resolve('content', 'songs.json');
 const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, 'utf8')) : [];
 
+// Modo Aprender (bêta) — fiches des deux chansons pilotes, pour le stub /apprendre.
+// Ce script CJS ne peut pas `require()` src/lib/learnContent.js (module ESM) : le
+// codebase gère déjà ce cas ailleurs (seo-templates.cjs réimplémente en CJS les
+// mêmes fonctions que src/lib/utils.js) — même principe ici, réimplémentation locale
+// minimale plutôt que de convertir la chaîne ESM du runtime.
+const LEARN_FICHES = [
+  require(path.resolve('src/content/learn/camarada-quer-cpf.json')),
+  require(path.resolve('src/content/learn/eu-sou-um-ovo.json')),
+];
+// ⚠️ Doit rester synchronisé avec BUTTONDOWN_USERNAME dans src/lib/buttondown.js —
+// même valeur, même garde-fou (voir ce fichier pour le détail du raisonnement).
+const BUTTONDOWN_USERNAME = 'amusicadasegunda';
+const BUTTONDOWN_CONFIGURED = BUTTONDOWN_USERNAME !== 'REMPLACER_PAR_IDENTIFIANT_BUTTONDOWN';
+
 // Derive launch year dynamically from earliest datePublished
 const launchYear = songs.reduce((min, s) => {
   if (!s.datePublished) return min;
@@ -270,6 +284,11 @@ ${songListHtml}
       path: '/festa',
       title: 'Festa — A Música da Segunda',
       description: 'Entre na festa, escolha músicas para a fila do karaokê e aplauda ao vivo.'
+    },
+    {
+      path: '/apprendre',
+      title: 'Modo Aprender — Aprenda português brasileiro com paródias | A Música da Segunda',
+      description: 'Beta: aprenda expressões reais do português brasileiro a partir das paródias de A Música da Segunda. Tradução linha a linha, karaokê e caderno de vocabulário.'
     }
   ];
 
@@ -417,6 +436,48 @@ ${songListHtml}
   <p><a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif; font-weight: bold;">Ver todas as paródias →</a></p>
 </div>`;
 
+  // ✅ Modo Aprender (bêta) — §6.5/§7 : contenu lisible sans JS, formulaire Buttondown
+  // FONCTIONNEL même sans JS (c'est un <form method="post"> natif — voir buttondown.js
+  // pour pourquoi ça ne peut pas être un fetch/AJAX cross-origin de toute façon).
+  const apprenderSongsHtml = LEARN_FICHES.map((fiche) => {
+    const pills = (fiche.expressions || [])
+      .map((e) => `<span style="display:inline-block; background:#f0f4ff; color:#2563eb; padding:0.15rem 0.6rem; border-radius:999px; font-size:0.8rem; margin:0.2rem 0.3rem 0 0;">${e.term}</span>`)
+      .join('');
+    return `
+    <li style="list-style:none; margin-bottom:0.75rem;">
+      <a href="${siteUrl}/musica/${fiche.slug}/" style="display:block; border:1px solid #e5e5e5; border-radius:1rem; padding:1.1rem 1.3rem; text-decoration:none; color:#111;">
+        <strong>${fiche.title}</strong>
+        <div style="margin-top:0.4rem;">${pills}</div>
+      </a>
+    </li>`;
+  }).join('\n');
+
+  const apprenderFormHtml = BUTTONDOWN_CONFIGURED ? `
+    <form action="https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USERNAME}" method="post" target="popupwindow" onsubmit="window.open('https://buttondown.com/${BUTTONDOWN_USERNAME}', 'popupwindow')" style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+      <label for="apprender-email-stub" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);">Endereço de email</label>
+      <input id="apprender-email-stub" type="email" name="email" required placeholder="seu@email.com" style="flex:1; min-width:14rem; padding:0.7rem 1rem; border-radius:999px; border:1px solid #ccc;" />
+      <input type="hidden" name="embed" value="1" />
+      <button type="submit" style="background:#111; color:#FDE047; font-weight:bold; padding:0.7rem 1.4rem; border-radius:999px; border:none; cursor:pointer;">Quero entrar na beta</button>
+    </form>` : `<p style="color:#888;">Inscrição em breve — a captura de email está a ser configurada.</p>`;
+
+  const apprenderBody = `
+<div style="max-width: 760px; margin: 0 auto; padding: 1.5rem 1rem 3rem; color: #222;">
+  <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #d97706; margin-bottom: 0.5rem; font-family: sans-serif; font-weight: bold;">Beta</p>
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.75rem; color: #111; font-family: sans-serif;">Aprenda português brasileiro cantando</h1>
+  <p style="font-size: 1.05rem; line-height: 1.7; color: #444; margin-bottom: 2rem; font-family: sans-serif;">Duas paródias de A Música da Segunda viram aulas de português real — o que se diz na rua, não no livro. Tradução linha a linha, karaokê com legendas em francês e um caderno para guardar o vocabulário.</p>
+
+  <h2 style="font-size: 1rem; text-transform: uppercase; letter-spacing: 0.15em; color: #888; margin-bottom: 1rem; font-family: sans-serif;">As duas músicas da beta</h2>
+  <ul style="padding:0; margin: 0 0 2rem;">
+    ${apprenderSongsHtml}
+  </ul>
+
+  <div style="border:1px solid #e5e5e5; border-radius:1rem; padding:1.5rem;">
+    <h2 style="font-size: 1.1rem; font-weight: bold; color:#111; margin-bottom:0.3rem; font-family: sans-serif;">Entra na beta</h2>
+    <p style="color:#666; margin-bottom:1rem; font-family: sans-serif; font-size:0.92rem;">Avisamos por email quando novas músicas entrarem no Modo Aprender.</p>
+    ${apprenderFormHtml}
+  </div>
+</div>`;
+
   const guiaArticleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -452,9 +513,10 @@ ${songListHtml}
     await fs.ensureDir(pageDir);
 
     const pageUrl = `${siteUrl}${page.path}/`;
-    // ✅ SEO: /sobre and /guia get rich editorial bodies; other pages get minimal body
+    // ✅ SEO: /sobre, /guia and /apprendre get rich bodies; other pages get minimal body
     const pageBody = page.path === '/sobre' ? sobreBody
       : page.path === '/guia' ? guiaBody
+      : page.path === '/apprendre' ? apprenderBody
       : `
 <div style="max-width: 1200px; margin: 0 auto; padding: 1rem 1rem 2rem;">
   <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111;">${page.title}</h1>

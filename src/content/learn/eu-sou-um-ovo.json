@@ -1,0 +1,113 @@
+{
+  "slug": "eu-sou-um-ovo",
+  "title": "Eu Sou um Ovo",
+  "lrcLineCount": 86,
+  "segments": [
+    { "from": 0, "to": 1, "fr": "Je suis un œuf" },
+    { "from": 2, "to": 2, "fr": "Quelqu'un peut m'expliquer" },
+    { "from": 3, "to": 3, "fr": "Là-bas, chez Mappin" },
+    { "from": 4, "to": 4, "fr": "J'étais bien" },
+    { "from": 5, "to": 5, "fr": "Sur l'étagère" },
+    { "from": 6, "to": 6, "fr": "Sans personne" },
+    { "from": 7, "to": 7, "fr": "C'était simple" },
+    { "from": 8, "to": 8, "fr": "C'était normal" },
+    { "from": 9, "to": 9, "fr": "C'était s'ouvrir" },
+    { "from": 10, "to": 10, "fr": "Et ça se terminait, à la fin" },
+    { "from": 11, "to": 13, "fr": "Où, où, où est passé mon sens", "expression_id": "cade" },
+    { "from": 14, "to": 16, "fr": "Où, où, où est passé mon sens", "expression_id": "cade" },
+    { "from": 17, "to": 18, "fr": "Cacau Show m'a appelé" },
+    { "from": 19, "to": 20, "fr": "Kopenhagen m'a transformé" },
+    { "from": 21, "to": 21, "fr": "Je suis devenu cher" },
+    { "from": 22, "to": 22, "fr": "Je suis devenu beau" },
+    { "from": 23, "to": 24, "fr": "Mais personne ne me mordait" },
+    { "from": 25, "to": 26, "fr": "Regarde, regarde" },
+    { "from": 27, "to": 27, "fr": "Mais personne ne me mange" },
+    { "from": 28, "to": 28, "fr": "Ils ont essayé de m'exporter" },
+    { "from": 29, "to": 29, "fr": "Ça n'a pas marché" },
+    { "from": 30, "to": 30, "fr": "Trump a taxé" },
+    { "from": 31, "to": 31, "fr": "Terminé" },
+    { "from": 32, "to": 33, "fr": "Je suis resté coincé dans mon emballage" },
+    { "from": 34, "to": 35, "fr": "Ma vie est devenue un mirage" },
+    { "from": 36, "to": 38, "fr": "Ça part, ça part pas, reste là" },
+    { "from": 39, "to": 39, "fr": "Alors est arrivé Jacquin" },
+    { "from": 40, "to": 40, "fr": "Il m'a regardé" },
+    { "from": 41, "to": 41, "fr": "Il a dit comme ça" },
+    { "from": 42, "to": 42, "fr": "Vraiment pas bon" },
+    { "from": 43, "to": 43, "fr": "Ça n'a aucune saveur, hein", "expression_id": "tempero" },
+    { "from": 44, "to": 44, "fr": "Il m'a retouché" },
+    { "from": 45, "to": 46, "fr": "Il a tout ajouté, jusqu'au bout" },
+    { "from": 47, "to": 49, "fr": "Crème, gâteau, tout dedans" },
+    { "from": 50, "to": 51, "fr": "Maintenant j'ai tout en moi" },
+    { "from": 52, "to": 53, "fr": "Sucré salé, ça n'en finit plus" },
+    { "from": 54, "to": 56, "fr": "Haricots, citron, mon frère" },
+    { "from": 57, "to": 58, "fr": "C'est un œuf ?" },
+    { "from": 59, "to": 60, "fr": "Ou c'est un déjeuner ?" },
+    { "from": 61, "to": 61, "fr": "Je suis en vitrine", "expression_id": "vitrine" },
+    { "from": 62, "to": 62, "fr": "Tout cher" },
+    { "from": 63, "to": 64, "fr": "Tout le monde me fixe" },
+    { "from": 65, "to": 65, "fr": "On me prend en photo" },
+    { "from": 66, "to": 66, "fr": "On me poste en story" },
+    { "from": 67, "to": 68, "fr": "Ma vie est devenue un souvenir" },
+    { "from": 69, "to": 71, "fr": "Mange, ne mange pas, décide" },
+    { "from": 72, "to": 73, "fr": "Ne mange pas, décide" },
+    { "from": 74, "to": 75, "fr": "Ne mange pas, décide" },
+    { "from": 76, "to": 77, "fr": "Ne mange pas, décide" },
+    { "from": 78, "to": 79, "fr": "Finalement j'ai atterri chez Neymar" },
+    { "from": 80, "to": 80, "fr": "Le barbecue qui tourne" },
+    { "from": 81, "to": 81, "fr": "Et moi sans qu'on me touche" },
+    { "from": 82, "to": 82, "fr": "Personne ne m'a voulu" },
+    { "from": 83, "to": 83, "fr": "Personne ne m'a pris" },
+    { "from": 84, "to": 85, "fr": "Je suis resté là et personne n'a même goûté" }
+  ],
+  "expressions": [
+    {
+      "id": "cade",
+      "term": "cadê",
+      "meaning_fr": "Contraction familière de « que é de » (qu'est-il advenu de), l'équivalent brésilien de « où est passé ». Utilisée partout à l'oral : cadê minhas chaves (où sont mes clés), cadê você (où t'étais).",
+      "register": "familier"
+    },
+    {
+      "id": "tempero",
+      "term": "não tem tempero",
+      "meaning_fr": "Littéralement « ça n'a pas d'assaisonnement », mais utilisé au sens figuré pour dire que quelque chose manque de peps, de personnalité, d'âme — pas seulement en cuisine.",
+      "register": "courant"
+    },
+    {
+      "id": "vitrine",
+      "term": "vitrine",
+      "meaning_fr": "La vitrine d'un magasin, mais aussi, au sens figuré très courant sur les réseaux sociaux brésiliens, l'idée de « n'exister que pour être montré » (virar vitrine, ficar de vitrine) — se dit de quelqu'un ou quelque chose de très exposé mais jamais réellement vécu ou consommé.",
+      "register": "courant"
+    }
+  ],
+  "cultural_context_fr": "Au Brésil, l'œuf de Pâques premium (ovo de páscoa) est devenu un phénomène commercial disproportionné : des marques comme Cacau Show et Kopenhagen vendent des œufs immenses, ultra-décorés, parfois à des prix délirants, davantage pensés pour Instagram que pour être mangés. Cette chanson donne une voix à l'un de ces œufs, entre crise existentielle et satire de la surconsommation — jusqu'à la référence à Jacquin, chef pâtissier très connu du grand public brésilien pour ses jugements sans filtre à la télévision, et à un vrai sujet d'actualité économique (les droits de douane imposés par Trump, qui touchent aussi les exportations agroalimentaires brésiliennes).",
+  "study_sheet": {
+    "objective_fr": "Apprendre la construction cadê et une expression figurée sur le goût.",
+    "grammar_note": {
+      "title_pt": "cadê",
+      "explanation_fr": "Contraction de « que é de » (où est passé). S'utilise à l'oral partout : cadê minhas chaves, cadê você. Beaucoup plus fréquent que onde está dans la conversation courante.",
+      "examples": ["cadê minhas chaves", "cadê você"]
+    },
+    "exercises": [
+      {
+        "type": "fill_blank",
+        "prompt_pt": "____ minhas chaves?",
+        "answer": "Cadê"
+      },
+      {
+        "type": "multiple_choice",
+        "prompt_pt": "Isso não tem tempero quer dizer:",
+        "options": [
+          { "text": "a comida está salgada", "correct": false },
+          { "text": "falta graça, personalidade", "correct": true },
+          { "text": "está quente", "correct": false }
+        ]
+      },
+      {
+        "type": "fill_blank",
+        "prompt_pt": "Ele só fica na ____, todo mundo olha mas ninguém compra.",
+        "answer": "vitrine"
+      }
+    ],
+    "summary_terms": ["cadê", "tempero", "vitrine", "virar"]
+  }
+}

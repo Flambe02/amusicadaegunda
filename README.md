@@ -532,6 +532,46 @@ curl -I https://www.amusicadasegunda.com/chansons/debaixo-da-pia/
 
 ---
 
+### 2026-07-30 - Fix `slugify_title` (espace supprimé au lieu de tiret) + ⚠️ historique migrations désynchronisé
+
+#### Problème identifié
+`public.slugify_title()` (créée par `20260222093000_add_slug_to_songs.sql`) écrivait des slugs
+sans tirets pour tout titre à plusieurs mots (`Camarada Quer CPF` → `camaradaquercpf` au lieu de
+`camarada-quer-cpf`) — 53 des 59 chansons touchées. Cause : `'[^a-z0-9\\s-]'` à l'intérieur d'une
+classe de caractères, où PostgreSQL ne traite pas `\s` comme un raccourci espace ; l'espace était
+donc supprimé avant que `\s+` ait quoi que ce soit à convertir.
+
+**Effet en production**, découvert en creusant une régression du Modo Aprender (bêta) : le
+matching par slug de `supabaseSongService.getBySlug()` échouait pour ces 53 chansons, faisant
+retomber `/musica/<slug>` sur le catalogue statique de secours `content/songs.json` — qui n'a ni
+`lrc_content`, ni `karaoke_published`, ni `timing_data`. Le bouton **« Cantar » avait disparu**
+des pages de ces chansons.
+
+#### Correction appliquée
+- `supabase/migrations/20260730120000_fix_slugify_title_whitespace.sql` — fonction corrigée
+  (espace ajouté comme membre littéral de la classe conservée) + backfill ciblé sur
+  `slug is distinct from public.slugify_title(title)`.
+- Vérifié après coup : 59/59 slugs alignés avec `generateSlug()` (JS, utilisé par
+  `scripts/export-songs-from-supabase.cjs`), 0 doublon, 0 slug vide. Bouton « Cantar » confirmé
+  de retour sur 6 chansons testées au hasard (dont les 2 pilotes du Modo Aprender).
+
+#### ⚠️ À traiter séparément — historique des migrations désynchronisé
+`supabase migration list --linked` montre que **12 des 13 migrations locales les plus récentes**
+(de `20260222093000_add_slug_to_songs` à celle du jour) sont marquées `remote: ""` — c'est-à-dire
+non reconnues comme appliquées, alors que leurs colonnes existent bien en base (appliquées à la
+main via l'éditeur SQL Supabase, comme celle-ci). `supabase db push` rejouerait donc ces 13
+migrations, dont `20260716170000_backfill_lyrics_karaoke_for_published.sql`, qui **écraserait les
+paroles karaoké déjà révisées**. Ne pas lancer `db push`/`db reset` tant que cet historique n'a
+pas été réconcilié (`supabase migration repair` ou équivalent) — pas urgent, mais à garder en
+tête avant toute opération de migration groupée.
+
+#### Fichiers
+```
+supabase/migrations/20260730120000_fix_slugify_title_whitespace.sql
+```
+
+---
+
 ## Colonnes Supabase — table `songs`
 
 ### ⚠️ Colonnes YouTube (noms trompeurs)
