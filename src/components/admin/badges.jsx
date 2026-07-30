@@ -39,6 +39,17 @@ export function KaraokeTag({ state }) {
       </span>
     );
   }
+  // Karaokê pronto e publicado, mas a música está em rascunho: ninguém o alcança.
+  if (state === 'song-draft') {
+    return (
+      <span
+        title="O karaokê está pronto, mas a música está em rascunho — o público não a recebe. Publica a música para o karaokê ficar acessível."
+        className="inline-flex items-center rounded border border-orange-500/30 bg-orange-500/10 px-2 py-0.5 text-xs text-orange-300"
+      >
+        Karaokê · música oculta
+      </span>
+    );
+  }
   if (state === 'draft') {
     return (
       <span className="inline-flex items-center rounded border border-amber-500/25 bg-amber-500/5 px-2 py-0.5 text-xs text-amber-300/90">

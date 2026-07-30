@@ -175,6 +175,48 @@ export function isKaraokePublished(song) {
 }
 
 /**
+ * A CHANSON elle-même est-elle publique ? Le catalogue public, /musica/:slug, la TV et
+ * a Festa ne reçoivent que des chansons `status='published'` (filtre côté requête pour
+ * getBySlug/getCurrent, et policy RLS « public read published » pour le reste).
+ * @param {{ status?: string|null }} song
+ */
+export function isSongPublished(song) {
+  return song?.status === 'published';
+}
+
+/** États affichés à l'ADMIN pour le karaokê d'une chanson (voir karaokeAdminState). */
+export const KARAOKE_STATE = {
+  UNCONFIGURED: 'unconfigured', // pas de letra
+  PENDING: 'pending',           // letra mais pas encore synchronisée
+  DRAFT: 'draft',               // synchronisée mais « Publicar karaokê » désactivé
+  SONG_DRAFT: 'song-draft',     // karaokê prêt ET publié… mais la CHANSON est un rascunho
+  ACTIVE: 'active',             // réellement atteignable par le public
+};
+
+/**
+ * État du karaokê tel qu'il doit être MONTRÉ À L'ADMIN.
+ *
+ * ⚠️ N'est PAS une décision de visibilité publique — pour ça, c'est
+ * `isKaraokePublished()`, et lui seul. Cette fonction existe pour dire la VÉRITÉ dans
+ * l'admin : une chanson en rascunho n'est servie à personne (filtre `status='published'`
+ * côté requêtes + policy RLS), donc publier son karaokê n'a AUCUN effet public tant que
+ * la chanson n'est pas publiée. L'admin affichait pourtant « Karaokê » (= en ligne) dans
+ * ce cas, ce qui laissait croire l'inverse.
+ *
+ * @param {{ status?:string|null, lyrics?:string|null, lyrics_karaoke?:string|null,
+ *           lrc_content?:string|null, timing_data?:unknown, karaoke_published?:boolean|null }} song
+ * @returns {string} une valeur de KARAOKE_STATE
+ */
+export function karaokeAdminState(song) {
+  const hasLyrics = Boolean(resolveLyricsText(song)?.trim());
+  const isSynced = hasLrcContent(song?.lrc_content) || song?.timing_data != null;
+  if (!hasLyrics && !isSynced) return KARAOKE_STATE.UNCONFIGURED;
+  if (!isSynced) return KARAOKE_STATE.PENDING;
+  if (song?.karaoke_published === false) return KARAOKE_STATE.DRAFT;
+  return isSongPublished(song) ? KARAOKE_STATE.ACTIVE : KARAOKE_STATE.SONG_DRAFT;
+}
+
+/**
  * Texto de letra a USAR — para leitura pública (diálogos/drawers de letra) E como
  * fonte para a sincronização karaokê (§ pedido 2026-07-16). Prefere
  * `lyrics_karaoke` (versão revista com espaçamento correto entre palavras,

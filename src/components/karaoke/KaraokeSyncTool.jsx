@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { resolveSyncVideo, syncVideoProblem } from '@/lib/syncVideoSource';
-import { splitLyricsLines, parseLrc, formatTimestamp, activeLineIndex, resolveLyricsText } from '@/lib/lrc';
+import { splitLyricsLines, parseLrc, formatTimestamp, activeLineIndex, resolveLyricsText, isSongPublished } from '@/lib/lrc';
 import { validateTiming } from '@/lib/timingValidation';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
 import { useTimingDraft, linesSignature } from '@/hooks/useTimingDraft';
@@ -493,6 +493,10 @@ export default function KaraokeSyncTool({
   // normalmente (nunca perde trabalho), mas o karaokê fica escondido do público
   // (ver isKaraokePublished() em @/lib/lrc, o único ponto que decide isso).
   const [karaokePublished, setKaraokePublished] = useState(() => song?.karaoke_published !== false);
+  // A MÚSICA em rascunho não é servida a ninguém (filtro status='published' nas queries
+  // públicas + policy RLS): publicar o karaokê dela não tem nenhum efeito público. O
+  // editor tem de o DIZER, senão o alternador « Publicado » mente.
+  const songIsPublished = isSongPublished(freshSong || song);
   useEffect(() => {
     if (freshSong && typeof freshSong.karaoke_published === 'boolean') setKaraokePublished(freshSong.karaoke_published);
   }, [freshSong]);
@@ -502,7 +506,7 @@ export default function KaraokeSyncTool({
     (async () => {
       const { data, error } = await supabase
         .from('songs')
-        .select('id, title, lyrics, lyrics_karaoke, lrc_content, youtube_url, youtube_music_url, karaoke_published')
+        .select('id, title, status, lyrics, lyrics_karaoke, lrc_content, youtube_url, youtube_music_url, karaoke_published')
         .eq('id', song.id)
         .maybeSingle();
       if (cancelled) return;
@@ -2639,16 +2643,21 @@ export default function KaraokeSyncTool({
             <button
               type="button"
               onClick={() => setKaraokePublished((v) => !v)}
-              title={karaokePublished
+              title={!songIsPublished
+                ? 'A MÚSICA está em rascunho: o público não a recebe, logo o karaokê fica inacessível mesmo « Publicado ». Publica a música na lista para o ativar.'
+                : karaokePublished
                 ? 'Publicado — clica para tornar RASCUNHO (esconder do público ao Guardar).'
                 : 'Rascunho — clica para PUBLICAR (visível ao público ao Guardar).'}
               className={`karaoke-focusable hidden items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors sm:inline-flex ${
-                karaokePublished
+                !songIsPublished
+                  ? 'border-orange-500/40 bg-orange-500/10 text-orange-200 hover:bg-orange-500/20'
+                  : karaokePublished
                   ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
                   : 'border-amber-400/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20'
               }`}
             >
-              {karaokePublished ? <Eye size={12} /> : <EyeOff size={12} />} {karaokePublished ? 'Publicado' : 'Rascunho'}
+              {karaokePublished && songIsPublished ? <Eye size={12} /> : <EyeOff size={12} />}
+              {!songIsPublished ? 'Música oculta' : karaokePublished ? 'Publicado' : 'Rascunho'}
             </button>
           )}
           {step === 'sync' && (
@@ -3584,7 +3593,9 @@ export default function KaraokeSyncTool({
                 </button>
               </div>
               <label
-                title={karaokePublished ? 'O karaokê fica visível ao público ao Guardar.' : 'Rascunho: Guardar continua a funcionar normalmente, mas o karaokê fica ESCONDIDO do público até reativares isto.'}
+                title={!songIsPublished
+                  ? 'A MÚSICA está em rascunho: publicar o karaokê aqui não o torna acessível. Publica a música primeiro.'
+                  : karaokePublished ? 'O karaokê fica visível ao público ao Guardar.' : 'Rascunho: Guardar continua a funcionar normalmente, mas o karaokê fica ESCONDIDO do público até reativares isto.'}
                 className={`ml-auto flex cursor-pointer items-center gap-1.5 rounded-lg border px-2 py-1 font-semibold ${karaokePublished ? 'border-white/10 bg-white/5 text-gray-300' : 'border-amber-400/40 bg-amber-500/10 text-amber-200'}`}
               >
                 <input type="checkbox" checked={karaokePublished} onChange={(e) => setKaraokePublished(e.target.checked)} className="accent-purple-600" />

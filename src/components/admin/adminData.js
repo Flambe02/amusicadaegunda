@@ -8,7 +8,7 @@
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
-import { isKaraokePublished } from '@/lib/lrc';
+import { karaokeAdminState } from '@/lib/lrc';
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
@@ -115,7 +115,10 @@ export function toSongAdminView(song, categories) {
     // 'draft' : já sincronizado mas escondido do público (karaoke_published:false) —
     // distinção pedida porque a lista geral mostrava "Karaokê" mesmo quando a
     // música estava despublicada, sugerindo (erradamente) que estava online.
-    karaokeState: !hasLyrics ? 'unconfigured' : !isSynced ? 'pending' : isKaraokePublished(song) ? 'active' : 'draft',
+    // 'draft' : karaokê desativado pelo admin ; 'song-draft' : karaokê pronto mas a
+    // MÚSICA está em rascunho — nada é público nesse caso (filtro status='published'
+    // nas queries + RLS), então mostrar « Karaokê » seria mentir. Ver karaokeAdminState().
+    karaokeState: karaokeAdminState(song),
     platforms: {
       spotifyUrl: song.spotify_url || null,
       appleMusicUrl: song.apple_music_url || null,
