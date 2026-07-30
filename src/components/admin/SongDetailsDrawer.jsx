@@ -29,7 +29,7 @@ function SummaryRow({ label, children }) {
   );
 }
 
-function DrawerBody({ view, closeRef, onClose, onEdit, onKaraoke, onPitchMap, onPublish, onManageLinks, onDelete }) {
+function DrawerBody({ view, closeRef, onClose, onEdit, onKaraoke, onQuickSync, onPitchMap, onPublish, onManageLinks, onDelete }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -68,13 +68,14 @@ function DrawerBody({ view, closeRef, onClose, onEdit, onKaraoke, onPitchMap, on
 
         <SongPlatformLinks platforms={view.platforms} onEdit={() => onManageLinks(view)} />
         <SongLocalAudioStatus view={view} />
-        <SongQuickActions view={view} onEdit={onEdit} onKaraoke={onKaraoke} onPitchMap={onPitchMap} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
+        <SongQuickActions view={view} onEdit={onEdit} onKaraoke={onKaraoke}
+            onQuickSync={onQuickSync} onPitchMap={onPitchMap} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
       </div>
     </div>
   );
 }
 
-export default function SongDetailsDrawer({ view, onClose, onEdit, onKaraoke, onPitchMap, onPublish, onManageLinks, onDelete }) {
+export default function SongDetailsDrawer({ view, onClose, onEdit, onKaraoke, onQuickSync, onPitchMap, onPublish, onManageLinks, onDelete }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const closeRef = useRef(null);
 
@@ -94,7 +95,8 @@ export default function SongDetailsDrawer({ view, onClose, onEdit, onKaraoke, on
   if (!view) return null;
 
   const body = (
-    <DrawerBody view={view} closeRef={closeRef} onClose={onClose} onEdit={onEdit} onKaraoke={onKaraoke} onPitchMap={onPitchMap} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
+    <DrawerBody view={view} closeRef={closeRef} onClose={onClose} onEdit={onEdit} onKaraoke={onKaraoke}
+            onQuickSync={onQuickSync} onPitchMap={onPitchMap} onPublish={onPublish} onManageLinks={onManageLinks} onDelete={onDelete} />
   );
 
   if (isDesktop) {

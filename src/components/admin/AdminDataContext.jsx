@@ -103,7 +103,13 @@ export function AdminDataProvider({ children }) {
   const openCreate = useCallback(() => setFormSong('new'), []);
   const openEdit = useCallback((song) => setFormSong(song), []);
   const closeForm = useCallback(() => setFormSong(null), []);
-  const openKaraoke = useCallback((song) => setKaraokeSong(song), []);
+  // `mode` = mode de PRÉSENTATION du même éditeur ('advanced' | 'quick') : aucun second
+  // écran, aucun second brouillon de timing.
+  const [karaokeMode, setKaraokeMode] = useState('advanced');
+  const openKaraoke = useCallback((song, opts) => {
+    setKaraokeMode(opts?.mode === 'quick' ? 'quick' : 'advanced');
+    setKaraokeSong(song);
+  }, []);
   const closeKaraoke = useCallback(() => setKaraokeSong(null), []);
   const openPitchMap = useCallback((song) => setPitchMapSong(song), []);
   const closePitchMap = useCallback(() => setPitchMapSong(null), []);
@@ -179,7 +185,7 @@ export function AdminDataProvider({ children }) {
     // form
     formSong, isSaving, openCreate, openEdit, closeForm, saveSong,
     // karaoke
-    karaokeSong, openKaraoke, closeKaraoke,
+    karaokeSong, karaokeMode, openKaraoke, closeKaraoke,
     // guia de tom (pitch-map)
     pitchMapSong, openPitchMap, closePitchMap,
     // delete

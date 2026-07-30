@@ -20,7 +20,7 @@ export default function AdminLayout() {
   const {
     published, drafts, adminEmail, selectedView, closeDrawer,
     openEdit, openKaraoke, publishSong, requestDelete, applySongPatch,
-    karaokeSong, closeKaraoke, confirmDelete, deleting, cancelDelete, performDelete,
+    karaokeSong, karaokeMode, closeKaraoke, confirmDelete, deleting, cancelDelete, performDelete,
     pitchMapSong, openPitchMap, closePitchMap,
   } = useAdminData();
 
@@ -63,6 +63,7 @@ export default function AdminLayout() {
             onClose={closeDrawer}
             onEdit={openEdit}
             onKaraoke={(v) => openKaraoke(v.raw)}
+            onQuickSync={(v) => openKaraoke(v.raw, { mode: 'quick' })}
             onPitchMap={(v) => openPitchMap(v.raw)}
             onPublish={publishSong}
             onManageLinks={manageLinks}
@@ -81,6 +82,7 @@ export default function AdminLayout() {
             onSaved={(updated) => applySongPatch(updated.id, updated)}
             onOpenPitchMap={() => openPitchMap(karaokeSong)}
             sharedAudio={sharedVocalAudio}
+            initialPresentation={karaokeMode}
           />
         )}
 

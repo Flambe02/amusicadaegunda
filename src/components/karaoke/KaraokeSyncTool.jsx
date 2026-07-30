@@ -42,6 +42,11 @@ import {
   startVerification, markHeard, canConfirmAlignment, verificationIsStale, comparisonSeekFor,
 } from '@/lib/trackVerification';
 import { computeAnchorOffset, formatOffsetSeconds } from '@/lib/audioClock';
+import {
+  quickSyncBlock, initialQuickLine, nextIncompleteLine, isLineComplete,
+} from '@/lib/quickSync';
+import { roleLabel } from '@/lib/workshopUi';
+import QuickSyncView from '@/components/karaoke/quick/QuickSyncView';
 import { useLocalTransport } from '@/hooks/useLocalTransport';
 import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
 import LocalTracksPanel from '@/components/karaoke/workshop/LocalTracksPanel';
@@ -89,7 +94,13 @@ const MAX_LATENCY = 600;      // borne haute raisonnable (ms)
  * suivante), comme avant. Le lecteur karaoké public respecte les deux cas
  * (via activeLineIndex, partagé avec cet outil).
  */
-export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap = null, sharedAudio = null }) {
+export default function KaraokeSyncTool({
+  song, onClose, onSaved, onOpenPitchMap = null, sharedAudio = null,
+  // MODE DE PRÉSENTATION. « quick » = Quick Sync : même composant, même brouillon, même
+  // horloge, même moteur de frases — seule la présentation change. C'est ce qui garantit
+  // qu'ouvrir l'ateliê après Quick Sync affiche exactement les mêmes timings.
+  initialPresentation = 'advanced',
+}) {
   const { toast } = useToast();
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
@@ -2151,6 +2162,54 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
     if (verificationIsStale(verifySession, verifyContext(verifySession.role))) setVerifySession(null);
   }, [verifySession, verifyContext]);
 
+  // ══════════════════ QUICK SYNC — mode de présentation ══════════════════
+  // Aucun second brouillon, aucune seconde horloge : on réutilise `lines`, `cursor`,
+  // startHold/finishHold/cancelHold et la source de capture déjà décidée.
+  const [presentation, setPresentation] = useState(initialPresentation === 'quick' ? 'quick' : 'advanced');
+  const quickBlock = useMemo(() => quickSyncBlock({
+    hasLyrics: lines.some((l) => l.text && l.text.trim()),
+    lines,
+    captureSource,
+    sourceIssue: captureSource === CAPTURE_SOURCE.BLOCKED
+      ? (syncRole && calibrationStatusOf(syncRole) === 'calibrated' ? 'verification'
+        : Object.values(tracks).some((t) => t.loadStatus === 'ready') ? 'calibration' : 'none')
+      : null,
+  }), [lines, captureSource, syncRole, calibrationStatusOf, tracks]);
+
+  const quickSourceLabel = captureSource === CAPTURE_SOURCE.LOCAL && syncRole
+    ? roleLabel(syncRole)
+    : captureSource === CAPTURE_SOURCE.YOUTUBE ? 'YouTube' : 'bloqueada';
+
+  // Ligne active à l'entrée en Quick Sync : première frase incomplète, en respectant une
+  // sélection déjà valide venue de l'ateliê.
+  const quickEnteredRef = useRef(false);
+  useEffect(() => {
+    if (presentation !== 'quick' || quickEnteredRef.current) return;
+    quickEnteredRef.current = true;
+    if (!isLineComplete(linesRef.current[cursorRef.current])) return; // sélection déjà utile
+    const i = initialQuickLine(linesRef.current);
+    if (i >= 0) selectLineManually(i);
+  }, [presentation, selectLineManually]);
+
+  /** Quick Sync : début de capture — délègue au geste EXISTANT. */
+  const quickStart = useCallback((index) => {
+    if (index !== cursorRef.current) selectLineManually(index);
+    startHold();
+    return captureOwnerRef.current != null;
+  }, [selectLineManually, startHold]);
+
+  /** Quick Sync : fin de capture — clôture la ligne gelée puis avance. */
+  const quickFinish = useCallback(() => {
+    const had = captureOwnerRef.current;
+    finishHold();
+    if (!had) return false;
+    const line = linesRef.current[had.index];
+    const ok = isLineComplete(line);
+    const nextIdx = nextIncompleteLine(linesRef.current, had.index);
+    if (nextIdx != null) selectLineManually(nextIdx);
+    return ok;
+  }, [finishHold, selectLineManually]);
+
   // ── Présentation guidée (aucun état persisté, aucun timing touché) ──
   const [tracksCollapsed, setTracksCollapsed] = useState(false);
   const [detailsRole, setDetailsRole] = useState(null);
@@ -2550,7 +2609,34 @@ export default function KaraokeSyncTool({ song, onClose, onSaved, onOpenPitchMap
         />
       )}
 
-      {step === 'lyrics' ? (
+      {presentation === 'quick' && step === 'sync' ? (
+        <QuickSyncView
+          songTitle={effectiveSong?.title || 'Karaokê'}
+          lines={lines}
+          activeIndex={cursor}
+          block={quickBlock}
+          sourceLabel={quickSourceLabel}
+          captureSource={captureSource}
+          isPlaying={captureSource === CAPTURE_SOURCE.LOCAL ? localTransport.isPlaying : isPlaying}
+          currentTime={captureSource === CAPTURE_SOURCE.LOCAL ? (localTransport.canonicalTime ?? 0) : currentTime}
+          duration={duration}
+          canUndo={canUndo}
+          onBack={handleClose}
+          onOpenAdvanced={() => setPresentation('advanced')}
+          onTogglePlay={captureSource === CAPTURE_SOURCE.LOCAL ? workshopTransport.togglePlay : togglePlay}
+          onSeekBy={(d) => {
+            if (captureSource === CAPTURE_SOURCE.LOCAL) localTransport.seekBy(d);
+            else seekTo(getTime() + d);
+          }}
+          onSelectLine={(i) => selectLineManually(Math.max(0, Math.min(lines.length - 1, i)))}
+          onStartCapture={quickStart}
+          onFinishCapture={quickFinish}
+          onCancelCapture={cancelHold}
+          onUndo={undo}
+          onSave={handleSave}
+          onPrepareAudio={() => setPresentation('advanced')}
+        />
+      ) : step === 'lyrics' ? (
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-8">
           <div className="w-full max-w-4xl space-y-4">
             {/* En-tête */}
