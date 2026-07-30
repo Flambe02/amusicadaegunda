@@ -361,7 +361,10 @@ const DEFAULT_VIDEO_PROBLEM = 'Vídeo do YouTube indisponível (privado ou remov
  * message par défaut : sans ça, un refus légitime du Short s'affichait comme une panne
  * de lecture, ce qui envoyait chercher au mauvais endroit.
  *
- * @returns {{ tone:'error'|'warn', text:string, canUseLocalClock:boolean }|null}
+ * Chaque état porte l'ACTION qui en sort — un bandeau qui dit « choisis le fichier »
+ * sans bouton pour le faire laisse l'admin sans issue.
+ *
+ * @returns {{ tone:'error'|'warn', text:string, action:'use-local-clock'|'pick-audio'|null }|null}
  */
 export function videoUnavailableNotice({ videoUnavailable, clockSource, hasLocalFile, problem } = {}) {
   if (!videoUnavailable) return null;
@@ -370,18 +373,37 @@ export function videoUnavailableNotice({ videoUnavailable, clockSource, hasLocal
     return {
       tone: 'warn',
       text: `${cause} O editor está a usar o áudio local como relógio.`,
-      canUseLocalClock: false,
+      action: null,
     };
   }
   return hasLocalFile
     ? {
       tone: 'error',
       text: `${cause} Marca o áudio local como relógio para poder ouvir e ver o karaokê.`,
-      canUseLocalClock: true,
+      action: 'use-local-clock',
     }
     : {
       tone: 'error',
       text: `${cause} Escolhe o ficheiro da música completa para poder trabalhar.`,
-      canUseLocalClock: false,
+      action: 'pick-audio',
     };
+}
+
+/**
+ * Faut-il REMPLACER l'éditeur par l'écran « il manque une vidéo » ?
+ *
+ * Cet écran était un cul-de-sac : il s'affichait dès qu'aucune vidéo n'était exploitable,
+ * y compris sur une chanson DÉJÀ synchronisée (152/152 frases), interdisant l'accès à un
+ * travail existant qu'on peut parfaitement relire, corriger à la main, réimporter ou
+ * sauvegarder sans aucune horloge.
+ *
+ * On ne bloque donc que s'il n'y a VRAIMENT rien à montrer — et même là, `forced` laisse
+ * entrer : l'admin garde le dernier mot.
+ *
+ * @param {{ hasVideo?:boolean, hasLocalAudio?:boolean, hasTiming?:boolean, forced?:boolean }} state
+ */
+export function shouldBlockOnMissingVideo(state = {}) {
+  const { hasVideo, hasLocalAudio, hasTiming, forced } = state;
+  if (hasVideo || hasLocalAudio || hasTiming || forced) return false;
+  return true;
 }

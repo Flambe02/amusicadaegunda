@@ -31,6 +31,7 @@ import {
   CAPTURE_SOURCE, canonicalCaptureTime, captureBlockedMessage,
   captureSourceLabel, compensateLatency,
   CLOCK_SOURCE, masterClockSource, localCanonicalDuration, videoUnavailableNotice,
+  shouldBlockOnMissingVideo,
 } from '@/lib/karaokeWorkshop';
 import {
   TRACK_ROLE, TRACK_LABEL, emptyTrack, compareTrackDuration, canUseForSync, switchTrackSeek,
@@ -232,7 +233,14 @@ export default function KaraokeSyncTool({
             durationSeconds: null, relativePath: file.name,
           });
         } catch { /* noop */ }
-      } catch { /* cancelado pelo utilizador */ }
+      } catch (err) {
+        // Un `catch {}` muet transformait TOUTE panne du sélecteur (contexte non
+        // sécurisé, activation utilisateur perdue, politique de permissions) en « le
+        // bouton ne fait rien ». On ne reste silencieux que sur une VRAIE annulation,
+        // et on retombe sur le champ fichier classique dans les autres cas.
+        if (err?.name === 'AbortError') return;
+        fileInputRef.current?.click();
+      }
     } else {
       fileInputRef.current?.click();
     }
@@ -459,6 +467,7 @@ export default function KaraokeSyncTool({
   const [showShortcuts, setShowShortcuts] = useState(false); // diálogo de atalhos de teclado
   const [showMoreMenu, setShowMoreMenu] = useState(false);    // menu «⋯» do header
   const [showImport, setShowImport] = useState(false);        // importar .lrc / JSON de alinhamento
+  const [forceEditor, setForceEditor] = useState(false);      // entrar no editor sem vídeo nem áudio
 
   // ── UI de remaster : navegação, pré-visualização e inspector ──
   const [inspectorTab, setInspectorTab] = useState('line');   // 'line' | 'words'
@@ -2588,10 +2597,15 @@ export default function KaraokeSyncTool({
     listItemRefs.current[target.selectedLineIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [seekTo, selectLineManually]);
 
-  // Écran bloquant SEULEMENT s'il n'y a vraiment rien pour travailler. Avec un fichier
-  // audio local, l'éditeur tourne sans YouTube (voir masterClockSource) : bloquer ici
-  // enfermerait l'admin dehors alors que tout le nécessaire est chargé.
-  const noVideo = !videoId && !tracks[TRACK_ROLE.ORIGINAL]?.fileName;
+  // L'écran « sem vídeo » n'est plus une porte fermée : une sincronização DÉJÀ FAITE se
+  // relit, se corrige et se sauvegarde très bien sans aucune horloge. On ne le montre que
+  // s'il n'y a vraiment rien — et `forceEditor` laisse entrer même dans ce cas.
+  const noVideo = shouldBlockOnMissingVideo({
+    hasVideo: Boolean(videoId),
+    hasLocalAudio: Boolean(tracks[TRACK_ROLE.ORIGINAL]?.fileName),
+    hasTiming: syncedCount > 0,
+    forced: forceEditor,
+  });
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex flex-col bg-[#0b0710] text-white">
@@ -2758,13 +2772,21 @@ export default function KaraokeSyncTool({
         >
           <AlertTriangle size={14} className="shrink-0" />
           <span className="min-w-0">{clockNotice.text}</span>
-          {clockNotice.canUseLocalClock && (
+          {clockNotice.action === 'use-local-clock' && (
             <button
               onClick={useLocalAsClock}
               title="Afirma que o ficheiro local começa no mesmo instante que os tempos gravados (calibração explícita de 0 s)"
               className="karaoke-focusable ml-auto shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 font-bold text-white hover:bg-emerald-700"
             >
               Usar o áudio local como relógio
+            </button>
+          )}
+          {clockNotice.action === 'pick-audio' && (
+            <button
+              onClick={() => pickTrackFile(TRACK_ROLE.ORIGINAL)}
+              className="karaoke-focusable ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-purple-600 px-3 py-1.5 font-bold text-white hover:bg-purple-700"
+            >
+              <AudioLines size={13} /> Escolher a música completa
             </button>
           )}
         </div>
@@ -2978,12 +3000,21 @@ export default function KaraokeSyncTool({
             Duas saídas: adicionar o link da música completa em <code className="text-purple-300">youtube_url</code>,
             ou escolher aqui o ficheiro áudio da música completa e sincronizar sobre ele.
           </p>
-          <button
-            onClick={() => pickTrackFile(TRACK_ROLE.ORIGINAL)}
-            className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
-          >
-            <AudioLines size={15} /> Escolher a música completa
-          </button>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              onClick={() => pickTrackFile(TRACK_ROLE.ORIGINAL)}
+              className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+            >
+              <AudioLines size={15} /> Escolher a música completa
+            </button>
+            <button
+              onClick={() => setForceEditor(true)}
+              title="Abrir o editor completo sem áudio: dá para rever, corrigir tempos à mão, importar e guardar. Só não dá para ouvir."
+              className="karaoke-focusable inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-gray-200 hover:bg-white/10"
+            >
+              Abrir o editor mesmo assim <ChevronRight size={15} />
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -3546,7 +3577,6 @@ export default function KaraokeSyncTool({
               {/* Áudio local partilhado — a onda aparece na frise; não é enviado ao servidor */}
               <div className="flex items-center gap-1.5" title="O áudio local permanece neste computador e não é enviado ao servidor. É memorizado neste aparelho para não recarregar a cada sessão.">
                 <span className="text-white/40">Áudio local:</span>
-                <input ref={fileInputRef} type="file" accept="audio/*" className="hidden" onChange={onMainAudioPick} />
                 {localAudio.fileName ? (
                   <>
                     <span className="inline-flex max-w-[140px] items-center gap-1 truncate text-gray-200"><Music size={11} /> {localAudio.fileName}</span>
@@ -3607,11 +3637,6 @@ export default function KaraokeSyncTool({
             </div>
 
             {/* ══ Faixas locais : original / instrumental / voz isolada ══ */}
-            <input
-              ref={instrumentalFileInputRef} type="file" accept="audio/*"
-              className="hidden" onChange={onInstrumentalPick}
-              aria-label="Selecionar arquivo instrumental"
-            />
             <LocalTracksPanel
               tracks={tracks}
               referenceDuration={localAudio.duration}
@@ -3747,6 +3772,14 @@ export default function KaraokeSyncTool({
           />
         );
       })()}
+      {/* Entrées fichier MONTÉES EN PERMANENCE — hors de toute branche conditionnelle.
+          Rendues dans l'arbre avancé, elles n'existaient pas sur l'écran « sem vídeo » :
+          `fileInputRef.current` valait null et le bouton « Escolher a música completa »
+          ne faisait rien du tout. Un ref vers un DOM conditionnel est un piège classique. */}
+      <input ref={fileInputRef} type="file" accept="audio/*" className="hidden"
+        aria-label="Selecionar a música completa" onChange={onMainAudioPick} />
+      <input ref={instrumentalFileInputRef} type="file" accept="audio/*" className="hidden"
+        aria-label="Selecionar arquivo instrumental" onChange={onInstrumentalPick} />
       <input ref={ballVocalsFileInputRef} type="file" accept="audio/*" className="hidden" onChange={onBallVocalsPick} />
     </div>,
     document.body

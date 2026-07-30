@@ -15,6 +15,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   CLOCK_SOURCE, masterClockSource, localCanonicalDuration, videoUnavailableNotice,
+  shouldBlockOnMissingVideo,
 } from '../karaokeWorkshop';
 import { localAudioTimeToCanonical } from '../audioClock';
 
@@ -67,12 +68,12 @@ describe('videoUnavailableNotice', () => {
   it('propose UNE action quand un fichier local existe mais n’est pas calibré', () => {
     const n = videoUnavailableNotice({ videoUnavailable: true, clockSource: CLOCK_SOURCE.NONE, hasLocalFile: true });
     expect(n.tone).toBe('error');
-    expect(n.canUseLocalClock).toBe(true);
+    expect(n.action).toBe('use-local-clock');
   });
 
   it('demande le fichier quand il n’y en a aucun', () => {
     const n = videoUnavailableNotice({ videoUnavailable: true, clockSource: CLOCK_SOURCE.NONE, hasLocalFile: false });
-    expect(n.canUseLocalClock).toBe(false);
+    expect(n.action).toBe('pick-audio'); // sans fichier, la sortie est d'en choisir un
     expect(n.text).toMatch(/ficheiro/i);
   });
 
@@ -95,7 +96,29 @@ describe('videoUnavailableNotice', () => {
   it('explique la situation, sans action, quand le local est déjà l’horloge', () => {
     const n = videoUnavailableNotice({ videoUnavailable: true, clockSource: CLOCK_SOURCE.LOCAL, hasLocalFile: true });
     expect(n.tone).toBe('warn');
-    expect(n.canUseLocalClock).toBe(false);
+    expect(n.action).toBeNull();
+  });
+});
+
+describe('shouldBlockOnMissingVideo', () => {
+  it("laisse TOUJOURS entrer sur une chanson déjà synchronisée", () => {
+    // Le cas signalé : 152/152 frases déjà faites, mais l'écran « sem vídeo » interdisait
+    // l'accès à ce travail — qu'on peut pourtant relire, corriger et sauvegarder sans horloge.
+    expect(shouldBlockOnMissingVideo({ hasVideo: false, hasLocalAudio: false, hasTiming: true })).toBe(false);
+  });
+
+  it('laisse entrer dès qu’il y a une vidéo ou un audio local', () => {
+    expect(shouldBlockOnMissingVideo({ hasVideo: true })).toBe(false);
+    expect(shouldBlockOnMissingVideo({ hasLocalAudio: true })).toBe(false);
+  });
+
+  it('bloque seulement quand il n’y a vraiment rien', () => {
+    expect(shouldBlockOnMissingVideo({})).toBe(true);
+    expect(shouldBlockOnMissingVideo({ hasVideo: false, hasLocalAudio: false, hasTiming: false })).toBe(true);
+  });
+
+  it('l’admin garde le dernier mot avec `forced`', () => {
+    expect(shouldBlockOnMissingVideo({ forced: true })).toBe(false);
   });
 });
 
