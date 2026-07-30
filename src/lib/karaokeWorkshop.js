@@ -351,28 +351,37 @@ export function localCanonicalDuration(localDuration, offsetSeconds) {
   return Math.max(0, localDuration + offsetSeconds);
 }
 
+/** Cause par défaut : la vidéo existe mais ne joue pas (privée, supprimée, bloquée). */
+const DEFAULT_VIDEO_PROBLEM = 'Vídeo do YouTube indisponível (privado ou removido).';
+
 /**
- * Message d'action quand la vidéo est indisponible. `null` = rien à signaler.
+ * Message d'action quand la vidéo ne peut pas servir d'horloge. `null` = rien à signaler.
+ *
+ * `problem` permet de NOMMER la cause réelle (ex. « só existe um Short ») au lieu du
+ * message par défaut : sans ça, un refus légitime du Short s'affichait comme une panne
+ * de lecture, ce qui envoyait chercher au mauvais endroit.
+ *
  * @returns {{ tone:'error'|'warn', text:string, canUseLocalClock:boolean }|null}
  */
-export function videoUnavailableNotice({ videoUnavailable, clockSource, hasLocalFile } = {}) {
+export function videoUnavailableNotice({ videoUnavailable, clockSource, hasLocalFile, problem } = {}) {
   if (!videoUnavailable) return null;
+  const cause = typeof problem === 'string' && problem.trim() ? problem.trim() : DEFAULT_VIDEO_PROBLEM;
   if (clockSource === CLOCK_SOURCE.LOCAL) {
     return {
       tone: 'warn',
-      text: 'Vídeo do YouTube indisponível (privado ou removido). O editor está a usar o áudio local como relógio.',
+      text: `${cause} O editor está a usar o áudio local como relógio.`,
       canUseLocalClock: false,
     };
   }
   return hasLocalFile
     ? {
       tone: 'error',
-      text: 'Vídeo do YouTube indisponível (privado ou removido). Marca o áudio local como relógio para poder ouvir e ver o karaokê.',
+      text: `${cause} Marca o áudio local como relógio para poder ouvir e ver o karaokê.`,
       canUseLocalClock: true,
     }
     : {
       tone: 'error',
-      text: 'Vídeo do YouTube indisponível (privado ou removido). Escolhe o ficheiro da música completa para poder trabalhar.',
+      text: `${cause} Escolhe o ficheiro da música completa para poder trabalhar.`,
       canUseLocalClock: false,
     };
 }

@@ -76,6 +76,22 @@ describe('videoUnavailableNotice', () => {
     expect(n.text).toMatch(/ficheiro/i);
   });
 
+  it('NOMME la cause réelle quand elle est fournie (Short refusé ≠ panne de lecture)', () => {
+    const problem = 'O único vídeo desta música é um Short (excerto de ~60 s).';
+    const blocked = videoUnavailableNotice({ videoUnavailable: true, clockSource: CLOCK_SOURCE.NONE, hasLocalFile: true, problem });
+    expect(blocked.text).toContain('Short');
+    expect(blocked.text).not.toContain('privado');
+    // …et la cause reste visible une fois l'audio local promu horloge.
+    const running = videoUnavailableNotice({ videoUnavailable: true, clockSource: CLOCK_SOURCE.LOCAL, hasLocalFile: true, problem });
+    expect(running.text).toContain('Short');
+    expect(running.text).toMatch(/áudio local/);
+  });
+
+  it('retombe sur la cause par défaut si aucune n’est fournie', () => {
+    const n = videoUnavailableNotice({ videoUnavailable: true, clockSource: CLOCK_SOURCE.NONE, hasLocalFile: true, problem: '   ' });
+    expect(n.text).toContain('privado');
+  });
+
   it('explique la situation, sans action, quand le local est déjà l’horloge', () => {
     const n = videoUnavailableNotice({ videoUnavailable: true, clockSource: CLOCK_SOURCE.LOCAL, hasLocalFile: true });
     expect(n.tone).toBe('warn');

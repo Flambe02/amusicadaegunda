@@ -11,7 +11,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
-import { extractYouTubeId } from '@/lib/utils';
+import { resolveSyncVideo, syncVideoProblem } from '@/lib/syncVideoSource';
 import { splitLyricsLines, parseLrc, formatTimestamp, activeLineIndex, resolveLyricsText } from '@/lib/lrc';
 import { validateTiming } from '@/lib/timingValidation';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
@@ -518,10 +518,17 @@ export default function KaraokeSyncTool({
     return () => { cancelled = true; };
   }, [song?.id, toast]);
 
-  const videoId = useMemo(
-    () => extractYouTubeId(effectiveSong?.youtube_url) || extractYouTubeId(effectiveSong?.youtube_music_url),
+  // Horloge de SYNCHRONISATION : jamais un Short. `youtube_music_url` contient le lien
+  // Shorts (extrait ~60 s) : s'y replier donnait un référentiel de temps faux, sans
+  // rien signaler. Voir resolveSyncVideo() + syncVideoSource.test.js.
+  const syncVideo = useMemo(
+    () => resolveSyncVideo({
+      youtube_url: effectiveSong?.youtube_url,
+      youtube_music_url: effectiveSong?.youtube_music_url,
+    }),
     [effectiveSong?.youtube_url, effectiveSong?.youtube_music_url]
   );
+  const videoId = syncVideo.videoId;
 
   // Lignes : { text, time:number|null }. Init depuis LRC existant, sinon paroles brutes.
   // (nouvelle instance à chaque changement de `song` grâce à key={song.id} côté Admin.jsx)
@@ -1983,8 +1990,12 @@ export default function KaraokeSyncTool({
   // Normalement YouTube. Mais si la vidéo est privée/supprimée, elle ne rend jamais son
   // horloge : l'aperçu restait figé à 00:00 et Play ne faisait rien. Dans ce cas précis,
   // et SEULEMENT si la piste locale est prête ET calibrée, c'est elle qui donne l'heure.
+  // « Horloge vidéo morte » = injouable (privée/supprimée) OU refusée comme référence
+  // (Short, lien absent). Les deux mènent au même repli : l'audio local calibré.
+  const videoProblem = syncVideoProblem(syncVideo.reason);
+  const videoClockDead = videoUnavailable || videoProblem !== null;
   const clockSource = masterClockSource({
-    videoUnavailable, playerReady,
+    videoUnavailable: videoClockDead, playerReady,
     localReady: Boolean(previewSession.ready),
     offsetSeconds: previewOffset,
   });
@@ -1995,7 +2006,8 @@ export default function KaraokeSyncTool({
   // ils restaient grisés alors que l'audio local était parfaitement jouable.
   const transportReady = clockSource === CLOCK_SOURCE.LOCAL ? true : playerReady;
   const clockNotice = videoUnavailableNotice({
-    videoUnavailable, clockSource, hasLocalFile: Boolean(tracks[TRACK_ROLE.ORIGINAL]?.fileName),
+    videoUnavailable: videoClockDead, clockSource, problem: videoProblem,
+    hasLocalFile: Boolean(tracks[TRACK_ROLE.ORIGINAL]?.fileName),
   });
 
   // L'horloge locale alimente le MÊME état `currentTime` que le poll YouTube : tous les
@@ -2572,7 +2584,10 @@ export default function KaraokeSyncTool({
     listItemRefs.current[target.selectedLineIndex]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [seekTo, selectLineManually]);
 
-  const noVideo = !videoId;
+  // Écran bloquant SEULEMENT s'il n'y a vraiment rien pour travailler. Avec un fichier
+  // audio local, l'éditeur tourne sans YouTube (voir masterClockSource) : bloquer ici
+  // enfermerait l'admin dehors alors que tout le nécessaire est chargé.
+  const noVideo = !videoId && !tracks[TRACK_ROLE.ORIGINAL]?.fileName;
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex flex-col bg-[#0b0710] text-white">
@@ -2948,9 +2963,18 @@ export default function KaraokeSyncTool({
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-gray-400">
           <Music className="h-10 w-10 text-gray-600" />
           <p className="max-w-md text-sm">
-            Esta música não tem um link YouTube válido em <code className="text-purple-300">youtube_url</code> (vídeo único).
-            Adiciona um link antes de sincronizar.
+            {videoProblem || 'Esta música não tem um link YouTube válido em youtube_url (vídeo único).'}
           </p>
+          <p className="max-w-md text-xs text-gray-500">
+            Duas saídas: adicionar o link da música completa em <code className="text-purple-300">youtube_url</code>,
+            ou escolher aqui o ficheiro áudio da música completa e sincronizar sobre ele.
+          </p>
+          <button
+            onClick={() => pickTrackFile(TRACK_ROLE.ORIGINAL)}
+            className="karaoke-focusable inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+          >
+            <AudioLines size={15} /> Escolher a música completa
+          </button>
         </div>
       ) : (
         <>
