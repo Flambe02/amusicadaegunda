@@ -4,7 +4,6 @@ import { isKaraokePublished } from '@/lib/lrc';
 import {
   buildSearchIndex,
   deriveThemes,
-  deriveMonths,
   filterAndSortSongs,
   pickRandomSong,
 } from '@/lib/karaokeCatalog';
@@ -30,14 +29,18 @@ function writeRecent(ids) {
   }
 }
 
-const DEFAULT_FILTERS = { query: '', theme: null, month: null, sort: 'newest' };
+const DEFAULT_FILTERS = { query: '', theme: null, difficulty: null, sort: 'newest' };
 
 /**
  * Contrôleur d'état partagé du catalogue Karaokê (mobile + desktop).
  *
  * - charge les chansons éligibles (lrc_content), les indexe pour la recherche ;
- * - expose filtres (query/theme/month/sort) + dérivés (thèmes, mois, résultats) ;
+ * - expose filtres (query/theme/difficulty/sort) + dérivés (thèmes, résultats) ;
  * - fournit un tirage aléatoire respectant les filtres actifs et l'anti-répétition.
+ *
+ * Le regroupement/filtre par MOIS a été retiré avec le redesign (grille plate, plus
+ * de sections mensuelles) — voir `karaokeCatalog.js`. La recherche reste capable de
+ * retrouver un mois par son nom.
  *
  * Aucune navigation ici : la page décide quoi faire de la chanson choisie
  * (ouvrir le lecteur), pour réutiliser le même chemin que le clic sur une carte.
@@ -88,7 +91,6 @@ export function useKaraokeCatalog() {
   }, [load]);
 
   const themes = useMemo(() => deriveThemes(songs), [songs]);
-  const months = useMemo(() => deriveMonths(songs), [songs]);
 
   // Résultats filtrés + triés (une seule passe mémoïsée).
   const results = useMemo(
@@ -97,12 +99,12 @@ export function useKaraokeCatalog() {
   );
 
   const hasActiveFilters =
-    !!filters.query.trim() || filters.theme !== null || filters.month !== null;
+    !!filters.query.trim() || filters.theme !== null || filters.difficulty !== null;
 
   // ── Mutateurs de filtres ──
   const setQuery = useCallback((query) => setFilters((f) => ({ ...f, query })), []);
   const setTheme = useCallback((theme) => setFilters((f) => ({ ...f, theme })), []);
-  const setMonth = useCallback((month) => setFilters((f) => ({ ...f, month })), []);
+  const setDifficulty = useCallback((difficulty) => setFilters((f) => ({ ...f, difficulty })), []);
   const setSort = useCallback((sort) => setFilters((f) => ({ ...f, sort })), []);
   const clearFilters = useCallback(
     () => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort })),
@@ -111,7 +113,8 @@ export function useKaraokeCatalog() {
 
   /**
    * Tire une chanson au hasard parmi les résultats courants (respecte donc
-   * recherche + filtres). Évite les derniers tirages. Renvoie la chanson ou null.
+   * recherche + thème + DIFFICULTÉ actifs, puisque `results` en est déjà le produit).
+   * Évite les derniers tirages. Renvoie la chanson ou null.
    */
   const pickSurprise = useCallback((rng = Math.random) => {
     const chosen = pickRandomSong(results, { recentIds: recentRef.current, rng });
@@ -132,14 +135,13 @@ export function useKaraokeCatalog() {
     error,
     // dérivés pour l'UI
     themes,
-    months,
     // état filtres
     filters,
     hasActiveFilters,
     // actions
     setQuery,
     setTheme,
-    setMonth,
+    setDifficulty,
     setSort,
     clearFilters,
     pickSurprise,

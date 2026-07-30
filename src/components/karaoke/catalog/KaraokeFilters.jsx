@@ -1,40 +1,42 @@
-import { CalendarDays, Clock, Music } from 'lucide-react';
+import { Tag, Clock } from 'lucide-react';
 import KaraokeSelect from './KaraokeSelect';
 import { SORT_OPTIONS } from '@/lib/karaokeCatalog';
+import { DIFFICULTY_FILTER_OPTIONS } from '@/lib/karaokeDifficulty';
 
 /**
- * Barre de filtres : chips de thème (sélection unique) + Mês + Ordenar +
- * compteur de résultats + « Limpar filtros » quand un filtre est actif.
+ * Barra de filtros do redesign 2026-07-30 :
+ *   - DIFICULDADE em destaque (chips « Todas / Fácil / Média / Difícil ») — filtro
+ *     primário, jamais escondido num menu ;
+ *   - Tema e Ordenar em dropdowns secundários (mesmo componente `KaraokeSelect` de
+ *     antes) ;
+ *   - o filtro por MÊS e o agrupamento mensal foram removidos com o redesign (grade
+ *     plana) — ver `karaokeCatalog.js`.
+ *   - o contador de resultados vive agora numa única linha acima da grade
+ *     (`Karaoke.jsx`), não aqui, para não duplicar a contagem.
  */
 export default function KaraokeFilters({
   themes,
-  months,
   filters,
-  resultCount,
   hasActiveFilters,
+  onDifficultyChange,
   onThemeChange,
-  onMonthChange,
   onSortChange,
   onClear,
 }) {
-  const activeThemeLabel = filters.theme
-    ? themes.find((t) => t.value === filters.theme)?.label
-    : null;
-
   return (
     <section className="karaoke-filters" aria-label="Filtros do catálogo">
-      <div className="karaoke-chips" role="group" aria-label="Filtrar por tema">
-        {themes.map((theme) => {
-          const active = filters.theme === theme.value;
+      <div className="karaoke-chips" role="group" aria-label="Filtrar por dificuldade">
+        {DIFFICULTY_FILTER_OPTIONS.map((opt) => {
+          const active = filters.difficulty === opt.value;
           return (
             <button
-              key={String(theme.value)}
+              key={String(opt.value)}
               type="button"
               className={`karaoke-chip${active ? ' is-active' : ''}`}
               aria-pressed={active}
-              onClick={() => onThemeChange(theme.value)}
+              onClick={() => onDifficultyChange(opt.value)}
             >
-              {theme.label}
+              {opt.label}
             </button>
           );
         })}
@@ -43,12 +45,12 @@ export default function KaraokeFilters({
       <div className="karaoke-filters-row">
         <div className="karaoke-filters-controls">
           <KaraokeSelect
-            icon={CalendarDays}
-            label="Mês"
-            ariaLabel="Filtrar por mês"
-            value={filters.month}
-            options={months}
-            onChange={onMonthChange}
+            icon={Tag}
+            label="Tema"
+            ariaLabel="Filtrar por tema"
+            value={filters.theme}
+            options={themes}
+            onChange={onThemeChange}
           />
           <KaraokeSelect
             icon={Clock}
@@ -60,18 +62,11 @@ export default function KaraokeFilters({
           />
         </div>
 
-        <div className="karaoke-filters-meta">
-          <span className="karaoke-result-count">
-            <Music className="h-4 w-4" aria-hidden="true" />
-            {activeThemeLabel ? `${activeThemeLabel} · ` : ''}
-            {resultCount} música{resultCount === 1 ? '' : 's'}
-          </span>
-          {hasActiveFilters && (
-            <button type="button" className="karaoke-clear" onClick={onClear}>
-              Limpar filtros
-            </button>
-          )}
-        </div>
+        {hasActiveFilters && (
+          <button type="button" className="karaoke-clear" onClick={onClear}>
+            Limpar filtros
+          </button>
+        )}
       </div>
     </section>
   );

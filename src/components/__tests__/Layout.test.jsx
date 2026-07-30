@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import Layout from '../../pages/Layout';
 
 // Mock environment variables
@@ -66,6 +66,24 @@ describe('Layout', () => {
     const contentElements = screen.getAllByText('Test Content');
     expect(contentElements.length).toBeGreaterThan(0);
     expect(contentElements[0]).toBeInTheDocument();
+  });
+
+  // Le redesign du catalogue karaokê (Karaoke.jsx) ne touche ni Layout.jsx ni la nav —
+  // ce test verrouille que « Karaokê » reste bien marqué actif sur /karaoke, mobile
+  // (AppBottomNav) et desktop (sidebar), sans rien changer ici.
+  it('marks Karaokê active in both navs on /karaoke', () => {
+    render(
+      <MemoryRouter initialEntries={['/karaoke']}>
+        <Layout>
+          <div>Conteúdo</div>
+        </Layout>
+      </MemoryRouter>
+    );
+
+    const karaokeLinks = screen.getAllByRole('link', { name: /karaok/i });
+    expect(karaokeLinks.length).toBeGreaterThan(0);
+    const active = karaokeLinks.filter((el) => el.getAttribute('aria-current') === 'page');
+    expect(active.length).toBeGreaterThan(0);
   });
 });
 

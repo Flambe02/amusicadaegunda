@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Music } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 import { useKaraokeCatalog } from '@/hooks/useKaraokeCatalog';
-import { groupByMonth } from '@/lib/karaokeCatalog';
 import { trackEvent } from '@/lib/analytics';
 import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import KaraokeHero from '@/components/karaoke/catalog/KaraokeHero';
 import KaraokeSearch from '@/components/karaoke/catalog/KaraokeSearch';
 import KaraokeSurpriseCard from '@/components/karaoke/catalog/KaraokeSurpriseCard';
 import KaraokeFilters from '@/components/karaoke/catalog/KaraokeFilters';
-import KaraokeMonthSection from '@/components/karaoke/catalog/KaraokeMonthSection';
+import KaraokeSongCard from '@/components/karaoke/catalog/KaraokeSongCard';
 import KaraokeSurpriseResult from '@/components/karaoke/catalog/KaraokeSurpriseResult';
 import KaraokeEmptyState from '@/components/karaoke/catalog/KaraokeEmptyState';
 import '@/styles/karaoke.css';
@@ -36,12 +35,11 @@ export default function KaraokePage() {
     error,
     reload,
     themes,
-    months,
     filters,
     hasActiveFilters,
     setQuery,
     setTheme,
-    setMonth,
+    setDifficulty,
     setSort,
     clearFilters,
     pickSurprise,
@@ -98,17 +96,16 @@ export default function KaraokePage() {
     trackEvent('karaoke_theme_filter_selected', { theme: value || 'todos' });
   }, [setTheme]);
 
-  const handleMonthChange = useCallback((value) => {
-    setMonth(value);
-    trackEvent('karaoke_month_filter_selected', { month: value || 'todos' });
-  }, [setMonth]);
+  const handleDifficultyChange = useCallback((value) => {
+    setDifficulty(value);
+    trackEvent('karaoke_difficulty_filter_selected', { difficulty: value || 'todas' });
+  }, [setDifficulty]);
 
   const handleSortChange = useCallback((value) => {
     setSort(value);
     trackEvent('karaoke_sort_changed', { sort: value });
   }, [setSort]);
 
-  const groups = groupByMonth(results);
   const canSurprise = results.length > 0;
 
   return (
@@ -119,7 +116,7 @@ export default function KaraokePage() {
         <div className="karaoke-spotlights !inset-0" aria-hidden="true" />
 
         <div className="relative">
-          <KaraokeHero count={totalEligible} showCount={!isLoading} />
+          <KaraokeHero />
 
           {!isLoading && totalEligible > 0 && (
             <>
@@ -136,12 +133,10 @@ export default function KaraokePage() {
 
               <KaraokeFilters
                 themes={themes}
-                months={months}
                 filters={filters}
-                resultCount={results.length}
                 hasActiveFilters={hasActiveFilters}
+                onDifficultyChange={handleDifficultyChange}
                 onThemeChange={handleThemeChange}
-                onMonthChange={handleMonthChange}
                 onSortChange={handleSortChange}
                 onClear={clearFilters}
               />
@@ -164,16 +159,20 @@ export default function KaraokePage() {
               canSurprise={false}
             />
           ) : (
-            <div className="karaoke-results">
-              {groups.map((group) => (
-                <KaraokeMonthSection
-                  key={group.key}
-                  label={group.label}
-                  songs={group.songs}
-                  onSelect={sing}
-                />
-              ))}
-            </div>
+            <>
+              {/* Compteur UNIQUE de la page, juste au-dessus de la grille — dynamique
+                  (reflète les filtres actifs), remplace les deux compteurs concurrents
+                  du hero et de la barre de filtres de l'ancienne version. */}
+              <p className="karaoke-result-line" aria-live="polite">
+                <Music className="h-4 w-4" aria-hidden="true" />
+                {results.length} música{results.length > 1 ? 's' : ''} pronta{results.length > 1 ? 's' : ''} para cantar
+              </p>
+              <div className="karaoke-grid">
+                {results.map((song) => (
+                  <KaraokeSongCard key={song.id} song={song} onSelect={sing} />
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

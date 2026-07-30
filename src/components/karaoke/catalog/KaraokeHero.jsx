@@ -1,23 +1,25 @@
-import { Mic, Music } from 'lucide-react';
+import { Mic } from 'lucide-react';
 
 /**
- * Hero compact « Palco da Segunda ». Le compteur est dynamique.
- * Volontairement court pour ne pas repousser la recherche sous la ligne de flottaison.
+ * Hero compact du catalogue Karaokê — redesign 2026-07-30 : plus de titre néon géant,
+ * plus d'eyebrow décorative, plus de compteur ici (il vit désormais juste au-dessus
+ * de la grille, dans Karaoke.jsx, comme SEUL compteur affiché sur la page).
+ *
+ * Un seul composant partagé mobile + desktop : la variation vient du CSS
+ * (`.karaoke-hero-subtitle--mobile` / `--desktop`), pas d'une implémentation séparée.
  */
-export default function KaraokeHero({ count = 0, showCount = true }) {
+export default function KaraokeHero() {
   return (
-    <header className="karaoke-hero text-center">
-      <p className="karaoke-eyebrow">
-        <Mic className="h-3.5 w-3.5" aria-hidden="true" /> Palco da Segunda
+    <header className="karaoke-hero">
+      <h1 className="karaoke-hero-title">
+        <Mic className="karaoke-hero-title-icon" aria-hidden="true" /> Escolha sua música
+      </h1>
+      <p className="karaoke-hero-subtitle karaoke-hero-subtitle--desktop">
+        Encontre uma música e comece a cantar.
       </p>
-      <h1 className="karaoke-neon karaoke-hero-title">KARAOKÊ</h1>
-      <p className="karaoke-hero-subtitle">Escolha uma música ou deixe a sorte decidir.</p>
-      {showCount && count > 0 && (
-        <p className="karaoke-count-pill" aria-live="polite">
-          <Music className="h-3.5 w-3.5" aria-hidden="true" />
-          {count} música{count > 1 ? 's' : ''} pronta{count > 1 ? 's' : ''} para cantar
-        </p>
-      )}
+      <p className="karaoke-hero-subtitle karaoke-hero-subtitle--mobile">
+        Qual você vai cantar hoje?
+      </p>
     </header>
   );
 }

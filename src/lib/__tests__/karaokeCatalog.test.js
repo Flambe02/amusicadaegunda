@@ -6,17 +6,15 @@ import {
   monthKeyLabel,
   buildSearchIndex,
   deriveThemes,
-  deriveMonths,
   filterAndSortSongs,
-  groupByMonth,
   pickRandomSong,
 } from '../karaokeCatalog';
 
 const SONGS = [
-  { id: '1', title: 'Camarada Quer CPF', subtitle: 'Espião russo', category: 'internacional', release_date: '2026-07-06', hashtags: ['Rússia'] },
-  { id: '2', title: 'Independência ou Gol', subtitle: 'Brasil x Noruega', category: 'esporte', release_date: '2026-07-01' },
-  { id: '3', title: 'Messi é o Melhor', subtitle: 'Ronaldo entrou na roda', category: 'esporte', release_date: '2026-06-15' },
-  { id: '4', title: 'Como é Grande', subtitle: 'Zelle', category: 'politica', release_date: '2026-06-01' },
+  { id: '1', title: 'Camarada Quer CPF', subtitle: 'Espião russo', category: 'internacional', release_date: '2026-07-06', hashtags: ['Rússia'], difficulty: 'easy' },
+  { id: '2', title: 'Independência ou Gol', subtitle: 'Brasil x Noruega', category: 'esporte', release_date: '2026-07-01', difficulty: 'medium' },
+  { id: '3', title: 'Messi é o Melhor', subtitle: 'Ronaldo entrou na roda', category: 'esporte', release_date: '2026-06-15', difficulty: 'hard' },
+  { id: '4', title: 'Como é Grande', subtitle: 'Zelle', category: 'politica', release_date: '2026-06-01', difficulty: 'medium' },
 ];
 
 describe('normalizeText', () => {
@@ -38,17 +36,18 @@ describe('themeLabel / monthKey', () => {
 });
 
 describe('buildSearchIndex', () => {
-  it('includes title, theme, month, year and tags (normalized)', () => {
+  it('includes title, theme, month, year, tags and difficulty (normalized)', () => {
     const idx = buildSearchIndex(SONGS[0]);
     expect(idx).toContain('camarada');
     expect(idx).toContain('internacional');
     expect(idx).toContain('julho');
     expect(idx).toContain('2026');
     expect(idx).toContain('russia'); // accent-stripped tag
+    expect(idx).toContain('facil'); // "Fácil" indexé accent-insensible (difficulty: 'easy')
   });
 });
 
-describe('deriveThemes / deriveMonths', () => {
+describe('deriveThemes', () => {
   it('derives themes from real data, Todos first, preferred order', () => {
     const themes = deriveThemes(SONGS);
     expect(themes[0]).toEqual({ value: null, label: 'Todos' });
@@ -59,12 +58,6 @@ describe('deriveThemes / deriveMonths', () => {
     // esporte (préféré) avant les non listés — internacional est aussi préféré
     expect(values.indexOf('politica')).toBeLessThan(values.indexOf('internacional'));
   });
-  it('derives months descending with Todos first', () => {
-    const months = deriveMonths(SONGS);
-    expect(months[0].value).toBeNull();
-    expect(months[1].value).toBe('2026-07');
-    expect(months[2].value).toBe('2026-06');
-  });
 });
 
 describe('filterAndSortSongs', () => {
@@ -74,9 +67,22 @@ describe('filterAndSortSongs', () => {
     expect(filterAndSortSongs(SONGS, { query: 'politica' }).map((s) => s.id)).toEqual(['4']);
     expect(filterAndSortSongs(SONGS, { query: 'julho' }).map((s) => s.id).sort()).toEqual(['1', '2']);
   });
-  it('filters by theme and by month', () => {
+  it('filters by theme', () => {
     expect(filterAndSortSongs(SONGS, { theme: 'esporte' }).map((s) => s.id).sort()).toEqual(['2', '3']);
-    expect(filterAndSortSongs(SONGS, { month: '2026-06' }).map((s) => s.id).sort()).toEqual(['3', '4']);
+  });
+  it('filters by difficulty — Fácil', () => {
+    expect(filterAndSortSongs(SONGS, { difficulty: 'easy' }).map((s) => s.id)).toEqual(['1']);
+  });
+  it('filters by difficulty — Média', () => {
+    expect(filterAndSortSongs(SONGS, { difficulty: 'medium' }).map((s) => s.id).sort()).toEqual(['2', '4']);
+  });
+  it('filters by difficulty — Difícil', () => {
+    expect(filterAndSortSongs(SONGS, { difficulty: 'hard' }).map((s) => s.id)).toEqual(['3']);
+  });
+  it('combines search and difficulty (only matching medium songs about "segunda"-like queries)', () => {
+    const withDesc = SONGS.map((s) => ({ ...s, description: 'A Música da Segunda' }));
+    const combined = filterAndSortSongs(withDesc, { query: 'segunda', difficulty: 'medium' });
+    expect(combined.map((s) => s.id).sort()).toEqual(['2', '4']);
   });
   it('sorts newest, oldest and A-Z', () => {
     expect(filterAndSortSongs(SONGS, { sort: 'newest' }).map((s) => s.id)).toEqual(['1', '2', '3', '4']);
@@ -87,16 +93,6 @@ describe('filterAndSortSongs', () => {
     const copy = [...SONGS];
     filterAndSortSongs(SONGS, { sort: 'az' });
     expect(SONGS).toEqual(copy);
-  });
-});
-
-describe('groupByMonth', () => {
-  it('groups sorted songs by month without empty groups', () => {
-    const sorted = filterAndSortSongs(SONGS, { sort: 'newest' });
-    const groups = groupByMonth(sorted);
-    expect(groups.map((g) => g.label)).toEqual(['Julho 2026', 'Junho 2026']);
-    expect(groups[0].songs).toHaveLength(2);
-    expect(groups[1].songs).toHaveLength(2);
   });
 });
 

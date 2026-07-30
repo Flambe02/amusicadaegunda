@@ -6,6 +6,7 @@
  */
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+import { getSongDifficultyKey, getSongDifficultyLabel } from '@/lib/karaokeDifficulty';
 
 export const CATEGORY_LABELS = {
   internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', esporte: 'Esporte',
@@ -98,7 +99,11 @@ export function shortSummary(song, max = 130) {
   return `${raw.slice(0, max - 1).trimEnd()}…`;
 }
 
-/** Texte pré-normalisé sur lequel porte la recherche (titre, thème, mois, tags…). */
+/**
+ * Texte pré-normalisé sur lequel porte la recherche (titre, artiste, thème, mois,
+ * tags, difficulté…). Inclure la difficulté permet à « facil » de retrouver les
+ * chansons Fácil même quand le filtre difficulté n'est pas actif.
+ */
 export function buildSearchIndex(song) {
   const key = monthKey(song);
   const parts = [
@@ -110,6 +115,7 @@ export function buildSearchIndex(song) {
     song?.category,
     key ? monthKeyLabel(key) : '',
     key ? key.split('-')[0] : '', // année seule
+    getSongDifficultyLabel(song),
     ...(Array.isArray(song?.hashtags) ? song.hashtags : []),
   ];
   return normalizeText(parts.filter(Boolean).join(' '));
@@ -135,23 +141,6 @@ export function deriveThemes(songs) {
   ];
 }
 
-/**
- * Liste ordonnée (récent → ancien) des mois présents, `{ value, label }`,
- * précédée de « Todos » (`value === null`).
- */
-export function deriveMonths(songs) {
-  const keys = new Set();
-  for (const s of songs) {
-    const key = monthKey(s);
-    if (key) keys.add(key);
-  }
-  const ordered = [...keys].sort().reverse();
-  return [
-    { value: null, label: 'Todos' },
-    ...ordered.map((value) => ({ value, label: monthKeyLabel(value) })),
-  ];
-}
-
 export const SORT_OPTIONS = [
   { value: 'newest', label: 'Mais recentes' },
   { value: 'oldest', label: 'Mais antigas' },
@@ -159,14 +148,18 @@ export const SORT_OPTIONS = [
 ];
 
 /**
- * Applique recherche + thème + mois puis tri. Fonction pure : mêmes entrées →
+ * Applique recherche + thème + difficulté puis tri. Fonction pure : mêmes entrées →
  * même sortie, sans muter `songs`.
+ *
+ * Le filtre `month` a été retiré avec le regroupement mensuel de l'affichage (grille
+ * plate désormais) — la recherche reste capable de retrouver un mois par son nom
+ * (« julho »), via `buildSearchIndex`, qui l'indexe toujours.
  */
-export function filterAndSortSongs(songs, { query = '', theme = null, month = null, sort = 'newest' } = {}) {
+export function filterAndSortSongs(songs, { query = '', theme = null, difficulty = null, sort = 'newest' } = {}) {
   const q = normalizeText(query);
   let out = songs.filter((song) => {
     if (theme && song.category !== theme) return false;
-    if (month && monthKey(song) !== month) return false;
+    if (difficulty && getSongDifficultyKey(song) !== difficulty) return false;
     if (q && !(song.__searchIndex ?? buildSearchIndex(song)).includes(q)) return false;
     return true;
   });
@@ -179,25 +172,6 @@ export function filterAndSortSongs(songs, { query = '', theme = null, month = nu
     out.sort((a, b) => (publishedTimestamp(a) - publishedTimestamp(b)) * factor);
   }
   return out;
-}
-
-/**
- * Regroupe des chansons (déjà triées) par mois pour l'affichage desktop.
- * Renvoie `[{ key, label, songs }]` dans l'ordre reçu (pas de groupe vide).
- */
-export function groupByMonth(songs) {
-  const groups = [];
-  const index = new Map();
-  for (const song of songs) {
-    const key = monthKey(song) || 'sem-data';
-    if (!index.has(key)) {
-      const group = { key, label: key === 'sem-data' ? 'Sem data' : monthKeyLabel(key), songs: [] };
-      index.set(key, group);
-      groups.push(group);
-    }
-    index.get(key).songs.push(song);
-  }
-  return groups;
 }
 
 /**

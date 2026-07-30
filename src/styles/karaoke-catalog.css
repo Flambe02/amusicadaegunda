@@ -36,27 +36,41 @@
   .karaoke-catalog { padding-bottom: 3rem; }
 }
 
-/* ── Hero ── */
-.karaoke-hero { margin-bottom: clamp(1.1rem, 3vw, 1.75rem); }
-.karaoke-eyebrow {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  font-size: 11px; font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase;
-  color: var(--karaoke-text-muted); margin-bottom: 0.35rem;
-}
-.karaoke-eyebrow svg { color: var(--karaoke-yellow); }
+/* ── Hero (compact — redesign 2026-07-30) ──
+   Plus de titre néon géant, plus d'eyebrow, plus de compteur ici : un hero court qui
+   ne repousse pas la recherche sous la ligne de flottaison. Le compteur unique de la
+   page vit désormais dans `.karaoke-result-line`, juste au-dessus de la grille. */
+.karaoke-hero { margin-bottom: clamp(0.9rem, 2.4vw, 1.4rem); text-align: left; }
 .karaoke-hero-title {
-  font-size: clamp(2.75rem, 12vw, 5rem); font-weight: 900; line-height: 0.95; margin: 0;
+  display: flex; align-items: center; gap: 0.55rem;
+  font-size: clamp(1.5rem, 3.6vw, 2.1rem); font-weight: 900; line-height: 1.1; margin: 0;
+  color: var(--karaoke-text-primary);
 }
+.karaoke-hero-title-icon { width: 1.35rem; height: 1.35rem; flex-shrink: 0; color: var(--karaoke-yellow); }
 .karaoke-hero-subtitle {
-  margin: 0.6rem auto 0; max-width: 30rem;
-  font-size: clamp(0.9rem, 2.4vw, 1.05rem); color: var(--karaoke-text-secondary);
+  margin: 0.35rem 0 0; max-width: 30rem;
+  font-size: clamp(0.85rem, 2vw, 0.95rem); color: var(--karaoke-text-secondary);
 }
-.karaoke-count-pill {
-  display: inline-flex; align-items: center; gap: 0.4rem; margin-top: 0.75rem;
-  padding: 0.3rem 0.8rem; border-radius: 9999px;
-  border: 1px solid transparent; border-color: var(--karaoke-yellow-border); background: var(--karaoke-yellow-soft);
-  font-size: 0.78rem; font-weight: 700; color: var(--karaoke-yellow);
+/* Un seul texte visible à la fois : le sous-titre desktop diffère du mobile
+   (copy demandée par écran), pas d'implémentation dupliquée — juste du CSS. */
+.karaoke-hero-subtitle--mobile { display: block; }
+.karaoke-hero-subtitle--desktop { display: none; }
+@media (min-width: 768px) {
+  .karaoke-hero { text-align: center; }
+  .karaoke-hero-title { justify-content: center; }
+  .karaoke-hero-subtitle { margin-left: auto; margin-right: auto; }
+  .karaoke-hero-subtitle--mobile { display: none; }
+  .karaoke-hero-subtitle--desktop { display: block; }
 }
+
+/* Compteur UNIQUE de la page (remplace le compteur du hero + celui de la barre de
+   filtres de l'ancienne version) — juste au-dessus de la grille, met à jour au fil
+   des filtres actifs. */
+.karaoke-result-line {
+  display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.75rem;
+  font-size: 0.85rem; font-weight: 700; color: var(--karaoke-text-secondary);
+}
+.karaoke-result-line svg { color: var(--karaoke-yellow); }
 
 /* ── Ligne utilitaire : recherche + surprise ── */
 .karaoke-utility-row {
@@ -230,62 +244,85 @@
   .karaoke-select-menu { left: 0; right: 0; min-width: 0; }
 }
 
-/* ── Sections mensuelles + grille ── */
-.karaoke-results { display: flex; flex-direction: column; gap: clamp(1.25rem, 3vw, 2rem); }
-.karaoke-month-header {
-  display: flex; align-items: baseline; gap: 0.75rem; margin-bottom: 0.85rem;
-  padding-bottom: 0.5rem; border-bottom: 1px solid transparent; border-bottom-color: var(--karaoke-border);
-}
-.karaoke-month-title {
-  font-size: 0.8rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--karaoke-text-secondary); margin: 0;
-}
-.karaoke-month-count { font-size: 0.78rem; color: var(--karaoke-text-muted); }
+/* ── Grille (redesign 2026-07-30 — plate, plus de sections mensuelles) ──
+   Seuils choisis pour distinguer nettement les 7 largeurs de test de la section 9 :
+   360→1 col, 390/412→2, 768→3 (« desktop médio »/tablette), 1280/1440/1920→4. */
 .karaoke-grid {
-  display: grid; gap: 0.85rem; grid-template-columns: 1fr;
+  display: grid; gap: 0.9rem; grid-template-columns: 1fr;
+}
+@media (min-width: 380px) {
+  .karaoke-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (min-width: 768px) {
-  .karaoke-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+  .karaoke-grid { grid-template-columns: repeat(3, 1fr); gap: 1.1rem; }
+}
+@media (min-width: 1280px) {
+  .karaoke-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-/* ── Carte chanson ── */
+/* ── Carte chanson — verticale (capa grande, essencial apenas) ──
+   Toda a carta é UM ÚNICO <button> ; « Cantar » é um <span> visual, não um botão
+   aninhado — estrutura de interação acessível válida (secção 10). */
 .karaoke-song-card {
-  display: flex; align-items: stretch; gap: 0.9rem; width: 100%; text-align: left;
-  padding: 0.75rem; cursor: pointer; border-radius: var(--karaoke-radius-md);
+  display: flex; flex-direction: column; width: 100%; text-align: left;
+  padding: 0.65rem; cursor: pointer; border-radius: var(--karaoke-radius-md);
   border: 1px solid transparent; border-color: var(--karaoke-border); background: var(--karaoke-surface);
+  transition: border-color 0.18s, transform 0.15s;
 }
+.karaoke-song-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
 .karaoke-song-card:focus-visible { outline: 3px solid var(--karaoke-yellow); outline-offset: 2px; }
 .karaoke-song-cover {
-  flex-shrink: 0; width: 92px; height: 92px; border-radius: var(--karaoke-radius-sm);
-  overflow: hidden; background: #1a1a1a;
+  display: block; width: 100%; aspect-ratio: 1 / 1; margin-bottom: 0.65rem;
+  border-radius: var(--karaoke-radius-sm); overflow: hidden; background: #1a1a1a;
 }
 .karaoke-song-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.karaoke-song-body { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1; }
-.karaoke-song-meta { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.karaoke-song-body { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; flex: 1; }
+.karaoke-song-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .karaoke-song-theme {
-  padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.66rem; font-weight: 800;
+  padding: 0.15rem 0.55rem; border-radius: 9999px; font-size: 0.62rem; font-weight: 800;
   letter-spacing: 0.04em; text-transform: uppercase;
   color: var(--karaoke-yellow); background: var(--karaoke-yellow-soft);
   border: 1px solid transparent; border-color: var(--karaoke-yellow-border);
 }
-.karaoke-song-date {
+.karaoke-song-duration, .karaoke-song-date {
   display: inline-flex; align-items: center; gap: 0.25rem;
   font-size: 0.72rem; font-weight: 600; color: var(--karaoke-text-muted);
 }
 .karaoke-song-title {
-  font-size: 1.05rem; font-weight: 800; line-height: 1.2; color: var(--karaoke-text-primary);
-}
-.karaoke-song-summary {
-  font-size: 0.82rem; line-height: 1.4; color: var(--karaoke-text-secondary);
+  font-size: 0.98rem; font-weight: 800; line-height: 1.25; color: var(--karaoke-text-primary);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
+.karaoke-song-artist {
+  font-size: 0.78rem; color: var(--karaoke-text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.karaoke-song-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  margin-top: auto; padding-top: 0.5rem;
+}
 .karaoke-song-cta {
-  display: inline-flex; align-items: center; gap: 0.35rem; align-self: flex-end; flex-shrink: 0;
-  margin-top: auto; padding: 0.5rem 0.9rem; border-radius: 9999px;
-  background: var(--karaoke-yellow); color: #111; font-size: 0.82rem; font-weight: 800;
+  display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0;
+  padding: 0.45rem 0.85rem; border-radius: 9999px;
+  background: var(--karaoke-yellow); color: #111; font-size: 0.8rem; font-weight: 800;
   transition: transform 0.15s;
 }
 .karaoke-song-card:hover .karaoke-song-cta { transform: scale(1.03); }
+
+/* ── Badge de dificuldade — a cor nunca é a única portadora de sentido (secção 4E) ── */
+.karaoke-difficulty-badge {
+  display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 9999px;
+  font-size: 0.68rem; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.karaoke-difficulty-badge.is-easy {
+  color: #4ade80; background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.35);
+}
+.karaoke-difficulty-badge.is-medium {
+  color: #fb923c; background: rgba(251, 146, 60, 0.12); border-color: rgba(251, 146, 60, 0.35);
+}
+.karaoke-difficulty-badge.is-hard {
+  color: #f87171; background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.35);
+}
 
 /* ── États vides ── */
 .karaoke-empty {
@@ -385,7 +422,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .karaoke-surprise, .karaoke-song-cta, .karaoke-btn-primary, .karaoke-select-caret { transition: none; }
+  .karaoke-surprise, .karaoke-song-cta, .karaoke-song-card, .karaoke-btn-primary, .karaoke-select-caret { transition: none; }
   .karaoke-modal-overlay, .karaoke-modal-panel, .karaoke-surprise-result-cover { animation: none; }
-  .karaoke-surprise:hover:not(:disabled), .karaoke-song-card:hover .karaoke-song-cta { transform: none; }
+  .karaoke-surprise:hover:not(:disabled), .karaoke-song-card:hover, .karaoke-song-card:hover .karaoke-song-cta { transform: none; }
 }

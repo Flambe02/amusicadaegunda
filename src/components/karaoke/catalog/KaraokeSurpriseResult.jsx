@@ -2,6 +2,7 @@ import { Mic, Shuffle, X, Sparkles, CalendarDays } from 'lucide-react';
 import KaraokeModal from './KaraokeModal';
 import { themeLabel, formatShortDate, getSongCover, shortSummary } from '@/lib/karaokeCatalog';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+import KaraokeDifficultyBadge from './KaraokeDifficultyBadge';
 
 /**
  * Résultat du tirage « Me surpreenda » : bottom-sheet mobile / carte centrée desktop.
@@ -38,6 +39,7 @@ export default function KaraokeSurpriseResult({ song, onSing, onReroll, onClose 
       <h2 id="karaoke-surprise-title" className="karaoke-surprise-result-title">{song?.title}</h2>
 
       <div className="karaoke-surprise-result-meta">
+        <KaraokeDifficultyBadge song={song} />
         {theme && <span className="karaoke-song-theme">{theme}</span>}
         {date && (
           <span className="karaoke-song-date">
