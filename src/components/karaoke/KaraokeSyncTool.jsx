@@ -6,7 +6,7 @@ import {
   RotateCcw, History, ClipboardPaste, ArrowLeft, Gauge, X, Sparkles, AlertTriangle, Pencil,
   Repeat, Clock, ShieldCheck, CheckCircle2, AlertCircle, Info, Type, Wand2,
   ListMusic, Search, Video, Maximize2, Minimize2, Keyboard, MoreHorizontal, AudioLines,
-  Eye, EyeOff,
+  Eye, EyeOff, FileUp,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
@@ -47,6 +47,7 @@ import {
 } from '@/lib/quickSync';
 import { roleLabel } from '@/lib/workshopUi';
 import QuickSyncView from '@/components/karaoke/quick/QuickSyncView';
+import TimingImportDialog from '@/components/karaoke/TimingImportDialog';
 import { useLocalTransport } from '@/hooks/useLocalTransport';
 import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
 import LocalTracksPanel from '@/components/karaoke/workshop/LocalTracksPanel';
@@ -453,6 +454,7 @@ export default function KaraokeSyncTool({
   const [showVersions, setShowVersions] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false); // diálogo de atalhos de teclado
   const [showMoreMenu, setShowMoreMenu] = useState(false);    // menu «⋯» do header
+  const [showImport, setShowImport] = useState(false);        // importar .lrc / JSON de alinhamento
 
   // ── UI de remaster : navegação, pré-visualização e inspector ──
   const [inspectorTab, setInspectorTab] = useState('line');   // 'line' | 'words'
@@ -687,6 +689,26 @@ export default function KaraokeSyncTool({
       return nextState;
     });
   }, []);
+
+  // ── Importar uma sincronização existente (.lrc / JSON de timing / JSON de palavras) ──
+  // O plano vem já calculado e pré-visualizado por TimingImportDialog. Aqui só se
+  // aplica: via commitLines() (anulável com Ctrl+Z) e SEM guardar nada no Supabase —
+  // o « Guardar » habitual é que persiste, como em qualquer outra edição.
+  const handleImportApply = useCallback((importedLines, plan) => {
+    if (!Array.isArray(importedLines) || importedLines.length === 0) return;
+    commitLines(() => importedLines);
+    setLyricsDraft(importedLines.map((l) => l.text).join('\n'));
+    userEditedLyricsRef.current = true; // o texto importado não deve ser reescrito pelo fetch «fresh»
+    const firstNull = importedLines.findIndex((l) => l.time == null);
+    setCursor(firstNull === -1 ? 0 : firstNull);
+    if (!initialSyncLinesRef.current) initialSyncLinesRef.current = importedLines.map((l) => ({ ...l }));
+    setStep('sync');
+    setShowImport(false);
+    toast({
+      title: '✅ Sincronização importada',
+      description: `${plan?.stats?.matchedLines ?? 0} frase(s) com tempo${plan?.stats?.wordLines ? `, ${plan.stats.wordLines} por palavra` : ''}. Revê e clica em Guardar.`,
+    });
+  }, [commitLines, toast]);
 
   // ── Módulo B-v1 : Pré-alinhar com áudio (nível frase) ──
   // Deteta os segmentos cantados nos vocais LOCAIS e preenche time/endTime das
@@ -1123,6 +1145,7 @@ export default function KaraokeSyncTool({
   useEffect(() => {
     if (!isParentKeyboardActive({
       step, wordStudioOpen: ballStudioIndex != null, isCalibrating, quickMode: quickActive,
+      importOpen: showImport,
     })) {
       return undefined;
     }
@@ -1201,7 +1224,7 @@ export default function KaraokeSyncTool({
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [step, quickActive, ballStudioIndex, mode, startHold, finishHold, cancelHold, markCursor, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
+  }, [step, quickActive, showImport, ballStudioIndex, mode, startHold, finishHold, cancelHold, markCursor, undo, redo, rewind, togglePlay, handleClose, cyclePlaybackRate, isCalibrating, exitWordCapture]);
 
   // Compteur live (durée du maintien) affiché pendant la capture — rAF, un seul petit
   // state, actif seulement le temps bref d'un maintien d'Espaço.
@@ -2508,6 +2531,13 @@ export default function KaraokeSyncTool({
                 )}
               </button>
               <button
+                onClick={() => setShowImport(true)}
+                title="Importar uma sincronização já existente (.lrc, JSON de timing, JSON de alinhamento por palavra)"
+                className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-gray-300 hover:bg-white/10"
+              >
+                <FileUp size={13} /> Importar
+              </button>
+              <button
                 onClick={openVersions}
                 title="Histórico de versões de sincronização (restaurar uma anterior)"
                 className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-gray-300 hover:bg-white/10"
@@ -2694,12 +2724,22 @@ export default function KaraokeSyncTool({
                     <p className="text-xs text-gray-500">Uma linha por frase cantada, na ordem da música (repete o refrão se for 2×)</p>
                   </div>
                 </div>
-                <button
-                  onClick={handlePasteLyrics}
-                  className="karaoke-focusable inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-gray-300 hover:bg-white/10"
-                >
-                  <ClipboardPaste size={13} /> Colar
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    onClick={handlePasteLyrics}
+                    className="karaoke-focusable inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-gray-300 hover:bg-white/10"
+                  >
+                    <ClipboardPaste size={13} /> Colar
+                  </button>
+                  {/* Já tens a sincronização num ficheiro? Entra por aqui, sem marcar nada à mão. */}
+                  <button
+                    onClick={() => setShowImport(true)}
+                    title="Importar uma sincronização já existente (.lrc, JSON de timing, JSON de alinhamento por palavra)"
+                    className="karaoke-focusable inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-500/10 px-2.5 py-1.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/20"
+                  >
+                    <FileUp size={13} /> Importar timing
+                  </button>
+                </div>
               </div>
               <textarea
                 value={lyricsDraft}
@@ -3465,6 +3505,15 @@ export default function KaraokeSyncTool({
       </div>
 
       {showShortcuts && <KeyboardShortcutsDialog onClose={() => setShowShortcuts(false)} />}
+
+      {/* Rendu HORS du conteneur masqué en Quick Sync : accessible dans les deux présentations. */}
+      {showImport && (
+        <TimingImportDialog
+          lines={lines}
+          onApply={handleImportApply}
+          onClose={() => setShowImport(false)}
+        />
+      )}
 
       {ballStudioIndex != null && lines[ballStudioIndex]?.time != null && (() => {
         const idx = ballStudioIndex;

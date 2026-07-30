@@ -65,6 +65,12 @@ describe('A. propriété exclusive du clavier', () => {
     expect(isParentKeyboardActive({ ...base, quickMode: false })).toBe(true);
   });
 
+  it("le parent N'écoute PAS quand le dialogue d'import est ouvert", () => {
+    // Sinon Escape fermerait TOUT l'éditeur (perte du brouillon) au lieu du dialogue.
+    expect(isParentKeyboardActive({ ...base, importOpen: true })).toBe(false);
+    expect(isParentKeyboardActive({ ...base, importOpen: false })).toBe(true);
+  });
+
   it('le studio l’emporte sur tout autre état', () => {
     for (const step of ['sync', 'lyrics']) {
       for (const isCalibrating of [true, false]) {
