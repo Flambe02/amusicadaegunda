@@ -22,7 +22,7 @@ export default function SongQuickActions({ view, onEdit, onKaraoke, onQuickSync,
     <div>
       <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-gray-500">Ações rápidas</h3>
       <div className="space-y-2">
-        <Button onClick={() => onEdit(view)} className="w-full justify-center gap-2 bg-purple-600 hover:bg-purple-700">
+        <Button onClick={() => onEdit(view.raw)} className="w-full justify-center gap-2 bg-purple-600 hover:bg-purple-700">
           <Edit2 size={15} /> Editar música
         </Button>
 

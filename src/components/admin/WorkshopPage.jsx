@@ -76,7 +76,7 @@ export default function WorkshopPage() {
               </span>
               <button
                 type="button"
-                onClick={() => (action.action === 'editLyrics' ? openEdit(view) : openKaraoke(view.raw))}
+                onClick={() => (action.action === 'editLyrics' ? openEdit(view.raw) : openKaraoke(view.raw))}
                 className="karaoke-focusable min-h-[36px] rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-purple-700 focus-visible:ring-1 focus-visible:ring-purple-400"
               >
                 {action.label}
