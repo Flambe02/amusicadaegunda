@@ -3208,14 +3208,40 @@ export default function KaraokeSyncTool({
                     : (videoHidden ? 'hidden' : `absolute right-3 top-3 z-20 overflow-hidden rounded-xl border border-white/15 bg-black shadow-2xl ${videoExpanded ? 'w-80' : 'w-52'}`)
                 }>
                   <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-                    {(!apiReady || !playerReady) && !apiError && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center text-white/60">
-                        <Loader2 className="h-5 w-5 animate-spin" />
+                    {/* Sans vídeo de sincronização, aucun player n'est créé : `playerReady`
+                        ne devient jamais vrai et le spinner tournait indéfiniment sur un
+                        carré noir. On montre à la place une image fixe (capa da música). */}
+                    {!videoId ? (
+                      <div className="absolute inset-0 z-10 overflow-hidden bg-black">
+                        {effectiveSong?.cover_image ? (
+                          <img
+                            src={effectiveSong.cover_image}
+                            alt={`Capa de ${effectiveSong?.title || 'música'}`}
+                            className="h-full w-full object-cover opacity-80"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-900/40 to-black">
+                            <Music className="h-6 w-6 text-white/40" />
+                          </div>
+                        )}
+                        <span className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1 text-center text-[10px] font-semibold text-white/70">
+                          Sem vídeo · a sincronizar pelo áudio local
+                        </span>
                       </div>
+                    ) : (
+                      <>
+                        {(!apiReady || !playerReady) && !apiError && (
+                          <div className="absolute inset-0 z-10 flex items-center justify-center text-white/60">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          </div>
+                        )}
+                        {apiError && (
+                          <div className="absolute inset-0 z-10 flex items-center justify-center px-2 text-center text-[11px] text-white/60">Erro ao carregar o vídeo</div>
+                        )}
+                      </>
                     )}
-                    {apiError && (
-                      <div className="absolute inset-0 z-10 flex items-center justify-center px-2 text-center text-[11px] text-white/60">Erro ao carregar o vídeo</div>
-                    )}
+                    {/* L'hôte du player reste TOUJOURS monté (même sans videoId) : le
+                        démonter détruirait le player si une vidéo valide arrive ensuite. */}
                     <div ref={hostRef} className="h-full w-full" />
                     {previewTab === 'karaoke' && !videoHidden && (
                       <div className="absolute right-1 top-1 z-20 flex gap-1">
