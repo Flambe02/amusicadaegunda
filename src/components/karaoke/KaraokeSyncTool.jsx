@@ -30,6 +30,7 @@ import {
   reviewBlockedReason, issueTarget,
   CAPTURE_SOURCE, canonicalCaptureTime, captureBlockedMessage,
   captureSourceLabel, compensateLatency,
+  CLOCK_SOURCE, masterClockSource, localCanonicalDuration, videoUnavailableNotice,
 } from '@/lib/karaokeWorkshop';
 import {
   TRACK_ROLE, TRACK_LABEL, emptyTrack, compareTrackDuration, canUseForSync, switchTrackSeek,
@@ -41,7 +42,7 @@ import {
   CALIBRATION_STALE_MESSAGE, startCalibrationTarget, calibrationTargetValid,
   startVerification, markHeard, canConfirmAlignment, verificationIsStale, comparisonSeekFor,
 } from '@/lib/trackVerification';
-import { computeAnchorOffset, formatOffsetSeconds } from '@/lib/audioClock';
+import { computeAnchorOffset, formatOffsetSeconds, canonicalTimeToLocalAudio } from '@/lib/audioClock';
 import {
   quickSyncBlock, initialQuickLine, nextIncompleteLine, isLineComplete,
 } from '@/lib/quickSync';
@@ -111,6 +112,9 @@ export default function KaraokeSyncTool({
 
   const [playerReady, setPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  // Vidéo privée / supprimée / non intégrable : l'horloge YouTube ne viendra jamais.
+  // L'éditeur doit alors pouvoir tourner sur l'audio local (voir masterClockSource).
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
@@ -795,6 +799,15 @@ export default function KaraokeSyncTool({
           if (e.data === 1) setIsPlaying(true);
           else if (e.data === 2 || e.data === 0) setIsPlaying(false);
         },
+        // Sans ceci, une vidéo privée / supprimée / bloquée n'était JAMAIS signalée :
+        // getCurrentTime() restait à 0, l'aperçu ne bougeait pas et Play ne faisait rien,
+        // sans aucune explication à l'écran. Codes YouTube : 2 (id invalide), 5 (lecteur
+        // HTML5), 100 (retirée/privée), 101 & 150 (intégration interdite).
+        onError: () => {
+          if (destroyed) return;
+          setVideoUnavailable(true);
+          setIsPlaying(false);
+        },
       },
     });
     playerRef.current = player;
@@ -812,12 +825,40 @@ export default function KaraokeSyncTool({
     if (!playerReady) return undefined;
     pollRef.current = setInterval(() => {
       const p = playerRef.current;
-      if (p && typeof p.getCurrentTime === 'function') setCurrentTime(p.getCurrentTime() || 0);
+      if (!p || typeof p.getCurrentTime !== 'function') return;
+      // Une vidéo qui répond a une durée : c'est la preuve qu'elle N'EST PAS indisponible.
+      // Sert d'auto-guérison si le chien de garde plus bas s'est déclenché trop tôt.
+      const d = typeof p.getDuration === 'function' ? p.getDuration() : 0;
+      if (Number.isFinite(d) && d > 0) {
+        setDuration((prev) => (Math.abs(prev - d) > 0.5 ? d : prev));
+        setVideoUnavailable(false);
+      }
+      // Quand l'audio local donne l'heure, ne PAS écraser `currentTime` avec le 0 figé
+      // que renvoie un player mort — c'était la course qui gelait l'aperçu.
+      if (clockSourceRef.current === CLOCK_SOURCE.LOCAL) return;
+      setCurrentTime(p.getCurrentTime() || 0);
     }, 100);
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   }, [playerReady]);
 
+  // Chien de garde : certains échecs d'intégration ne déclenchent pas `onError` (le
+  // lecteur affiche son propre message dans l'iframe et se tait côté API). Sans horloge
+  // ni durée au bout de quelques secondes, on considère la vidéo indisponible — le poll
+  // ci-dessus annule ce verdict dès que la vidéo donne signe de vie.
+  useEffect(() => {
+    if (step !== 'sync' || !apiReady || !videoId) return undefined;
+    if (playerReady && duration > 0) return undefined;
+    const t = setTimeout(() => setVideoUnavailable(true), 8000);
+    return () => clearTimeout(t);
+  }, [step, apiReady, videoId, playerReady, duration]);
+
+  // Temps CANONIQUE courant, quelle que soit la source. Appelée uniquement depuis des
+  // handlers (jamais pendant le render), donc les refs déclarées plus bas sont prêtes.
   const getTime = () => {
+    if (clockSourceRef.current === CLOCK_SOURCE.LOCAL) {
+      const t = localTransportRef.current?.canonicalTime;
+      return Number.isFinite(t) ? t : 0;
+    }
     const p = playerRef.current;
     return p && typeof p.getCurrentTime === 'function' ? p.getCurrentTime() : 0;
   };
@@ -865,11 +906,27 @@ export default function KaraokeSyncTool({
   const warnCaptureBlocked = useCallback(() => {
     toast({ title: 'Sincronização bloqueada', description: TRACK_CAPTURE_BLOCKED, variant: 'destructive' });
   }, [toast]);
+  // ══════════ TRANSPORT — une seule décision : qui donne l'heure ? ══════════
+  // `localTransport` et l'horloge maître sont déclarés bien plus bas (ils dépendent des
+  // pistes locales) : ces refs évitent un TDZ sans réordonner tout l'éditeur — même
+  // procédé que `captureNextWordRef`. Tant que l'horloge n'est pas 'local', TOUT passe
+  // par YouTube exactement comme avant.
+  const clockSourceRef = useRef(CLOCK_SOURCE.NONE);
+  const localTransportRef = useRef(null);
+  const onLocalClock = () => clockSourceRef.current === CLOCK_SOURCE.LOCAL;
+  const localOffsetRef = useRef(0);
+
   const seekTo = useCallback((t) => {
+    if (onLocalClock()) {
+      // `t` est CANONIQUE : on le convertit avant de toucher la tête de lecture locale.
+      localTransportRef.current?.seekTo(canonicalTimeToLocalAudio(Math.max(0, t), localOffsetRef.current));
+      return;
+    }
     const p = playerRef.current;
     if (p && typeof p.seekTo === 'function') p.seekTo(Math.max(0, t), true);
   }, []);
   const togglePlay = useCallback(() => {
+    if (onLocalClock()) { localTransportRef.current?.togglePlay(); return; }
     const p = playerRef.current;
     if (!p) return;
     if (isPlaying) p.pauseVideo(); else p.playVideo();
@@ -878,6 +935,7 @@ export default function KaraokeSyncTool({
 
   // ── Vitesse de lecture (aide au calage des passages rapides) ──
   const applyPlaybackRate = useCallback((rate) => {
+    if (onLocalClock()) localTransportRef.current?.setRate(rate);
     const p = playerRef.current;
     if (p && typeof p.setPlaybackRate === 'function') p.setPlaybackRate(rate);
     setPlaybackRateState(rate);
@@ -886,6 +944,7 @@ export default function KaraokeSyncTool({
     setPlaybackRateState((prevRate) => {
       const idx = PLAYBACK_RATES.indexOf(prevRate);
       const next = PLAYBACK_RATES[(idx + 1) % PLAYBACK_RATES.length];
+      if (onLocalClock()) localTransportRef.current?.setRate(next);
       const p = playerRef.current;
       if (p && typeof p.setPlaybackRate === 'function') p.setPlaybackRate(next);
       return next;
@@ -1919,6 +1978,44 @@ export default function KaraokeSyncTool({
     : localAudio;
   const previewOffset = offsetOf(previewRole);
   const localTransport = useLocalTransport({ session: previewSession, offsetSeconds: previewOffset });
+
+  // ══════════════════ HORLOGE MAÎTRE de l'éditeur ══════════════════
+  // Normalement YouTube. Mais si la vidéo est privée/supprimée, elle ne rend jamais son
+  // horloge : l'aperçu restait figé à 00:00 et Play ne faisait rien. Dans ce cas précis,
+  // et SEULEMENT si la piste locale est prête ET calibrée, c'est elle qui donne l'heure.
+  const clockSource = masterClockSource({
+    videoUnavailable, playerReady,
+    localReady: Boolean(previewSession.ready),
+    offsetSeconds: previewOffset,
+  });
+  clockSourceRef.current = clockSource;
+  localTransportRef.current = localTransport;
+  localOffsetRef.current = Number.isFinite(previewOffset) ? previewOffset : 0;
+  // Les boutons de lecture suivent l'horloge RÉELLEMENT active : sur `playerReady` seul,
+  // ils restaient grisés alors que l'audio local était parfaitement jouable.
+  const transportReady = clockSource === CLOCK_SOURCE.LOCAL ? true : playerReady;
+  const clockNotice = videoUnavailableNotice({
+    videoUnavailable, clockSource, hasLocalFile: Boolean(tracks[TRACK_ROLE.ORIGINAL]?.fileName),
+  });
+
+  // L'horloge locale alimente le MÊME état `currentTime` que le poll YouTube : tous les
+  // consommateurs (aperçu karaokê, frise, ligne active, validation) restent inchangés.
+  useEffect(() => {
+    if (clockSource !== CLOCK_SOURCE.LOCAL) return;
+    setCurrentTime(Number.isFinite(localTransport.canonicalTime) ? localTransport.canonicalTime : 0);
+  }, [clockSource, localTransport.canonicalTime]);
+
+  useEffect(() => {
+    if (clockSource !== CLOCK_SOURCE.LOCAL) return;
+    setDuration(localCanonicalDuration(previewSession.duration, previewOffset));
+  }, [clockSource, previewSession.duration, previewOffset]);
+
+  // Sans ceci, le bouton resterait sur « ▶ » pendant la lecture locale.
+  useEffect(() => {
+    if (clockSource !== CLOCK_SOURCE.LOCAL) return;
+    setIsPlaying(localTransport.isPlaying);
+  }, [clockSource, localTransport.isPlaying]);
+
   // Le MODE d'édition est DÉRIVÉ de l'unique état existant (`ballStudioIndex`) — pas un
   // second état concurrent — et n'a aucun effet sur la frase sélectionnée.
   const editingMode = ballStudioIndex != null ? EDITING_MODE.WORD : EDITING_MODE.PHRASE;
@@ -2106,6 +2203,33 @@ export default function KaraokeSyncTool({
     setVerifySession(null);
     toast({ title: 'Calibração guardada', description: `${TRACK_LABEL[role]} · ${formatOffsetSeconds(offsetSeconds)}` });
   }, [calTarget, sessionForRole, calForRole, duration, toast]);
+
+  /**
+   * Promeut la MÚSICA COMPLETA en horloge de l'éditeur quand la vidéo est indisponible.
+   *
+   * C'est une calibration `explicit-zero` en bonne et due forme (pas un zéro implicite) :
+   * l'administrateur affirme que le fichier local commence au même instant que les temps
+   * enregistrés. C'est exactement le cas d'un timing importé depuis un alignement calculé
+   * SUR ce fichier. Passe par le même `saveCalibration()` que le panneau de calibration.
+   */
+  const useLocalAsClock = useCallback(() => {
+    const role = TRACK_ROLE.ORIGINAL;
+    const s = sessionForRole(role);
+    if (!s?.ready) {
+      toast({ title: 'Selecione a música completa', description: 'Escolha o ficheiro áudio antes de o usar como relógio.', variant: 'destructive' });
+      return;
+    }
+    calForRole(role).saveCalibration({
+      offsetSeconds: 0, method: 'explicit-zero', verification: 'verified',
+      localDuration: s.duration, canonicalDuration: s.duration, // offset 0 → mêmes bornes
+    });
+    setPreviewRole(role);
+    setSyncRole(role);
+    toast({
+      title: 'Áudio local a dar as horas',
+      description: 'O editor usa a música completa como relógio (início comum). Já podes ouvir e ver o karaokê a andar.',
+    });
+  }, [sessionForRole, calForRole, toast]);
 
   // ── Session de comparaison original ↔ stem (étape 6.1) ──
   // Confirmer un alignement exige d'avoir RÉELLEMENT écouté les deux pistes au même point
@@ -2596,6 +2720,31 @@ export default function KaraokeSyncTool({
           )}
         </div>
       </header>
+
+      {/* Vidéo YouTube indisponible (privée/supprimée/non intégrable). Sans ce bandeau,
+          l'éditeur restait muet à 00:00 sans jamais dire pourquoi. */}
+      {step === 'sync' && clockNotice && (
+        <div
+          role="status"
+          className={`flex flex-wrap items-center gap-2 border-b px-4 py-2 text-xs ${
+            clockNotice.tone === 'error'
+              ? 'border-red-500/30 bg-red-500/10 text-red-200'
+              : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+          }`}
+        >
+          <AlertTriangle size={14} className="shrink-0" />
+          <span className="min-w-0">{clockNotice.text}</span>
+          {clockNotice.canUseLocalClock && (
+            <button
+              onClick={useLocalAsClock}
+              title="Afirma que o ficheiro local começa no mesmo instante que os tempos gravados (calibração explícita de 0 s)"
+              className="karaoke-focusable ml-auto shrink-0 rounded-lg bg-emerald-600 px-3 py-1.5 font-bold text-white hover:bg-emerald-700"
+            >
+              Usar o áudio local como relógio
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Banner « sem sessão » — l'UI admin peut s'afficher SANS session Supabase
           (mode dev, session expirée) et alors le RLS bloque toute gravação. On le
@@ -3276,11 +3425,11 @@ export default function KaraokeSyncTool({
                 <span className="text-[9px] font-bold uppercase tracking-wider text-white/35">Leitura</span>
                 <div className="flex items-center gap-1">
                   <ToolButton onClick={() => setCursor((c) => Math.max(0, c - 1))} disabled={cursor <= 0} title="Linha anterior"><ChevronLeft size={15} /></ToolButton>
-                  <ToolButton onClick={rewind} disabled={!playerReady} title="Recuar 3s (←)"><span className="text-[10px] font-bold">-3s</span></ToolButton>
-                  <button onClick={togglePlay} disabled={!playerReady} aria-label={isPlaying ? 'Pausar' : 'Tocar'} className="karaoke-focusable inline-flex h-9 w-11 items-center justify-center rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-40">
+                  <ToolButton onClick={rewind} disabled={!transportReady} title="Recuar 3s (←)"><span className="text-[10px] font-bold">-3s</span></ToolButton>
+                  <button onClick={togglePlay} disabled={!transportReady} aria-label={isPlaying ? 'Pausar' : 'Tocar'} className="karaoke-focusable inline-flex h-9 w-11 items-center justify-center rounded-lg bg-purple-600 hover:bg-purple-700 disabled:opacity-40">
                     {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5 fill-current" />}
                   </button>
-                  <ToolButton onClick={() => seekTo(getTime() + REWIND_SECONDS)} disabled={!playerReady} title="Avançar 3s"><span className="text-[10px] font-bold">+3s</span></ToolButton>
+                  <ToolButton onClick={() => seekTo(getTime() + REWIND_SECONDS)} disabled={!transportReady} title="Avançar 3s"><span className="text-[10px] font-bold">+3s</span></ToolButton>
                   <ToolButton onClick={() => setCursor((c) => Math.min(lines.length - 1, c + 1))} disabled={cursor >= lines.length - 1} title="Próxima linha"><ChevronRight size={15} /></ToolButton>
                   <ToolButton onClick={toggleLoop} disabled={lines[cursor]?.time == null} active={loopActive} title="Repetir linha selecionada"><Repeat size={15} /></ToolButton>
                   <select value={playbackRate} onChange={(e) => applyPlaybackRate(parseFloat(e.target.value))} aria-label="Velocidade de reprodução" className="rounded-lg border border-white/10 bg-white/5 px-1.5 py-1.5 text-[11px] font-semibold text-gray-200 outline-none">
@@ -3325,7 +3474,7 @@ export default function KaraokeSyncTool({
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] font-bold uppercase tracking-wider text-white/35">Ferramentas</span>
                 <div className="flex flex-wrap items-center gap-1">
-                  <ToolButton onClick={insertAtPlayhead} disabled={!playerReady} title="Inserir linha em falta neste instante"><Plus size={15} /></ToolButton>
+                  <ToolButton onClick={insertAtPlayhead} disabled={!transportReady} title="Inserir linha em falta neste instante"><Plus size={15} /></ToolButton>
                   <ToolButton onClick={() => duplicateLine(cursor)} title="Duplicar linha (refrão)"><Copy size={15} /></ToolButton>
                   <ToolButton onClick={() => deleteLine(cursor)} title="Apagar linha"><Trash2 size={15} /></ToolButton>
                   <div className="mx-0.5 h-6 w-px bg-white/10" />

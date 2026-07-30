@@ -306,3 +306,73 @@ export function issueTarget(issue, lineCount) {
     canonicalTime: Number.isFinite(issue?.time) ? issue.time : null,
   };
 }
+
+// ─────────────────── Horloge MAÎTRE de l'éditeur ───────────────────
+
+/**
+ * Qui donne l'heure à l'éditeur (aperçu karaokê, frise, boutons de lecture).
+ *   'youtube' — le player YouTube (cas normal, comportement historique)
+ *   'local'   — l'audio local converti en canonique (`local + offset`)
+ *   'none'    — aucune horloge fiable : rien ne doit bouger, et il faut le DIRE
+ */
+export const CLOCK_SOURCE = { YOUTUBE: 'youtube', LOCAL: 'local', NONE: 'none' };
+
+/**
+ * Choix de l'horloge maître.
+ *
+ * Pourquoi ce repli existe : une vidéo privée/supprimée/bloquée ne rend jamais son
+ * horloge (getCurrentTime() reste à 0). Sans repli, l'éditeur affichait 00:00 fixe et
+ * le bouton Play ne faisait RIEN, même avec la chanson en local et des timings déjà
+ * importés — la chanson devenait inéditable pour une raison sans rapport avec elle.
+ *
+ * Règles, dans cet ordre :
+ *  - YouTube utilisable → YouTube (jamais de bascule surprise en cours de lecture) ;
+ *  - vidéo indisponible + piste locale prête ET CALIBRÉE → local ;
+ *  - sinon → 'none'. Une piste non calibrée n'est JAMAIS promue horloge : son décalage
+ *    avec les temps enregistrés est inconnu, l'aperçu surlignerait la mauvaise frase.
+ *
+ * @param {{ videoUnavailable?:boolean, playerReady?:boolean, localReady?:boolean,
+ *           offsetSeconds?:number|null }} [state]
+ */
+export function masterClockSource(state = {}) {
+  const { videoUnavailable, playerReady, localReady, offsetSeconds } = state;
+  if (!videoUnavailable) return playerReady ? CLOCK_SOURCE.YOUTUBE : CLOCK_SOURCE.NONE;
+  if (localReady && Number.isFinite(offsetSeconds)) return CLOCK_SOURCE.LOCAL;
+  return CLOCK_SOURCE.NONE;
+}
+
+/**
+ * Durée canonique déduite d'une piste locale : la fin du fichier, exprimée sur
+ * l'horloge de la chanson. Renvoie 0 (durée inconnue) plutôt qu'une valeur inventée.
+ */
+export function localCanonicalDuration(localDuration, offsetSeconds) {
+  if (!Number.isFinite(localDuration) || localDuration <= 0) return 0;
+  if (!Number.isFinite(offsetSeconds)) return 0;
+  return Math.max(0, localDuration + offsetSeconds);
+}
+
+/**
+ * Message d'action quand la vidéo est indisponible. `null` = rien à signaler.
+ * @returns {{ tone:'error'|'warn', text:string, canUseLocalClock:boolean }|null}
+ */
+export function videoUnavailableNotice({ videoUnavailable, clockSource, hasLocalFile } = {}) {
+  if (!videoUnavailable) return null;
+  if (clockSource === CLOCK_SOURCE.LOCAL) {
+    return {
+      tone: 'warn',
+      text: 'Vídeo do YouTube indisponível (privado ou removido). O editor está a usar o áudio local como relógio.',
+      canUseLocalClock: false,
+    };
+  }
+  return hasLocalFile
+    ? {
+      tone: 'error',
+      text: 'Vídeo do YouTube indisponível (privado ou removido). Marca o áudio local como relógio para poder ouvir e ver o karaokê.',
+      canUseLocalClock: true,
+    }
+    : {
+      tone: 'error',
+      text: 'Vídeo do YouTube indisponível (privado ou removido). Escolhe o ficheiro da música completa para poder trabalhar.',
+      canUseLocalClock: false,
+    };
+}
