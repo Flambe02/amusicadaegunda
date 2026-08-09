@@ -6,7 +6,7 @@ import {
   RotateCcw, History, ClipboardPaste, ArrowLeft, Gauge, X, Sparkles, AlertTriangle, Pencil,
   Repeat, Clock, ShieldCheck, CheckCircle2, AlertCircle, Info, Type, Wand2,
   ListMusic, Search, Video, Maximize2, Minimize2, Keyboard, MoreHorizontal, AudioLines,
-  Eye, EyeOff, FileUp,
+  Eye, EyeOff, FileUp, ExternalLink,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
@@ -2734,6 +2734,15 @@ export default function KaraokeSyncTool({
               </div>
             </>
           )}
+          <a
+            href="https://www.gliss.pro/fr/tools/alignment"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Ferramenta externa Gliss — alinhamento de letras"
+            className="karaoke-focusable inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 p-1.5 text-gray-400 hover:bg-white/10 hover:text-white"
+          >
+            <ExternalLink size={14} />
+          </a>
           {onOpenPitchMap && (
             <button
               onClick={() => onOpenPitchMap()}

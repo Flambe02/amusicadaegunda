@@ -32,6 +32,13 @@ export default function KaraokeMixerSheet({
   opts, setOpts, onClose,
   pitchAvailable = false, pitchActive = false, pitchStatusLabel = null,
   onTogglePitchGuide = null,
+  // Modo Aprender (learningMode du KaraokePlayer) : la traduction y est forcée par
+  // la chanson choisie depuis /apprendre, pas un choix libre — un changement fait
+  // ici s'écrirait quand même dans les préférences GLOBALES du karaokê (opts est
+  // partagé, cf. karaokeOptions.js) et polluerait le karaokê brésilien normal au
+  // prochain lancement. On masque donc ce contrôle plutôt que de le laisser
+  // désynchronisé de ce qui s'affiche réellement à l'écran.
+  hideTranslate = false,
 }) {
   const panelRef = useRef(null);
   const [dragY, setDragY] = useState(0);
@@ -239,19 +246,21 @@ export default function KaraokeMixerSheet({
             )}
           </section>
 
-          <section className="km-section">
-            <p className="km-section-title"><Globe className="h-3.5 w-3.5" /> Tradução <span className="km-section-note">(rodapé)</span></p>
-            <div className="km-segmented">
-              {TRANSLATION_LANGS.map((l) => (
-                <button key={l.value} type="button"
-                  className={`km-seg ${opts.translate === l.value ? 'is-on' : ''}`}
-                  aria-pressed={opts.translate === l.value}
-                  onClick={() => setOpts((o) => ({ ...o, translate: l.value }))}>
-                  {l.label}
-                </button>
-              ))}
-            </div>
-          </section>
+          {!hideTranslate && (
+            <section className="km-section">
+              <p className="km-section-title"><Globe className="h-3.5 w-3.5" /> Tradução <span className="km-section-note">(rodapé)</span></p>
+              <div className="km-segmented">
+                {TRANSLATION_LANGS.map((l) => (
+                  <button key={l.value} type="button"
+                    className={`km-seg ${opts.translate === l.value ? 'is-on' : ''}`}
+                    aria-pressed={opts.translate === l.value}
+                    onClick={() => setOpts((o) => ({ ...o, translate: l.value }))}>
+                    {l.label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>

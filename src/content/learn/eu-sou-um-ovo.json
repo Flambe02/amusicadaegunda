@@ -3,7 +3,7 @@
   "title": "Eu Sou um Ovo",
   "lrcLineCount": 86,
   "segments": [
-    { "from": 0, "to": 1, "fr": "Je suis un œuf" },
+    { "from": 0, "to": 1, "fr": "Je suis un œuf", "expression_id": "eu-sou" },
     { "from": 2, "to": 2, "fr": "Quelqu'un peut m'expliquer" },
     { "from": 3, "to": 3, "fr": "Là-bas, chez Mappin" },
     { "from": 4, "to": 4, "fr": "J'étais bien" },
@@ -61,10 +61,25 @@
   ],
   "expressions": [
     {
+      "id": "eu-sou",
+      "term": "eu sou",
+      "meaning_fr": "je suis",
+      "register": "base",
+      "moment_type": "base",
+      "moment_examples": ["Eu sou francês 🇫🇷", "Eu sou brasileiro 🇧🇷", "Eu sou feliz 😁", "Eu sou um ovo 🥚"],
+      "mini_interaction": {
+        "prompt_pt": "Eu sou _______",
+        "options": ["francês 🇫🇷", "feliz 😁", "um ovo 🥚"]
+      }
+    },
+    {
       "id": "cade",
       "term": "cadê",
       "meaning_fr": "Contraction familière de « que é de » (qu'est-il advenu de), l'équivalent brésilien de « où est passé ». Utilisée partout à l'oral : cadê minhas chaves (où sont mes clés), cadê você (où t'étais).",
-      "register": "familier"
+      "register": "familier",
+      "moment_type": "vivo",
+      "moment_examples": ["Cadê você? → T'es où ?", "Cadê meu celular? → Il est où mon téléphone ?"],
+      "moment_note": "À l'oral au Brésil, tu l'entendras partout."
     },
     {
       "id": "tempero",
@@ -76,7 +91,8 @@
       "id": "vitrine",
       "term": "vitrine",
       "meaning_fr": "La vitrine d'un magasin, mais aussi, au sens figuré très courant sur les réseaux sociaux brésiliens, l'idée de « n'exister que pour être montré » (virar vitrine, ficar de vitrine) — se dit de quelqu'un ou quelque chose de très exposé mais jamais réellement vécu ou consommé.",
-      "register": "courant"
+      "register": "courant",
+      "moment_type": "culture"
     }
   ],
   "cultural_context_fr": "Au Brésil, l'œuf de Pâques premium (ovo de páscoa) est devenu un phénomène commercial disproportionné : des marques comme Cacau Show et Kopenhagen vendent des œufs immenses, ultra-décorés, parfois à des prix délirants, davantage pensés pour Instagram que pour être mangés. Cette chanson donne une voix à l'un de ces œufs, entre crise existentielle et satire de la surconsommation — jusqu'à la référence à Jacquin, chef pâtissier très connu du grand public brésilien pour ses jugements sans filtre à la télévision, et à un vrai sujet d'actualité économique (les droits de douane imposés par Trump, qui touchent aussi les exportations agroalimentaires brésiliennes).",
@@ -109,5 +125,145 @@
       }
     ],
     "summary_terms": ["cadê", "tempero", "vitrine", "virar"]
-  }
+  },
+  "lesson_meta": {
+    "level": "A1-A2",
+    "duration_minutes": 8,
+    "theme": "nourriture, prix, frustration",
+    "learning_goals": [
+      "Comprendre et utiliser cadê",
+      "Repérer não tem à l'oral",
+      "Comprendre l'expression figurée não tem tempero",
+      "Découvrir le sens figuré de vitrine sur les réseaux sociaux",
+      "Reconnaître le ton d'auto-dérision typique de l'humour brésilien"
+    ],
+    "comprehension_question": {
+      "prompt_pt": "Sobre o que fala a música, principalmente?",
+      "options": [
+        { "text": "Um ovo de Páscoa que virou caro e bonito demais para ser comido", "correct": true },
+        { "text": "Uma receita de bolo de Páscoa", "correct": false },
+        { "text": "Uma festa de aniversário no Rio de Janeiro", "correct": false }
+      ]
+    }
+  },
+  "learning_moments": [
+    {
+      "id": "eu-sou",
+      "level": "beginner",
+      "line_from": 0,
+      "line_to": 1,
+      "term": "eu sou",
+      "translation": "je suis",
+      "breakdown": [
+        { "pt": "eu", "fr": "je" },
+        { "pt": "sou", "fr": "suis" },
+        { "pt": "um ovo", "fr": "un œuf" }
+      ],
+      "explanation_fr": "Le verbe SER (être) à la 1ère personne — pour dire qui on est.",
+      "interaction": { "prompt_pt": "EU SOU = ?", "options": ["je suis", "j'ai", "je veux"] }
+    },
+    {
+      "id": "eu-tenho",
+      "level": "beginner",
+      "line_from": 50,
+      "line_to": 51,
+      "term": "eu tenho",
+      "translation": "j'ai",
+      "breakdown": [
+        { "pt": "eu", "fr": "je" },
+        { "pt": "tenho", "fr": "ai" }
+      ],
+      "explanation_fr": "Le verbe TER (avoir) à la 1ère personne — un des verbes les plus utilisés du portugais parlé.",
+      "interaction": { "prompt_pt": "EU TENHO = ?", "options": ["j'ai", "je suis", "je veux"] }
+    },
+    {
+      "id": "nao-tem",
+      "level": "beginner",
+      "line_from": 52,
+      "line_to": 53,
+      "term": "não tem",
+      "translation": "il n'y a pas / ça n'a pas",
+      "breakdown": [
+        { "pt": "não", "fr": "ne...pas" },
+        { "pt": "tem", "fr": "il y a" }
+      ],
+      "explanation_fr": "TER sert aussi à dire ce qui existe (tem) ou n'existe pas (não tem).",
+      "interaction": { "prompt_pt": "NÃO TEM = ?", "options": ["il n'y a pas", "il y a beaucoup", "c'est fini"] }
+    },
+    {
+      "id": "cade",
+      "level": "intermediate",
+      "line_from": 11,
+      "line_to": 13,
+      "term": "cadê",
+      "translation": "où est passé...",
+      "breakdown": [
+        { "pt": "cadê", "fr": "où est" }
+      ],
+      "explanation_fr": "Contraction familière de « que é de » : l'équivalent brésilien de « où est passé ». Utilisée partout à l'oral.",
+      "interaction": { "prompt_pt": "CADÊ = ?", "options": ["où est", "comment va", "pourquoi"] }
+    },
+    {
+      "id": "fiquei-caro",
+      "level": "intermediate",
+      "line_from": 21,
+      "line_to": 21,
+      "term": "fiquei caro",
+      "translation": "je suis devenu cher",
+      "breakdown": [
+        { "pt": "fiquei", "fr": "je suis devenu" },
+        { "pt": "caro", "fr": "cher" }
+      ],
+      "explanation_fr": "FICAR + adjectif est la façon la plus naturelle de dire « devenir » à l'oral, plus courante que tornar-se.",
+      "interaction": { "prompt_pt": "FIQUEI CARO = ?", "options": ["je suis devenu cher", "j'étais cher", "je serai cher"] }
+    },
+    {
+      "id": "nao-deu",
+      "level": "intermediate",
+      "line_from": 29,
+      "line_to": 29,
+      "term": "não deu",
+      "translation": "ça n'a pas marché",
+      "breakdown": [
+        { "pt": "não", "fr": "ne...pas" },
+        { "pt": "deu", "fr": "marché / réussi" }
+      ],
+      "explanation_fr": "DEU (de DAR) sert tout le temps à dire si quelque chose a fonctionné ou non — très courant à l'oral.",
+      "interaction": { "prompt_pt": "NÃO DEU = ?", "options": ["ça n'a pas marché", "ça a bien marché", "ça n'a pas commencé"] }
+    },
+    {
+      "id": "tempero",
+      "level": "advanced",
+      "line_from": 43,
+      "line_to": 43,
+      "term": "não tem tempero",
+      "translation": "ça manque de peps, de personnalité",
+      "breakdown": [],
+      "explanation_fr": "Littéralement « ça n'a pas d'assaisonnement » — mais au sens figuré, utilisé pour dire que quelque chose (ou quelqu'un) manque d'âme, pas seulement en cuisine. La traduction littérale ne suffit pas à comprendre l'usage réel."
+    },
+    {
+      "id": "vitrine",
+      "level": "advanced",
+      "line_from": 61,
+      "line_to": 61,
+      "term": "tô na vitrine",
+      "translation": "je suis exposé, montré",
+      "breakdown": [],
+      "explanation_fr": "La vitrine d'un magasin — mais au sens figuré très courant sur les réseaux sociaux brésiliens : « virar vitrine », l'idée d'exister seulement pour être montré, jamais réellement vécu."
+    },
+    {
+      "id": "virou-miragem",
+      "level": "advanced",
+      "line_from": 34,
+      "line_to": 35,
+      "term": "virou miragem",
+      "translation": "est devenue un mirage",
+      "breakdown": [
+        { "pt": "minha vida", "fr": "ma vie" },
+        { "pt": "virou", "fr": "est devenue" },
+        { "pt": "miragem", "fr": "un mirage" }
+      ],
+      "explanation_fr": "VIRAR + nom est une construction plus forte que FICAR + adjectif : elle marque un changement d'identité ou d'état (virar vitrine, virar meme, virar brasileiro)."
+    }
+  ]
 }

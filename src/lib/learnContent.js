@@ -59,7 +59,7 @@ export function deriveSongSlug(song) {
   const slug = title
     .toLowerCase()
     .trim()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '');
@@ -248,6 +248,13 @@ export function buildStudySheet(entry) {
         answer: ex.answer,
         choices: distractors.length > 0 ? [ex.answer, ...distractors] : null,
       });
+    } else if (ex.type === 'true_false') {
+      if (typeof ex.answer !== 'boolean') return null;
+      exercises.push({
+        type: 'true_false',
+        prompt: ex.prompt_pt,
+        answer: ex.answer,
+      });
     } else {
       return null; // type d'exercice inconnu — fail-closed plutôt que de l'ignorer
     }
@@ -275,8 +282,141 @@ export function buildStudySheet(entry) {
 export function normalizeAnswer(value) {
   return String(value ?? '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ' ');
+}
+
+/**
+ * Métadonnées de la leçon guidée (`/apprendre/:slug`) — niveau, durée, thème,
+ * objectifs, question de compréhension globale et phrases ciblées pour la
+ * répétition. Bloc `lesson_meta` OPTIONNEL et additif de la fiche : une fiche sans
+ * ce bloc reste utilisable telle quelle par LearnPanel/StudySheetPanel (mode
+ * lecture dans LyricsDialog) — elle n'offre juste pas de parcours guidé, et
+ * `/apprendre/:slug` la masque alors plutôt que d'afficher un parcours incomplet
+ * (même stratégie fail-closed que `buildLearnIndex`/`buildStudySheet`).
+ *
+ * NON UTILISÉ par l'écran principal du Modo Aprender depuis la simplification
+ * « chanson + karaokê + 3 découvertes » (voir `buildLearningMoments` ci-dessous) —
+ * conservé tel quel plutôt que supprimé, au cas où un parcours guidé optionnel
+ * redevienne pertinent plus tard.
+ *
+ * Le projet n'a pas de TypeScript strict (pas de tsconfig racine, pas de script
+ * typecheck) : les types d'étape/exercice sont documentés en JSDoc plutôt que dans
+ * un système de types séparé, pour rester dans la convention déjà en place ici.
+ *
+ * @typedef {{ prompt:string, options: Array<{ text:string, correct:boolean }> }} ComprehensionQuestion
+ * @typedef {{
+ *   level:string, durationMinutes:number, theme:string, learningGoals:string[],
+ *   comprehensionQuestion: ComprehensionQuestion, repetitionExpressionIds:string[],
+ * }} LessonMeta
+ *
+ * @param {object|null} entry fiche chargée par loadLearnContent
+ * @returns {null | LessonMeta}
+ */
+export function buildLessonMeta(entry) {
+  const meta = entry?.lesson_meta;
+  if (!meta) return null;
+  if (typeof meta.level !== 'string' || !meta.level.trim()) return null;
+  if (!Number.isFinite(meta.duration_minutes) || meta.duration_minutes <= 0) return null;
+  if (typeof meta.theme !== 'string' || !meta.theme.trim()) return null;
+
+  if (!Array.isArray(meta.learning_goals) || meta.learning_goals.length === 0) return null;
+  if (meta.learning_goals.some((g) => typeof g !== 'string' || !g.trim())) return null;
+
+  const cq = meta.comprehension_question;
+  if (!cq || typeof cq.prompt_pt !== 'string' || !cq.prompt_pt.trim()) return null;
+  if (!Array.isArray(cq.options) || cq.options.length < 2) return null;
+  if (cq.options.some((o) => typeof o?.text !== 'string' || !o.text.trim())) return null;
+  // Garde-fou : exactement une bonne réponse, comme buildStudySheet pour multiple_choice.
+  if (cq.options.filter((o) => o.correct === true).length !== 1) return null;
+
+  // Garde-fou : une phrase de répétition doit référencer une expression réelle de la
+  // fiche. À défaut de liste explicite, la répétition porte sur toutes les
+  // expressions enseignées (comportement par défaut raisonnable pour la bêta).
+  const allExpressionIds = Array.isArray(entry.expressions) ? entry.expressions.map((e) => e.id) : [];
+  const explicitIds = Array.isArray(meta.repetition_expression_ids)
+    ? meta.repetition_expression_ids.filter((id) => typeof id === 'string' && id.trim())
+    : [];
+  if (explicitIds.some((id) => !allExpressionIds.includes(id))) return null;
+  const repetitionExpressionIds = explicitIds.length > 0 ? explicitIds : allExpressionIds;
+  if (repetitionExpressionIds.length === 0) return null;
+
+  return {
+    level: meta.level,
+    durationMinutes: meta.duration_minutes,
+    theme: meta.theme,
+    learningGoals: meta.learning_goals,
+    comprehensionQuestion: {
+      prompt: cq.prompt_pt,
+      options: cq.options.map((o) => ({ text: o.text, correct: o.correct === true })),
+    },
+    repetitionExpressionIds,
+  };
+}
+
+/**
+ * Découvertes musicales (« micro-apprentissages ») d'une fiche, PAR NIVEAU — au plus
+ * 3 par chanson et par niveau (`beginner` | `intermediate` | `advanced`).
+ *
+ * v2 (remplace la version `moment_type` base/vivo/culture attachée à `expressions[]`,
+ * conservée mais plus utilisée — voir `MOMENT_TYPES` historique ci-dessus). Les
+ * découvertes vivent maintenant dans un tableau top-level `learning_moments[]`,
+ * DÉCOUPLÉ de `expressions[]`/`segments[]` : chaque entrée référence directement une
+ * plage `[line_from, line_to]` de lignes LRC (même convention que `segments[]`), sans
+ * passer par `buildLearnIndex`. Pourquoi découplé : une même ligne doit pouvoir
+ * enseigner des choses différentes selon le niveau (ex. « não tem tempero » = structure
+ * grammaticale « não tem » au niveau débutant ailleurs dans la chanson, idiome complet
+ * au niveau avancé) — le système `expressions[]`/`byLine` impose UN SEUL expression_id
+ * par ligne, ce qui rendrait ça impossible sans ce découplage.
+ *
+ * Fail-closed sur la FORME (id/term/translation/plage manquants ou invalides →
+ * découverte ignorée), permissif sur le contenu optionnel (`breakdown`/`explanation_fr`/
+ * `interaction` mal formés dégradent sobrement plutôt que de rejeter toute la découverte).
+ *
+ * @typedef {{
+ *   id:string, level:'beginner'|'intermediate'|'advanced', term:string, translation:string,
+ *   lineFrom:number, lineTo:number, breakdown:Array<{pt:string,fr:string}>,
+ *   explanation:string|null, interaction:{ prompt:string, options:string[] }|null,
+ * }} LearningMoment
+ *
+ * @param {object|null} entry fiche chargée par loadLearnContent
+ * @param {'beginner'|'intermediate'|'advanced'|null} [level] filtre par niveau ; sans
+ *   filtre, renvoie toutes les découvertes de tous les niveaux (utile pour un aperçu
+ *   global, ex. compter le total sur une fiche).
+ * @returns {LearningMoment[]} jamais plus de 3 éléments par appel
+ */
+export function buildLearningMoments(entry, level = null) {
+  const raw = Array.isArray(entry?.learning_moments) ? entry.learning_moments : [];
+  const scoped = level ? raw.filter((m) => m?.level === level) : raw;
+  return scoped
+    .filter((m) => m
+      && typeof m.id === 'string' && m.id.trim()
+      && typeof m.term === 'string' && m.term.trim()
+      && typeof m.translation === 'string' && m.translation.trim()
+      && Number.isInteger(m.line_from) && Number.isInteger(m.line_to)
+      && m.line_from >= 0 && m.line_to >= m.line_from)
+    .slice(0, 3)
+    .map((m) => {
+      const interaction = m.interaction
+        && typeof m.interaction.prompt_pt === 'string' && m.interaction.prompt_pt.trim()
+        && Array.isArray(m.interaction.options) && m.interaction.options.length > 0
+        && m.interaction.options.every((o) => typeof o === 'string' && o.trim())
+        ? { prompt: m.interaction.prompt_pt, options: m.interaction.options }
+        : null;
+      return {
+        id: m.id,
+        level: m.level,
+        term: m.term,
+        translation: m.translation,
+        lineFrom: m.line_from,
+        lineTo: m.line_to,
+        breakdown: Array.isArray(m.breakdown)
+          ? m.breakdown.filter((b) => b && typeof b.pt === 'string' && typeof b.fr === 'string')
+          : [],
+        explanation: typeof m.explanation_fr === 'string' && m.explanation_fr.trim() ? m.explanation_fr : null,
+        interaction,
+      };
+    });
 }

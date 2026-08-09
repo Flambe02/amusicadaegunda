@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowLeft, Play, Pause, Music, Loader2, Settings2, Mic,
   SkipBack, SkipForward, Square, RotateCcw, X,
-  SlidersHorizontal, Repeat, Check, Sparkles, BookOpen,
+  SlidersHorizontal, Repeat, Check, Sparkles, BookOpen, PartyPopper,
 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
@@ -12,9 +12,11 @@ import { resolveSongTiming } from '@/lib/timingModel';
 import { distributeWords } from '@/lib/wordDistribution';
 import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import {
-  buildLearnIndex, deriveSongSlug, hasLearnContent, loadLearnContent, lookupExpression, lookupFr,
+  buildLearningMoments, buildLearnIndex, deriveSongSlug, hasLearnContent, loadLearnContent, lookupExpression, lookupFr,
 } from '@/lib/learnContent';
 import { addEntry as addVocabEntry } from '@/lib/vocabNotebook';
+import { LEARN_LEVELS } from '@/lib/learnLevel';
+import { trackEvent } from '@/lib/analytics';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import KaraokeMixerSheet from '@/components/karaoke/KaraokeMixerSheet';
@@ -39,11 +41,24 @@ const KaraokeTvOptions = lazy(() => import('@/tv/KaraokeTvOptions'));
 // principal, chargé sur CHAQUE page (§9 de la spec). lazy() garde son code dans son
 // propre chunk, chargé seulement quand un utilisateur ouvre effectivement le carnet.
 const VocabNotebookSheet = lazy(() => import('@/components/learn/VocabNotebookSheet'));
+// Zone basse « J'apprends » (Modo Aprender simplifié, v2) — même raison de lazy() :
+// jamais téléchargée pour les 57 autres chansons ni pour le karaokê brésilien normal
+// (learningMode=false partout ailleurs). LearningMomentSheet (micro-carte popup, v1)
+// n'est plus câblée dans ce flux principal depuis le passage à cette zone persistante
+// — le fichier reste dans le repo, techniquement réutilisable ailleurs, simplement
+// plus importé ici (§10 de la mission).
+const LearningZone = lazy(() => import('@/components/karaoke/LearningZone'));
 
 const FALLBACK_LINE_DURATION_SEC = 4;
 // Couleurs des parties en modo dueto (P1 / P2).
 const DUET_COLORS = ['#38bdf8', '#f472b6'];
 const YELLOW = '#FDE047';
+// Modo Aprender simplifié : emoji des 3 niveaux (sélecteur intro + badge live + écran de fin).
+const LEVEL_META = {
+  beginner: { emoji: '🟢', label: 'Iniciante' },
+  intermediate: { emoji: '🟡', label: 'Intermediário' },
+  advanced: { emoji: '🔴', label: 'Avançado' },
+};
 // SING_THRESHOLD/LOUDNESS_TARGET/gradeFor : voir src/lib/energyGrade.js (formule
 // partagée avec le médiateur d'énergie à distance du Modo Festa — la TV n'a pas de
 // micro, cf. src/components/festa/FestaEnergyMic.jsx).
@@ -95,6 +110,28 @@ async function translateText(text, target) {
  *                                       via Realtime broadcast, cf. FestaEnergyMic.jsx)
  *  - remoteEnergyGrade : {score,grade,emoji}|null  (nota finale équivalente, pour la chanson
  *                                                    QUI VIENT DE FINIR, affichée sur l'intro)
+ *  - learningMode       : bool   Modo Aprender simplifié (« chanson + karaokê + 3
+ *                                découvertes »), activé UNIQUEMENT par l'écran
+ *                                `/apprendre/:slug` — jamais par défaut, jamais en
+ *                                tvMode. Force la traduction (`translationLanguage`)
+ *                                SANS écrire dans les préférences globales du
+ *                                karaokê (`karaoke-opts-v1`), change ce que fait la
+ *                                pastille d'expression (ouvre une micro-carte plutôt
+ *                                que de collecter silencieusement) et remplace l'écran
+ *                                de fin par un résumé « Boa! » à la place de la nota
+ *                                d'énergie / de la fermeture silencieuse. Tout le reste
+ *                                du lecteur (play/pause/seek/mixer/dueto/pitch/etc.)
+ *                                est strictement inchangé.
+ *  - translationLanguage : string|null  langue forcée en `learningMode` (ex. 'fr').
+ *  - learningLevel        : 'beginner'|'intermediate'|'advanced'  quel jeu de
+ *                            `learning_moments` proposer (cf. `buildLearningMoments`
+ *                            dans learnContent.js) — pas un cursus, juste un filtre de
+ *                            contenu. Changeable seulement sur l'écran d'intro (avant
+ *                            « Começar ») ; affiché en lecture seule pendant le chant.
+ *  - onLearningLevelChange : (level) => void  remonté par l'écran d'intro quand
+ *                            l'utilisateur change de niveau — la persistance
+ *                            (`localStorage`, `learnLevel.js`) est de la responsabilité
+ *                            de l'appelant, KaraokePlayer reste un composant contrôlé.
  *
  * Continuité : le texte ne disparaît JAMAIS. La ligne « affichée » est toujours la
  * dernière ligne démarrée ; le balayage se complète (100%) à la fin captée et la ligne
@@ -103,7 +140,8 @@ async function translateText(text, target) {
 export default function KaraokePlayer({
   song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null,
   applauseScore = null, tomatoScore = null, remoteEnergyLevel = null, remoteEnergyGrade = null,
-  initialSessionOptions = null,
+  initialSessionOptions = null, learningMode = false, translationLanguage = null,
+  learningLevel = 'beginner', onLearningLevelChange = null,
 }) {
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
@@ -117,12 +155,21 @@ export default function KaraokePlayer({
   // onEnded via ref : ne doit PAS entrer dans les deps du player (sinon recréation à chaque render).
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
+  // Modo Aprender simplifié : mêmes raisons que onEndedRef ci-dessus — lus dans
+  // l'effet de fin naturelle de la chanson (deps figées à [apiReady, YT, videoId, tvMode]).
+  const learningModeRef = useRef(learningMode);
+  learningModeRef.current = learningMode;
+  const learningLevelRef = useRef(learningLevel);
+  learningLevelRef.current = learningLevel;
 
   const [playerReady, setPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [displayIdx, setDisplayIdx] = useState(-1);
   const [phase, setPhase] = useState('intro'); // 'intro' | 'live'
   const [countdown, setCountdown] = useState(null);
+  // Écran de fin simplifié du Modo Aprender (« Boa! ») — remplace la nota d'énergie
+  // et la fermeture silencieuse UNIQUEMENT quand learningMode est actif.
+  const [showLearningEnd, setShowLearningEnd] = useState(false);
 
   // Override de session (ex. Dueto choisi depuis la landing karaokê TV) : fusionné
   // aux préférences sauvegardées UNE SEULE FOIS au montage, sans jamais écraser la
@@ -162,6 +209,14 @@ export default function KaraokePlayer({
   const optsRef = useRef(opts); optsRef.current = opts;
   const queueInfoRef = useRef(queueInfo); queueInfoRef.current = queueInfo;
   const finishAndScoreRef = useRef(null);
+
+  // Langue de traduction EFFECTIVEMENT affichée. En `learningMode`, la traduction
+  // est forcée (`translationLanguage`) SANS jamais passer par `setOpts` : `opts` est
+  // persisté globalement (`saveKaraokeOptions`, clé partagée par TOUT le karaokê,
+  // TV comprise) — y écrire depuis l'univers Aprender ferait fuiter le français vers
+  // le karaokê brésilien normal au lancement suivant. `opts.translate` reste donc
+  // fidèle à la préférence de l'utilisateur en dehors du Modo Aprender.
+  const effectiveTranslate = (learningMode && !tvMode) ? (translationLanguage || 'fr') : opts.translate;
 
   // Compensação de exibição das letras (Ajuste das letras) — em segundos. Aplicada
   // SÓ no render (tempo efetivo = tempo da mídia + offset) ; nunca modifica os dados
@@ -277,6 +332,9 @@ export default function KaraokePlayer({
   // colonne `slug` en base. Import dynamique : aucune des 57 autres chansons ne
   // télécharge de fiche (§9 de la spec).
   const learnSlug = useMemo(() => deriveSongSlug(song), [song]);
+  // Miroir ref pour l'effet de fin naturelle de la chanson (deps figées, cf. learningModeRef).
+  const learnSlugRef = useRef(learnSlug);
+  learnSlugRef.current = learnSlug;
   const [learnEntry, setLearnEntry] = useState(null);
   // Slug pour lequel `learnEntry` est à jour (fiche chargée, OU confirmée absente).
   // Comparé à `learnSlug` à CHAQUE RENDU (pas via un `useState` séparé qui pourrait
@@ -363,11 +421,13 @@ export default function KaraokePlayer({
             // Panneau Opções ouvert au moment de la fin naturelle : le fermer avant
             // d'afficher l'écran de fin, jamais les deux superposés.
             if (showOptsRef.current) setShowOpts(false);
-            // Fin naturelle : si le medidor de energia est actif et qu'on n'est pas en
-            // mode fila, on affiche la note plutôt que d'enchaîner. JAMAIS en tvMode :
-            // l'écran de note n'est pas navigable au D-pad (la jauge live suffit ; en
-            // Festa la nota vient du micro du celular, cf. remoteEnergyGrade).
-            if (optsRef.current.energy && !queueInfoRef.current && !tvMode) finishAndScoreRef.current?.();
+            // Modo Aprender simplifié : écran de fin dédié (« Boa! »), prioritaire sur
+            // la nota d'énergie et sur la fermeture silencieuse — jamais en tvMode
+            // (learningModeRef ne peut de toute façon pas être vrai là, cf. prop).
+            if (learningModeRef.current) {
+              setShowLearningEnd(true);
+              trackEvent('learning_song_completed', { song_slug: learnSlugRef.current, level: learningLevelRef.current });
+            } else if (optsRef.current.energy && !queueInfoRef.current && !tvMode) finishAndScoreRef.current?.();
             else onEndedRef.current?.();
           }
         },
@@ -585,10 +645,15 @@ export default function KaraokePlayer({
     }
     energyStatsRef.current = { active: 0, sung: 0, sum: 0, count: 0 }; // repart à zéro
     setScoreResult(null);
+    if (learningMode) {
+      setLastLearningMoment(null);
+      setLearningResetTick((t) => t + 1);
+      trackEvent('learning_song_started', { song_slug: learnSlug, level: learningLevel });
+    }
     try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
     setPhase('live');
     setCountdown(3);
-  }, [duetTaggedAvailable, duetToggleOn]);
+  }, [duetTaggedAvailable, duetToggleOn, learningMode, learnSlug, learningLevel]);
 
   // Calcule et affiche la note d'énergie. coverage = part du temps « à chanter » où le
   // micro a capté du son ; loudness = volume moyen normalisé. Pondération 70/30.
@@ -762,7 +827,7 @@ export default function KaraokePlayer({
   // pour une ligne déjà couverte. Hors couverture (langue ≠ fr, ligne non couverte,
   // fiche absente/désalignée sur les 57 autres chansons), comportement API inchangé.
   useEffect(() => {
-    const lang = opts.translate;
+    const lang = effectiveTranslate;
     if (lang === 'off') { setTranslation(''); setTranslationSource(null); return undefined; }
     // Tant que le statut de la fiche n'est pas résolu ('loading'), on ne sait pas
     // encore si cette ligne sera couverte : ne rien faire plutôt que d'appeler l'API
@@ -783,7 +848,7 @@ export default function KaraokePlayer({
       .then((out) => { if (!cancelled) { transCacheRef.current.set(key, out); setTranslation(out); setTranslationSource('api'); } })
       .catch(() => { if (!cancelled) { setTranslation(''); setTranslationSource(null); } });
     return () => { cancelled = true; };
-  }, [displayIdx, opts.translate, lines, learnIndex, learnStatus]);
+  }, [displayIdx, effectiveTranslate, lines, learnIndex, learnStatus]);
 
   // ── Préchargement des traductions (supprime le délai) ──
   // Dès qu'une langue est choisie, on traduit TOUTES les lignes en tâche de fond
@@ -792,7 +857,7 @@ export default function KaraokePlayer({
   // Les lignes couvertes par la fiche Modo Aprender (lang='fr') sont SAUTÉES : leur
   // traduction est déjà connue, ça ne fait qu'économiser des appels API inutiles.
   useEffect(() => {
-    const lang = opts.translate;
+    const lang = effectiveTranslate;
     if (lang === 'off' || lines.length === 0) return undefined;
     // Même garde que l'effet ci-dessus : sans elle, cette boucle a le temps de taper
     // l'API sur des dizaines de lignes avant que la fiche (import dynamique) arrive.
@@ -820,7 +885,7 @@ export default function KaraokePlayer({
       }
     })();
     return () => { cancelled = true; };
-  }, [opts.translate, lines, learnIndex, learnStatus]);
+  }, [effectiveTranslate, lines, learnIndex, learnStatus]);
 
   // ── Collecte d'expression Modo Aprender (bêta) — tap sur la pastille de traduction
   // quand la ligne active porte une expression. Écrit dans le carnet (§6.4) ;
@@ -839,11 +904,88 @@ export default function KaraokePlayer({
       songSlug: learnSlug,
       songTitle: song?.title,
     });
-    if (wrote) setCollectedIds((prev) => new Set(prev).add(activeExpression.id));
+    if (wrote) {
+      setCollectedIds((prev) => new Set(prev).add(activeExpression.id));
+      trackEvent('expression_saved', { expression_id: activeExpression.id, song_slug: learnSlug });
+    }
     setCollectAck(true);
     if (collectAckTimerRef.current) clearTimeout(collectAckTimerRef.current);
     collectAckTimerRef.current = setTimeout(() => setCollectAck(false), 1400);
   }, [activeExpression, learnSlug, song?.title]);
+
+  // ── Modo Aprender simplifié (v2) : « 3 découvertes » PAR NIVEAU, vivant directement
+  // dans la zone basse de l'écran (pas une pastille + popup). Détection DÉCOUPLÉE de
+  // `activeExpression`/`lookupExpression` ci-dessus (qui reste le mécanisme historique
+  // du karaokê normal, inchangé) : une découverte référence directement une plage de
+  // lignes LRC (`lineFrom`/`lineTo`), donc plusieurs découvertes de niveaux différents
+  // peuvent couvrir la MÊME ligne sans conflit (cf. docstring de buildLearningMoments).
+  const learningMoments = useMemo(
+    () => (learningMode ? buildLearningMoments(learnEntry, learningLevel) : []),
+    [learningMode, learnEntry, learningLevel],
+  );
+  const activeLearningMoment = learningMode
+    ? (learningMoments.find((m) => displayIdx >= m.lineFrom && displayIdx <= m.lineTo) || null)
+    : null;
+
+  // Zone basse « sticky » : une fois une découverte rencontrée, elle reste affichée
+  // (dans un style plus discret une fois quittée, cf. rendu) jusqu'à la suivante —
+  // §13 de la mission, continuité visuelle sans deuxième timeline ni minuteur.
+  //
+  // `learningResetTick` : handleStart/restartLearningSong ont besoin de forcer une
+  // resynchronisation immédiate de `lastLearningMoment` avec `activeLearningMoment`
+  // MÊME QUAND cette dernière n'a pas changé de référence (ex. la ligne 0 est déjà
+  // active dès l'écran d'intro si le lecteur est prêt avant le clic sur « Começar »).
+  // Sans ce jeton dans les dépendances de l'effet, un `setLastLearningMoment(null)`
+  // fait depuis l'EXTÉRIEUR de cet effet ne le déclenche pas (activeLearningMoment
+  // inchangé = pas de re-render de l'effet) et la zone basse restait bloquée sur
+  // « Continua a escutar… » malgré une découverte déjà active — bug réel constaté.
+  const [lastLearningMoment, setLastLearningMoment] = useState(null);
+  const [learningResetTick, setLearningResetTick] = useState(0);
+  useEffect(() => {
+    if (!activeLearningMoment) return;
+    setLastLearningMoment((prev) => {
+      if (prev?.id === activeLearningMoment.id) return prev;
+      trackEvent('learning_moment_seen', { song_slug: learnSlug, expression_id: activeLearningMoment.id, level: activeLearningMoment.level });
+      // Rencontrée = automatiquement rangée dans le carnet (plus de geste de tap
+      // séparé requis — §10/§11 : la découverte principale ne dépend plus d'un tap).
+      addVocabEntry({
+        expressionId: activeLearningMoment.id,
+        term: activeLearningMoment.term,
+        meaningFr: activeLearningMoment.translation,
+        register: activeLearningMoment.level,
+        songSlug: learnSlug,
+        songTitle: song?.title,
+      });
+      return activeLearningMoment;
+    });
+  }, [activeLearningMoment, learningResetTick, learnSlug, song?.title]);
+
+  // 🔊 Réécouter cette découverte : réutilise seekToLine (même primitive que le
+  // bouton « Repetir » du footer normal) plutôt qu'un nouveau mécanisme de segment
+  // start/end — §14 de la mission : ne pas fragiliser le player pour ça.
+  const replayLearningMoment = useCallback((moment) => {
+    const line = lines[moment.lineFrom];
+    if (line?.time == null) return;
+    seekToLine(line.time, 0.4);
+    try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
+  }, [lines, seekToLine]);
+
+  const handleLearningInteractionComplete = useCallback((moment) => {
+    trackEvent('learning_interaction_completed', { song_slug: learnSlug, expression_id: moment.id, level: moment.level });
+  }, [learnSlug]);
+
+  const [notebookInitialTab, setNotebookInitialTab] = useState('lista');
+  const restartLearningSong = useCallback(() => {
+    setShowLearningEnd(false);
+    setLastLearningMoment(null);
+    setLearningResetTick((t) => t + 1);
+    try { playerRef.current?.seekTo?.(0, true); playerRef.current?.playVideo?.(); } catch { /* ignore */ }
+  }, []);
+  const openLearningReview = useCallback(() => {
+    setNotebookInitialTab('revisao');
+    setShowNotebook(true);
+    trackEvent('learning_review_opened', { song_slug: learnSlug });
+  }, [learnSlug]);
 
   const hasLines = lines.length > 0;
   const scale = opts.fontScale;
@@ -867,8 +1009,8 @@ export default function KaraokePlayer({
         ) : (
           <button type="button" onClick={handleClose}
             className="karaoke-focusable flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white/85 transition hover:bg-white/10"
-            aria-label="Voltar">
-            <ArrowLeft className="h-5 w-5" /><span className="hidden sm:inline">Voltar</span>
+            aria-label={learningMode ? 'Voltar para Aprender' : 'Voltar'}>
+            <ArrowLeft className="h-5 w-5" /><span className="hidden sm:inline">{learningMode ? 'Aprender' : 'Voltar'}</span>
           </button>
         )}
         <div className="min-w-0 flex-1">
@@ -878,6 +1020,14 @@ export default function KaraokePlayer({
             {queueInfo && <span className="ml-2 text-app-yellow/70">· Fila {queueInfo.index + 1}/{queueInfo.total}</span>}
           </p>
         </div>
+        {/* Modo Aprender simplifié : niveau visible discrètement pendant le chant (§17
+            de la mission) — pas de changement de niveau ici, seulement à l'écran
+            d'intro, pour ne pas ajouter de complexité pendant la lecture. */}
+        {learningMode && (
+          <span className="flex shrink-0 items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-white/70">
+            {LEVEL_META[learningLevel]?.emoji} <span className="hidden sm:inline">{LEVEL_META[learningLevel]?.label}</span>
+          </span>
+        )}
         {tvMode && phase === 'live' && !showOpts && (
           <button type="button"
             onClick={() => { setControlsVisible(false); setShowOpts(true); }}
@@ -890,7 +1040,7 @@ export default function KaraokePlayer({
             chansons pourvues d'une fiche (§9 : pas d'entrée qui ne mène nulle part
             sur les 57 autres chansons). */}
         {phase === 'live' && !tvMode && hasLearnContent(learnSlug) && (
-          <button type="button" onClick={() => setShowNotebook(true)}
+          <button type="button" onClick={() => { setNotebookInitialTab('lista'); setShowNotebook(true); }}
             className="karaoke-focusable flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/85 transition hover:bg-white/10"
             aria-label="Abrir caderno de vocabulário">
             <BookOpen className="h-5 w-5" />
@@ -984,9 +1134,50 @@ export default function KaraokePlayer({
               )}
               <h1 className="karaoke-neon relative max-w-3xl text-4xl font-black leading-tight md:text-6xl">{song?.title}</h1>
               <p className="relative text-sm text-white/55 md:text-base">{song?.artist || 'A Música da Segunda'}</p>
+
+              {/* Modo Aprender simplifié : niveau + aperçu AVANT de lancer (§6 de la
+                  mission) — l'utilisateur sait ce qu'il va apprendre avant de jouer.
+                  Changer de niveau ici recalcule instantanément les 3 découvertes. */}
+              {learningMode && (
+                <div className="karaoke-focusable relative w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Teu nível</p>
+                  <div className="flex items-center justify-center gap-2" role="group" aria-label="Escolher nível">
+                    {LEARN_LEVELS.map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => onLearningLevelChange?.(lvl)}
+                        aria-pressed={learningLevel === lvl}
+                        className={`flex-1 rounded-full border px-2 py-2 text-xs font-black transition ${
+                          learningLevel === lvl
+                            ? 'border-app-yellow/60 bg-app-yellow/15 text-app-yellow'
+                            : 'border-white/12 bg-white/[0.03] text-white/60 hover:border-white/24'
+                        }`}
+                      >
+                        {LEVEL_META[lvl].emoji} {LEVEL_META[lvl].label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {learningMoments.length > 0 ? (
+                    <div className="mt-3 space-y-1.5 text-left">
+                      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/40">Hoje vais descobrir</p>
+                      {learningMoments.map((m) => (
+                        <p key={m.id} className="text-sm text-white/80">
+                          <span className="font-black text-app-yellow">{m.term.toUpperCase()}</span>
+                          <span className="text-white/50"> — {m.translation}</span>
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm text-white/45">Sem descobertas para este nível nesta música.</p>
+                  )}
+                </div>
+              )}
+
               <button type="button" onClick={handleStart} disabled={!playerReady}
                 className="karaoke-focusable karaoke-start-btn relative mt-2 inline-flex items-center gap-3 rounded-full bg-app-yellow px-9 py-4 text-lg font-black text-black disabled:opacity-50 md:px-12 md:py-5 md:text-xl">
-                {playerReady ? (<><Play className="h-6 w-6 fill-current" /> Começar</>) : (<><Loader2 className="h-6 w-6 animate-spin" /> A preparar…</>)}
+                {playerReady ? (<><Play className="h-6 w-6 fill-current" /> {learningMode ? 'Escutar & aprender' : 'Começar'}</>) : (<><Loader2 className="h-6 w-6 animate-spin" /> A preparar…</>)}
               </button>
               {duetTaggedAvailable && (
                 <button type="button"
@@ -1002,7 +1193,8 @@ export default function KaraokePlayer({
           )}
         </div>
       ) : (
-        <div className="relative flex-1 overflow-hidden">
+        <>
+        <div className={learningMode ? 'relative z-10 flex-[1.1] min-h-0 overflow-hidden' : 'relative flex-1 overflow-hidden'}>
           {/* Compte à rebours de départ 3-2-1 */}
           {countdown != null && (
             <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
@@ -1069,30 +1261,49 @@ export default function KaraokePlayer({
 
                 {/* Scroll do utilizador BLOQUEADO durante a música (overflow-hidden) — só o
                     auto-scroll programático (scrollTo) move a letra. */}
-                <div ref={lyricsBoxRef} className="karaoke-lyrics relative z-10 h-full overflow-hidden px-6 pt-[30vh] pb-[46vh] text-center md:px-12" aria-live="polite">
+                <div
+                  ref={lyricsBoxRef}
+                  className={`karaoke-lyrics relative z-10 h-full overflow-hidden px-6 text-center md:px-12 ${
+                    learningMode ? 'flex flex-col items-center justify-center gap-1 py-3' : 'pt-[30vh] pb-[46vh]'
+                  }`}
+                  aria-live="polite"
+                >
                   {hasLines ? (
                     lines.map((line, i) => {
                       // Limpa o ecrã : esconde as frases já cantadas, mantendo apenas a
                       // imediatamente anterior à ativa (i >= displayIdx - 1).
                       if (i < displayIdx - 1) return null;
+                      // Écran d'apprentissage compact (§4) : seulement précédente/active/suivante,
+                      // pas de fenêtre longue — le karaokê normal garde tout son comportement.
+                      if (learningMode && i > displayIdx + 1) return null;
                       const distance = displayIdx < 0 ? i + 1 : Math.abs(i - displayIdx);
                       const isActive = i === displayIdx;
                       const duetColor = opts.dueto ? DUET_COLORS[i % 2] : null;
                       return (
-                        <p key={`${i}-${line.time}`} ref={isActive ? activeLineRef : null}
-                          className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/25'].join(' ')}
-                          style={{
-                            fontSize: isActive ? `calc(clamp(1.75rem, 8vw, 3.5rem) * ${scale})` : distance === 1 ? `calc(clamp(1.15rem, 5vw, 2rem) * ${scale})` : `calc(clamp(1rem, 4vw, 1.6rem) * ${scale})`,
-                            marginBlock: isActive ? '0.55em' : '0.42em',
-                            opacity: distance > 3 ? 0.12 : undefined,
-                            color: !isActive && duetColor ? `${duetColor}66` : undefined,
-                          }}>
-                          {isActive
-                            ? (Array.isArray(line.words) && line.words.length > 0
-                              ? <KaraokeWordLine ref={wordApiRef} words={line.words} showBall={opts.showBall} arcBall color={lineColor(i)} />
-                              : <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />)
-                            : (line.text || '♪')}
-                        </p>
+                        <Fragment key={`${i}-${line.time}`}>
+                          <p ref={isActive ? activeLineRef : null}
+                            className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/25'].join(' ')}
+                            style={{
+                              fontSize: isActive ? `calc(clamp(1.75rem, 8vw, 3.5rem) * ${scale})` : distance === 1 ? `calc(clamp(1.15rem, 5vw, 2rem) * ${scale})` : `calc(clamp(1rem, 4vw, 1.6rem) * ${scale})`,
+                              marginBlock: isActive ? '0.55em' : '0.42em',
+                              opacity: distance > 3 ? 0.12 : undefined,
+                              color: !isActive && duetColor ? `${duetColor}66` : undefined,
+                            }}>
+                            {isActive
+                              ? (Array.isArray(line.words) && line.words.length > 0
+                                ? <KaraokeWordLine ref={wordApiRef} words={line.words} showBall={opts.showBall} arcBall color={lineColor(i)} />
+                                : <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />)
+                              : (line.text || '♪')}
+                          </p>
+                          {/* Modo Aprender simplifié : traduction EN LIGNE sous la ligne active
+                              (§5/§8 de la mission) — réutilise `translation`, déjà calculé par le
+                              pipeline de traduction existant, aucune nouvelle logique. */}
+                          {isActive && learningMode && translation && (
+                            <p className="mx-auto max-w-4xl text-base font-bold leading-tight text-app-yellow/85 md:text-xl" style={{ marginBlock: '0.3em' }}>
+                              {translation}
+                            </p>
+                          )}
+                        </Fragment>
                       );
                     })
                   ) : (
@@ -1110,6 +1321,21 @@ export default function KaraokePlayer({
             </div>
           )}
         </div>
+        {/* Zone basse « J'apprends » — Modo Aprender simplifié, jamais en TV. Visible
+            immédiatement dès qu'une découverte est rencontrée, pas de tap requis. */}
+        {learningMode && !tvMode && (
+          <Suspense fallback={null}>
+            <LearningZone
+              moment={lastLearningMoment}
+              active={Boolean(activeLearningMoment)}
+              currentLine={hasLines && displayIdx >= 0 ? (lines[displayIdx]?.text || null) : null}
+              currentTranslation={translation || null}
+              onReplay={lastLearningMoment ? () => replayLearningMoment(lastLearningMoment) : null}
+              onInteractionComplete={handleLearningInteractionComplete}
+            />
+          </Suspense>
+        )}
+        </>
       )}
 
       {/* Pílula de estado do pitch por baixo da letra (§26) — só quando o micro está
@@ -1127,7 +1353,11 @@ export default function KaraokePlayer({
           traduction ne s'affiche pas », bug TV réel 2026-07-14 ; la traduction ELLE
           fonctionnait, seul le placement la masquait). mobile/web : pastille juste
           au-dessus de la barre de contrôle. */}
-      {phase === 'live' && opts.translate !== 'off' && translation && (
+      {/* Modo Aprender simplifié : cette pastille+bandeau historique disparaît en
+          learningMode — la traduction vit maintenant en ligne sous la lettre active
+          (zone haute) et les découvertes dans la zone basse dédiée, plus lisibles et
+          plus visibles qu'une pastille en bas à droite (retour direct de test réel). */}
+      {phase === 'live' && effectiveTranslate !== 'off' && translation && !learningMode && (
         tvMode ? (
           <div className="tv-karaoke-translation" aria-live="polite">
             <p>{translation}</p>
@@ -1135,8 +1365,6 @@ export default function KaraokePlayer({
         ) : (
           <div className={`km-translation${translationSource === 'learn' ? ' km-translation--learn' : ''}`} aria-live="polite">
             <p>{translation}</p>
-            {/* Modo Aprender (bêta) : tap pour ajouter l'expression de la ligne active au
-                carnet. Jamais en TV — hors périmètre de cette bêta (§10 de la spec). */}
             {activeExpression && (
               <button
                 type="button"
@@ -1235,13 +1463,14 @@ export default function KaraokePlayer({
           pitchActive={pitch.active}
           pitchStatusLabel={pitch.active ? statusMeta(pitch.status).label : null}
           onTogglePitchGuide={handleTogglePitchGuide}
+          hideTranslate={learningMode}
         />
       )}
 
       {/* Caderno de vocabulário (bêta) — só móvel/web ; a música continua a tocar */}
       {showNotebook && (
         <Suspense fallback={null}>
-          <VocabNotebookSheet onClose={() => setShowNotebook(false)} />
+          <VocabNotebookSheet onClose={() => setShowNotebook(false)} initialTab={notebookInitialTab} />
         </Suspense>
       )}
 
@@ -1311,6 +1540,43 @@ export default function KaraokePlayer({
                 <SkipForward className="h-5 w-5" /> Próxima
               </button>
             )}
+            <button type="button" onClick={handleClose}
+              className="karaoke-focusable rounded-full px-6 py-3 text-base font-semibold text-white/60 hover:text-white">
+              Sair
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Écran de fin — Modo Aprender simplifié (§12 : « pas de gros écran de
+          résultats », juste un résumé gratifiant + 2 actions optionnelles). */}
+      {showLearningEnd && (
+        <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-5 bg-black/88 px-6 text-center backdrop-blur-md">
+          <button type="button" onClick={handleClose} aria-label="Sair"
+            className="karaoke-focusable absolute right-4 top-[max(env(safe-area-inset-top),1rem)] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/80 hover:bg-white/10">
+            <X className="h-5 w-5" />
+          </button>
+          <PartyPopper className="h-14 w-14 text-app-yellow" aria-hidden="true" />
+          <p className="text-3xl font-black text-white">Boa!</p>
+          <p className="max-w-xs text-sm text-white/60">Você acabou de ouvir uma música inteira em português.</p>
+          {learningMoments.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {learningMoments.map((m) => (
+                <span key={m.id} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/80">
+                  {m.term}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <button type="button" onClick={restartLearningSong}
+              className="karaoke-focusable inline-flex items-center gap-2 rounded-full bg-app-yellow px-7 py-3 text-base font-black text-black">
+              <Music className="h-5 w-5" /> Ouvir de novo
+            </button>
+            <button type="button" onClick={openLearningReview}
+              className="karaoke-focusable inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3 text-base font-bold text-white/85 hover:bg-white/10">
+              <BookOpen className="h-5 w-5" /> Revisar 2 min
+            </button>
             <button type="button" onClick={handleClose}
               className="karaoke-focusable rounded-full px-6 py-3 text-base font-semibold text-white/60 hover:text-white">
               Sair

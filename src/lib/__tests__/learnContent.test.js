@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import camarada from '@/content/learn/camarada-quer-cpf.json';
 import ovo from '@/content/learn/eu-sou-um-ovo.json';
 import {
+  buildLearningMoments,
   buildLearnIndex,
+  buildLessonMeta,
   buildStudySheet,
   deriveSongSlug,
   hasLearnContent,
@@ -234,6 +236,192 @@ describe('buildStudySheet — garde-fous (fail-closed)', () => {
 
   it('accepte la fiche minimale valide', () => {
     expect(buildStudySheet(VALID)).not.toBeNull();
+  });
+});
+
+describe('buildStudySheet — true_false', () => {
+  const base = {
+    study_sheet: {
+      objective_fr: 'x',
+      grammar_note: { title_pt: 'x', explanation_fr: 'x', examples: ['x'] },
+      summary_terms: ['x'],
+    },
+  };
+
+  it('accepte un exercice true_false avec answer=true et answer=false', () => {
+    const sheetTrue = buildStudySheet({
+      study_sheet: { ...base.study_sheet, exercises: [{ type: 'true_false', prompt_pt: 'x é y.', answer: true }] },
+    });
+    expect(sheetTrue.exercises[0]).toEqual({ type: 'true_false', prompt: 'x é y.', answer: true });
+
+    const sheetFalse = buildStudySheet({
+      study_sheet: { ...base.study_sheet, exercises: [{ type: 'true_false', prompt_pt: 'x é y.', answer: false }] },
+    });
+    expect(sheetFalse.exercises[0]).toEqual({ type: 'true_false', prompt: 'x é y.', answer: false });
+  });
+
+  it('refuse un true_false sans answer booléen', () => {
+    const bad = { study_sheet: { ...base.study_sheet, exercises: [{ type: 'true_false', prompt_pt: 'x' }] } };
+    expect(buildStudySheet(bad)).toBeNull();
+    const badString = { study_sheet: { ...base.study_sheet, exercises: [{ type: 'true_false', prompt_pt: 'x', answer: 'true' }] } };
+    expect(buildStudySheet(badString)).toBeNull();
+  });
+});
+
+describe('buildLessonMeta — fiche réelle (Eu Sou um Ovo)', () => {
+  it('valide le lesson_meta réel de la leçon pilote', () => {
+    const meta = buildLessonMeta(ovo);
+    expect(meta).toEqual({
+      level: 'A1-A2',
+      durationMinutes: 8,
+      theme: 'nourriture, prix, frustration',
+      learningGoals: expect.arrayContaining([expect.stringContaining('cadê')]),
+      comprehensionQuestion: {
+        prompt: 'Sobre o que fala a música, principalmente?',
+        options: expect.any(Array),
+      },
+      repetitionExpressionIds: ['eu-sou', 'cade', 'tempero', 'vitrine'],
+    });
+    expect(meta.comprehensionQuestion.options.filter((o) => o.correct)).toHaveLength(1);
+  });
+
+  it('renvoie null pour une chanson sans lesson_meta (Camarada Quer CPF, pour le moment)', () => {
+    expect(buildLessonMeta(camarada)).toBeNull();
+  });
+});
+
+describe('buildLessonMeta — garde-fous (fail-closed)', () => {
+  const VALID = {
+    expressions: [{ id: 'e1', term: 'x', meaning_fr: 'x' }],
+    lesson_meta: {
+      level: 'A1',
+      duration_minutes: 5,
+      theme: 'x',
+      learning_goals: ['x'],
+      comprehension_question: { prompt_pt: 'x?', options: [{ text: 'a', correct: true }, { text: 'b', correct: false }] },
+    },
+  };
+
+  it('renvoie null sans lesson_meta', () => {
+    expect(buildLessonMeta({})).toBeNull();
+    expect(buildLessonMeta(null)).toBeNull();
+  });
+
+  it('renvoie null si niveau/durée/thème/objectifs manquent', () => {
+    expect(buildLessonMeta({ ...VALID, lesson_meta: { ...VALID.lesson_meta, level: '' } })).toBeNull();
+    expect(buildLessonMeta({ ...VALID, lesson_meta: { ...VALID.lesson_meta, duration_minutes: 0 } })).toBeNull();
+    expect(buildLessonMeta({ ...VALID, lesson_meta: { ...VALID.lesson_meta, theme: '' } })).toBeNull();
+    expect(buildLessonMeta({ ...VALID, lesson_meta: { ...VALID.lesson_meta, learning_goals: [] } })).toBeNull();
+  });
+
+  it('renvoie null si la question de compréhension n\'a pas exactement une bonne réponse', () => {
+    const noCorrect = {
+      ...VALID,
+      lesson_meta: { ...VALID.lesson_meta, comprehension_question: { prompt_pt: 'x?', options: [{ text: 'a', correct: false }, { text: 'b', correct: false }] } },
+    };
+    expect(buildLessonMeta(noCorrect)).toBeNull();
+  });
+
+  it('renvoie null si repetition_expression_ids référence une expression inexistante', () => {
+    const bad = {
+      ...VALID,
+      lesson_meta: { ...VALID.lesson_meta, repetition_expression_ids: ['fantome'] },
+    };
+    expect(buildLessonMeta(bad)).toBeNull();
+  });
+
+  it('replie sur toutes les expressions si repetition_expression_ids est absent', () => {
+    const meta = buildLessonMeta(VALID);
+    expect(meta.repetitionExpressionIds).toEqual(['e1']);
+  });
+});
+
+describe('buildLearningMoments — fiches réelles (v2, par niveau, découplé des expressions[])', () => {
+  it('extrait exactement 3 découvertes par niveau pour Eu Sou um Ovo', () => {
+    expect(buildLearningMoments(ovo, 'beginner').map((m) => m.id)).toEqual(['eu-sou', 'eu-tenho', 'nao-tem']);
+    expect(buildLearningMoments(ovo, 'intermediate').map((m) => m.id)).toEqual(['cade', 'fiquei-caro', 'nao-deu']);
+    expect(buildLearningMoments(ovo, 'advanced').map((m) => m.id)).toEqual(['tempero', 'vitrine', 'virou-miragem']);
+  });
+
+  it('une découverte porte level/term/translation/plage de lignes/breakdown', () => {
+    const [euSou] = buildLearningMoments(ovo, 'beginner');
+    expect(euSou).toMatchObject({
+      id: 'eu-sou', level: 'beginner', term: 'eu sou', translation: 'je suis', lineFrom: 0, lineTo: 1,
+    });
+    expect(euSou.breakdown).toEqual([
+      { pt: 'eu', fr: 'je' }, { pt: 'sou', fr: 'suis' }, { pt: 'um ovo', fr: 'un œuf' },
+    ]);
+    expect(euSou.interaction).toEqual({ prompt: 'EU SOU = ?', options: ['je suis', "j'ai", 'je veux'] });
+  });
+
+  it('les découvertes avancées (idiomes) n\'ont pas d\'interaction obligatoire', () => {
+    const [tempero] = buildLearningMoments(ovo, 'advanced');
+    expect(tempero.interaction).toBeNull();
+    expect(tempero.explanation).toMatch(/manque d.âme/i);
+  });
+
+  it('une même ligne peut enseigner des choses différentes selon le niveau (Camarada, ligne 22)', () => {
+    const beginnerQuer = buildLearningMoments(camarada, 'beginner').find((m) => m.id === 'quer');
+    const intermediateCpf = buildLearningMoments(camarada, 'intermediate').find((m) => m.id === 'cpf');
+    expect(beginnerQuer).toMatchObject({ lineFrom: 22, lineTo: 22, term: 'quer' });
+    expect(intermediateCpf).toMatchObject({ lineFrom: 22, lineTo: 22, term: 'CPF' });
+  });
+
+  it('Camarada Quer CPF n\'a que 2 découvertes de qualité au niveau avancé (contenu insuffisant pour 3, assumé)', () => {
+    const advanced = buildLearningMoments(camarada, 'advanced');
+    expect(advanced.map((m) => m.id)).toEqual(['jeitinho', 'malandro']);
+    expect(advanced).toHaveLength(2);
+  });
+
+  it('sans niveau précisé, renvoie toutes les découvertes de toutes les niveaux (plafonnées à 3 par appel)', () => {
+    // slice(0,3) global sans filtre — utile seulement pour un aperçu grossier, pas la
+    // liste consommée par l'écran principal (toujours appelée avec un niveau précis).
+    const all = buildLearningMoments(ovo);
+    expect(all).toHaveLength(3);
+    expect(all.map((m) => m.id)).toEqual(['eu-sou', 'eu-tenho', 'nao-tem']);
+  });
+
+  it('renvoie un tableau vide sans learning_moments ou sans fiche', () => {
+    expect(buildLearningMoments(null, 'beginner')).toEqual([]);
+    expect(buildLearningMoments({}, 'beginner')).toEqual([]);
+    expect(buildLearningMoments({ learning_moments: [] }, 'beginner')).toEqual([]);
+  });
+
+  it('ignore une découverte mal formée (id/term/translation/plage manquants ou invalides)', () => {
+    const bad = {
+      learning_moments: [
+        { level: 'beginner', term: 'x', translation: 'x', line_from: 0, line_to: 0 }, // id manquant
+        { id: 'x', level: 'beginner', translation: 'x', line_from: 0, line_to: 0 }, // term manquant
+        { id: 'x', level: 'beginner', term: 'x', line_from: 0, line_to: 0 }, // translation manquante
+        { id: 'x', level: 'beginner', term: 'x', translation: 'x', line_from: 2, line_to: 1 }, // plage inversée
+        { id: 'x', level: 'beginner', term: 'x', translation: 'x', line_from: -1, line_to: 0 }, // plage négative
+      ],
+    };
+    expect(buildLearningMoments(bad, 'beginner')).toEqual([]);
+  });
+
+  it('plafonne à 3 même si la fiche en marque plus pour un même niveau', () => {
+    const entry = {
+      learning_moments: Array.from({ length: 5 }, (_, i) => ({
+        id: `m${i}`, level: 'beginner', term: `t${i}`, translation: `f${i}`, line_from: i, line_to: i,
+      })),
+    };
+    expect(buildLearningMoments(entry, 'beginner')).toHaveLength(3);
+  });
+
+  it('dégrade sobrement les champs optionnels mal formés sans rejeter la découverte', () => {
+    const entry = {
+      learning_moments: [{
+        id: 'x', level: 'beginner', term: 'x', translation: 'x', line_from: 0, line_to: 0,
+        breakdown: 'pas un tableau',
+        explanation_fr: 42,
+        interaction: { prompt_pt: 'x', options: 'pas un tableau' },
+      }],
+    };
+    const [moment] = buildLearningMoments(entry, 'beginner');
+    expect(moment.breakdown).toEqual([]);
+    expect(moment.explanation).toBeNull();
+    expect(moment.interaction).toBeNull();
   });
 });
 

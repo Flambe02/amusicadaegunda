@@ -33,6 +33,7 @@ const Privacy = lazy(() => import('../pages/Privacy'));
 const Tv = lazy(() => import('../pages/Tv'));
 const Festa = lazy(() => import('../pages/Festa'));
 const Apprender = lazy(() => import('../pages/Apprender'));
+const ApprenderLesson = lazy(() => import('../pages/ApprenderLesson'));
 const includeDebugRoutes = import.meta.env.DEV;
 
 /**
@@ -200,6 +201,12 @@ export const ROUTES = [
     component: Apprender,
     name: 'Apprender',
     seo: null // SEO géré via useSEO dans Apprender.jsx — landing bêta du Modo Aprender
+  },
+  {
+    path: '/apprendre/:slug',
+    component: ApprenderLesson,
+    name: 'ApprenderLesson',
+    seo: null // SEO dynamique géré via useSEO dans ApprenderLesson.jsx — leçon guidée
   }
 ];
 
@@ -244,6 +251,11 @@ export function getCurrentPage(url) {
   // Gérer les routes categoria avec slug (ex: /categoria/politica)
   if (url.startsWith('/categoria/') && urlLastPart !== 'categoria') {
     return 'Categoria';
+  }
+
+  // Gérer les routes de leçon avec slug (ex: /apprendre/eu-sou-um-ovo)
+  if (url.startsWith('/apprendre/') && urlLastPart !== 'apprendre') {
+    return 'ApprenderLesson';
   }
 
   // Chercher dans les routes configurées

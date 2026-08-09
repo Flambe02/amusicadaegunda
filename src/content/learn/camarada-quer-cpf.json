@@ -71,19 +71,24 @@
       "id": "cpf",
       "term": "CPF",
       "meaning_fr": "Numéro fiscal brésilien. Sans lui, impossible d'ouvrir un compte, de louer un logement ou de prendre un abonnement téléphonique. Dans la chanson, c'est le symbole ultime : avoir un CPF, c'est exister administrativement au Brésil.",
-      "register": "courant"
+      "register": "courant",
+      "moment_type": "vivo",
+      "moment_examples": ["CPF na nota?"],
+      "moment_note": "Une phrase que tu entendras constamment au moment de payer au Brésil."
     },
     {
       "id": "jeitinho",
       "term": "jeitinho brasileiro",
       "meaning_fr": "L'art de contourner une règle ou une difficulté avec charme et débrouille, sans que ce soit vu comme malhonnête. Victor arrive avec un « jeitinho répété » : il a préparé sa version brésilienne, mais un vrai jeitinho ne s'apprend pas, il se vit.",
-      "register": "courant"
+      "register": "courant",
+      "moment_type": "culture"
     },
     {
       "id": "malandro",
       "term": "malandro",
       "meaning_fr": "Figure culturelle brésilienne du débrouillard rusé, séducteur, qui s'en sort toujours par l'intelligence de la rue. « Fez estágio de malandro » est une blague : on ne devient pas malandro par un cours, c'est une identité, pas une compétence.",
-      "register": "familier"
+      "register": "familier",
+      "moment_type": "culture"
     }
   ],
   "cultural_context_fr": "Cette chanson s'inspire d'une histoire réelle : un supposé espion russe aurait tenté de devenir citoyen brésilien sous une fausse identité, probablement pour échapper à une procédure devant la Cour de La Haye. La chanson tourne cette tentative en dérision en listant tout ce qu'il faudrait vraiment maîtriser pour « devenir brésilien » — bien au-delà des papiers : rire de ses dettes, pleurer d'émotion devant un plat simple, connaître Neymar par cœur, et surtout, crier au vol si l'Argentine gagne la Coupe du monde.",
@@ -117,5 +122,106 @@
       }
     ],
     "summary_terms": ["virar", "CPF", "jeitinho", "malandro"]
-  }
+  },
+  "learning_moments": [
+    {
+      "id": "tem-que",
+      "level": "beginner",
+      "line_from": 14,
+      "line_to": 14,
+      "term": "tem que",
+      "translation": "il faut / on doit",
+      "breakdown": [
+        { "pt": "tem", "fr": "il faut" },
+        { "pt": "que", "fr": "que" }
+      ],
+      "explanation_fr": "TER QUE + verbe est la façon la plus courante de dire « devoir faire quelque chose » à l'oral.",
+      "interaction": { "prompt_pt": "TEM QUE = ?", "options": ["il faut", "il y a", "je veux"] }
+    },
+    {
+      "id": "voce",
+      "level": "beginner",
+      "line_from": 20,
+      "line_to": 20,
+      "term": "você",
+      "translation": "tu / toi",
+      "breakdown": [
+        { "pt": "você", "fr": "tu" }
+      ],
+      "explanation_fr": "Le pronom le plus utilisé au Brésil pour « tu » — bien plus courant que « tu » lui-même à l'oral.",
+      "interaction": { "prompt_pt": "VOCÊ = ?", "options": ["tu", "je", "il"] }
+    },
+    {
+      "id": "quer",
+      "level": "beginner",
+      "line_from": 22,
+      "line_to": 22,
+      "term": "quer",
+      "translation": "veut",
+      "breakdown": [
+        { "pt": "quer", "fr": "veut" }
+      ],
+      "explanation_fr": "Du verbe QUERER (vouloir), à la 3ème personne — un des verbes essentiels du portugais.",
+      "interaction": { "prompt_pt": "O CAMARADA ___ CPF", "options": ["quer", "tem", "é"] }
+    },
+    {
+      "id": "cpf",
+      "level": "intermediate",
+      "line_from": 22,
+      "line_to": 22,
+      "term": "CPF",
+      "translation": "numéro fiscal brésilien",
+      "breakdown": [],
+      "explanation_fr": "Sans lui, impossible d'ouvrir un compte, de louer un logement ou de prendre un abonnement téléphonique. On te le demande partout au moment de payer.",
+      "interaction": { "prompt_pt": "CPF NA NOTA = ?", "options": ["on te le demande à quasi chaque achat", "c'est un plat typique", "c'est une danse"] }
+    },
+    {
+      "id": "ai-complica",
+      "level": "intermediate",
+      "line_from": 40,
+      "line_to": 40,
+      "term": "aí complica",
+      "translation": "là ça se complique",
+      "breakdown": [
+        { "pt": "aí", "fr": "là" },
+        { "pt": "complica", "fr": "ça se complique" }
+      ],
+      "explanation_fr": "Expression très courante pour marquer le moment où un plan se grippe.",
+      "interaction": { "prompt_pt": "AÍ COMPLICA = ?", "options": ["la situation devient difficile", "tout va bien", "c'est facile"] }
+    },
+    {
+      "id": "deu-ruim",
+      "level": "intermediate",
+      "line_from": 28,
+      "line_to": 28,
+      "term": "deu ruim",
+      "translation": "ça a mal tourné",
+      "breakdown": [
+        { "pt": "deu", "fr": "ça a donné" },
+        { "pt": "ruim", "fr": "mauvais" }
+      ],
+      "explanation_fr": "DEU RUIM est la façon la plus informelle de dire que quelque chose s'est mal terminé.",
+      "interaction": { "prompt_pt": "DEU RUIM = ?", "options": ["ça a mal tourné", "ça a bien marché", "rien ne s'est passé"] }
+    },
+    {
+      "id": "jeitinho",
+      "level": "advanced",
+      "line_from": 1,
+      "line_to": 1,
+      "term": "jeitinho brasileiro",
+      "translation": "l'art de contourner une règle avec charme",
+      "breakdown": [],
+      "explanation_fr": "L'art de contourner une règle ou une difficulté avec charme et débrouille, sans que ce soit vu comme malhonnête — un vrai jeitinho ne s'apprend pas, il se vit."
+    },
+    {
+      "id": "malandro",
+      "level": "advanced",
+      "line_from": 47,
+      "line_to": 47,
+      "term": "malandro",
+      "translation": "débrouillard rusé, figure culturelle",
+      "breakdown": [],
+      "explanation_fr": "Figure culturelle brésilienne du débrouillard rusé et séducteur qui s'en sort toujours par l'intelligence de la rue — une identité, pas une compétence qu'on apprend en cours."
+    }
+  ]
 }

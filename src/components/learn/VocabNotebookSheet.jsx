@@ -21,9 +21,9 @@ import '@/styles/karaoke.css';
  * Deux piles de révision seulement (`to_review` / `known`), sans répétition
  * espacée — comme conçu pour cette bêta (§6.4).
  */
-export default function VocabNotebookSheet({ onClose }) {
+export default function VocabNotebookSheet({ onClose, initialTab = 'lista' }) {
   const panelRef = useRef(null);
-  const [tab, setTab] = useState('lista'); // 'lista' | 'revisao'
+  const [tab, setTab] = useState(initialTab); // 'lista' | 'revisao'
 
   // Escape + bouton « voltar » Android + piège de focus — même logique que
   // KaraokeMixerSheet (proven pattern dans ce même empilement d'overlays).
