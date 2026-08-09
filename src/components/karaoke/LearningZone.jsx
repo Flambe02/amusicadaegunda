@@ -32,9 +32,9 @@ export default function LearningZone({ moment, active, currentLine, currentTrans
         {currentLine ? (
           <div className="mx-auto flex max-w-[720px] flex-col items-center gap-1.5">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/35">🇫🇷 Agora</p>
-            <p className="text-lg font-black leading-snug text-white md:text-2xl">{currentLine}</p>
+            <p className="text-[clamp(1rem,3.2vh,1.5rem)] font-black leading-snug text-white">{currentLine}</p>
             {currentTranslation && (
-              <p className="text-sm font-semibold leading-snug text-app-yellow/80 md:text-base">{currentTranslation}</p>
+              <p className="text-[clamp(0.8rem,2.4vh,1rem)] font-semibold leading-snug text-app-yellow/80">{currentTranslation}</p>
             )}
             <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-white/30">
               <Music className="h-3.5 w-3.5" aria-hidden="true" /> Continua a ouvir…
@@ -53,11 +53,14 @@ export default function LearningZone({ moment, active, currentLine, currentTrans
   return (
     <div
       data-testid="learning-zone"
-      className={`relative z-20 flex flex-[1] min-h-0 flex-col justify-center overflow-hidden border-t px-6 py-3 text-center transition-colors md:px-10 ${
+      className={`relative z-20 flex flex-[1] min-h-0 flex-col justify-start overflow-y-auto border-t px-6 py-3 text-center transition-colors md:px-10 ${
         active ? 'border-app-yellow/35 bg-app-yellow/[0.07]' : 'border-app-yellow/20 bg-[#11110D]'
       }`}
     >
-      <div className="mx-auto flex w-full max-w-[860px] flex-col items-center gap-2.5">
+      {/* Contenu centré verticalement quand il tient (cas courant) ; démarre en haut et
+          défile localement si un écran très bas (mobile paysage) ne peut pas tout montrer
+          — jamais coupé/masqué en silence (§11 : rien ne doit rester invisible). */}
+      <div className="mx-auto my-auto flex w-full max-w-[860px] flex-col items-center gap-2.5">
         <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${active ? 'text-app-yellow' : 'text-white/40'}`}>
           💡 Entender
         </p>
@@ -67,9 +70,9 @@ export default function LearningZone({ moment, active, currentLine, currentTrans
             <div className="flex flex-wrap items-start justify-center gap-x-6 gap-y-2">
               {moment.breakdown.map((chunk, i) => (
                 <div key={i} className="flex flex-col items-center">
-                  <span className="text-2xl font-black leading-tight text-white md:text-4xl">{chunk.pt}</span>
+                  <span className="text-[clamp(1.1rem,4.2vh,2.5rem)] font-black leading-tight text-white">{chunk.pt}</span>
                   <ArrowDown className="my-1 h-3.5 w-3.5 text-white/30" aria-hidden="true" />
-                  <span className="text-sm font-semibold leading-tight text-app-yellow/90 md:text-lg">{chunk.fr}</span>
+                  <span className="text-[clamp(0.75rem,2.2vh,1.125rem)] font-semibold leading-tight text-app-yellow/90">{chunk.fr}</span>
                 </div>
               ))}
             </div>
@@ -79,8 +82,8 @@ export default function LearningZone({ moment, active, currentLine, currentTrans
           </>
         ) : (
           <div className="text-center">
-            <p className="text-2xl font-black text-white md:text-4xl">{moment.term}</p>
-            <p className="mt-1 text-base font-semibold text-app-yellow/90 md:text-lg">{moment.translation}</p>
+            <p className="text-[clamp(1.1rem,4.2vh,2.5rem)] font-black text-white">{moment.term}</p>
+            <p className="mt-1 text-[clamp(0.85rem,2.4vh,1.125rem)] font-semibold text-app-yellow/90">{moment.translation}</p>
           </div>
         )}
 

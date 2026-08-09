@@ -1284,7 +1284,14 @@ export default function KaraokePlayer({
                           <p ref={isActive ? activeLineRef : null}
                             className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/25'].join(' ')}
                             style={{
-                              fontSize: isActive ? `calc(clamp(1.75rem, 8vw, 3.5rem) * ${scale})` : distance === 1 ? `calc(clamp(1.15rem, 5vw, 2rem) * ${scale})` : `calc(clamp(1rem, 4vw, 1.6rem) * ${scale})`,
+                              // learningMode : la ligne + zone d'apprentissage partagent une hauteur
+                              // compacte — un min(vw, vh) borne aussi par la hauteur (mobile paysage
+                              // court), là où le karaokê normal reste purement en vw (inchangé).
+                              fontSize: isActive
+                                ? (learningMode ? `calc(clamp(1.4rem, min(7vw, 9vh), 3rem) * ${scale})` : `calc(clamp(1.75rem, 8vw, 3.5rem) * ${scale})`)
+                                : distance === 1
+                                ? (learningMode ? `calc(clamp(1rem, min(4.5vw, 6vh), 1.75rem) * ${scale})` : `calc(clamp(1.15rem, 5vw, 2rem) * ${scale})`)
+                                : (learningMode ? `calc(clamp(0.85rem, min(3.5vw, 5vh), 1.4rem) * ${scale})` : `calc(clamp(1rem, 4vw, 1.6rem) * ${scale})`),
                               marginBlock: isActive ? '0.55em' : '0.42em',
                               opacity: distance > 3 ? 0.12 : undefined,
                               color: !isActive && duetColor ? `${duetColor}66` : undefined,
@@ -1295,14 +1302,6 @@ export default function KaraokePlayer({
                                 : <KaraokeWipeLine ref={wipeApiRef} text={line.text || '♪'} showBall={opts.showBall} color={lineColor(i)} />)
                               : (line.text || '♪')}
                           </p>
-                          {/* Modo Aprender simplifié : traduction EN LIGNE sous la ligne active
-                              (§5/§8 de la mission) — réutilise `translation`, déjà calculé par le
-                              pipeline de traduction existant, aucune nouvelle logique. */}
-                          {isActive && learningMode && translation && (
-                            <p className="mx-auto max-w-4xl text-base font-bold leading-tight text-app-yellow/85 md:text-xl" style={{ marginBlock: '0.3em' }}>
-                              {translation}
-                            </p>
-                          )}
                         </Fragment>
                       );
                     })

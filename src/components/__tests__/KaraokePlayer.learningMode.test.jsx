@@ -96,7 +96,7 @@ describe('KaraokePlayer — learningMode (v2, niveaux + zone basse)', () => {
     await startPlayer(user);
 
     await waitFor(() => {
-      expect(screen.getByText('Je suis un œuf')).toBeInTheDocument();
+      expect(screen.getByTestId('learning-zone')).toHaveTextContent('EU SOU = JE SUIS');
     }, { timeout: 3000 });
 
     const stored = JSON.parse(localStorage.getItem('karaoke-opts-v1'));
