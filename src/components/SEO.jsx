@@ -19,7 +19,7 @@ export default function SEO({
   const siteUrl = 'https://www.amusicadasegunda.com';
   // /icons/icon-512x512.png n'existe pas (les icônes PWA sont sous /icons/pwa/) :
   // on utilise l'image sociale 1200×630, la même que le <head> statique.
-  const defaultImage = `${siteUrl}/images/og-social-1200x630.jpg`;
+  const defaultImage = `${siteUrl}/images/og-caipivara-1200x630.jpg`;
   
   const fullTitle = buildFullTitle(title, siteName);
   const documentTitle = getDocumentTitle(title, siteName);

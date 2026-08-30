@@ -43,7 +43,7 @@ const siteUrl = cfg.siteUrl;
 
 // ✅ SEO: Image sociale dédiée 1200x630 (vs logo transparent inadapté pour OG/Twitter).
 // Utilisée comme og:image par défaut pour toutes les pages sans miniature propre.
-const OG_IMAGE = '/images/og-social-1200x630.jpg';
+const OG_IMAGE = '/images/og-caipivara-1200x630.jpg';
 const OG_IMAGE_W = 1200;
 const OG_IMAGE_H = 630;
 
