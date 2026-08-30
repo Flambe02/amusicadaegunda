@@ -198,7 +198,7 @@ export default function Layout({ children }) {
         </header>
 
         <main id="main-mobile" className="relative min-h-0 flex-1 overflow-hidden">
-          <div className={`min-h-0 h-full overflow-y-auto overscroll-behavior-contain${isImmersiveMobilePage ? '' : ' pb-[env(safe-area-inset-bottom)]'}`}>
+          <div id="mobile-scroll" className={`min-h-0 h-full overflow-y-auto overscroll-behavior-contain${isImmersiveMobilePage ? '' : ' pb-[env(safe-area-inset-bottom)]'}`}>
             {children}
           </div>
         </main>
@@ -244,8 +244,11 @@ export default function Layout({ children }) {
               </div>
             </div>
 
-            {/* Desktop navigation */}
-            <nav className="relative mt-8 flex flex-1 flex-col gap-3" aria-label="Navegacao principal">
+            {/* Desktop navigation. min-h-0 + overflow-y-auto : le conteneur parent est en
+                overflow-hidden, donc sans ces deux classes les derniers items (TV, Sobre,
+                Aprender) et le compte a rebours sont coupes SANS scroll possible des que la
+                hauteur utile passe sous ~990px - le cas de la plupart des portables. */}
+            <nav className="relative mt-8 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto" aria-label="Navegacao principal">
               {pages.map((page) => {
                 const active = isActive(page);
 

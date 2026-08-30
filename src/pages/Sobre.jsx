@@ -478,7 +478,7 @@ export default function Sobre() {
       <div className="space-y-0">
         <MobileAboutExperience />
 
-        <div className="desktop-about-shell mx-auto hidden max-w-6xl p-4 lg:block lg:p-5 2xl:max-w-7xl">
+        <div className="desktop-about-shell mx-auto hidden max-w-6xl p-4 md:block md:p-5 2xl:max-w-7xl">
           {/* Hero */}
           <section className="glass-panel desktop-shell-gradient mb-6 overflow-hidden rounded-[36px] p-5 md:p-8">
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,360px)] xl:items-center">

@@ -55,6 +55,17 @@ function PagesContent() {
         return () => clearTimeout(gaTimer.current);
     }, [location]);
 
+    // Reset du scroll a chaque changement de route. React Router conserve la position
+    // precedente : sans ca, ouvrir une fiche depuis le bas de la home y atterrit au
+    // milieu de la page. Le shell mobile scrolle dans #mobile-scroll (Layout.jsx) et
+    // non dans window, donc les deux conteneurs doivent etre remis a zero.
+    // On ne touche a rien quand l'URL porte un hash (ancre, token Supabase).
+    useEffect(() => {
+        if (window.location.hash) return;
+        window.scrollTo(0, 0);
+        document.getElementById('mobile-scroll')?.scrollTo(0, 0);
+    }, [location.pathname]);
+
     // Admin routes use their OWN full-screen shell (AdminLayout inside
     // ProtectedAdmin/Admin). They must NOT be wrapped in the public <Layout>
     // (olive sidebar, branding card, countdown, mobile bottom nav). We split the

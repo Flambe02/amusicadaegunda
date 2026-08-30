@@ -784,7 +784,7 @@ export default function SongPage() {
         )}
 
         {/* Hero section */}
-        <section className="glass-panel desktop-shell-gradient relative hidden overflow-hidden rounded-[36px] p-6 xl:p-8 lg:block">
+        <section className="glass-panel desktop-shell-gradient relative hidden overflow-hidden rounded-[36px] p-6 xl:p-8 md:block">
           {/* Background artwork blur */}
           <div className="absolute inset-0 overflow-hidden">
             <img src={artwork} alt="" aria-hidden="true"
