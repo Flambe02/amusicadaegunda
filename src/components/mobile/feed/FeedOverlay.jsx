@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, ListMusic, Newspaper, Share2, Volume2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { isKaraokePublished } from '@/lib/lrc';
 import { formatTime, getPublicSlug } from './feedMedia';
 import WeekRibbon from './WeekRibbon';
 import FeedStorySheet from './FeedStorySheet';
+import {
+  LyricsSheetFilled,
+  MusicListFilled,
+  NewspaperFilled,
+  ShareArrowFilled,
+  SpeakerFilled,
+} from '@/components/mobile/icons/FilledIcons';
 import { ICON_SHADOW, TEXT_SHADOW, TEXT_SHADOW_DENSE } from './feedStyles';
 
 const SITE_URL = 'https://www.amusicadasegunda.com';
@@ -87,18 +93,18 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
       </div>
 
       {/* Colonne droite, de haut en bas : Som (si actif), Letra, História, Cantar,
-          Compartilhar. */}
-      <div className="absolute bottom-6 right-3 z-30 flex flex-col items-center gap-4">
+          Compartilhar. Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
+      <div data-rail className="absolute bottom-6 right-1.5 z-30 flex flex-col items-stretch gap-3">
         {showSound ? (
-          <RailButton label="Som" onClick={player.mute} icon={Volume2} ariaLabel="Silenciar" />
+          <RailButton label="Som" onClick={player.mute} icon={SpeakerFilled} ariaLabel="Silenciar" />
         ) : null}
-        <RailButton label="Letra" onClick={onShowLyrics} icon={FileText} ariaLabel={`Ver a letra de ${song.title}`} />
+        <RailButton label="Letra" onClick={onShowLyrics} icon={LyricsSheetFilled} ariaLabel={`Ver a letra de ${song.title}`} />
         {hasStory ? (
           <RailButton
             buttonRef={storyButtonRef}
             label="História"
             onClick={() => setStoryOpen(true)}
-            icon={Newspaper}
+            icon={NewspaperFilled}
             ariaLabel={`Ler a história de ${song.title}`}
           />
         ) : null}
@@ -106,11 +112,11 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
           <RailLink
             label="Cantar"
             to={`/karaoke?musica=${encodeURIComponent(slug)}`}
-            icon={ListMusic}
+            icon={MusicListFilled}
             ariaLabel={`Cantar ${song.title} no karaokê`}
           />
         ) : null}
-        <RailButton label="Compartilhar" onClick={share} icon={Share2} ariaLabel={`Compartilhar ${song.title}`} />
+        <RailButton label="Compartilhar" onClick={share} icon={ShareArrowFilled} ariaLabel={`Compartilhar ${song.title}`} />
       </div>
 
       <Scrubber player={player} />
@@ -122,16 +128,17 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
   );
 }
 
+// Zone tactile ≥ 44 × 44 px (≥ 56 × 52) ; icône pleine de 32 px, ombre portée douce.
+// Largeur = le plus long libellé (« Compartilhar »), sinon il déborde de l'écran.
 const railClass =
-  'flex min-h-[44px] w-14 touch-manipulation select-none flex-col items-center gap-1 text-white active:opacity-70';
-const railIconClass =
-  'flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 backdrop-blur-md';
-const railLabelClass = `text-[11px] font-semibold leading-none ${TEXT_SHADOW}`;
+  'flex min-h-[44px] min-w-[56px] touch-manipulation select-none flex-col items-center gap-1 py-0.5 text-white active:opacity-70';
+const railIconClass = `h-8 w-8 ${ICON_SHADOW}`;
+const railLabelClass = `whitespace-nowrap text-xs font-semibold leading-none ${TEXT_SHADOW}`;
 
 function RailButton({ label, icon: Icon, onClick, ariaLabel, buttonRef }) {
   return (
     <button ref={buttonRef} type="button" onClick={onClick} aria-label={ariaLabel} className={railClass}>
-      <span className={railIconClass}><Icon className={`h-5 w-5 ${ICON_SHADOW}`} aria-hidden="true" /></span>
+      <Icon className={railIconClass} />
       <span aria-hidden="true" className={railLabelClass}>{label}</span>
     </button>
   );
@@ -140,7 +147,7 @@ function RailButton({ label, icon: Icon, onClick, ariaLabel, buttonRef }) {
 function RailLink({ label, icon: Icon, to, ariaLabel }) {
   return (
     <Link to={to} aria-label={ariaLabel} className={railClass}>
-      <span className={railIconClass}><Icon className={`h-5 w-5 ${ICON_SHADOW}`} aria-hidden="true" /></span>
+      <Icon className={railIconClass} />
       <span aria-hidden="true" className={railLabelClass}>{label}</span>
     </Link>
   );

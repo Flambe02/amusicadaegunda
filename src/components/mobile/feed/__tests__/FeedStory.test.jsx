@@ -36,7 +36,7 @@ beforeEach(() => {
 });
 
 const railLabels = (container) =>
-  [...container.querySelectorAll('.bottom-6.right-3 > a, .bottom-6.right-3 > button')].map((el) => el.getAttribute('aria-label'));
+  [...container.querySelectorAll('[data-rail] > a, [data-rail] > button')].map((el) => el.getAttribute('aria-label'));
 
 describe('Colonne droite — Som et História', () => {
   it('orders the rail: Som (sound on), Letra, História, Cantar, Compartilhar', () => {
@@ -48,6 +48,24 @@ describe('Colonne droite — Som et História', () => {
       'Cantar Tá Chovendo de Novo no karaokê',
       'Compartilhar Tá Chovendo de Novo',
     ]);
+  });
+
+  it('TikTok style: filled 32 px icons straight on the video (no dark disc), 12 px semibold labels, ≥ 44 px targets', () => {
+    const { container } = renderOverlay();
+    const items = container.querySelectorAll('[data-rail] > a, [data-rail] > button');
+    expect(items).toHaveLength(5);
+    for (const item of items) {
+      expect(item.className).toMatch(/min-h-\[44px\]/);
+      expect(item.className).toMatch(/min-w-\[56px\]/);
+      const svg = item.querySelector('svg');
+      expect(svg.getAttribute('fill')).toBe('currentColor');
+      expect(svg.getAttribute('class')).toMatch(/h-8 w-8/);
+      expect(svg.getAttribute('class')).toContain('drop-shadow');
+      expect(svg.parentElement).toBe(item); // pas de rond sombre autour
+      const label = item.querySelector('span[aria-hidden]');
+      expect(label.className).toMatch(/text-xs font-semibold/);
+    }
+    expect(container.querySelector('[data-rail] [class*="bg-black"], [data-rail] [class*="rounded-full"]')).toBeNull();
   });
 
   it('shows the Som icon only once the sound is on', () => {
