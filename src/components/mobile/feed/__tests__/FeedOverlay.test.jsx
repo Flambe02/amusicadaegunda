@@ -152,6 +152,22 @@ describe('FeedOverlay (étape 4)', () => {
     expect(letra.querySelector('span[aria-hidden]:last-child').className).toContain('[text-shadow:');
   });
 
+  it('Som is a small speaker at the top right (not in the rail), only once the sound is on', () => {
+    const mute = vi.fn();
+    const { unmount } = renderOverlay({ player: { ...soundPlayer, mute } });
+    const som = screen.getByRole('button', { name: 'Silenciar' });
+    expect(som).toHaveAttribute('data-sound-toggle');
+    expect(som.closest('[data-rail]')).toBeNull();
+    expect(som.className).toMatch(/right-3/);
+    expect(som.className).toMatch(/top-\[calc\(max\(env\(safe-area-inset-top\)/);
+    fireEvent.click(som);
+    expect(mute).toHaveBeenCalledTimes(1);
+    expect([...document.querySelector('[data-rail]').children].map((el) => el.textContent)).toEqual(['Letra', 'Cantar', 'Compartilhar']);
+    unmount();
+    renderOverlay(); // son coupé : pas d'icône (« Toque para ouvir » suffit)
+    expect(screen.queryByRole('button', { name: 'Silenciar' })).toBeNull();
+  });
+
   it('never writes a news headline line (no manchete source yet)', () => {
     renderOverlay({ song: { ...SONG, subtitle: 'O mês já virou o setembro mais chuvoso' } });
     expect(screen.queryByText(/setembro mais chuvoso/)).toBeNull();

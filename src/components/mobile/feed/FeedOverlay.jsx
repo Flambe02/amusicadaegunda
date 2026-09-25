@@ -12,7 +12,7 @@ import {
   ShareArrowFilled,
   SpeakerFilled,
 } from '@/components/mobile/icons/FilledIcons';
-import { TEXT_SHADOW, TEXT_SHADOW_DENSE } from './feedStyles';
+import { ICON_SHADOW, TEXT_SHADOW, TEXT_SHADOW_DENSE } from './feedStyles';
 
 // Courbe « strong ease-out » (changements d'état d'interface).
 const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
@@ -69,12 +69,24 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
         </TitleTag>
       </div>
 
-      {/* Colonne droite, de haut en bas : Som (si actif), Letra, História, Cantar,
-          Compartilhar. Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
+      {/* Som : petite icône haut-parleur en haut à droite, à la place de l'ancien bouton
+          « i » de l'en-tête (même taille, même alignement), seulement une fois le son
+          activé. L'en-tête transparent laisse passer les taps jusqu'ici. */}
+      {showSound ? (
+        <button
+          type="button"
+          onClick={player.mute}
+          aria-label="Silenciar"
+          data-sound-toggle
+          className="absolute right-3 top-[calc(max(env(safe-area-inset-top),0.35rem)+0.25rem)] z-30 flex h-11 w-11 touch-manipulation items-center justify-center text-white active:opacity-70"
+        >
+          <SpeakerFilled className={`h-6 w-6 ${ICON_SHADOW}`} />
+        </button>
+      ) : null}
+
+      {/* Colonne droite, de haut en bas : Letra, História, Cantar, Compartilhar.
+          Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
       <Rail className="absolute bottom-6 right-1.5">
-        {showSound ? (
-          <RailButton label="Som" onClick={player.mute} icon={SpeakerFilled} ariaLabel="Silenciar" />
-        ) : null}
         <RailButton label="Letra" onClick={onShowLyrics} icon={LyricsSheetFilled} ariaLabel={`Ver a letra de ${song.title}`} />
         {hasStory ? (
           <RailButton

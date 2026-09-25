@@ -141,6 +141,10 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 3. **Colonne d'icônes à droite, identique au feed** (`FeedRail.jsx`, partagé) : Letra (le `LyricsDialog` du feed), História (si description), Cantar (si karaokê publié), Compartilhar, **Clipe** (`/?musica=<slug>`). Le bas de l'écran ne garde que titre, barre de progression, pause et Outra.
 4. **Plus de bouton ⓘ** dans l'en-tête mobile, sur aucune page (l'onglet Menu le remplace). Desktop inchangé.
 
+### H.9 Feed — Som et Ouvir (2026-09-25, remplace H.3.2)
+1. **Som** sort de la colonne : petite icône haut-parleur en haut à droite de la vidéo, à l'emplacement de l'ancien bouton ⓘ, visible seulement une fois le son activé.
+2. **Colonne du feed**, de haut en bas : Ouvir (seulement si `youtube_url`), Letra, História, Cantar, Compartilhar. **Colonne du Catálogo** (page ou calque) : Letra, História, Cantar, Compartilhar, Clipe.
+
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.
 - **Plus de captures d'écran dans les rapports** : Florent teste lui-même sur son téléphone. Les vérifications au navigateur (Playwright) continuent, mais seuls leurs résultats figurent dans le rapport.
