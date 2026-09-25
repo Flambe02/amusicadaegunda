@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import Layout from '../../pages/Layout';
 import { useShell } from '@/components/mobile/ShellContext';
@@ -15,6 +15,9 @@ vi.mock('@/lib/supabase', () => ({
     })),
   },
 }));
+
+// Catalogue lu par le panneau de recherche (onglet Buscar).
+vi.mock('@/api/entities', () => ({ Song: { list: vi.fn(() => Promise.resolve([])) } }));
 
 // Mock window.matchMedia pour les tests
 beforeEach(() => {
@@ -109,9 +112,10 @@ describe('Layout — shell mobile', () => {
     const nav = mobileNav();
     const tabs = [...nav.querySelectorAll('li > a, li > button')];
     expect(tabs.map((el) => el.getAttribute('aria-label') || el.textContent)).toEqual(['Início', 'Karaokê', 'Catálogo', 'Buscar', 'Menu']);
-    // Buscar mène au Catálogo jusqu'à l'étape 10 (panneau de recherche).
-    expect(tabs.slice(0, 4).map((a) => a.getAttribute('href'))).toEqual(['/', '/karaoke', '/catalogo', '/catalogo']);
-    expect(tabs[4].tagName).toBe('BUTTON'); // Menu ouvre la feuille
+    expect(tabs.slice(0, 3).map((a) => a.getAttribute('href'))).toEqual(['/', '/karaoke', '/catalogo']);
+    // Buscar ouvre le panneau de recherche, Menu ouvre la feuille : deux boutons.
+    expect(tabs[3].tagName).toBe('BUTTON');
+    expect(tabs[4].tagName).toBe('BUTTON');
     expect(within(nav).queryByText(/pesquisa|roda/i)).toBeNull();
   });
 
@@ -147,6 +151,20 @@ describe('Layout — shell mobile', () => {
     const row = within(dialog).getByRole('link', { name: /todas as músicas/i });
     expect(row).toHaveAttribute('href', '/musica');
     expect(within(row).getByText('O arquivo completo, semana a semana')).toBeInTheDocument();
+  });
+
+  it('Buscar opens the search panel on the current page, focuses the field, and is never active', async () => {
+    renderAt('/karaoke');
+    const buscar = within(mobileNav()).getByRole('button', { name: 'Buscar' });
+    expect(buscar).not.toHaveAttribute('aria-current');
+    expect(within(buscar).getByText('Buscar').className).toMatch(/text-white\/60/);
+    fireEvent.click(buscar);
+    const field = await screen.findByRole('searchbox', { name: /buscar por título ou letra/i });
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+    await waitFor(() => expect(field).toHaveFocus());
+    // Pas de changement de page : Karaokê reste l'onglet actif (masqué aux lecteurs
+    // d'écran derrière le panneau modal, d'où `hidden: true`).
+    expect(within(mobileNav()).getByRole('link', { name: 'Karaokê', hidden: true })).toHaveAttribute('aria-current', 'page');
   });
 
   it('closes the Menu sheet with Escape', () => {

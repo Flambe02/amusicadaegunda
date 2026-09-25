@@ -71,7 +71,12 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
   // le feed se place sur elle — le glissement reste possible dans les deux sens —,
   // son coupé comme à toute arrivée, puis le paramètre est retiré de l'URL. La liste
   // complète arrive après la chanson de la semaine : on attend qu'elle contienne le slug.
+  // Le paramètre peut aussi arriver alors que le feed est déjà monté (recherche ouverte
+  // depuis l'Início) : chaque nouveau paramètre est appliqué, une fois.
   const startAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!startSlug) startAppliedRef.current = false;
+  }, [startSlug]);
   useEffect(() => {
     if (!startSlug || startAppliedRef.current || !songs.length) return;
     const target = songs.findIndex((song) => getPublicSlug(song) === startSlug || deriveSongSlug(song) === startSlug);

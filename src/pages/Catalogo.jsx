@@ -8,7 +8,7 @@ import { useSEO } from '@/hooks/useSEO';
 /**
  * /catalogo — onglet Catálogo de la nav mobile : la scène de la Caipivara (étape 9,
  * refonte audio : le tap lance une chanson).
- * La recherche (panneau qui monte du bas) arrive à l'étape 10.
+ * La recherche est un panneau global, ouvert par l'onglet « Buscar » (SearchSheet).
  * Desktop (≥ 768 px) : redirection vers /musica, la page indexée (addendum §G.2).
  * Toujours `noindex` (stub noindex, hors sitemap).
  */

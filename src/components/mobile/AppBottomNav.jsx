@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
  * `items` :
  *   { value, label, href, icon, activeIcon }                 onglet
  *   { value, label, href, image, variant: 'pill' }           pastille centrale
+ *   { value, label, icon, activeIcon, onSelect, buttonRef? } action (Buscar), jamais active
  *   { value, label, icon, activeIcon, menuItems: [...] }     ouvre une feuille
  *     menuItems : [{ value, label, description?, href, icon }]
  */
@@ -93,6 +94,23 @@ export default function AppBottomNav({ items = [], activeValue }) {
                     data-active={isActive ? 'true' : 'false'}
                   >
                     {renderItemContent(item, isActive)}
+                  </button>
+                </li>
+              );
+            }
+
+            if (item.onSelect) {
+              // Action sans page (Buscar ouvre le panneau de recherche) : jamais active.
+              return (
+                <li key={item.value}>
+                  <button
+                    ref={item.buttonRef}
+                    type="button"
+                    onClick={item.onSelect}
+                    className={tabClass}
+                    aria-haspopup="dialog"
+                  >
+                    {renderItemContent(item, false)}
                   </button>
                 </li>
               );

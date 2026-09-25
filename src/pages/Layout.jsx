@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { createPageUrl } from '@/utils';
@@ -24,6 +24,7 @@ import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
 const TutorialManager = lazy(() => import('@/components/TutorialManager'));
 const StandaloneOnboarding = lazy(() => import('@/components/StandaloneOnboarding'));
+const SearchSheet = lazy(() => import('@/components/mobile/search/SearchSheet'));
 
 function getNextMondayMs() {
   const now = new Date();
@@ -119,7 +120,7 @@ function SidebarCountdown() {
 
 // Onglets de la barre mobile (addendum catálogo §A, révisé le 2026-09-25) : inicio,
 // karaoke, catalogo (pastille centrale), buscar, menu. « Buscar » n'est jamais actif
-// (il ouvrira un panneau, pas une page). Tout ce qui parcourt les musiques (le catalogue, les fiches /musica/…, les
+// (il ouvre un panneau, pas une page). Tout ce qui parcourt les musiques (le catalogue, les fiches /musica/…, les
 // catégories, l'arquivo) allume « Catálogo » ; les pages atteintes depuis la feuille
 // « Menu » allument « Menu ».
 function getMobileActiveTab(pathname) {
@@ -150,9 +151,32 @@ function getMobileActiveTab(pathname) {
   return 'inicio';
 }
 
+/**
+ * Clavier iOS : Safari ne l'ouvre que si un champ reçoit le focus DANS le geste. Le
+ * panneau de recherche est chargé à la demande et son champ n'existe pas encore au
+ * tap : un champ relais temporaire reçoit le focus tout de suite, le panneau le
+ * reprend à l'ouverture (le clavier reste ouvert), et le relais disparaît dès qu'il
+ * perd le focus. 16 px pour qu'iOS ne zoome pas.
+ */
+function focusKeyboardRelay() {
+  const relay = document.createElement('input');
+  relay.type = 'text';
+  relay.tabIndex = -1;
+  relay.setAttribute('aria-label', 'Buscar');
+  relay.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;pointer-events:none;';
+  relay.addEventListener('blur', () => relay.remove(), { once: true });
+  document.body.appendChild(relay);
+  relay.focus({ preventScroll: true });
+  // Filet : si le panneau ne prend jamais le focus, le relais ne reste pas.
+  window.setTimeout(() => relay.isConnected && relay.blur(), 3000);
+}
+
 export default function Layout({ children }) {
   const location = useLocation();
   const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchRequested, setSearchRequested] = useState(false);
+  const buscarButtonRef = useRef(null);
   const isHomePage = location.pathname === '/';
   const isImmersiveMobilePage = isHomePage || location.pathname === '/sobre';
 
@@ -215,15 +239,22 @@ export default function Layout({ children }) {
     { name: 'Contato', url: 'mailto:contact@amusicadasegunda.com', external: true },
   ];
 
+  // Panneau de recherche mobile, ouvert par « Buscar » (voir focusKeyboardRelay).
+  const openSearch = () => {
+    focusKeyboardRelay();
+    setSearchRequested(true);
+    setSearchOpen(true);
+  };
+
   const mobileNavItems = [
     { value: 'inicio', label: 'Início', href: '/', icon: Home, activeIcon: HomeFilled },
     // Icône de paroles, pas de micro : le karaokê fonctionne sans microphone.
     { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: ListMusic, activeIcon: MusicListFilled },
     // Au centre, la Caipivara dans sa pastille jaune : le seul jaune de la barre.
     { value: 'catalogo', label: 'Catálogo', href: '/catalogo', variant: 'pill', image: '/images/caipivara-3d-head-128.webp' },
-    // Étape 10 : ouvrira le panneau de recherche depuis n'importe quel écran. D'ici là,
-    // mène au Catálogo (décision du 2026-09-25).
-    { value: 'buscar', label: 'Buscar', href: '/catalogo', icon: Search, activeIcon: SearchFilled },
+    // Ouvre le panneau de recherche (étape 10) par-dessus l'écran courant, sans changer
+    // de page ; jamais affiché comme actif.
+    { value: 'buscar', label: 'Buscar', icon: Search, activeIcon: SearchFilled, onSelect: openSearch, buttonRef: buscarButtonRef },
     {
       value: 'menu',
       label: 'Menu',
@@ -247,6 +278,11 @@ export default function Layout({ children }) {
       ],
     },
   ];
+
+  // Tout changement de page referme le panneau de recherche.
+  useEffect(() => {
+    setSearchOpen(false);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     let timeoutId = null;
@@ -336,6 +372,12 @@ export default function Layout({ children }) {
           items={mobileNavItems}
           activeValue={getMobileActiveTab(location.pathname)}
         />
+
+        {searchRequested ? (
+          <Suspense fallback={null}>
+            <SearchSheet open={searchOpen} onOpenChange={setSearchOpen} returnFocusRef={buscarButtonRef} />
+          </Suspense>
+        ) : null}
       </div>
 
       <div className="hidden md:block min-h-screen text-white">

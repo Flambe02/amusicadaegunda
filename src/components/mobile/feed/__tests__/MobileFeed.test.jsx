@@ -514,6 +514,29 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(onStartApplied).toHaveBeenCalledTimes(1);
   });
 
+  it('applies a new ?musica= while already mounted (search opened from Início), even the same slug twice', async () => {
+    const onStartApplied = vi.fn();
+    const at = (startSlug) => (
+      <MemoryRouter>
+        <MobileFeed songs={SONGS} startSlug={startSlug} onStartApplied={onStartApplied} />
+      </MemoryRouter>
+    );
+    const { container, rerender } = render(at(null));
+    await flush();
+    expect(currentIndex(container)).toBe(0);
+    rerender(at('semana-um'));
+    await flush();
+    expect(currentIndex(container)).toBe(2);
+    rerender(at(null)); // paramètre retiré par onStartApplied
+    rerender(at('semana-dois'));
+    await flush();
+    expect(currentIndex(container)).toBe(1);
+    rerender(at(null));
+    rerender(at('semana-dois')); // même slug une seconde fois : appliqué aussi
+    await flush();
+    expect(onStartApplied).toHaveBeenCalledTimes(3);
+  });
+
   it('frames the video exactly like the thumbnail: cover, no extra zoom', () => {
     const { container } = renderFeed();
     const mount = stage(container).querySelector('[style*="100cqw"]');
