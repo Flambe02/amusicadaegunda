@@ -5,6 +5,7 @@
  */
 import { extractYouTubeId } from '@/lib/utils';
 import { getShortsUrl, getHeroImage } from '@/lib/homeSongMedia';
+import { deriveSongSlug } from '@/lib/learnContent';
 
 export const CAIPIVARA_STAGE_IMAGE = '/images/caipivara-3d-960.webp';
 
@@ -35,3 +36,31 @@ export function getPosterCandidates(song, buildArtwork) {
  * pas : `onError` ne suffit pas, on rejette aussi toute image trop petite.
  */
 export const YT_PLACEHOLDER_MAX_WIDTH = 200;
+
+// ── Semaine de sortie ───────────────────────────────────────────────────────────────
+const SAO_PAULO_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' });
+
+/** Lundi (AAAA-MM-JJ) de la semaine lundi→dimanche qui contient la date donnée. */
+function mondayOf(isoDay) {
+  const [y, m, d] = isoDay.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * La chanson est-elle sortie CETTE semaine (lundi→dimanche, heure de São Paulo) ?
+ * Sert à ne jamais afficher un faux « Esta semana » quand aucune chanson n'est sortie
+ * ce lundi-ci.
+ */
+export function isReleasedThisWeek(song, now = new Date()) {
+  const release = String(song?.release_date || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(release)) return false;
+  return mondayOf(release) === mondayOf(SAO_PAULO_DAY.format(now));
+}
+
+/** Slug de l'URL publique /musica/<slug>/ : la colonne `slug` (source des stubs), sinon dérivé du titre. */
+export function getPublicSlug(song) {
+  const slug = typeof song?.slug === 'string' ? song.slug.trim() : '';
+  return slug || deriveSongSlug(song);
+}

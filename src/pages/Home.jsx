@@ -1352,7 +1352,16 @@ export default function Home() {
           pas celle affichée par l'historique desktop. */}
       <div className="md:hidden h-full">
         {isMobileViewport && shell !== 'desktop' ? (
-          <MobileFeed songs={mobileFeedSongs} buildArtwork={CURRENT_SONG_ARTWORK} />
+          <MobileFeed
+            songs={mobileFeedSongs}
+            buildArtwork={CURRENT_SONG_ARTWORK}
+            onShowLyrics={(song) => {
+              // Spec §4.1 : « Letra » ouvre le LyricsDialog existant (avec le mode
+              // Aprender pour les chansons qui ont une fiche), pas le drawer.
+              setSelectedSongForDialog(song);
+              setShowLyricsDialog(true);
+            }}
+          />
         ) : null}
       </div>
       <LyricsDrawer

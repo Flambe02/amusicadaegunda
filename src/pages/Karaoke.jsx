@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useSearchParams } from 'react-router-dom';
 import { Loader2, Music } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 import { useKaraokeCatalog } from '@/hooks/useKaraokeCatalog';
 import { trackEvent } from '@/lib/analytics';
+import { deriveSongSlug } from '@/lib/learnContent';
+import { useShell } from '@/components/mobile/ShellContext';
+import { getPublicSlug } from '@/components/mobile/feed/feedMedia';
 import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import KaraokeHero from '@/components/karaoke/catalog/KaraokeHero';
 import KaraokeSearch from '@/components/karaoke/catalog/KaraokeSearch';
@@ -29,6 +33,7 @@ const HINT_KEY = 'karaoke-surprise-hint-dismissed-v1';
  */
 export default function KaraokePage() {
   const {
+    songs,
     results,
     totalEligible,
     isLoading,
@@ -105,6 +110,34 @@ export default function KaraokePage() {
     setSort(value);
     trackEvent('karaoke_sort_changed', { sort: value });
   }, [setSort]);
+
+  // Lien direct /karaoke?musica=<slug> (bouton « Cantar » du feed mobile) : ouvre le
+  // lecteur de cette chanson par le même chemin qu'une carte. Layout rend cette page
+  // deux fois et KaraokePlayer s'ouvre dans un portail : seule la copie qui correspond
+  // au viewport agit, sinon deux lecteurs s'ouvriraient. Le paramètre est retiré
+  // ensuite, pour que fermer le lecteur ramène à la liste. Chanson absente du
+  // catalogue karaokê (pas publiée) : la liste s'affiche, simplement.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const shell = useShell();
+  const requestedSlug = searchParams.get('musica');
+  useEffect(() => {
+    if (!requestedSlug || isLoading) return;
+    if (shell) {
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      if (shell !== (isMobile ? 'mobile' : 'desktop')) return;
+    }
+    const match = songs.find(
+      (song) => getPublicSlug(song) === requestedSlug || deriveSongSlug(song) === requestedSlug
+    );
+    if (match) sing(match);
+    setSearchParams(
+      (params) => {
+        params.delete('musica');
+        return params;
+      },
+      { replace: true }
+    );
+  }, [requestedSlug, isLoading, songs, shell, sing, setSearchParams]);
 
   const canSurprise = results.length > 0;
 

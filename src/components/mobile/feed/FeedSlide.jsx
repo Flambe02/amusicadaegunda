@@ -8,6 +8,13 @@ import { getPosterCandidates, getShortVideoId, YT_PLACEHOLDER_MAX_WIDTH } from '
 // écrite en attribut direct. La décomposition échappe aux deux.
 const HIGH_PRIORITY = { fetchpriority: 'high' };
 
+// YouTube superpose parfois son interface Shorts pendant toute la lecture (avatar de
+// chaîne, muet et « ⋮ » en haut, j'aime/partager sur le bord droit, titre et chaîne en
+// bas), à ~50–60 px des bords de l'iframe. On agrandit l'iframe au-delà du cadre
+// « cover » pour que ces éléments tombent hors champ : ~73 % de la largeur et ~82 %
+// de la hauteur de la vidéo restent visibles (décision du 2026-09-25).
+const SHORTS_UI_ZOOM = 1.22;
+
 /**
  * Une diapositive du feed : le Short d'une chanson en plein écran (étape 3).
  *
@@ -77,7 +84,8 @@ export default function FeedSlide({ song, buildArtwork, renderOverlay }) {
         className="absolute inset-0 h-full w-full object-cover"
       />
 
-      {/* 2. Vidéo — iframe dimensionnée 9:16 en « cover » sur la zone, centrée. */}
+      {/* 2. Vidéo — iframe 9:16 en « cover », agrandie de SHORTS_UI_ZOOM pour sortir
+          l'interface YouTube du champ, centrée. */}
       {videoId ? (
         <div
           aria-hidden="true"
@@ -89,8 +97,8 @@ export default function FeedSlide({ song, buildArtwork, renderOverlay }) {
             ref={mountRef}
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 [&>iframe]:h-full [&>iframe]:w-full"
             style={{
-              width: 'max(100cqw, calc(100cqh * 9 / 16))',
-              height: 'max(100cqh, calc(100cqw * 16 / 9))',
+              width: `calc(max(100cqw, 100cqh * 9 / 16) * ${SHORTS_UI_ZOOM})`,
+              height: `calc(max(100cqh, 100cqw * 16 / 9) * ${SHORTS_UI_ZOOM})`,
             }}
           />
         </div>

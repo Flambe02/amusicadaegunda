@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HelmetProvider } from 'react-helmet-async';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 
 // ── Mocks ──
 const LRC = '[00:01.00]Olá\n[00:03.00]Mundo';
@@ -28,10 +29,20 @@ vi.mock('@capacitor/app', () => ({ App: { addListener: () => Promise.reject(new 
 
 import KaraokePage from '../Karaoke';
 
-function renderPage() {
+// La page vit sous le Router de l'app (elle lit ?musica=). `LocationProbe` expose
+// l'URL courante pour vérifier que le paramètre est retiré après usage.
+function LocationProbe() {
+  const location = useLocation();
+  return <span data-testid="location">{location.pathname + location.search}</span>;
+}
+
+function renderPage(path = '/karaoke') {
   return render(
     <HelmetProvider>
-      <KaraokePage />
+      <MemoryRouter initialEntries={[path]}>
+        <KaraokePage />
+        <LocationProbe />
+      </MemoryRouter>
     </HelmetProvider>,
   );
 }
@@ -150,5 +161,20 @@ describe('KaraokePage', () => {
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /cantar agora/i }));
     expect(await screen.findByTestId('karaoke-player')).toBeInTheDocument();
+  });
+});
+
+describe('KaraokePage — lien direct ?musica= (bouton « Cantar » du feed mobile)', () => {
+  it('opens the player of the requested song, then clears the parameter', async () => {
+    renderPage('/karaoke?musica=independencia-ou-gol');
+    expect(await screen.findByTestId('karaoke-player')).toHaveTextContent('A cantar: Independência ou Gol');
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^.karaoke$/));
+  });
+
+  it('shows the list, without a player, when the song has no published karaoke', async () => {
+    renderPage('/karaoke?musica=sem-karaoke');
+    expect(await screen.findByText('Camarada Quer CPF')).toBeInTheDocument();
+    expect(screen.queryByTestId('karaoke-player')).toBeNull();
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^.karaoke$/));
   });
 });
