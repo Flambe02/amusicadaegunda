@@ -7,6 +7,9 @@ import { ANIMATIONS, IDLE_CLIP, pickAnimation, pickSong } from './stageDraw';
 // quand même le résultat.
 const ANIMATION_TIMEOUT_MS = 7000;
 const CROSSFADE = 'transition-opacity duration-150 ease-out';
+// flip et samba ne finissent pas dans la pose de repos : fondu plus long pour adoucir le
+// raccord (décision du 2026-09-25).
+const CROSSFADE_LONG = 'transition-opacity duration-[400ms] ease-out';
 // Les bords de la vidéo se fondent dans le fond de la page : aucun rectangle visible.
 const EDGE_MASK = 'radial-gradient(ellipse closest-side at 50% 50%, #000 62%, transparent 100%)';
 
@@ -163,7 +166,7 @@ export default function CaipivaraStage({ songs = [] }) {
                   <video
                     key={clip.key}
                     ref={(element) => { videoRefs.current[clip.key] = element; }}
-                    className={`absolute inset-0 h-full w-full object-cover ${CROSSFADE} ${
+                    className={`absolute inset-0 h-full w-full object-cover ${clip.longFade ? CROSSFADE_LONG : CROSSFADE} ${
                       animation?.key === clip.key ? 'opacity-100' : 'opacity-0'
                     }`}
                     muted

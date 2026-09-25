@@ -158,6 +158,13 @@ describe('CaipivaraStage — la scène (étape 9)', () => {
     expect(mask.style.maskImage || mask.style.webkitMaskImage).toMatch(/radial-gradient/);
   });
 
+  it('fades flip and samba back to the idle loop over 400 ms (hat stays at 150 ms)', () => {
+    const { container } = renderStage();
+    expect(container.querySelector('video[data-clip="hat"]').className).toContain('duration-150');
+    expect(container.querySelector('video[data-clip="flip"]').className).toContain('duration-[400ms]');
+    expect(container.querySelector('video[data-clip="samba"]').className).toContain('duration-[400ms]');
+  });
+
   it('never writes a song count', () => {
     const { container } = renderStage();
     expect(container.textContent).not.toMatch(/\d+\s*(músicas|paródias|canções)/i);

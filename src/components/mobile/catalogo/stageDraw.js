@@ -24,6 +24,7 @@ export const ANIMATIONS = [
   {
     key: 'flip',
     line: 'Segura essa!',
+    longFade: true, // ne finit pas dans la pose de repos
     webm: `${CLIP_BASE}/caipivara-flip.webm`,
     mp4: `${CLIP_BASE}/caipivara-flip.mp4`,
     poster: `${CLIP_BASE}/caipivara-flip-poster.webp`,
@@ -31,6 +32,7 @@ export const ANIMATIONS = [
   {
     key: 'samba',
     line: 'Rodando a roda…',
+    longFade: true,
     webm: `${CLIP_BASE}/caipivara-samba.webm`,
     mp4: `${CLIP_BASE}/caipivara-samba.mp4`,
     poster: `${CLIP_BASE}/caipivara-samba-poster.webp`,
