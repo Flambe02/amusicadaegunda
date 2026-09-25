@@ -291,7 +291,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
   const slug = current ? getPublicSlug(current) : null;
   const hasStory = Boolean(String(current?.description || '').trim());
   const canSing = Boolean(current) && isKaraokePublished(current) && Boolean(slug);
-  const share = useShareSong(current || {});
+  const { share, linkSheet } = useShareSong(current || {});
 
   return (
     <div className="relative flex h-full w-full flex-col items-center overflow-hidden bg-app-black text-white [container-type:size]">
@@ -489,6 +489,8 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
           showIcon={false}
         />
       ) : null}
+
+      {linkSheet}
 
       {hasStory ? (
         <FeedStorySheet song={current} open={storyOpen} onOpenChange={setStoryOpen} returnFocusRef={storyButtonRef} />

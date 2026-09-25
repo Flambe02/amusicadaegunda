@@ -4,8 +4,9 @@ import { MemoryRouter } from 'react-router-dom';
 import FeedOverlay from '../FeedOverlay';
 import { isReleasedThisWeek, getPublicSlug } from '../feedMedia';
 
-const toast = vi.fn();
-vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast }) }));
+const dismiss = vi.fn();
+const toast = vi.fn(() => ({ dismiss }));
+vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast }), toast: (...args) => toast(...args) }));
 
 const LRC = '[00:01.00]Olá\n[00:03.00]Mundo';
 // Lundi 21/09/2026 ; « maintenant » = jeudi 24/09/2026 midi, heure de São Paulo.
@@ -104,6 +105,34 @@ describe('FeedOverlay (étape 4)', () => {
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: /compartilhar/i })); });
     expect(writeText).toHaveBeenCalledWith('https://www.amusicadasegunda.com/musica/ta-chovendo-de-novo/');
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Link copiado' }));
+  });
+
+  it('one « Link copiado » at a time: a new copy replaces the previous toast, which closes after 3 s', async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    renderOverlay();
+    toast.mockClear();
+    dismiss.mockClear();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /compartilhar/i })); });
+    const afterFirst = dismiss.mock.calls.length; // un toast d'un test précédent a pu être remplacé
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /compartilhar/i })); });
+    expect(toast).toHaveBeenCalledTimes(2);
+    expect(dismiss).toHaveBeenCalledTimes(afterFirst + 1); // le premier est remplacé
+    act(() => { vi.advanceTimersByTime(3100); });
+    expect(dismiss).toHaveBeenCalledTimes(afterFirst + 2); // le second se ferme seul
+  });
+
+  it('when copying fails: no error toast, a small panel with the link selected and ready to copy', async () => {
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    renderOverlay();
+    toast.mockClear();
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: /compartilhar/i })); });
+    expect(toast).not.toHaveBeenCalled();
+    const field = await screen.findByRole('textbox', { name: 'Link da música' });
+    expect(field).toHaveValue('https://www.amusicadasegunda.com/musica/ta-chovendo-de-novo/');
+    expect(field).toHaveAttribute('readonly');
+    expect(screen.getByRole('button', { name: 'Copiar' })).toBeInTheDocument();
+    expect(screen.queryByText('Não deu para copiar')).toBeNull();
   });
 
   it('has no Caipivara avatar, no bubble and no video loop on the feed', () => {

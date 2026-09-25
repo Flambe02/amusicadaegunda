@@ -47,7 +47,7 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
   const storyButtonRef = useRef(null);
   useEffect(() => { setStoryOpen(false); }, [song?.id, song?.title]);
 
-  const share = useShareSong(song);
+  const { share, linkSheet } = useShareSong(song);
 
   return (
     <>
@@ -132,6 +132,7 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
       {hasStory ? (
         <FeedStorySheet song={song} open={storyOpen} onOpenChange={setStoryOpen} returnFocusRef={storyButtonRef} />
       ) : null}
+      {linkSheet}
     </>
   );
 }

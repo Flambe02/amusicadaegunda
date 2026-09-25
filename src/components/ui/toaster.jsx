@@ -13,7 +13,9 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
+      {/* Un toast fermé (dismiss → open: false) reste en mémoire ~16 min avant d'être
+          retiré : on ne l'affiche plus dès sa fermeture. */}
+      {toasts.filter((item) => item.open !== false).map(function ({ id, title, description, action, ...props }) {
         return (
           <Toast key={id} {...props}>
             <div className="grid gap-1">

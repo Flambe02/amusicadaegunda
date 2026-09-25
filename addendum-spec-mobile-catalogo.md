@@ -157,6 +157,11 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 5. **Refus** (iOS, économie d'énergie) : si le son est toujours coupé ≈ 0,9 s après un geste qui l'a demandé, le bouton lecture central revient.
 6. Le calque Ouvir garde son « Toque para ouvir » jaune (H.9.5) : c'est une autre zone, sans vidéo.
 
+### H.11 Compartilhar — repli et toast (test iPhone du 2026-09-25)
+1. Web Share, sinon copie du lien. **Si la copie échoue** (contexte non sécurisé, refus) : plus de toast d'erreur, mais un **petit panneau** (famille História : monte du bas, #111217, coins 26 px, pas de voile) avec le lien dans un **champ déjà sélectionné**, prêt à être copié à la main, et un bouton « Copiar » qui retente la copie par la sélection.
+2. **Un seul « Link copiado » à la fois**, fermé après 3 s. (Cause du doublon : le composant Toast du site ignore `duration` et ne se fermait jamais ; chaque tap en empilait un. Le Toaster n'affiche plus les toasts fermés.)
+3. Tests sur téléphone : serveur de dev en https sur l'IP locale (certificat auto-signé, hors dépôt), sinon `navigator.share` et le presse-papiers sont bloqués.
+
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.
 - **Plus de captures d'écran dans les rapports** : Florent teste lui-même sur son téléphone. Les vérifications au navigateur (Playwright) continuent, mais seuls leurs résultats figurent dans le rapport.
