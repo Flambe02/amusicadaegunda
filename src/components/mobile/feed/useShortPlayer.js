@@ -2,28 +2,28 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 
 /**
- * Lecteur du Short de la semaine sur le feed mobile (spec mobile §4.1, étape 3).
+ * UN SEUL lecteur YouTube pour tout le feed mobile (spec mobile §4.1, étapes 3 et 4b).
  *
  * Chargement en deux temps : l'appelant affiche d'abord la miniature (élément LCP) et
  * passe `canLoad = true` une fois qu'elle a fini de charger ; alors seulement on charge
  * la YouTube IFrame API et on crée le lecteur (youtube-nocookie, muet, en boucle, sans
- * contrôles). Une seule iframe à la fois : le lecteur est détruit au démontage ou au
- * changement de vidéo.
+ * contrôles). Quand `videoId` change (glissement vers une autre semaine), le MÊME
+ * lecteur charge la nouvelle vidéo : jamais un second lecteur, et l'état du son est
+ * conservé (YouTube garde muet/non muet d'une vidéo à l'autre). Il n'est détruit
+ * qu'au démontage du feed.
  *
- * Toutes les valeurs exposées (lecture, son) viennent du LECTEUR, jamais du clic : le
- * tap demande `unMute()`/`mute()`, puis l'état est relu sur le lecteur. La danse de la
- * Caipivara (étape 4) et la ligne de karaokê (étape 5) s'appuieront dessus.
+ * Toutes les valeurs exposées (lecture, son) viennent du LECTEUR, jamais du clic.
  *
- * Phases :
+ * Phases (pour la vidéo courante) :
  *   'poster'   miniature seule, lecteur pas encore demandé
- *   'loading'  lecteur en cours de création, miniature toujours visible
+ *   'loading'  vidéo en cours de chargement, miniature toujours visible
  *   'playing'  la vidéo est affichée (fondu). On attend REVEAL_DELAY_MS après le premier
  *              PLAYING : YouTube superpose au démarrage son titre, son logo et un bouton,
  *              même avec controls=0, puis les masque. La miniature couvre ce moment.
- *              Si l'utilisateur active le son avant, la vidéo apparaît tout de suite.
+ *              Si le son joue, la vidéo apparaît tout de suite.
  *   'fallback' PLAYING pas reçu en 3 s (économie d'énergie/données, YouTube lent ou
  *              bloqué) → la miniature reste, « Toque para ouvir » relance au tap
- *   'none'     pas de Short : aucun lecteur n'est jamais chargé
+ *   'none'     pas de Short pour cette chanson : le lecteur est arrêté et masqué
  */
 
 export const FALLBACK_DELAY_MS = 3000;
@@ -49,6 +49,14 @@ function prefersSaveData() {
   return Boolean(navigator.connection?.saveData);
 }
 
+/**
+ * La boucle est gérée ici, pas par YouTube : juste avant la fin, on revient au début.
+ * Le lecteur n'atteint donc jamais son écran de fin, et `loadVideoById` peut changer
+ * de vidéo sans liste de lecture native (`loop=1&playlist=<id>` figeait la boucle sur
+ * la première vidéo et faisait échouer le premier changement de chanson).
+ */
+const LOOP_LEAD_S = 0.4; // > intervalle de sondage (250 ms) : la fin n'est jamais atteinte
+
 export function useShortPlayer({ videoId, canLoad, mountRef }) {
   const [phase, setPhase] = useState(videoId ? 'poster' : 'none');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -56,11 +64,13 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
 
   const playerRef = useRef(null);
   const readyRef = useRef(false);
+  const creatingRef = useRef(false);
   const everPlayedRef = useRef(false);
   const pendingSoundRef = useRef(false);
   const fallbackTimerRef = useRef(null);
   const revealTimerRef = useRef(null);
-  const creatingRef = useRef(false);
+  const videoIdRef = useRef(videoId);
+  const loadedIdRef = useRef(null);
 
   const clearRevealTimer = () => {
     if (revealTimerRef.current) {
@@ -76,12 +86,23 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     }
   };
 
+  const armFallbackTimer = () => {
+    clearFallbackTimer();
+    fallbackTimerRef.current = setTimeout(() => {
+      if (!everPlayedRef.current) setPhase('fallback');
+    }, FALLBACK_DELAY_MS);
+  };
+
   const syncFromPlayer = useCallback(() => {
     const player = playerRef.current;
     if (!player || !readyRef.current) return;
     try {
       const muted = player.isMuted();
       const playing = player.getPlayerState() === YT_STATE.PLAYING;
+      if (playing) {
+        const duration = player.getDuration?.() || 0;
+        if (duration > 1 && player.getCurrentTime() >= duration - LOOP_LEAD_S) player.seekTo(0, true);
+      }
       setIsMuted((previous) => (previous === muted ? previous : muted));
       setIsPlaying((previous) => (previous === playing ? previous : playing));
     } catch {
@@ -90,16 +111,12 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
   }, []);
 
   const createPlayer = useCallback(() => {
-    if (!videoId || creatingRef.current || playerRef.current) return;
-    const host = mountRef.current;
-    if (!host) return;
+    const initialId = videoIdRef.current;
+    if (!initialId || creatingRef.current || playerRef.current) return;
+    if (!mountRef.current) return;
     creatingRef.current = true;
-    setPhase((current) => (current === 'playing' ? current : current === 'fallback' ? current : 'loading'));
-
-    clearFallbackTimer();
-    fallbackTimerRef.current = setTimeout(() => {
-      if (!everPlayedRef.current) setPhase('fallback');
-    }, FALLBACK_DELAY_MS);
+    setPhase((current) => (current === 'playing' || current === 'fallback' ? current : 'loading'));
+    armFallbackTimer();
 
     loadYouTubeIframeApi()
       .then((YT) => {
@@ -108,18 +125,17 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
         // la main, pour que React ne le réconcilie jamais.
         const target = document.createElement('div');
         mountRef.current.replaceChildren(target);
+        loadedIdRef.current = initialId;
 
         playerRef.current = new YT.Player(target, {
           host: 'https://www.youtube-nocookie.com',
-          videoId,
+          videoId: initialId,
           width: '100%',
           height: '100%',
           playerVars: {
             autoplay: 1,
             mute: 1,
             playsinline: 1,
-            loop: 1,
-            playlist: videoId,
             controls: 0,
             disablekb: 1,
             fs: 0,
@@ -135,7 +151,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
               if (iframe) {
                 iframe.setAttribute('tabindex', '-1');
                 iframe.setAttribute('aria-hidden', 'true');
-                iframe.setAttribute('title', 'Vídeo da música da semana');
+                iframe.setAttribute('title', 'Vídeo da música');
               }
               if (pendingSoundRef.current) {
                 pendingSoundRef.current = false;
@@ -145,7 +161,16 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
                 player.mute();
               }
               hideCaptions(player);
-              player.playVideo();
+              // La chanson a pu changer pendant la création du lecteur.
+              const wanted = videoIdRef.current;
+              if (!wanted) {
+                player.stopVideo?.();
+              } else if (wanted !== loadedIdRef.current) {
+                loadedIdRef.current = wanted;
+                player.loadVideoById(wanted);
+              } else {
+                player.playVideo();
+              }
               syncFromPlayer();
             },
             onStateChange: (event) => {
@@ -158,8 +183,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
                   revealTimerRef.current = setTimeout(() => setPhase('playing'), REVEAL_DELAY_MS);
                 }
               }
-              // Filet de sécurité de la boucle : `loop` + `playlist` suffisent en
-              // général, mais certains navigateurs s'arrêtent sur ENDED.
+              // Filet de sécurité de la boucle, si le sondage a raté la fin.
               if (event.data === YT_STATE.ENDED) {
                 event.target.seekTo(0, true);
                 event.target.playVideo();
@@ -178,21 +202,43 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
         creatingRef.current = false;
         setPhase('fallback');
       });
-  }, [videoId, mountRef, syncFromPlayer]);
+    // armFallbackTimer / clear*Timer ne touchent que des refs et setPhase (stables).
+  }, [mountRef, syncFromPlayer]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Réinitialisation quand la vidéo change.
+  // Changement de chanson : le même lecteur charge la nouvelle vidéo (ou s'arrête si
+  // la chanson n'a pas de Short). Le son reste dans l'état où il était.
   useEffect(() => {
+    videoIdRef.current = videoId;
     everPlayedRef.current = false;
-    pendingSoundRef.current = false;
+    clearRevealTimer();
+    clearFallbackTimer();
     setIsPlaying(false);
-    setIsMuted(true);
-    setPhase(videoId ? 'poster' : 'none');
-  }, [videoId]);
 
-  // Création du lecteur une fois la miniature affichée. En économie de données, on
-  // n'en charge aucun tant que l'utilisateur ne l'a pas demandé.
+    const player = playerRef.current;
+    if (!videoId) {
+      if (player && readyRef.current) player.stopVideo?.();
+      // Arrêté : au retour sur une chanson avec Short, il faudra recharger sa vidéo.
+      loadedIdRef.current = null;
+      setPhase('none');
+      return;
+    }
+    if (player && readyRef.current) {
+      if (loadedIdRef.current !== videoId) {
+        loadedIdRef.current = videoId;
+        setPhase('loading');
+        armFallbackTimer();
+        player.loadVideoById(videoId);
+      }
+      return;
+    }
+    // Pas encore de lecteur (ou en cours de création) : la création s'en charge.
+    if (!creatingRef.current) setPhase('poster');
+  }, [videoId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Création du lecteur une fois la première miniature affichée. En économie de
+  // données, on n'en charge aucun tant que l'utilisateur ne l'a pas demandé.
   useEffect(() => {
-    if (!videoId || !canLoad) return;
+    if (!videoId || !canLoad || playerRef.current || creatingRef.current) return;
     if (prefersSaveData()) {
       setPhase('fallback');
       return;
@@ -200,7 +246,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     createPlayer();
   }, [videoId, canLoad, createPlayer]);
 
-  // Destruction au démontage / changement de vidéo.
+  // Destruction au démontage du feed seulement.
   useEffect(() => () => {
     clearFallbackTimer();
     clearRevealTimer();
@@ -212,16 +258,15 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     playerRef.current = null;
     readyRef.current = false;
     creatingRef.current = false;
-  }, [videoId]);
+  }, []);
 
   // L'état affiché suit le lecteur (le navigateur peut remuter, mettre en pause…).
   useEffect(() => {
-    if (!videoId) return undefined;
     const id = setInterval(syncFromPlayer, POLL_MS);
     return () => clearInterval(id);
-  }, [videoId, syncFromPlayer]);
+  }, [syncFromPlayer]);
 
-  // Son activé par l'utilisateur pendant l'attente → on montre la vidéo sans attendre.
+  // Son actif pendant l'attente → on montre la vidéo sans attendre.
   useEffect(() => {
     if (!everPlayedRef.current || isMuted || !isPlaying) return;
     clearRevealTimer();
@@ -230,7 +275,6 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
 
   // Onglet masqué → pause (batterie) ; retour → reprise si la vidéo tournait.
   useEffect(() => {
-    if (!videoId) return undefined;
     let resumeOnShow = false;
     const onVisibility = () => {
       const player = playerRef.current;
@@ -244,11 +288,11 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
-  }, [videoId]);
+  }, []);
 
   /** Tap : son coupé → son (et lecture si en repli) ; son actif → silence. */
   const toggleSound = useCallback(() => {
-    if (!videoId) return;
+    if (!videoIdRef.current) return;
     const player = playerRef.current;
 
     if (!player || !readyRef.current) {
@@ -267,7 +311,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
       player.mute();
     }
     syncFromPlayer();
-  }, [videoId, createPlayer, syncFromPlayer]);
+  }, [createPlayer, syncFromPlayer]);
 
   const getCurrentTime = useCallback(() => {
     try {

@@ -471,7 +471,14 @@ export default function Home() {
   // Layout rend cette page deux fois (coquille mobile + coquille desktop masquée) : le
   // feed, qui crée une iframe YouTube, ne doit exister que dans la copie mobile.
   const shell = useShell();
-  const mobileFeedSongs = useMemo(() => (currentSong ? [currentSong] : []), [currentSong]);
+  // Feed mobile : la chanson de la semaine d'abord, puis le reste du catalogue du plus
+  // récent au plus ancien (allSongs est déjà trié par release_date décroissante).
+  const mobileFeedSongs = useMemo(() => {
+    if (!currentSong) return allSongs;
+    const sameSong = (song) =>
+      (song?.id != null && song.id === currentSong.id) || (song?.slug && song.slug === currentSong.slug);
+    return [currentSong, ...allSongs.filter((song) => !sameSong(song))];
+  }, [currentSong, allSongs]);
 
   const dialogArtwork = getSongArtwork(selectedSongForDialog) || BRAND_SQUARE_MEDIUM;
   const shouldRenderLegacyDesktop =

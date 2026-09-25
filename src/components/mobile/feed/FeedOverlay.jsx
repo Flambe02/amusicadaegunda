@@ -11,7 +11,7 @@ const SITE_URL = 'https://www.amusicadasegunda.com';
 const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
 
 /**
- * Calques du feed (étape 4), posés au-dessus du bouton son plein cadre de FeedSlide.
+ * Calques du feed (étape 4), posés au-dessus du bouton son plein cadre du feed (MobileFeed).
  *
  * Seuls les contrôles réels captent les taps (colonne droite) ; tout le reste est en
  * `pointer-events-none`, pour qu'un tap sur la vidéo continue de couper/rétablir le son.
