@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T15:02:33.479Z",
+  "generatedAt": "2026-09-25T17:25:23.196Z",
   "title": "Design System: A Música da Segunda",
   "extensions": {
     "colorMeta": {
@@ -171,6 +171,14 @@
       "mono-meta": {
         "displayName": "Mono meta",
         "purpose": "Countdowns, version strings — tabular numbers only."
+      },
+      "feed-title": {
+        "displayName": "Feed title",
+        "purpose": "Song title over the Início video (mobile h1), 2 lines max."
+      },
+      "feed-title-compact": {
+        "displayName": "Feed title compact",
+        "purpose": "Same h1 while the sound plays: one line, ellipsis, bottom of the frame."
       }
     },
     "shadows": [

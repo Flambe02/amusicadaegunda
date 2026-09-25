@@ -35,6 +35,17 @@ typography:
     fontWeight: 900
     lineHeight: 1.1
     letterSpacing: "-0.025em"
+  feed-title:
+    fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "28px"
+    fontWeight: 900
+    lineHeight: 1.1
+    letterSpacing: "-0.025em"
+  feed-title-compact:
+    fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    fontSize: "15px"
+    fontWeight: 900
+    lineHeight: 1.25
   title:
     fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
     fontSize: "1.125rem"
@@ -196,6 +207,7 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 ### Hierarchy
 - **Display** (900, clamp(2.8rem, 4vw, 4.3rem), line-height 0.95, tight tracking): desktop page and hero titles, max ~14ch. On TV the hero title runs at clamp(2.1rem, 67px, 4.25rem) and steps down for long titles (`is-long`, `is-xlong`).
 - **Headline** (900, 1.875–2.25rem, tight): section heads and metric values.
+- **Feed title** (900, 28px, line-height 1.1, 2 lines max): the song title over the Início video, which is the mobile page's `h1`. When the sound plays it becomes **Feed title compact** (900, 15px, one line, ellipsis) at the bottom of the frame, so the lyrics burned into the video stay readable. It is the same element; only its style changes, over 300ms, with no transition under reduced motion.
 - **Title** (600–700, 1–1.125rem): song titles in lists, card titles and sidebar labels.
 - **Body** (400, 0.875rem with 1rem/1.75 for lead copy): descriptions and lyrics context, at 62–72% white and max-w-3xl.
 - **Label, eyebrow** (500, 11px, 0.22–0.28em tracking, uppercase, 42–68% white): badges, section kickers and metric captions.
@@ -262,7 +274,7 @@ The components are tactile and confident, with a pill for every action, glass fo
   - **Karaokê tab:** a lyrics icon (music list), never a microphone, because the karaoke works without one. It is flat like the other tabs; nothing breaks out of the bar.
   - **Menu tab:** opens a bottom sheet rather than a page. It lights up for every page reached from the sheet (Todas as músicas, Blog, Sobre, TV, Aprender), since those pages have no tab of their own.
   - **Menu sheet:** a bottom sheet (28px top radius, Wing Charcoal fill, 10% white top hairline, a 40×6px grabber at 20% white) over a 60% black scrim with a small blur, capped at 85% of the screen height and scrolling inside. Its rows are 16px-radius and at least 44px tall, with a 40px icon well (12px radius, 10% white fill, icon at 70% white), a 16px semibold white label and an optional 14px description at 70% white. "Todas as músicas" (O arquivo completo, semana a semana) leads to `/musica`. The sheet has no yellow; the scrim button and Escape close it.
-  - **Top header (mobile only):** 52px with the Caipivara avatar at left, the name centred and an info button (Sobre) at right. On Início it is transparent and floats over the content, and only the avatar and the info button catch taps, so the rest of the area passes touches through to the video. On Sobre it is hidden. Everywhere else it is glass at 90% black with a bottom hairline.
+  - **Top header (mobile only):** 52px with the Caipivara avatar at left (the still 3D Caipivara, head crop, `caipivara-3d-head-128/256.webp`; not the old microphone logo), the name centred and an info button (Sobre) at right. On Início it is transparent and floats over the content, and only the avatar and the info button catch taps, so the rest of the area passes touches through to the video. On Sobre it is hidden. Everywhere else it is glass at 90% black with a bottom hairline.
 - **Tablet sidebar:** a 260px glass panel with a 30px radius and a yellow radial glow at the top. The brand block at the top combines the Caipivara avatar with an eyebrow and the name. Nav items are 22px-radius rows with 40px icon wells and a status dot that turns yellow when active.
 - **Desktop top bar:** 72px tall at 80% black with `backdrop-blur-xl`. On the left is the logo (a 44px, 12px-radius square) with the name at 15px/700. The centred nav has 15px links, and a 40px circular search button sits on the right.
 

@@ -109,49 +109,37 @@ describe('FeedOverlay (étape 4)', () => {
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Link copiado' }));
   });
 
-  it('shows the « Psiu! » bubble while the sound is off, and hides it once sound really plays', () => {
-    const { rerender, container } = renderOverlay();
-    const bubble = () => screen.getByText('Psiu! Saiu a música da semana.').closest('div');
-    expect(bubble().className).toMatch(/opacity-100/);
-    rerender(
-      <MemoryRouter>
-        <FeedOverlay song={SONG} player={soundPlayer} onShowLyrics={vi.fn()} />
-      </MemoryRouter>
-    );
-    expect(bubble().className).toMatch(/opacity-0/);
-    expect(container).toBeTruthy();
-  });
-
-  it('never shows the bubble for a song that is not from this week', () => {
-    renderOverlay({ song: { ...SONG, release_date: '2026-09-14' } });
-    const bubble = screen.getByText('Psiu! Saiu a música da semana.').closest('div');
-    expect(bubble.className).toMatch(/opacity-0/);
-  });
-
-  it('switches the avatar to the dance loop only when the player really plays with sound', () => {
-    const { container, rerender } = renderOverlay();
-    act(() => { vi.advanceTimersByTime(1600); });
-    expect(container.querySelector('source[src*="caipivara-dance"]')).toBeNull();
-    rerender(
-      <MemoryRouter>
-        <FeedOverlay song={SONG} player={soundPlayer} onShowLyrics={vi.fn()} />
-      </MemoryRouter>
-    );
-    expect(container.querySelector('source[src*="caipivara-dance"]')).not.toBeNull();
-  });
-
-  it('under reduced motion: posters only, no video, no dance', () => {
-    window.matchMedia = vi.fn().mockImplementation((query) => ({
-      matches: query.includes('reduce'), media: query, addEventListener: vi.fn(), removeEventListener: vi.fn(),
-    }));
-    const { container } = render(
-      <MemoryRouter>
-        <FeedOverlay song={SONG} player={soundPlayer} onShowLyrics={vi.fn()} />
-      </MemoryRouter>
-    );
-    act(() => { vi.advanceTimersByTime(1600); });
+  it('has no Caipivara avatar, no bubble and no video loop on the feed', () => {
+    const { container } = renderOverlay({ player: soundPlayer });
+    expect(screen.queryByText(/Psiu/)).toBeNull();
     expect(container.querySelector('video')).toBeNull();
-    expect(container.querySelector('img[src*="caipivara-idle-poster"]')).not.toBeNull();
+    expect(container.querySelector('[src*="caipivara"], source[src*="caipivara"]')).toBeNull();
+    const rail = ['Ver a letra', 'Cantar', 'Compartilhar'];
+    for (const name of rail) expect(screen.getByRole(name === 'Cantar' ? 'link' : 'button', { name: new RegExp(name, 'i') })).toBeInTheDocument();
+  });
+
+  it('title: full size with the sound off, one discreet line with the sound on — same h1 element', () => {
+    const { rerender } = renderOverlay();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveAttribute('data-compact', 'false');
+    expect(h1.className).toContain('text-[28px]');
+    expect(h1.className).toMatch(/line-clamp-2/);
+
+    rerender(
+      <MemoryRouter>
+        <FeedOverlay song={SONG} player={soundPlayer} onShowLyrics={vi.fn()} />
+      </MemoryRouter>
+    );
+    const same = screen.getByRole('heading', { level: 1 });
+    expect(same).toBe(h1); // même élément, seul le style change
+    expect(same).toHaveAttribute('data-compact', 'true');
+    expect(same.className).toContain('text-[15px]');
+    expect(same.className).toMatch(/truncate/);
+  });
+
+  it('the title transition is disabled under reduced motion', () => {
+    renderOverlay();
+    expect(screen.getByRole('heading', { level: 1 }).className).toMatch(/motion-reduce:transition-none/);
   });
 
   it('never writes a news headline line (no manchete source yet)', () => {

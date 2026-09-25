@@ -19,7 +19,7 @@ import { AppBottomNav } from '@/components/mobile';
 import { ShellContext } from '@/components/mobile/ShellContext';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
-import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
 const TutorialManager = lazy(() => import('@/components/TutorialManager'));
 const StandaloneOnboarding = lazy(() => import('@/components/StandaloneOnboarding'));
@@ -274,10 +274,13 @@ export default function Layout({ children }) {
           <div className="px-3 pb-2 pt-[max(env(safe-area-inset-top),0.35rem)]">
             <div className="flex min-h-[52px] items-center justify-between gap-2">
               {/* Left: Logo */}
+              {/* Caipivara 3D fixe (tête recadrée), pas l'ancien logo au micro. */}
               <Link to="/" className="pointer-events-auto flex h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/10 shadow-sm">
                 <img
-                  src={BRAND_SQUARE_SMALL}
-                  alt="Logo A Musica da Segunda"
+                  src="/images/caipivara-3d-head-128.webp"
+                  srcSet="/images/caipivara-3d-head-128.webp 128w, /images/caipivara-3d-head-256.webp 256w"
+                  sizes="40px"
+                  alt="A Música da Segunda — página inicial"
                   className="w-full h-full object-cover"
                   loading="eager"
                   decoding="async"

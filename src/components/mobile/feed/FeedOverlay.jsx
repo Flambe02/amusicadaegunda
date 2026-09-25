@@ -1,14 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, ListMusic, Share2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { isKaraokePublished } from '@/lib/lrc';
 import { getWeekLabel } from '@/lib/homeSongMedia';
 import { getPublicSlug, isReleasedThisWeek } from './feedMedia';
-import { useReducedMotion } from './useReducedMotion';
 
 const SITE_URL = 'https://www.amusicadasegunda.com';
-// Courbe « strong ease-out » (entrées/sorties d'interface), 200 ms.
+// Courbe « strong ease-out » (changements d'état d'interface).
 const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
 
 /**
@@ -18,15 +17,28 @@ const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
  * `pointer-events-none`, pour qu'un tap sur la vidéo continue de couper/rétablir le son.
  * Un seul jaune par zone : ici, rien n'est jaune — le jaune de la vidéo est « Toque
  * para ouvir » (son coupé) puis, à l'étape 5, la ligne de karaokê (son actif).
+ *
+ * Aucun second mouvement ne concurrence la vidéo : pas d'avatar animé ni de bulle
+ * (retirés après test sur iPhone, 2026-09-25).
  */
 export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics }) {
-  const reduceMotion = useReducedMotion();
   const { toast } = useToast();
-  const thisWeek = isReleasedThisWeek(song);
-  const weekChip = thisWeek ? 'Esta semana' : getWeekLabel(song);
+  const weekChip = isReleasedThisWeek(song) ? 'Esta semana' : getWeekLabel(song);
   const slug = getPublicSlug(song);
   const canSing = isKaraokePublished(song) && Boolean(slug);
   const TitleTag = isFirst ? 'h1' : 'h2';
+  // Son actif (état réel du lecteur) : le titre se fait discret pour laisser lisibles
+  // les paroles incrustées dans la vidéo.
+  const compact = player.isSoundOn;
+
+  const copy = async (url) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Link copiado', description: 'Cole onde quiser para compartilhar.', duration: 3000 });
+    } catch {
+      toast({ title: 'Não deu para copiar', description: url, duration: 5000 });
+    }
+  };
 
   const share = async () => {
     const url = slug ? `${SITE_URL}/musica/${slug}/` : window.location.href;
@@ -42,15 +54,6 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
     copy(url);
   };
 
-  const copy = async (url) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({ title: 'Link copiado', description: 'Cole onde quiser para compartilhar.', duration: 3000 });
-    } catch {
-      toast({ title: 'Não deu para copiar', description: url, duration: 5000 });
-    }
-  };
-
   return (
     <>
       {/* Haut : chip de semaine, sous le nom du site (en-tête transparent du shell). */}
@@ -62,26 +65,36 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
         </div>
       ) : null}
 
-      {/* Bas : dégradé de lisibilité sous le titre et la colonne droite. */}
+      {/* Bas : dégradé de lisibilité. Son actif → il se replie vers le bas, pour ne pas
+          assombrir les paroles incrustées dans la vidéo. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[45%] bg-gradient-to-t from-black/80 via-black/40 to-transparent"
+        className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[45%] origin-bottom bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-transform duration-300 ${EASE_OUT} motion-reduce:transition-none ${
+          compact ? 'scale-y-[0.35]' : 'scale-y-100'
+        }`}
       />
 
-      {/* Bas gauche : titre (h1 de la page sur la première chanson). */}
-      <div className="pointer-events-none absolute bottom-6 left-4 right-24 z-20">
-        <TitleTag className="line-clamp-2 text-3xl font-black leading-[1.05] tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.45)]">
+      {/* Bas gauche : titre (h1 de la page sur la première chanson). Même élément dans
+          les deux états, seul son style change. */}
+      <div
+        className={`pointer-events-none absolute left-4 right-24 z-20 transition-[bottom] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
+          compact ? 'bottom-3' : 'bottom-6'
+        }`}
+      >
+        <TitleTag
+          data-compact={compact ? 'true' : 'false'}
+          className={`font-black tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.45)] transition-[font-size,line-height,opacity] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
+            compact
+              ? 'truncate text-[15px] leading-tight opacity-90'
+              : 'line-clamp-2 text-[28px] leading-[1.1]'
+          }`}
+        >
           {song.title}
         </TitleTag>
       </div>
 
-      {/* Colonne droite : Caipivara, Letra, Cantar, Compartilhar. */}
+      {/* Colonne droite : Letra, Cantar, Compartilhar. */}
       <div className="absolute bottom-6 right-3 z-30 flex flex-col items-center gap-4">
-        <CaipivaraAvatar
-          dancing={player.isSoundOn && !reduceMotion}
-          animate={!reduceMotion}
-          showBubble={thisWeek && !player.isSoundOn}
-        />
         <RailButton label="Letra" onClick={onShowLyrics} icon={FileText} ariaLabel={`Ver a letra de ${song.title}`} />
         {canSing ? (
           <RailLink
@@ -120,98 +133,6 @@ function RailLink({ label, icon: Icon, to, ariaLabel }) {
       <span className={railIconClass}><Icon className="h-5 w-5" aria-hidden="true" /></span>
       <span aria-hidden="true" className={railLabelClass}>{label}</span>
     </Link>
-  );
-}
-
-const CLIP = {
-  idle: { poster: '/videos/caipivara/caipivara-idle-poster.webp', webm: '/videos/caipivara/caipivara-idle.webm', mp4: '/videos/caipivara/caipivara-idle.mp4' },
-  dance: { poster: '/videos/caipivara/caipivara-dance-poster.webp', webm: '/videos/caipivara/caipivara-dance.webm', mp4: '/videos/caipivara/caipivara-dance.mp4' },
-};
-
-/**
- * Avatar Caipivara, cercle de 56 px recadré sur la tête. Au repos : boucle calme ;
- * quand le lecteur joue réellement avec le son : boucle de danse (fondu 200 ms).
- * Mouvement réduit : affiches fixes seulement, pas de danse, pas de boucle.
- * La boucle de danse n'est chargée qu'à la première fois où le son joue.
- */
-function CaipivaraAvatar({ dancing, animate, showBubble }) {
-  const [danceMounted, setDanceMounted] = useState(false);
-  const [idleReady, setIdleReady] = useState(false);
-
-  useEffect(() => {
-    if (dancing) setDanceMounted(true);
-  }, [dancing]);
-
-  // La boucle calme attend que la page ait fini son premier chargement (LCP, lecteur).
-  useEffect(() => {
-    if (!animate) return undefined;
-    const id = setTimeout(() => setIdleReady(true), 1500);
-    return () => clearTimeout(id);
-  }, [animate]);
-
-  return (
-    <div className="relative" aria-hidden="true">
-      <SpeechBubble visible={showBubble} />
-      <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-white/80 bg-app-charcoal shadow-[0_6px_18px_rgba(0,0,0,0.45)]">
-        <AvatarLayer clip={CLIP.idle} play={animate && idleReady} visible={!dancing} />
-        {danceMounted ? <AvatarLayer clip={CLIP.dance} play={animate && dancing} visible={dancing} /> : null}
-      </div>
-    </div>
-  );
-}
-
-// Le cadre 432×768 est agrandi et décalé pour que le cercle montre la tête.
-// Le visage est à ~39 % de la hauteur du cadre : image à 330 % du cercle, remontée de 78 %.
-const HEAD_CROP = 'absolute left-1/2 top-[-78%] h-[330%] w-auto max-w-none -translate-x-1/2';
-
-function AvatarLayer({ clip, play, visible }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const video = ref.current;
-    if (!video) return;
-    if (play && visible) {
-      // play() ne renvoie pas toujours une promesse (anciens navigateurs, jsdom).
-      const attempt = video.play?.();
-      if (attempt && typeof attempt.catch === 'function') attempt.catch(() => {});
-    }
-    else video.pause?.();
-  }, [play, visible]);
-
-  const layerClass = `transition-opacity duration-200 ${EASE_OUT} ${visible ? 'opacity-100' : 'opacity-0'}`;
-
-  if (!play) {
-    return <img src={clip.poster} alt="" className={`${HEAD_CROP} ${layerClass}`} />;
-  }
-  return (
-    <video
-      ref={ref}
-      className={`${HEAD_CROP} ${layerClass}`}
-      poster={clip.poster}
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      disablePictureInPicture
-    >
-      <source src={clip.webm} type="video/webm" />
-      <source src={clip.mp4} type="video/mp4" />
-    </video>
-  );
-}
-
-function SpeechBubble({ visible }) {
-  return (
-    <div
-      className={`pointer-events-none absolute right-[calc(100%+10px)] top-1/2 w-max max-w-[11rem] -translate-y-1/2 transition-[opacity,transform] duration-200 ${EASE_OUT} motion-reduce:transition-opacity ${
-        visible ? 'opacity-100' : 'translate-x-1 opacity-0 motion-reduce:translate-x-0'
-      }`}
-    >
-      <p className="relative rounded-2xl bg-white px-3 py-2 text-sm font-bold leading-snug text-[#050505] shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
-        Psiu! Saiu a música da semana.
-        <span className="absolute -right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rotate-45 rounded-[2px] bg-white" />
-      </p>
-    </div>
   );
 }
 

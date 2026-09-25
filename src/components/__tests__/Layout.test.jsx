@@ -169,6 +169,13 @@ describe('Layout — shell mobile', () => {
     expect(mobileShell().querySelector('header')).toHaveAttribute('data-mobile-header', mode);
   });
 
+  it('shows the fixed 3D Caipivara (not the old mic logo) in the mobile header', () => {
+    renderAt('/');
+    const img = mobileShell().querySelector('header img');
+    expect(img.getAttribute('src')).toBe('/images/caipivara-3d-head-128.webp');
+    expect(img.tagName).toBe('IMG');
+  });
+
   it('makes the header transparent only on Início', () => {
     renderAt('/');
     const header = mobileShell().querySelector('header');
