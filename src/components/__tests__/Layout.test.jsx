@@ -188,6 +188,14 @@ describe('Layout — shell mobile', () => {
     }
   );
 
+  it('Karaokê tab is a microphone: filled white when active, outline otherwise', () => {
+    renderAt('/karaoke');
+    const karaoke = within(mobileNav()).getByRole('link', { name: 'Karaokê' });
+    const svg = karaoke.querySelector('svg');
+    expect(svg.getAttribute('fill')).toBe('currentColor');
+    expect(svg.querySelectorAll('path')).toHaveLength(2); // MicFilled : capsule + pied
+  });
+
   it('lights the Catálogo pill while the feed shows the Ouvir layer (/?ouvir=<slug>)', () => {
     renderAt('/?ouvir=ta-chovendo-de-novo');
     const active = within(mobileNav()).getAllByRole('link').filter((a) => a.getAttribute('aria-current') === 'page');

@@ -6,7 +6,6 @@ import {
   GraduationCap,
   Home,
   Library,
-  ListMusic,
   Gift,
   Info,
   FileText,
@@ -16,7 +15,7 @@ import {
   Tv
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
-import { HomeFilled, MenuFilled, MusicListFilled, SearchFilled } from '@/components/mobile/icons/FilledIcons';
+import { HomeFilled, MenuFilled, MicFilled, SearchFilled } from '@/components/mobile/icons/FilledIcons';
 import { ShellContext } from '@/components/mobile/ShellContext';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
@@ -249,8 +248,8 @@ export default function Layout({ children }) {
 
   const mobileNavItems = [
     { value: 'inicio', label: 'Início', href: '/', icon: Home, activeIcon: HomeFilled },
-    // Icône de paroles, pas de micro : le karaokê fonctionne sans microphone.
-    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: ListMusic, activeIcon: MusicListFilled },
+    // Micro (décision du 2026-09-25, « O Palco ») : plein et blanc actif, contour sinon.
+    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: Mic, activeIcon: MicFilled },
     // Au centre, la Caipivara dans sa pastille jaune : le seul jaune de la barre.
     { value: 'catalogo', label: 'Catálogo', href: '/catalogo', variant: 'pill', image: '/images/caipivara-3d-head-128.webp' },
     // Ouvre le panneau de recherche (étape 10) par-dessus l'écran courant, sans changer

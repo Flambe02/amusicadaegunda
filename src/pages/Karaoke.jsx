@@ -16,6 +16,7 @@ import KaraokeFilters from '@/components/karaoke/catalog/KaraokeFilters';
 import KaraokeSongCard from '@/components/karaoke/catalog/KaraokeSongCard';
 import KaraokeSurpriseResult from '@/components/karaoke/catalog/KaraokeSurpriseResult';
 import KaraokeEmptyState from '@/components/karaoke/catalog/KaraokeEmptyState';
+import KaraokePalco from '@/components/mobile/karaoke/KaraokePalco';
 import '@/styles/karaoke.css';
 import '@/styles/karaoke-catalog.css';
 
@@ -141,6 +142,37 @@ export default function KaraokePage() {
 
   const canSurprise = results.length > 0;
 
+  // Sous 768 px, la copie mobile de la page est « O Palco » (carrousel 3D, micro) ; la
+  // copie desktop garde le catalogue ci-dessous, inchangé.
+  const [isMobileViewport] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 767px)').matches
+      : false
+  );
+  const playerOverlay = current ? (
+    <KaraokePlayer
+      key={current.id}
+      song={current}
+      onEnded={() => setCurrent(null)}
+      onClose={() => setCurrent(null)}
+    />
+  ) : null;
+
+  if (shell === 'mobile' && isMobileViewport) {
+    return (
+      <>
+        <Helmet><html lang="pt-BR" /></Helmet>
+        <KaraokePalco
+          songs={songs}
+          isLoading={isLoading}
+          unavailable={Boolean(error) || (!isLoading && totalEligible === 0)}
+          onSing={sing}
+        />
+        {playerOverlay}
+      </>
+    );
+  }
+
   return (
     <>
       <Helmet><html lang="pt-BR" /></Helmet>
@@ -219,14 +251,7 @@ export default function KaraokePage() {
         />
       )}
 
-      {current && (
-        <KaraokePlayer
-          key={current.id}
-          song={current}
-          onEnded={() => setCurrent(null)}
-          onClose={() => setCurrent(null)}
-        />
-      )}
+      {playerOverlay}
     </>
   );
 }

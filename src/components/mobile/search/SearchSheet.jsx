@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom';
 import { Drawer as DrawerPrimitive } from 'vaul';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { Song } from '@/api/entities';
-import { YT_PLACEHOLDER_MAX_WIDTH, getPublicSlug } from '@/components/mobile/feed/feedMedia';
+import { getPublicSlug } from '@/components/mobile/feed/feedMedia';
+import TileImage from './TileImage';
 import {
   RECENT_SUGGESTIONS,
   buildSearchText,
   filterEntries,
-  getTileCandidates,
   monthChipLabel,
   monthOptions,
   publishedNewestFirst,
@@ -40,16 +40,7 @@ const CHIP_OFF = 'border border-white/15 bg-white/5 text-white/80 active:bg-whit
  * pas). Si aucune image ne charge, la case reste sombre avec son titre.
  */
 function SongTile({ song, onPick }) {
-  const candidates = useMemo(() => getTileCandidates(song), [song]);
-  const [index, setIndex] = useState(0);
   const slug = getPublicSlug(song);
-  const src = candidates[index];
-
-  const next = () => setIndex((i) => i + 1);
-  const onLoad = (event) => {
-    const width = event.currentTarget.naturalWidth || 0;
-    if (width > 0 && width < YT_PLACEHOLDER_MAX_WIDTH) next(); // vignette grise de YouTube
-  };
 
   return (
     <li>
@@ -58,18 +49,7 @@ function SongTile({ song, onPick }) {
         onClick={onPick}
         className="relative block aspect-[9/16] touch-manipulation overflow-hidden rounded-xl border border-white/10 bg-[#1b1c22] active:opacity-80"
       >
-        {src ? (
-          <img
-            key={src}
-            src={src}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            onLoad={onLoad}
-            onError={next}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : null}
+        <TileImage song={song} />
         <span
           aria-hidden="true"
           className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/50 to-transparent"

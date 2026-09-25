@@ -52,21 +52,21 @@ export function NewspaperFilled(props) {
   );
 }
 
-/** Cantar : liste musicale (trois lignes et une note). */
-export function MusicListFilled(props) {
-  return (
-    <FilledIcon {...props}>
-      <path d="M3 5.3c0-.6.5-1.1 1.1-1.1h9.3a1.1 1.1 0 1 1 0 2.2H4.1C3.5 6.4 3 5.9 3 5.3Zm0 5c0-.6.5-1.1 1.1-1.1h9.3a1.1 1.1 0 1 1 0 2.2H4.1c-.6 0-1.1-.5-1.1-1.1Zm0 5c0-.6.5-1.1 1.1-1.1h5.4a1.1 1.1 0 1 1 0 2.2H4.1c-.6 0-1.1-.5-1.1-1.1Z" />
-      <path d="M17.2 3.6a1 1 0 0 1 1.3-.9l2.8.9a1 1 0 0 1 .7.9v1.9a.8.8 0 0 1-1 .8l-1.6-.5v9.8a3.4 3.4 0 1 1-2.2-3.2Z" />
-    </FilledIcon>
-  );
-}
-
 /** Compartilhar : flèche courbe pleine, façon TikTok. */
 export function ShareArrowFilled(props) {
   return (
     <FilledIcon {...props}>
       <path d="M13.6 3.9a1 1 0 0 1 1.7-.7l6.8 6.5c.4.4.4 1.1 0 1.5l-6.8 6.5a1 1 0 0 1-1.7-.7v-3.4c-4.6.1-7.9 1.6-10.6 5.1-.3.4-.9.1-.8-.4C3.3 12 7 8.2 13.6 7.5Z" />
+    </FilledIcon>
+  );
+}
+
+/** Karaokê / Cantar : micro plein (capsule, pied et socle). */
+export function MicFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path d="M12 2a3.5 3.5 0 0 0-3.5 3.5v6a3.5 3.5 0 0 0 7 0v-6A3.5 3.5 0 0 0 12 2Z" />
+      <path d="M5.9 10.6a1 1 0 0 1 1 1 5.1 5.1 0 0 0 10.2 0 1 1 0 1 1 2 0 7.1 7.1 0 0 1-6.1 7v1.9h2.6a1 1 0 1 1 0 2H8.4a1 1 0 1 1 0-2H11v-1.9a7.1 7.1 0 0 1-6.1-7 1 1 0 0 1 1-1Z" />
     </FilledIcon>
   );
 }

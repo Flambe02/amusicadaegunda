@@ -71,11 +71,17 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
   - Indice discret « Deslize para a semana anterior », affiché tant que l'utilisateur n'a jamais glissé.
   - `prefers-reduced-motion` : le changement se fait sans animation de défilement.
 
-### 4.2 Karaokê — liste
-- En tête : carte « Música da semana » (Caipivara + titre + bouton jaune « Cantar agora ») si le karaoké de la semaine est publié. Sinon, la carte met en avant la dernière musique dont le karaoké est publié.
-- Lien « Festa na TV » vers le flux existant.
-- Liste : uniquement les musiques avec `isKaraokePublished()`, plus récentes en premier, bouton « Cantar ».
-- Icône de l'onglet : icône de paroles, pas de micro (le karaoké fonctionne sans micro).
+### 4.2 Karaokê — « O Palco » (remplace la liste, décision du 2026-09-25)
+Pas de liste : une scène (sous 768 px ; desktop inchangé). Tout le reste de l'ancienne page disparaît sur mobile (Me surpreenda, bulle « Deixe a sorte escolher », filtres, étiquettes de catégorie, pochettes génériques, recherche).
+- **En-tête** : « Karaokê » (30 px, 900), « O palco é seu » en eyebrow ; à droite, une icône télé seule (`aria-label` « Festa na TV ») vers `/festa`.
+- **Carrousel 3D horizontal** des chansons au karaokê publié (`isKaraokePublished()`), de la plus récente à la plus ancienne : cartes 9:16 d'environ 188 × 334 px, miniature du Short (même repli que la grille de recherche), titre en bas lisible par ombre de texte seulement. Carte centrale pleine taille et nette ; voisines décalées, pivotées en profondeur (perspective, `rotateY` ≈ 38°, `translateZ` négatif), atténuées (55 % puis 25 %) ; au-delà, invisibles. Navigation : glissement horizontal (seuil ≈ 30 px, jamais depuis les 24 px du bord gauche — geste retour d'iOS), tap sur une carte latérale, flèches (boutons et clavier). Transition ≈ 550 ms, courbe douce. Tap sur la carte centrale = Cantar.
+- **Effets** : projecteur jaune (cône) sur la carte centrale, qui oscille lentement ; halo diffus de la couleur dominante de la miniature centrale (échantillonnée sur un canvas, repli neutre sombre), en fondu ; petit égaliseur animé sur la carte centrale.
+- **Sous le carrousel** : mois et année (eyebrow), titre (24 px, 900), premier vers des LRC existantes qui se remplit en jaune en boucle (lecture seule, moteur intact). Sans paroles, la ligne n'existe pas.
+- **En bas** : gros bouton micro jaune rond (≈ 76 px, seul jaune plein de l'écran) avec une onde qui pulse doucement ; il ouvre la lecture karaokê de la chanson centrale. Flèches précédent / suivant de part et d'autre.
+- **Mouvement réduit** : pas de rotation 3D (cartes simplement décalées), pas d'oscillation, pas d'égaliseur, pas de pulsation, vers en jaune fixe.
+- **État dégradé** (données karaokê indisponibles, repli `songs.json` sans LRC) : la chanson de la semaine seule au centre (sa carte mène au feed sur son Short), « O karaokê volta já » à la place du micro. Jamais d'écran vide.
+- **Accessibilité** : le carrousel est une liste d'éléments focusables ; la chanson centrale est annoncée à chaque changement ; cibles ≥ 44 px.
+- **Icônes** : onglet Karaokê de la barre = micro (plein et blanc actif, contour sinon) ; « Cantar » de la colonne (feed et Catálogo) = le même micro. *(Remplace « icône de paroles, pas de micro » : le karaokê fonctionne toujours sans micro.)*
 
 ### 4.3 Karaokê — lecture (restyle uniquement)
 - Ligne en cours : remplissage jaune mot à mot + petite balle jaune, comme la signature décrite dans `DESIGN.md`.
@@ -170,7 +176,7 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 
 **Étape 5 — Início, ligne de karaoké synchronisée** (conditionnée à `isKaraokePublished()`).
 
-**Étape 6 — Karaokê liste.**
+**Étape 6 — Karaokê « O Palco »** (§4.2, remplace la liste).
 
 **Étape 7 — Karaokê lecture (restyle).**
 

@@ -8,7 +8,7 @@ import { useShareSong } from './useShareSong';
 import {
   HeadphonesFilled,
   LyricsSheetFilled,
-  MusicListFilled,
+  MicFilled,
   NewspaperFilled,
   ShareArrowFilled,
   SpeakerFilled,
@@ -107,7 +107,7 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
           <RailLink
             label="Cantar"
             to={`/karaoke?musica=${encodeURIComponent(slug)}`}
-            icon={MusicListFilled}
+            icon={MicFilled}
             ariaLabel={`Cantar ${song.title} no karaokê`}
           />
         ) : null}

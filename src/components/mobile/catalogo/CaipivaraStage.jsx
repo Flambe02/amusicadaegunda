@@ -9,7 +9,7 @@ import { formatTime, getPublicSlug } from '@/components/mobile/feed/feedMedia';
 import {
   ClipFilled,
   LyricsSheetFilled,
-  MusicListFilled,
+  MicFilled,
   NewspaperFilled,
   ShareArrowFilled,
 } from '@/components/mobile/icons/FilledIcons';
@@ -423,7 +423,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
               <RailLink
                 label="Cantar"
                 to={`/karaoke?musica=${encodeURIComponent(slug)}`}
-                icon={MusicListFilled}
+                icon={MicFilled}
                 ariaLabel={`Cantar ${current.title} no karaokê`}
               />
             ) : null}

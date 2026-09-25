@@ -131,7 +131,7 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 1. **Étape 10 — Recherche** : panneau global monté dans `Layout`, ouvert par « Buscar » depuis n'importe quel écran (le clavier s'ouvre) ; contenu selon la section B (« Recherche »).
 2. **Étape 11 — Menu simplifié** (section D, décision G.6).
 3. **Étape 5 — Karaokê sur le Short** : ligne de karaokê sur la vidéo ; si elle est désynchronisée, ne pas l'afficher.
-4. **Étape 6 — Liste karaokê + état dégradé** (« O karaokê volta já » + lien vers le Short).
+4. **Étape 6 — Karaokê « O Palco »** (carrousel 3D, micro, état dégradé « O karaokê volta já ») : voir spec §4.2, qui remplace la liste (décision du 2026-09-25). Onglet Karaokê et « Cantar » = micro.
 5. **Étape 7 — Lecteur karaokê restylé.**
 6. **Étape 12 — Vérification finale.**
 
