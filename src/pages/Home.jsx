@@ -1365,6 +1365,9 @@ export default function Home() {
           <MobileFeed
             songs={mobileFeedSongs}
             startSlug={startSlug}
+            // Calque « Ouvir » : /?ouvir=<slug>, une entrée d'historique (Retour le ferme).
+            ouvirSlug={searchParams.get('ouvir')}
+            onOpenOuvir={(slug) => setSearchParams({ ouvir: slug })}
             onStartApplied={() =>
               setSearchParams(
                 (params) => {

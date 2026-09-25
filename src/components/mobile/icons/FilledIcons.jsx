@@ -71,6 +71,15 @@ export function ShareArrowFilled(props) {
   );
 }
 
+/** Ouvir : casque, arceau et deux écouteurs pleins. */
+export function HeadphonesFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path d="M12 3a9 9 0 0 0-9 9v5.5A2.5 2.5 0 0 0 5.5 20H7a1.2 1.2 0 0 0 1.2-1.2v-5.1A1.2 1.2 0 0 0 7 12.5H5.1a6.9 6.9 0 0 1 13.8 0H17a1.2 1.2 0 0 0-1.2 1.2v5.1A1.2 1.2 0 0 0 17 20h1.5a2.5 2.5 0 0 0 2.5-2.5V12a9 9 0 0 0-9-9Z" />
+    </FilledIcon>
+  );
+}
+
 /** Clipe : écran vidéo arrondi, triangle de lecture évidé. */
 export function ClipFilled(props) {
   return (

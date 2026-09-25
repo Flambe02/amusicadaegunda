@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChevronUp, Play, VolumeX } from 'lucide-react';
 import FeedPoster from './FeedPoster';
 import FeedOverlay from './FeedOverlay';
@@ -6,6 +6,11 @@ import { useShortPlayer } from './useShortPlayer';
 import { CAIPIVARA_STAGE_IMAGE, getPublicSlug, getShortVideoId } from './feedMedia';
 import { deriveSongSlug } from '@/lib/learnContent';
 import { TEXT_SHADOW } from './feedStyles';
+import CaipivaraStage from '@/components/mobile/catalogo/CaipivaraStage';
+import { getSongAudioId } from '@/components/mobile/catalogo/stageDraw';
+
+// Sous l'en-tête transparent de l'Início (52 px + zone de sécurité).
+const HEADER_OFFSET = 'pt-[calc(max(env(safe-area-inset-top),0.35rem)+3.75rem)]';
 
 // Agrandissement de l'iframe au-delà du cadre « cover ». À 1,0 (décision du
 // 2026-09-25), la vidéo a exactement le cadrage de la miniature qui la précède.
@@ -64,7 +69,15 @@ function isActivatableTarget(target) {
  * Sans aucune chanson (Supabase ET repli statique indisponibles), la scène Caipivara
  * s'affiche : jamais d'écran vide ni de message « nenhuma música ».
  */
-export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyrics, startSlug = null, onStartApplied }) {
+export default function MobileFeed({
+  songs = [],
+  buildArtwork = null,
+  onShowLyrics,
+  startSlug = null,
+  onStartApplied,
+  ouvirSlug = null,
+  onOpenOuvir,
+}) {
   const [index, setIndex] = useState(0);
 
   // Ouverture sur une chanson précise (« Ouvir » depuis Catálogo, /?musica=<slug>) :
@@ -105,8 +118,20 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
   const newer = safeIndex > 0 ? songs[safeIndex - 1] : null;
   const older = safeIndex + 1 < songs.length ? songs[safeIndex + 1] : null;
 
-  const videoId = getShortVideoId(current);
-  const player = useShortPlayer({ videoId, canLoad: firstPosterSettled, mountRef });
+  // Calque « Ouvir » (/?ouvir=<slug>, addendum H.9) : le Catálogo s'ouvre au-dessus du
+  // feed et emprunte SON lecteur — même iframe, jamais rechargée —, qui joue alors la
+  // chanson complète (`youtube_url`) sans boucle. À la fermeture (Retour, Início, Clipe),
+  // le même lecteur recharge le Short de la diapositive, son conservé.
+  const ouvirSong = useMemo(
+    () => (ouvirSlug ? songs.find((song) => getPublicSlug(song) === ouvirSlug || deriveSongSlug(song) === ouvirSlug) || null : null),
+    [ouvirSlug, songs]
+  );
+  const ouvirOpen = Boolean(ouvirSong);
+  const [audioSong, setAudioSong] = useState(null); // chanson jouée dans le calque
+  useEffect(() => { setAudioSong(null); }, [ouvirSlug]);
+
+  const videoId = ouvirOpen ? getSongAudioId(audioSong || ouvirSong) : getShortVideoId(current);
+  const player = useShortPlayer({ videoId, canLoad: firstPosterSettled, mountRef, loop: !ouvirOpen });
   const { phase, isMuted, isPaused, toggleSound, togglePause } = player;
   const videoVisible = phase === 'playing';
   // « Toque para ouvir » : seulement quand le lecteur est RÉELLEMENT muet — à l'arrivée,
@@ -244,12 +269,24 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
     event.preventDefault();
   };
 
+  /** Ouvir : la chanson complète est chargée ET le son lancé ici, dans le geste (iOS). */
+  const openOuvir = () => {
+    const id = getSongAudioId(current);
+    const slug = getPublicSlug(current);
+    if (!id || !slug) return;
+    interactedRef.current = true;
+    if (!player.loadNow(id)) player.unmute(); // lecteur pas prêt : « Toque para ouvir » dans le calque
+    onOpenOuvir?.(slug);
+  };
+  const canOuvir = Boolean(onOpenOuvir && getSongAudioId(current) && getPublicSlug(current));
+
   // ── Clavier ──────────────────────────────────────────────────────────────────────
   // Flèche bas = semaine précédente, flèche haut = plus récente ; Espace = pause /
   // lecture ; flèches gauche / droite = -5 s / +5 s.
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.altKey || event.ctrlKey || event.metaKey || isTypingTarget(event.target)) return;
+      if (ouvirOpen) return; // le calque Ouvir recouvre le feed
       if (document.querySelector('[role="dialog"]')) return; // Letra ouverte, menu…
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         if (go(event.key === 'ArrowDown' ? +1 : -1)) event.preventDefault();
@@ -285,8 +322,11 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
   }
 
   return (
+    <>
     <section
       ref={stageRef}
+      // Sous le calque Ouvir, le feed est inerte (ni focus, ni lecteur d'écran).
+      {...(ouvirOpen ? { inert: '' } : null)}
       className="relative h-full w-full select-none overflow-hidden bg-app-black [container-type:size] [touch-action:pan-x_pinch-zoom]"
       aria-label={current.title}
       data-feed-phase={phase}
@@ -378,6 +418,7 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
             player={player}
             isFirst={safeIndex === 0}
             onShowLyrics={() => onShowLyrics?.(current)}
+            onOuvir={canOuvir ? openOuvir : undefined}
           />
 
           {older && !swipedEver ? <SwipeHint /> : null}
@@ -401,6 +442,20 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
 
       <p className="sr-only" aria-live="polite">{announce}</p>
     </section>
+
+    {ouvirSong ? (
+      <div data-ouvir className={`absolute inset-0 z-30 flex flex-col bg-app-black ${HEADER_OFFSET}`}>
+        <CaipivaraStage
+          key={ouvirSlug}
+          songs={songs}
+          player={player}
+          initialSong={ouvirSong}
+          onSongChange={setAudioSong}
+          ribbonTop="top-[calc(max(env(safe-area-inset-top),0.35rem)+4rem)]"
+        />
+      </div>
+    ) : null}
+    </>
   );
 }
 

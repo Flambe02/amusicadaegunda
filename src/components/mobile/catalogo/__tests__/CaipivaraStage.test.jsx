@@ -218,6 +218,46 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(caipivara()).toHaveAttribute('data-stage', 'idle');
   });
 
+  it('Ouvir layer: borrows the feed player, starts on the given song, reports each song change', () => {
+    const external = {
+      ...player, isSoundOn: true, isMuted: false, isPlaying: true,
+      loadNow: vi.fn(() => true), play: vi.fn(), unmute: vi.fn(),
+    };
+    const onSongChange = vi.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <CaipivaraStage songs={SONGS} player={external} initialSong={SONGS[0]} onSongChange={onSongChange} />
+      </MemoryRouter>
+    );
+    // Son propre lecteur reste inerte : aucun videoId, rien à charger, pas de conteneur.
+    expect(hookCalls.every((call) => call.videoId === null && call.canLoad === false)).toBe(true);
+    expect(container.querySelector('[data-audio-player]')).toBeNull();
+    expect(screen.getByText(SONGS[0].title)).toBeInTheDocument();
+    expect(caipivara()).toHaveAttribute('data-stage', 'dancing');
+    expect(onSongChange).toHaveBeenLastCalledWith(SONGS[0]);
+    expect(screen.queryByRole('heading', { level: 1 })).toBeNull(); // le h1 reste celui du feed
+
+    fireEvent.click(screen.getByRole('button', { name: 'Outra música' }));
+    expect(external.loadNow).toHaveBeenCalledTimes(1);
+    const next = songOfVideo(external.loadNow.mock.calls[0][0]);
+    expect(next.id).not.toBe(SONGS[0].id);
+    expect(onSongChange).toHaveBeenLastCalledWith(next);
+  });
+
+  it('Ouvir layer: « Toque para ouvir » (the only yellow) when the sound could not start', () => {
+    const external = { ...player, isMuted: true, isSoundOn: false, play: vi.fn(), unmute: vi.fn() };
+    render(
+      <MemoryRouter>
+        <CaipivaraStage songs={SONGS} player={external} initialSong={SONGS[0]} onSongChange={vi.fn()} />
+      </MemoryRouter>
+    );
+    const toque = screen.getByRole('button', { name: /toque para ouvir/i });
+    expect(toque.className).toContain('bg-app-yellow');
+    fireEvent.click(toque);
+    expect(external.play).toHaveBeenCalled();
+    expect(external.unmute).toHaveBeenCalled();
+  });
+
   it('right rail like the feed: Letra, História, Cantar (if published), Compartilhar, Clipe → feed', () => {
     const karaoke = { ...SONGS[0], lrc_content: '[00:01.00]Chove', karaoke_published: true };
     renderStage([karaoke]);

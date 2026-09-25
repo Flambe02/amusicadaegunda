@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pause, Play, SkipForward } from 'lucide-react';
+import { Pause, Play, SkipForward, VolumeX } from 'lucide-react';
 import { useShortPlayer } from '@/components/mobile/feed/useShortPlayer';
 import FeedStorySheet from '@/components/mobile/feed/FeedStorySheet';
 import WeekRibbon from '@/components/mobile/feed/WeekRibbon';
@@ -124,10 +124,18 @@ function SongProgress({ player }) {
  * (le bouton ▶ le relance). Pas de changement de page.
  *
  * Mouvement réduit : image fixe, la musique part directement.
+ *
+ * Calque « Ouvir » du feed (addendum H.9) : `player` est alors le lecteur du feed, qui
+ * joue déjà `initialSong` (chargée dans le geste du tap sur Ouvir) — la scène ne crée
+ * pas le sien et signale chaque changement de chanson par `onSongChange`, pour que le
+ * feed garde son `videoId` aligné (pas de rechargement). Si le son n'a pas pu partir
+ * (lecteur pas prêt, ouverture directe de l'adresse), « Toque para ouvir » le relance.
+ * `ribbonTop` : position du ruban (sous l'en-tête transparent de l'Início).
  */
-export default function CaipivaraStage({ songs = [] }) {
+export default function CaipivaraStage({ songs = [], player: externalPlayer = null, initialSong = null, onSongChange, ribbonTop = 'top-3' }) {
   const reduceMotion = prefersReducedMotion();
-  const [current, setCurrent] = useState(null); // chanson jouée (après le premier tap)
+  const external = Boolean(externalPlayer);
+  const [current, setCurrent] = useState(initialSong); // chanson jouée (après le premier tap)
   const [queued, setQueued] = useState(null); // tirée d'avance, en muet dans le lecteur
   const [animation, setAnimation] = useState(null);
   const [warmAnimations, setWarmAnimations] = useState(false);
@@ -139,7 +147,7 @@ export default function CaipivaraStage({ songs = [] }) {
   const storyButtonRef = useRef(null);
   const busyRef = useRef(false);
   const lastAnimationRef = useRef(null);
-  const currentRef = useRef(null);
+  const currentRef = useRef(initialSong);
   const pendingStartRef = useRef(false);
   const videoRefs = useRef({});
   const danceRef = useRef(null);
@@ -154,14 +162,21 @@ export default function CaipivaraStage({ songs = [] }) {
   }, [songs, queued, current]);
 
   const playing = current || queued;
-  const player = useShortPlayer({
-    videoId: getSongAudioId(playing),
-    canLoad: Boolean(playing),
+  // Toujours appelé (règle des hooks) ; inerte quand la scène emprunte le lecteur du feed.
+  const ownPlayer = useShortPlayer({
+    videoId: external ? null : getSongAudioId(playing),
+    canLoad: !external && Boolean(playing),
     mountRef,
     loop: false,
   });
+  const player = externalPlayer || ownPlayer;
   const playerRef = useRef(player);
   playerRef.current = player;
+
+  // Calque Ouvir : le feed suit la chanson jouée (il a déjà chargé la vidéo dans le geste).
+  useEffect(() => {
+    if (external && current) onSongChange?.(current);
+  }, [external, current, onSongChange]);
 
   // Préchargement des trois animations quand le navigateur est inactif.
   useEffect(() => {
@@ -280,18 +295,24 @@ export default function CaipivaraStage({ songs = [] }) {
 
   return (
     <div className="relative flex h-full w-full flex-col items-center overflow-hidden bg-app-black text-white [container-type:size]">
-      <h1 className="sr-only">Catálogo de músicas</h1>
+      {/* Dans le calque Ouvir, le h1 de la page reste le titre du feed. */}
+      {external
+        ? <h2 className="sr-only">Catálogo de músicas</h2>
+        : <h1 className="sr-only">Catálogo de músicas</h1>}
 
-      {/* Lecteur YouTube invisible : on n'en garde que le son. */}
-      <div
-        ref={mountRef}
-        aria-hidden="true"
-        data-audio-player
-        className="pointer-events-none fixed left-0 top-0 -z-10 h-[200px] w-[200px] opacity-0"
-      />
+      {/* Lecteur YouTube invisible : on n'en garde que le son. Dans le calque Ouvir, c'est
+          celui du feed, déjà monté sous le calque. */}
+      {external ? null : (
+        <div
+          ref={mountRef}
+          aria-hidden="true"
+          data-audio-player
+          className="pointer-events-none fixed left-0 top-0 -z-10 h-[200px] w-[200px] opacity-0"
+        />
+      )}
 
       {/* Ruban éphémère du feed, à chaque nouvelle chanson (rien avant le premier tap). */}
-      <WeekRibbon song={current} phase={player.phase} topClass="top-3" />
+      <WeekRibbon song={current} phase={player.phase} topClass={ribbonTop} />
 
       <div className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center pt-4">
         <button
@@ -362,7 +383,21 @@ export default function CaipivaraStage({ songs = [] }) {
           </div>
         </button>
 
-        {current && !retapUsed ? (
+        {/* Calque Ouvir : si le son n'a pas pu partir dans le geste, « Toque para ouvir »
+            (seul jaune de la zone) le relance. */}
+        {external && current && player.isMuted ? (
+          <button
+            type="button"
+            onClick={() => {
+              player.play();
+              player.unmute();
+            }}
+            className="mt-2 inline-flex h-12 touch-manipulation items-center gap-2 rounded-full bg-app-yellow px-6 text-base font-black text-[#171505] active:opacity-80"
+          >
+            <VolumeX className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+            Toque para ouvir
+          </button>
+        ) : current && !retapUsed ? (
           <p className="mt-1 text-sm font-medium text-white/60">Ou toque em mim</p>
         ) : null}
 

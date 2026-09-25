@@ -144,6 +144,10 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 ### H.9 Feed — Som et Ouvir (2026-09-25, remplace H.3.2)
 1. **Som** sort de la colonne : petite icône haut-parleur en haut à droite de la vidéo, à l'emplacement de l'ancien bouton ⓘ, visible seulement une fois le son activé.
 2. **Colonne du feed**, de haut en bas : Ouvir (seulement si `youtube_url`), Letra, História, Cantar, Compartilhar. **Colonne du Catálogo** (page ou calque) : Letra, História, Cantar, Compartilhar, Clipe.
+3. **Ouvir = calque, pas changement de page.** Au tap (icône casque), dans le geste : le lecteur du feed charge `youtube_url` et rétablit le son (même iframe, jamais rechargée), puis l'adresse devient `/?ouvir=<slug>` (une entrée d'historique). La scène du Catálogo s'affiche au-dessus du feed (devenu inerte) et emprunte ce lecteur, sans boucle : Caipivara qui danse, pause, Outra, colonne, ruban. La pastille Catálogo de la nav est active.
+4. **Fermeture** : Retour, onglet Início ou Clipe (`/?musica=<slug>`). Le même lecteur recharge le Short de la diapositive (ou de la chanson du Clipe), son conservé.
+5. **Repli** : si le son n'a pas pu partir (lecteur pas prêt, ouverture directe de l'adresse), le calque affiche « Toque para ouvir » (jaune, seul jaune de la zone) sous la Caipivara.
+6. La page `/catalogo` (pastille de la nav) garde son propre lecteur. Quitter l'Início vers une autre page coupe la musique, comme avant.
 
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.

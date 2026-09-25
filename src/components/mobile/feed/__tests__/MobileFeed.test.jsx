@@ -537,6 +537,64 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(onStartApplied).toHaveBeenCalledTimes(3);
   });
 
+  describe('Ouvir — the Catálogo layer on the same player (addendum H.9)', () => {
+    const renderWith = (props) => (
+      <MemoryRouter>
+        <MobileFeed songs={SONGS} onShowLyrics={vi.fn()} {...props} />
+      </MemoryRouter>
+    );
+
+    async function loadedWith(props) {
+      const utils = render(renderWith(props));
+      const img = stage(utils.container).querySelector(':scope > div > div:last-child img');
+      Object.defineProperty(img, 'naturalWidth', { value: 576, configurable: true });
+      fireEvent.load(img);
+      await flush();
+      players[0].ready();
+      players[0].play();
+      return utils;
+    }
+
+    it('rail starts with Ouvir only when the song has a youtube_url, and never shows Clipe', async () => {
+      const { rerender } = await loadedWith({ onOpenOuvir: vi.fn() });
+      const rail = document.querySelector('section[data-feed-index] [data-rail]');
+      expect([...rail.children].map((el) => el.textContent)).toEqual(['Ouvir', 'Letra', 'Compartilhar']);
+      rerender(renderWith({ songs: [{ ...WEEK, youtube_url: '' }], onOpenOuvir: vi.fn() }));
+      expect(screen.queryByRole('button', { name: /ouvir a música completa/i })).toBeNull();
+    });
+
+    it('the tap loads the full track AND unmutes inside the gesture, on the same player, then opens /?ouvir=', async () => {
+      const onOpenOuvir = vi.fn();
+      await loadedWith({ onOpenOuvir });
+      const player = players[0];
+      player.calls.length = 0;
+      fireEvent.click(screen.getByRole('button', { name: /ouvir a música completa/i }));
+      // Dans le même geste, avant tout rendu : chargement + son.
+      expect(player.calls.slice(0, 2)).toEqual(['loadVideoById:ZZZZZZZZZZZ', 'unMute']);
+      expect(onOpenOuvir).toHaveBeenCalledWith('semana-tres');
+    });
+
+    it('the layer borrows the feed player: no second iframe, no reload, feed inert; closing reloads the Short', async () => {
+      const { container, rerender } = await loadedWith({ onOpenOuvir: vi.fn() });
+      const player = players[0];
+      fireEvent.click(screen.getByRole('button', { name: /ouvir a música completa/i }));
+      rerender(renderWith({ onOpenOuvir: vi.fn(), ouvirSlug: 'semana-tres' }));
+      await flush();
+      expect(container.querySelector('[data-ouvir]')).not.toBeNull();
+      expect(players).toHaveLength(1);
+      expect(container.querySelectorAll('iframe')).toHaveLength(1);
+      expect(player.calls.filter((c) => c === 'loadVideoById:ZZZZZZZZZZZ')).toHaveLength(1); // pas de rechargement
+      expect(stage(container)).toHaveAttribute('inert');
+      expect(container.querySelector('[data-ouvir] [data-rail]').textContent).toContain('Clipe');
+
+      rerender(renderWith({ onOpenOuvir: vi.fn(), ouvirSlug: null })); // Retour
+      await flush();
+      expect(container.querySelector('[data-ouvir]')).toBeNull();
+      expect(stage(container)).not.toHaveAttribute('inert');
+      expect(player.calls[player.calls.length - 1]).toBe('loadVideoById:AAAAAAAAAAA');
+    });
+  });
+
   it('frames the video exactly like the thumbnail: cover, no extra zoom', () => {
     const { container } = renderFeed();
     const mount = stage(container).querySelector('[style*="100cqw"]');

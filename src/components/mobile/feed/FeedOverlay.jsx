@@ -6,6 +6,7 @@ import FeedStorySheet from './FeedStorySheet';
 import { Rail, RailButton, RailLink } from './FeedRail';
 import { useShareSong } from './useShareSong';
 import {
+  HeadphonesFilled,
   LyricsSheetFilled,
   MusicListFilled,
   NewspaperFilled,
@@ -28,7 +29,7 @@ const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
  * Aucun second mouvement ne concurrence la vidéo : pas d'avatar animé ni de bulle
  * (retirés après test sur iPhone, 2026-09-25).
  */
-export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics }) {
+export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics, onOuvir }) {
   const slug = getPublicSlug(song);
   const canSing = isKaraokePublished(song) && Boolean(slug);
   const TitleTag = isFirst ? 'h1' : 'h2';
@@ -84,9 +85,14 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
         </button>
       ) : null}
 
-      {/* Colonne droite, de haut en bas : Letra, História, Cantar, Compartilhar.
+      {/* Colonne droite, de haut en bas : Ouvir, Letra, História, Cantar, Compartilhar.
           Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
       <Rail className="absolute bottom-6 right-1.5">
+        {/* Ouvir : la chanson complète dans le Catálogo (calque), son lancé dans ce geste.
+            Seulement si la chanson a un lien youtube_url lisible (onOuvir fourni). */}
+        {onOuvir ? (
+          <RailButton label="Ouvir" onClick={onOuvir} icon={HeadphonesFilled} ariaLabel={`Ouvir a música completa de ${song.title}`} />
+        ) : null}
         <RailButton label="Letra" onClick={onShowLyrics} icon={LyricsSheetFilled} ariaLabel={`Ver a letra de ${song.title}`} />
         {hasStory ? (
           <RailButton

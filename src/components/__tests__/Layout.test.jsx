@@ -188,6 +188,12 @@ describe('Layout — shell mobile', () => {
     }
   );
 
+  it('lights the Catálogo pill while the feed shows the Ouvir layer (/?ouvir=<slug>)', () => {
+    renderAt('/?ouvir=ta-chovendo-de-novo');
+    const active = within(mobileNav()).getAllByRole('link').filter((a) => a.getAttribute('aria-current') === 'page');
+    expect(active.map((a) => a.getAttribute('aria-label'))).toEqual(['Catálogo']);
+  });
+
   it.each(['/blog', '/sobre', '/festa', '/apprendre'])(
     'lights the Menu tab (no other tab) on %s',
     (path) => {

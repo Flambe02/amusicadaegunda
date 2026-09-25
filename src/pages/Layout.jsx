@@ -123,8 +123,9 @@ function SidebarCountdown() {
 // (il ouvre un panneau, pas une page). Tout ce qui parcourt les musiques (le catalogue, les fiches /musica/…, les
 // catégories, l'arquivo) allume « Catálogo » ; les pages atteintes depuis la feuille
 // « Menu » allument « Menu ».
-function getMobileActiveTab(pathname) {
-  if (pathname === '/') return 'inicio';
+function getMobileActiveTab(pathname, search = '') {
+  // Calque « Ouvir » du feed (/?ouvir=<slug>) : c'est le Catálogo qui est à l'écran.
+  if (pathname === '/') return new URLSearchParams(search).has('ouvir') ? 'catalogo' : 'inicio';
   if (pathname === '/karaoke') return 'karaoke';
   if (
     pathname === '/catalogo' ||
@@ -360,7 +361,7 @@ export default function Layout({ children }) {
 
         <AppBottomNav
           items={mobileNavItems}
-          activeValue={getMobileActiveTab(location.pathname)}
+          activeValue={getMobileActiveTab(location.pathname, location.search)}
         />
 
         {searchRequested ? (
