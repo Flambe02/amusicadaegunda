@@ -10,13 +10,13 @@ import {
   Gift,
   Info,
   FileText,
-  LayoutGrid,
   Menu as MenuLines,
   Mic,
   Search,
   Tv
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
+import { HomeFilled, MenuFilled, MusicListFilled, SearchFilled } from '@/components/mobile/icons/FilledIcons';
 import { ShellContext } from '@/components/mobile/ShellContext';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
@@ -117,8 +117,9 @@ function SidebarCountdown() {
   );
 }
 
-// Onglets de la barre mobile (addendum catálogo, étape 8) : inicio, catalogo, karaoke,
-// menu. Tout ce qui parcourt les musiques (le catalogue, les fiches /musica/…, les
+// Onglets de la barre mobile (addendum catálogo §A, révisé le 2026-09-25) : inicio,
+// karaoke, catalogo (pastille centrale), buscar, menu. « Buscar » n'est jamais actif
+// (il ouvrira un panneau, pas une page). Tout ce qui parcourt les musiques (le catalogue, les fiches /musica/…, les
 // catégories, l'arquivo) allume « Catálogo » ; les pages atteintes depuis la feuille
 // « Menu » allument « Menu ».
 function getMobileActiveTab(pathname) {
@@ -215,15 +216,19 @@ export default function Layout({ children }) {
   ];
 
   const mobileNavItems = [
-    { value: 'inicio', label: 'Início', href: '/', icon: Home },
-    // Pesquisa et Roda vivent désormais dans Catálogo (grille de 4 carrés).
-    { value: 'catalogo', label: 'Catálogo', href: '/catalogo', icon: LayoutGrid },
+    { value: 'inicio', label: 'Início', href: '/', icon: Home, activeIcon: HomeFilled },
     // Icône de paroles, pas de micro : le karaokê fonctionne sans microphone.
-    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: ListMusic },
+    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: ListMusic, activeIcon: MusicListFilled },
+    // Au centre, la Caipivara dans sa pastille jaune : le seul jaune de la barre.
+    { value: 'catalogo', label: 'Catálogo', href: '/catalogo', variant: 'pill', image: '/images/caipivara-3d-head-128.webp' },
+    // Étape 10 : ouvrira le panneau de recherche depuis n'importe quel écran. D'ici là,
+    // mène au Catálogo (décision du 2026-09-25).
+    { value: 'buscar', label: 'Buscar', href: '/catalogo', icon: Search, activeIcon: SearchFilled },
     {
       value: 'menu',
       label: 'Menu',
       icon: MenuLines,
+      activeIcon: MenuFilled,
       menuItems: [
         { value: 'inicio', label: 'Início', href: '/', icon: Home },
         {

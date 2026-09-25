@@ -70,3 +70,34 @@ export function ShareArrowFilled(props) {
     </FilledIcon>
   );
 }
+
+/** Nav — Início actif : maison pleine, porte évidée. */
+export function HomeFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path
+        fillRule="evenodd"
+        d="M10.6 2.6a2.2 2.2 0 0 1 2.8 0l7 5.8c.4.4.6.9.6 1.4v9.4a2.3 2.3 0 0 1-2.3 2.3h-3.4a1 1 0 0 1-1-1v-5.2a1 1 0 0 0-1-1h-2.6a1 1 0 0 0-1 1v5.2a1 1 0 0 1-1 1H5.3A2.3 2.3 0 0 1 3 19.2V9.8c0-.5.2-1 .6-1.4Z"
+      />
+    </FilledIcon>
+  );
+}
+
+/** Nav — Buscar actif : loupe au trait épais (une loupe « pleine » ne se lit pas). */
+export function SearchFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <circle cx="10.5" cy="10.5" r="6.3" fill="none" stroke="currentColor" strokeWidth="3" />
+      <path d="m15.4 15.4 5 5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </FilledIcon>
+  );
+}
+
+/** Nav — Menu actif : trois traits épais. */
+export function MenuFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </FilledIcon>
+  );
+}

@@ -1,4 +1,4 @@
-# Addendum — Spec mobile : navigation à 4 onglets, page Catálogo, Menu simplifié
+# Addendum — Spec mobile : navigation, page Catálogo, Menu simplifié
 
 Complète `spec-mobile-redesign.md`. En cas de conflit, cet addendum prévaut sur les sections 4.4, 4.5, 4.6 et sur les étapes 8, 9 et 10.
 Référence visuelle : artboard « Catálogo » du canvas « A Música da Segunda — Mobile Caipivara ».
@@ -6,14 +6,18 @@ Les étapes 4b à 7 de la spec restent inchangées.
 
 ---
 
-## A. Barre de navigation : 4 onglets
+## A. Barre de navigation : 5 éléments, façon TikTok
 
-- Ordre : **Início**, **Catálogo**, **Karaokê**, **Menu**.
-- Pesquisa et Roda disparaissent comme onglets : leurs fonctions sont regroupées dans Catálogo.
-- Icônes : Início (maison), Catálogo (grille de 4 carrés), Karaokê (icône paroles actuelle), Menu (trois traits, à la place du « i »).
-- Le bouton « i » du header de l'Início est supprimé (doublon du Menu). Le header garde la Caipivara (logo fixe), le nom et le chip de la semaine.
-- Les routes existantes de Pesquisa et Roda redirigent vers `/catalogo` (pas de lien mort). `/musica` reste accessible et indexable.
-- Mettre à jour la section navigation de `DESIGN.md` et les tests de `Layout`.
+*Révisé le 2026-09-25 (remplace la barre à 4 onglets de l'étape 8).*
+
+- Ordre : **Início**, **Karaokê**, **[Caipivara au centre]**, **Buscar**, **Menu**.
+- Fond noir pur, filet supérieur très discret (1 px, blanc à 10 %), pas d'ombre ni de flou.
+- Onglet actif : icône pleine blanche + libellé en gras. Inactifs : icône en contour, blanc à 60 %. Plus de jaune sur l'onglet actif.
+- Au centre : la Caipivara (visage) dans une pastille jaune arrondie d'environ 46 × 34 px, sans libellé, `aria-label` « Catálogo ». Elle ouvre `/catalogo`. C'est le seul jaune de la barre. Active (léger contour blanc) sur `/catalogo` et les pages qui parcourent les musiques (`/musica`, fiches, catégories, arquivo).
+- « Buscar » ouvre directement le panneau de recherche de l'étape 10, depuis n'importe quel écran. En attendant l'étape 10, il mène à `/catalogo` (décision du 2026-09-25). Il n'est jamais affiché comme actif.
+- Pesquisa et Roda ne sont plus des onglets. Leurs routes redirigent vers `/catalogo` sous 768 px (pas de lien mort). `/musica` reste accessible et indexable.
+- Le bouton « i » du header de l'Início est supprimé (doublon du Menu). Le header garde la Caipivara (logo fixe) et le nom.
+- Section navigation de `DESIGN.md` et tests de `Layout` à jour.
 
 ## B. Page Catálogo (`/catalogo`) — la scène de la Caipivara
 
@@ -23,7 +27,7 @@ Les étapes 4b à 7 de la spec restent inchangées.
 - Fond Stage Black, un seul halo jaune doux derrière la Caipivara, une ombre au sol sous elle.
 - La Caipivara en pied, grande et centrée (≈ 250 px de large sur 390 px d'écran), jouant la boucle `caipivara-idle` en continu.
 - Sous elle, une seule ligne façon sous-titre (≈ 20 px, 800) : « Toque em mim e eu escolho uma música pra você. »
-- En bas, au-dessus de la nav : une barre de recherche en verre (≈ 50 px de haut, pleine largeur moins 16 px de marge) : icône loupe + « Buscar música, tema ou mês ».
+- ~~Barre de recherche en bas de la scène~~ — *supprimée le 2026-09-25 : l'onglet « Buscar » de la nav suffit.*
 - `h1` visuellement masqué : « Catálogo de músicas ».
 
 **Tap sur la Caipivara (toute sa surface est un bouton, avec `aria-label`)** — *révisé le 2026-09-25 : c'est la musique qui se lance, pas la vidéo (principe de la Roda). L'étape « Que tal / Ouvir / Outra » est supprimée ; pas de changement de page.*
@@ -38,7 +42,7 @@ Les étapes 4b à 7 de la spec restent inchangées.
 5. Nouveau tap = nouvelle animation + nouvelle chanson. Taps répétés pendant une animation : ignorés.
 6. Seule la coquille mobile de `Layout` monte la scène (un seul lecteur audio). La Roda desktop est inchangée.
 
-**Recherche (tap sur la barre du bas) :** un panneau monte du bas (≈ 94 % de la hauteur), fond #111217, coins 26 px, poignée en haut.
+**Recherche (onglet « Buscar » de la nav, depuis n'importe quel écran) :** un panneau monte du bas (≈ 94 % de la hauteur), fond #111217, coins 26 px, poignée en haut.
 - En tête : champ de recherche (titre, manchete, paroles) + « Cancelar » à droite, façon iOS. Le clavier s'ouvre directement.
 - « Por mês · année » : pastilles des seuls mois qui ont des musiques ; le mois le plus récent sélectionné par défaut (pastille blanche pleine).
 - « Por tema » : pastilles des catégories réelles.
@@ -84,7 +88,7 @@ Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 
 ## E. Nouvelles étapes (remplacent les étapes 8, 9 et 10)
 
-**Étape 8 — Navigation à 4 onglets.** Section A. Redirections Pesquisa et Roda. Suppression du bouton « i » de l'Início.
+**Étape 8 — Navigation** (4 onglets, révisée le 2026-09-25 en barre à 5 éléments façon TikTok). Section A. Redirections Pesquisa et Roda. Suppression du bouton « i » de l'Início.
 
 **Étape 9 — Catálogo, la scène.** Section B hors recherche, avec les assets de la section C.
 
@@ -96,14 +100,14 @@ Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 
 ## F. Critères d'acceptation ajoutés
 
-- [ ] La nav mobile a exactement 4 onglets, dans l'ordre Início, Catálogo, Karaokê, Menu.
+- [ ] La nav mobile a exactement 5 éléments, dans l'ordre Início, Karaokê, [Caipivara], Buscar, Menu ; la pastille est son seul jaune.
 - [ ] Les anciennes routes de Pesquisa et Roda mènent à `/catalogo`, sans erreur.
 - [ ] Sur Catálogo, seule la Caipivara bouge ; aucune liste n'est visible avant l'ouverture de la recherche.
 - [ ] Chaque tap joue une des trois animations, jamais deux fois la même à la suite, et lance tout de suite une musique différente de la précédente, avec le son (iPhone compris).
 - [ ] La Caipivara danse tant que la musique joue ; repos en pause et à la fin.
 - [ ] Aucun rectangle de vidéo n'est visible autour de la Caipivara.
 - [ ] Un seul élément jaune à l'écran à tout moment.
-- [ ] La recherche s'ouvre en un tap depuis le bas de l'écran, avec le clavier ouvert.
+- [ ] La recherche s'ouvre en un tap sur « Buscar », depuis n'importe quel écran, avec le clavier ouvert.
 - [ ] Les mois proposés sont uniquement ceux qui ont des musiques.
 - [ ] Aucune grille vide, aucun nombre en dur.
 - [ ] Avec `prefers-reduced-motion`, aucune animation ne joue et la musique part directement.

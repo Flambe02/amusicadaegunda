@@ -131,15 +131,19 @@ components:
     padding: "20px"
   nav-item-mobile:
     backgroundColor: "transparent"
-    textColor: "{colors.text-muted}"
+    textColor: "rgba(255,255,255,0.6)"
     typography: "{typography.label-nav}"
-    rounded: "12px"
     height: "48px"
   nav-item-mobile-active:
     backgroundColor: "transparent"
-    textColor: "{colors.spotlight-yellow}"
+    textColor: "{colors.text-primary}"
+  nav-catalogo-pill:
+    backgroundColor: "{colors.spotlight-yellow}"
+    rounded: "11px"
+    width: "46px"
+    height: "34px"
   bottom-nav:
-    backgroundColor: "{colors.stage-black-deep}"
+    backgroundColor: "#000000"
   tv-card:
     backgroundColor: "{colors.tv-card}"
     textColor: "{colors.text-primary}"
@@ -171,7 +175,7 @@ Type is loud and heavy, and never decorative. Headlines are system sans at weigh
 The palette is a near-black stage with a white text ramp and one yellow spotlight. Everything else is either functional (focus, destructive) or borrowed from a streaming platform.
 
 ### Primary
-- **Spotlight Yellow** (#FDE047): the single brand accent. It marks the active nav item (icon colour and indicator dot), the primary CTA fill, the karaoke line being sung, and accent metrics. It also tints the stage wash (`rgba(253,224,71,0.08–0.18)` radial gradients), text selection (28% alpha) and the scrollbar hover. On a yellow fill, text is **On-Yellow Ink** (#171505) or Stage Black, never white.
+- **Spotlight Yellow** (#FDE047): the single brand accent. It fills the Caipivara pill at the centre of the mobile nav (the bar's only yellow; active tabs are white), the tablet sidebar's active dot, the primary CTA fill, the karaoke line being sung, and accent metrics. It also tints the stage wash (`rgba(253,224,71,0.08–0.18)` radial gradients), text selection (28% alpha) and the scrollbar hover. On a yellow fill, text is **On-Yellow Ink** (#171505) or Stage Black, never white.
 - **Focus Yellow** (#FACC15): the slightly deeper yellow used only for the keyboard and remote focus ring. Keeping it separate from Spotlight Yellow lets a focused-and-active element still show the ring.
 
 ### Secondary
@@ -179,7 +183,7 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 
 ### Neutral
 - **Stage Black** (#0A0A0A): the page, karaoke and TV background.
-- **Stage Black Deep** (#050505): the deepest black, used for the opaque mobile bottom nav, the focus-ring outline and text on yellow badges.
+- **Stage Black Deep** (#050505): the deepest black, used for the focus-ring outline and text on yellow badges.
 - **Wing Charcoal** (#111111): the top of the page's vertical gradient, which fades to Stage Black.
 - **TV Card** (#14161C): the opaque card surface on TV, where blur is too expensive.
 - **Text ramp:** white at 100% (headings, active labels), 68–72% (secondary copy), 42–55% (muted meta, eyebrows) and 30% (footnotes).
@@ -211,7 +215,7 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 - **Title** (600–700, 1–1.125rem): song titles in lists, card titles and sidebar labels.
 - **Body** (400, 0.875rem with 1rem/1.75 for lead copy): descriptions and lyrics context, at 62–72% white and max-w-3xl.
 - **Label, eyebrow** (500, 11px, 0.22–0.28em tracking, uppercase, 42–68% white): badges, section kickers and metric captions.
-- **Label, nav** (500/600 active, 10px): bottom-nav captions under 20px icons.
+- **Label, nav** (500, 700 active, 10px): bottom-nav captions under 24px icons.
 
 ### Named Rules
 **The Weight Contrast Rule.** Hierarchy comes from weight and opacity, not from typeface changes. Headlines are 900 and white, and the context above them is small, tracked and uppercase at under 70% white. Don't bring in a webfont to create hierarchy the weights already give.
@@ -220,7 +224,7 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 
 ## Layout
 
-- **Mobile (<768px):** the page is a fixed-height `100svh` immersive app shell. `html` and `body` don't scroll; an inner container (`#mobile-scroll`) does. There is a compact top header (52px): transparent and floating over the content on Início, hidden on Sobre, opaque glass elsewhere. At the bottom sits an opaque nav (about 62px plus the safe area) with four equal tabs: Início, Catálogo, Karaokê, Menu. Side gutter is 16px and vertical rhythm is 14px.
+- **Mobile (<768px):** the page is a fixed-height `100svh` immersive app shell. `html` and `body` don't scroll; an inner container (`#mobile-scroll`) does. There is a compact top header (52px): transparent and floating over the content on Início, hidden on Sobre, opaque glass elsewhere. At the bottom sits a pure black nav (about 59px plus the safe area) with five items: Início, Karaokê, the Caipivara pill (Catálogo), Buscar, Menu. Side gutter is 16px and vertical rhythm is 14px.
 - **Tablet (768–1023px):** a fixed 260px glass sidebar sits inset 16px from the viewport edge with rounded 30px corners. Content is offset by `ml-[260px]`.
 - **Desktop (≥1024px):** a fixed 72px glass top bar with centred nav at a max width of 1440px. Content has `px-6 / xl:px-8 / 2xl:px-10` and a footer bar. Pages use `DesktopPageShell`, a glass hero panel with badge, display title, lead, actions and a 2–3-column metric grid, plus an optional 340px side column at 2xl.
 - **TV:** a 960×540 CSS viewport at 2× density, with generous safe margins (`scroll-margin: 12vh 8vw` on focus) and horizontal rows of cards moved through by D-pad.
@@ -234,7 +238,7 @@ Depth is layered, not lifted. Surfaces are translucent sheets over a lit backgro
 - **Glass ambient** (`box-shadow: 0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)`): every glass panel.
 - **Soft** (`0 16px 40px rgba(0,0,0,0.28)`): floating thumbnails and smaller raised elements.
 - **Float** (`0 24px 80px rgba(0,0,0,0.45)`): drawers and dialogs.
-- **Nav** (`0 -12px 32px rgba(0,0,0,0.32)`): the mobile bottom bar, casting shadow upward.
+- **Nav** (`0 -12px 32px rgba(0,0,0,0.32)`): no longer used by the mobile bottom bar (flat, TikTok-style, since 2026-09-25); kept as a token.
 - **Spotlight glow** (`0 0 0 3–4px rgba(253,224,71,0.32–0.4), 0 0 22–36px rgba(253,224,71,0.42–0.55)`): TV focus on yellow-themed items. It is the only shadow that carries colour.
 
 ### Named Rules
@@ -270,11 +274,11 @@ The components are tactile and confident, with a pill for every action, glass fo
 - **Internal Padding:** 24px (28px at xl) for panels and 20px for tiles.
 
 ### Navigation
-- **Mobile bottom bar** (`src/components/mobile/AppBottomNav.jsx`, fed by `mobileNavItems` in `src/pages/Layout.jsx`): an opaque Stage Black Deep (#050505) bar with no blur, so nothing shows through it, not even the Início video. It has a 1px top hairline at 12% white, the upward Nav shadow and the bottom safe-area inset. Four equal tabs sit in a grid: Início (house), Catálogo (grid of four squares), Karaokê, Menu (three lines). Each is a 48px-tall, 12px-radius target with a 20px line icon over a 10px semibold caption; inactive tabs are white at 55%. The active tab turns both icon and caption Spotlight Yellow, with no pill behind it, and it is the bar's only yellow. Press feedback is a 5% white wash.
-  - **Karaokê tab:** a lyrics icon (music list), never a microphone, because the karaoke works without one. It is flat like the other tabs; nothing breaks out of the bar.
-  - **Catálogo tab:** `/catalogo`, where the old Pesquisa and Roda now live. It also lights up on every page that browses the songs (`/musica`, song pages, categories, arquivo). Below 768px, `/search` and `/roda` lead to `/catalogo`; on desktop they are unchanged.
-  - **Menu tab:** three lines, opens a bottom sheet rather than a page. It lights up for the pages reached from the sheet (Blog, Sobre, TV, Festa, Aprender), since those pages have no tab of their own.
-  - **Menu sheet:** a bottom sheet (28px top radius, Wing Charcoal fill, 10% white top hairline, a 40×6px grabber at 20% white) over a 60% black scrim with a small blur, capped at 85% of the screen height and scrolling inside. Its rows are 16px-radius and at least 44px tall, with a 40px icon well (12px radius, 10% white fill, icon at 70% white), a 16px semibold white label and an optional 14px description at 70% white. "Todas as músicas" (O arquivo completo, semana a semana) leads to `/musica`. The sheet has no yellow; the scrim button and Escape close it.
+- **Mobile bottom bar** (`src/components/mobile/AppBottomNav.jsx`, fed by `mobileNavItems` in `src/pages/Layout.jsx`), TikTok-style since 2026-09-25: a pure black bar (#000) with no blur and no shadow, a very discreet 1px top rule at 10% white, and the bottom safe-area inset. Five items in a grid: Início, Karaokê, [Caipivara pill], Buscar, Menu. Each tab is a 48px-tall target with a 24px icon over a 10px caption. **Active:** filled white icon (`src/components/mobile/icons/FilledIcons.jsx`) and bold white caption. **Inactive:** the lucide outline icon and caption at 60% white. No pill or wash behind tabs and no yellow on them; press feedback is a 70% opacity dip.
+  - **Caipivara pill (Catálogo):** at the centre, the Caipivara face (`caipivara-3d-head-128.webp`, 28px) in a 46×34px Spotlight Yellow pill with an 11px radius, inside a 48px target. No caption; `aria-label="Catálogo"`. It is the bar's only yellow. When active it takes a light 1.5px white ring, offset by 1.5px of black. It opens `/catalogo` and lights up on every page that browses the songs (`/catalogo`, `/musica`, song pages, categories, arquivo). Below 768px, `/search` and `/roda` lead to `/catalogo`; on desktop they are unchanged.
+  - **Karaokê tab:** a lyrics icon (music list), never a microphone, because the karaoke works without one.
+  - **Buscar tab:** opens the search panel from any screen (step 10). Until that panel exists it leads to `/catalogo`. It is never shown as active.
+  - **Menu tab:** three lines (three thick lines when active), opens a bottom sheet rather than a page. It lights up for the pages reached from the sheet (Blog, Sobre, TV, Festa, Aprender), since those pages have no tab of their own.
   - **Top header (mobile only):** 52px with the Caipivara avatar at left (the still 3D Caipivara, head crop, `caipivara-3d-head-128/256.webp`; not the old microphone logo), the name centred and an info button (Sobre) at right — except on Início, where the info button is removed (it duplicated the Menu tab) and a same-size spacer keeps the name centred. On Início the header is transparent and floats over the content, and only the avatar catches taps, so the rest of the area passes touches through to the video. On Sobre it is hidden. Everywhere else it is glass at 90% black with a bottom hairline.
 - **Tablet sidebar:** a 260px glass panel with a 30px radius and a yellow radial glow at the top. The brand block at the top combines the Caipivara avatar with an eyebrow and the name. Nav items are 22px-radius rows with 40px icon wells and a status dot that turns yellow when active.
 - **Desktop top bar:** 72px tall at 80% black with `backdrop-blur-xl`. On the left is the logo (a 44px, 12px-radius square) with the name at 15px/700. The centred nav has 15px links, and a 40px circular search button sits on the right.
@@ -303,4 +307,4 @@ An opaque #14161C card with a 16px radius, a 3px transparent border and a dark d
 - **Don't** give nested elements the same large radius. Step radii down, from 30 to 22 to 16.
 - **Don't** use white text on a yellow fill.
 - **Don't** let any glow be a colour other than yellow.
-- **Don't** put a gradient, scrim or veil over the Início feed video: it darkens the video. Text and icons on the video (site name, week label, song title, rail labels and icons) stay readable with a soft shadow only: `text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.35)` (icons: the same as `filter: drop-shadow`). The rail's round buttons keep their dark translucent fill.
+- **Don't** put a gradient, scrim or veil over the Início feed video: it darkens the video. Text and icons on the video (site name, week label, song title, rail labels and icons) stay readable with a soft shadow only: `text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.35)` (icons: the same as `filter: drop-shadow`). The compact 15px title uses a denser shadow (`0 1px 2px rgba(0,0,0,0.85), 0 0 6px rgba(0,0,0,0.6), 0 0 14px rgba(0,0,0,0.4)`) at full opacity. The right rail is TikTok-style: filled white 32px icons (speaker, text sheet, newspaper, music list, curved share arrow) sitting straight on the video with no disc behind them, 12px semibold white captions, targets of at least 56×52px, 6px from the right edge.

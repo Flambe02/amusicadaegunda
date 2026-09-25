@@ -104,14 +104,40 @@ describe('Layout — shell mobile', () => {
   const mobileShell = () => document.querySelector('#main-mobile').parentElement;
   const mobileNav = () => mobileShell().querySelector('nav');
 
-  it('has exactly 4 tabs, in order: Início, Catálogo, Karaokê, Menu (no Pesquisa, no Roda)', () => {
+  it('has exactly 5 items, in order: Início, Karaokê, [Caipivara], Buscar, Menu (no Pesquisa, no Roda)', () => {
     renderAt('/');
     const nav = mobileNav();
     const tabs = [...nav.querySelectorAll('li > a, li > button')];
-    expect(tabs.map((el) => el.textContent)).toEqual(['Início', 'Catálogo', 'Karaokê', 'Menu']);
-    expect(tabs.slice(0, 3).map((a) => a.getAttribute('href'))).toEqual(['/', '/catalogo', '/karaoke']);
-    expect(tabs[3].tagName).toBe('BUTTON'); // Menu ouvre la feuille
+    expect(tabs.map((el) => el.getAttribute('aria-label') || el.textContent)).toEqual(['Início', 'Karaokê', 'Catálogo', 'Buscar', 'Menu']);
+    // Buscar mène au Catálogo jusqu'à l'étape 10 (panneau de recherche).
+    expect(tabs.slice(0, 4).map((a) => a.getAttribute('href'))).toEqual(['/', '/karaoke', '/catalogo', '/catalogo']);
+    expect(tabs[4].tagName).toBe('BUTTON'); // Menu ouvre la feuille
     expect(within(nav).queryByText(/pesquisa|roda/i)).toBeNull();
+  });
+
+  it('centre: the Caipivara face in a yellow pill, no label, aria-label « Catálogo » — the only yellow of the bar', () => {
+    renderAt('/');
+    const nav = mobileNav();
+    const pill = within(nav).getByRole('link', { name: 'Catálogo' });
+    expect(pill.textContent).toBe('');
+    expect(pill.querySelector('img').getAttribute('src')).toContain('caipivara-3d-head');
+    const badge = pill.querySelector('span');
+    expect(badge.className).toMatch(/h-\[34px\] w-\[46px\]/);
+    expect(badge.className).toContain('bg-app-yellow');
+    expect(nav.querySelectorAll('[class*="yellow"]')).toHaveLength(1);
+  });
+
+  it('active tab: filled white icon + bold label; inactive: outline icon, 60 % white', () => {
+    renderAt('/');
+    const nav = mobileNav();
+    const home = within(nav).getByRole('link', { name: 'Início' });
+    expect(home).toHaveAttribute('aria-current', 'page');
+    expect(within(home).getByText('Início').className).toMatch(/font-bold/);
+    expect(within(home).getByText('Início').className).toMatch(/text-white(?!\/)/);
+    expect(home.querySelector('svg').getAttribute('fill')).toBe('currentColor');
+    const karaoke = within(nav).getByRole('link', { name: 'Karaokê' });
+    expect(within(karaoke).getByText('Karaokê').className).toMatch(/text-white\/60/);
+    expect(karaoke.querySelector('svg').getAttribute('fill')).toBe('none'); // lucide, en contour
   });
 
   it('keeps /musica reachable from the Menu sheet as « Todas as músicas »', () => {
@@ -138,7 +164,9 @@ describe('Layout — shell mobile', () => {
       const active = within(mobileNav())
         .getAllByRole('link')
         .filter((a) => a.getAttribute('aria-current') === 'page');
-      expect(active.map((a) => a.textContent)).toEqual(['Catálogo']);
+      expect(active.map((a) => a.getAttribute('aria-label'))).toEqual(['Catálogo']);
+      // Pastille active : léger contour blanc.
+      expect(active[0].querySelector('span').className).toMatch(/ring-white/);
     }
   );
 
@@ -148,15 +176,17 @@ describe('Layout — shell mobile', () => {
       renderAt(path);
       const nav = mobileNav();
       expect(within(nav).queryAllByRole('link').filter((a) => a.getAttribute('aria-current') === 'page')).toHaveLength(0);
-      expect(within(within(nav).getByRole('button', { name: /menu/i })).getByText('Menu')).toHaveClass('text-app-yellow');
+      const menu = within(nav).getByRole('button', { name: /menu/i });
+      expect(menu).toHaveAttribute('data-active', 'true');
+      expect(within(menu).getByText('Menu')).toHaveClass('font-bold', 'text-white');
     }
   );
 
-  it('uses an opaque #050505 bar (no translucency, no blur)', () => {
+  it('uses a pure black bar with a very discreet top rule (no translucency, no blur, no shadow)', () => {
     renderAt('/');
     const nav = mobileNav();
-    expect(nav).toHaveClass('bg-app-black');
-    expect(nav.className).not.toMatch(/backdrop-blur|bg-app-surface/);
+    expect(nav).toHaveClass('bg-black', 'border-t', 'border-white/10');
+    expect(nav.className).not.toMatch(/backdrop-blur|bg-app-surface|shadow/);
   });
 
   it('has no « i » button in the Início header (it duplicated the Menu tab), but keeps it elsewhere', () => {
