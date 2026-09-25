@@ -79,7 +79,7 @@ Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 
 1. **Redirections** : `/search` et `/roda` redirigent vers `/catalogo` **uniquement sous 768 px** (redirection côté client, depuis la copie mobile de la page). Sur desktop, les routes, les stubs et le sitemap restent inchangés.
 2. **`/catalogo` sur desktop** (≥ 768 px) : redirection vers `/musica`. `/catalogo` est `noindex` et hors sitemap. *Révisé le 2026-09-25 :* il a un **stub `noindex`** (comme `/festa` et `/search`), sinon un rechargement ou un lien direct passait par `404.html`, qui renvoie vers `/`.
-3. **« Ouvir »** (devenu « Ver o clipe » avec la refonte audio) : navigation vers `/?musica=<slug>`. Le feed s'ouvre positionné sur cette chanson (le glissement reste possible dans les deux sens), son coupé avec « Toque para ouvir », puis le paramètre est retiré de l'URL.
+3. **« Ouvir »** (devenu « Ver o clipe » avec la refonte audio) : navigation vers `/?musica=<slug>`. Le feed s'ouvre positionné sur cette chanson (le glissement reste possible dans les deux sens), son coupé (pastille « Toque para ativar o som », H.10), puis le paramètre est retiré de l'URL.
 4. **Un seul halo** : celui qui est déjà dans les vidéos (projecteur et lueur au sol), bords fondus par le masque radial. Pas de halo CSS ajouté. En mouvement réduit, image fixe = poster du clip `caipivara-idle`.
 5. **Recherche** : sur le titre, les paroles et `subtitle`. `subtitle` sert à la recherche mais n'est jamais affiché (pas de manchete tant qu'aucune colonne dédiée n'existe).
 6. **Menu** : « Festa na TV » → `/festa`. « Newsletter » → le composant existant `ButtondownSignupForm`, dans un petit panneau qui s'ouvre depuis la ligne.
@@ -97,7 +97,7 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 4. **Titre compact** (15 px, son actif) : opacité 100 % et ombre plus dense (`TEXT_SHADOW_DENSE`).
 
 ### H.2 Feed Início — son et gestes (modèle TikTok)
-1. Arrivée : vidéo muette + « Toque para ouvir ». **Le premier geste de la visite active le son**, quel qu'il soit : tap, glissement vers une autre semaine, flèche du clavier, bouton. « Toque para ouvir » n'apparaît que si le lecteur est réellement muet.
+1. Arrivée : vidéo muette + pastille « Toque para ativar o som » (H.10). **Le premier geste de la visite active le son**, quel qu'il soit : tap, glissement vers une autre semaine, flèche du clavier, bouton. Le haut-parleur barré n'apparaît que si le lecteur est réellement muet.
 2. Ensuite, **tap sur la vidéo = pause / lecture**. En pause : miniature floutée + icône lecture par-dessus le bloc central de YouTube.
 3. **Barre de progression manipulable** en bas de la vidéo (`data-scrubber`, zone tactile de 24 px, trait 3 → 6 px pendant le geste, temps « m:ss / m:ss »). Ce geste ne change jamais de semaine.
 4. **Clavier** : ↑/↓ = semaine précédente / suivante, Espace = pause / lecture, ←/→ = −5 s / +5 s. Deux boutons `sr-only` « Semana anterior » / « Semana seguinte ».
@@ -148,6 +148,14 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 4. **Fermeture** : Retour, onglet Início ou Clipe (`/?musica=<slug>`). Le même lecteur recharge le Short de la diapositive (ou de la chanson du Clipe), son conservé.
 5. **Repli** : si le son n'a pas pu partir (lecteur pas prêt, ouverture directe de l'adresse), le calque affiche « Toque para ouvir » (jaune, seul jaune de la zone) sous la Caipivara.
 6. La page `/catalogo` (pastille de la nav) garde son propre lecteur. Quitter l'Início vers une autre page coupe la musique, comme avant.
+
+### H.10 Feed — son coupé sans gros bouton jaune (2026-09-25, remplace H.2.1 pour l'affichage)
+1. **Plus de gros bouton jaune « Toque para ouvir »** au centre de la vidéo.
+2. À la place, une **petite pastille discrète** en haut de la vidéo, sous le ruban de la semaine : haut-parleur barré + « Toque para ativar o som », fond sombre translucide, texte blanc, **pas de jaune**. Visible ≈ 3 s à l'arrivée (dès que la vidéo ou la miniature de repli est là), puis fondu de sortie.
+3. **Tant que le son est coupé**, un haut-parleur barré reste en petit en haut à droite (emplacement de Som) ; un tap dessus active le son. Son actif : haut-parleur plein (Silenciar).
+4. Règle inchangée : le premier geste (tap n'importe où, glissement, flèche) active le son.
+5. **Refus** (iOS, économie d'énergie) : si le son est toujours coupé ≈ 0,9 s après un geste qui l'a demandé, la pastille réapparaît.
+6. Le calque Ouvir garde son « Toque para ouvir » jaune (H.9.5) : c'est une autre zone, sans vidéo.
 
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.

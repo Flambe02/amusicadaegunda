@@ -28,6 +28,22 @@ export function SpeakerFilled(props) {
   );
 }
 
+/** Son coupé : haut-parleur plein et croix. */
+export function SpeakerMutedFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path d="M11.1 4.3 6.6 8H3.8A1.8 1.8 0 0 0 2 9.8v4.4A1.8 1.8 0 0 0 3.8 16h2.8l4.5 3.7a1.1 1.1 0 0 0 1.8-.9V5.2a1.1 1.1 0 0 0-1.8-.9Z" />
+      <path
+        d="m16 9 5 6m0-6-5 6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+    </FilledIcon>
+  );
+}
+
 /** Letra : feuille de texte, coin plié, lignes évidées. */
 export function LyricsSheetFilled(props) {
   return (

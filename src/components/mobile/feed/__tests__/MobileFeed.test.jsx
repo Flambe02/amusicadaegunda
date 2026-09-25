@@ -150,11 +150,31 @@ describe('MobileFeed — Short de la semaine (étape 3)', () => {
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
   });
 
-  it('falls back to the thumbnail + « Toque para ouvir » when PLAYING does not come within 3 s', async () => {
+  it('falls back to the thumbnail + the discreet sound hint when PLAYING does not come within 3 s', async () => {
     const { container } = await renderLoaded();
     act(() => { vi.advanceTimersByTime(FALLBACK_DELAY_MS + 10); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'fallback');
-    expect(screen.getByText('Toque para ouvir')).toBeInTheDocument();
+    expect(container.querySelector('[data-sound-hint]')).toHaveAttribute('data-sound-hint', 'shown');
+    expect(screen.getByRole('button', { name: 'Ativar o som' })).toBeInTheDocument();
+  });
+
+  it('no big yellow button: a small hint « Toque para ativar o som » for ~3 s at arrival, then a fade; muted speaker stays', async () => {
+    const { container } = await renderLoaded();
+    act(() => { players[0].ready(); players[0].play(); });
+    act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
+    const hint = container.querySelector('[data-sound-hint]');
+    expect(hint).toHaveAttribute('data-sound-hint', 'shown');
+    expect(hint).toHaveTextContent('Toque para ativar o som');
+    expect(hint.innerHTML).not.toMatch(/yellow|FDE047/i);
+    expect(hint.className).toMatch(/motion-reduce:transition-none/);
+    expect(stage(container).innerHTML).not.toMatch(/bg-app-yellow/);
+    act(() => { vi.advanceTimersByTime(3100); });
+    expect(hint).toHaveAttribute('data-sound-hint', 'hidden');
+    const speaker = screen.getByRole('button', { name: 'Ativar o som' });
+    expect(speaker).toHaveAttribute('data-sound-toggle', 'muted');
+    players[0].calls.length = 0;
+    fireEvent.click(speaker);
+    expect(players[0].calls).toContain('unMute');
   });
 
   it('toggles sound: first tap unMute (+ playVideo in fallback), second tap mute', async () => {
@@ -272,7 +292,7 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     swipe(container, -300);
     expect(player.calls).toContain('unMute');
     act(() => { player.play(); vi.advanceTimersByTime(300); });
-    expect(screen.queryByText('Toque para ouvir')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ativar o som' })).toBeNull();
   });
 
   it('after the user mutes with the speaker, later swipes keep it muted and the unmute button returns', async () => {
@@ -283,22 +303,26 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     act(() => { player.play(); vi.advanceTimersByTime(300); });
     fireEvent.click(screen.getByRole('button', { name: 'Silenciar' })); // haut-parleur
     act(() => { vi.advanceTimersByTime(300); });
-    expect(screen.getByText('Toque para ouvir')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ativar o som' })).toBeInTheDocument();
     player.calls.length = 0;
     swipe(container, +300);
     expect(player.calls).not.toContain('unMute');
     act(() => { player.play(); vi.advanceTimersByTime(300); });
-    expect(screen.getByText('Toque para ouvir')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ativar o som' })).toBeInTheDocument();
   });
 
-  it('keeps the button when the browser refuses the sound after a swipe (iOS)', async () => {
+  it('when the browser refuses the sound after a swipe (iOS), the hint comes back and the muted speaker stays', async () => {
     const { container } = await renderLoaded();
     const player = players[0];
     act(() => { player.ready(); player.play(); });
+    act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); }); // vidéo affichée → pastille
+    act(() => { vi.advanceTimersByTime(3200); }); // pastille d'arrivée terminée
+    expect(container.querySelector('[data-sound-hint]')).toHaveAttribute('data-sound-hint', 'hidden');
     player.unMute = function refused() { this.calls.push('unMute'); }; // reste muet
     swipe(container, -300);
-    act(() => { player.play(); vi.advanceTimersByTime(300); });
-    expect(screen.getByText('Toque para ouvir')).toBeInTheDocument();
+    act(() => { player.play(); vi.advanceTimersByTime(1000); });
+    expect(container.querySelector('[data-sound-hint]')).toHaveAttribute('data-sound-hint', 'shown');
+    expect(screen.getByRole('button', { name: 'Ativar o som' })).toBeInTheDocument();
   });
 
   it('stops the same player (no second one) on a song without a Short, and resumes it after', async () => {

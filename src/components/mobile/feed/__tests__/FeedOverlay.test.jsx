@@ -164,8 +164,9 @@ describe('FeedOverlay (étape 4)', () => {
     expect(mute).toHaveBeenCalledTimes(1);
     expect([...document.querySelector('[data-rail]').children].map((el) => el.textContent)).toEqual(['Letra', 'Cantar', 'Compartilhar']);
     unmount();
-    renderOverlay(); // son coupé : pas d'icône (« Toque para ouvir » suffit)
+    renderOverlay(); // son coupé : haut-parleur barré à la même place
     expect(screen.queryByRole('button', { name: 'Silenciar' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Ativar o som' })).toHaveAttribute('data-sound-toggle', 'muted');
   });
 
   it('never writes a news headline line (no manchete source yet)', () => {

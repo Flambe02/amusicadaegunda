@@ -11,6 +11,7 @@ import {
   MicFilled,
   NewspaperFilled,
   ShareArrowFilled,
+  SpeakerMutedFilled,
   SpeakerFilled,
 } from '@/components/mobile/icons/FilledIcons';
 import { ICON_SHADOW, TEXT_SHADOW, TEXT_SHADOW_DENSE } from './feedStyles';
@@ -29,15 +30,17 @@ const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
  * Aucun second mouvement ne concurrence la vidéo : pas d'avatar animé ni de bulle
  * (retirés après test sur iPhone, 2026-09-25).
  */
-export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics, onOuvir }) {
+export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics, onOuvir, onRequestSound }) {
   const slug = getPublicSlug(song);
   const canSing = isKaraokePublished(song) && Boolean(slug);
   const TitleTag = isFirst ? 'h1' : 'h2';
   // Son actif (état réel du lecteur, pause comprise) : le titre se fait discret pour
   // laisser lisibles les paroles incrustées dans la vidéo.
   const compact = !player.isMuted && player.phase === 'playing';
-  // Icône Som : seulement une fois le son activé (son coupé → « Toque para ouvir » suffit).
+  // Haut-parleur en haut à droite : plein quand le son joue (tap = Silenciar), barré
+  // tant que le son est coupé (tap = activer le son). Rien sans vidéo.
   const showSound = player.phase !== 'none' && !player.isMuted;
+  const showMuted = player.phase !== 'none' && player.isMuted;
   // « História » : seulement si la chanson a une description — jamais de bouton vide.
   const hasStory = typeof song?.description === 'string' && song.description.trim().length > 0;
   const [storyOpen, setStoryOpen] = useState(false);
@@ -82,6 +85,16 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
           className="absolute right-3 top-[calc(max(env(safe-area-inset-top),0.35rem)+0.25rem)] z-30 flex h-11 w-11 touch-manipulation items-center justify-center text-white active:opacity-70"
         >
           <SpeakerFilled className={`h-6 w-6 ${ICON_SHADOW}`} />
+        </button>
+      ) : showMuted ? (
+        <button
+          type="button"
+          onClick={onRequestSound || player.unmute}
+          aria-label="Ativar o som"
+          data-sound-toggle="muted"
+          className="absolute right-3 top-[calc(max(env(safe-area-inset-top),0.35rem)+0.25rem)] z-30 flex h-11 w-11 touch-manipulation items-center justify-center text-white active:opacity-70"
+        >
+          <SpeakerMutedFilled className={`h-6 w-6 ${ICON_SHADOW}`} />
         </button>
       ) : null}
 
