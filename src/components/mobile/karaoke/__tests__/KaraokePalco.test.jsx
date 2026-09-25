@@ -54,7 +54,7 @@ describe('palco — pure helpers', () => {
   });
 
   it('reduced motion: cards simply offset, no rotation, no depth', () => {
-    expect(cardLayout(1, true).transform).toBe('translate3d(62%, 0, 0)');
+    expect(cardLayout(1, true).transform).toBe('translate3d(78%, 0, 0)');
   });
 
   it('first verse = the first non-empty LRC line, or null', () => {
@@ -144,7 +144,7 @@ describe('KaraokePalco', () => {
     renderPalco();
     expect(document.querySelector('[data-palco-carousel]').style.perspective).toBe('none');
     expect(cards()[1].style.transition).toBe('none');
-    expect(cards()[1].style.transform).toBe('translate3d(62%, 0, 0)');
+    expect(cards()[1].style.transform).toBe('translate3d(78%, 0, 0)');
   });
 
   it('degraded state: the week song alone, « O karaokê volta já » instead of the mic; the card leads to its Short', async () => {

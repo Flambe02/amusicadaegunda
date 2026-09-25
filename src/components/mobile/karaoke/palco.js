@@ -25,7 +25,8 @@ export function cardLayout(offset, reduceMotion = false) {
   if (distance > 2) return { visible: false, opacity: 0, transform: 'translate3d(0,0,0)', zIndex: 0 };
   const direction = Math.sign(offset);
   const opacity = distance === 0 ? 1 : distance === 1 ? 0.55 : 0.25;
-  const shift = distance === 0 ? 0 : distance === 1 ? 62 : 108; // % de la largeur de carte
+  // % de la largeur de carte : les voisines débordent nettement sur les côtés.
+  const shift = distance === 0 ? 0 : distance === 1 ? 78 : 140;
   const zIndex = 10 - distance;
   if (reduceMotion) {
     return { visible: true, opacity, zIndex, transform: `translate3d(${direction * shift}%, 0, 0)` };

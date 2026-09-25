@@ -8,7 +8,6 @@ import { getPublicSlug, monthYearLabel } from '@/components/mobile/feed/feedMedi
 import { TEXT_SHADOW } from '@/components/mobile/feed/feedStyles';
 import { MicFilled } from '@/components/mobile/icons/FilledIcons';
 import {
-  CARD_H,
   CARD_W,
   EDGE_GUARD_PX,
   NEUTRAL_TINT,
@@ -130,18 +129,17 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
   const verse = degraded ? null : firstVerse(current);
   const period = current ? monthYearLabel(current) : null;
   const tintColor = `rgb(${tint[0]}, ${tint[1]}, ${tint[2]})`;
-  // 188 × 334 au plus ; plus étroite sur un petit écran, pour que titre, vers et micro
-  // tiennent sous la carte (360 px ≈ la hauteur de tout le reste de la scène).
-  const cardSize = {
-    width: `min(${CARD_W}px, 52cqw, calc((100cqh - 360px) * ${(CARD_W / CARD_H).toFixed(4)}))`,
-  };
+  // Largeur fixée par la seule largeur d'écran (Safari iOS : une largeur tirée de la
+  // hauteur disponible tombait à ~90 px, barres du navigateur affichées) : 188 × 334 dès
+  // 392 px de large, jamais moins de 160 px. Si la hauteur manque, la page défile.
+  const cardSize = { width: `clamp(160px, 48vw, ${CARD_W}px)` };
 
   return (
     <div
       data-palco
-      // Hauteur exacte de la zone de contenu (pas une hauteur minimale) : les unités cqh
-      // d'un conteneur « size » valent 0 sans hauteur définie.
-      className="relative isolate flex h-full w-full flex-col overflow-hidden bg-app-black text-white [container-type:size]"
+      // Au moins la hauteur de la zone de contenu ; plus haute si l'écran est court (la
+      // zone défile). Les voisines débordent sur les côtés : rognées horizontalement.
+      className="relative isolate flex min-h-full w-full flex-col overflow-x-hidden bg-app-black text-white"
     >
       {/* Halo diffus de la couleur de la miniature centrale, en fondu entre les chansons. */}
       <div
@@ -170,7 +168,9 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
       <div className="relative mt-3 flex flex-1 flex-col items-center justify-center">
         {/* Projecteur : cône jaune sur la carte centrale. */}
         {current ? (
-          <div aria-hidden="true" className="palco-spotlight pointer-events-none absolute -top-16 left-1/2 z-0 h-[115%] w-[70%] -translate-x-1/2" />
+          // Centré par ses bords, pas par une translation : l'animation d'oscillation
+          // (transform: rotate) remplacerait la translation et décalerait le cône.
+          <div aria-hidden="true" className="palco-spotlight pointer-events-none absolute -top-16 left-[15%] right-[15%] z-0 h-[115%]" />
         ) : null}
 
         <div
