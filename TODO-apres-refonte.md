@@ -46,3 +46,10 @@ Git avertit à chaque commit que les fichiers en LF seront convertis en CRLF. Aj
 
 Renseigner l'empreinte SHA-256 de la clé de signature Play dans `assetlinks.json` (ancien reste à faire, hors refonte).
 
+## 10. Les toasts du site ne se ferment pas seuls
+
+**Constat (2026-09-25).** Le composant `Toast` (`src/components/ui/toast.jsx`) est une simple `div` : il ignore `duration`, et `use-toast.jsx` ne retire un toast fermé qu'après `TOAST_REMOVE_DELAY` (≈ 16 min). Chaque appel à `toast()` reste donc à l'écran jusqu'à fermeture manuelle, et plusieurs appels s'empilent.
+
+**Déjà corrigé :** le `Toaster` n'affiche plus les toasts fermés (`open: false`) ; « Link copiado » (Compartilhar) remplace le précédent et se ferme seul après 3 s (`useShareSong.jsx`).
+
+**Chantier.** Faire respecter `duration` pour tous les toasts (fermeture automatique, par ex. dans `Toaster` ou dans `toast()`), avec une durée par défaut raisonnable, et vérifier chaque appel existant (admin compris).
