@@ -10,6 +10,14 @@
 /** text-shadow: 0 1px 3px rgba(0,0,0,.6), 0 0 12px rgba(0,0,0,.35) */
 export const TEXT_SHADOW = '[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_0_12px_rgba(0,0,0,0.35)]';
 
+/**
+ * Titre compact (15 px, son actif) : ombre plus dense, le petit corps se perd sinon sur
+ * les miniatures claires (décision du 2026-09-25).
+ * text-shadow: 0 1px 2px rgba(0,0,0,.85), 0 0 6px rgba(0,0,0,.6), 0 0 14px rgba(0,0,0,.4)
+ */
+export const TEXT_SHADOW_DENSE =
+  '[text-shadow:0_1px_2px_rgba(0,0,0,0.85),0_0_6px_rgba(0,0,0,0.6),0_0_14px_rgba(0,0,0,0.4)]';
+
 /** Même ombre pour les icônes, en filtre (les SVG n'ont pas de text-shadow). */
 export const ICON_SHADOW =
   '[filter:drop-shadow(0_1px_3px_rgba(0,0,0,0.6))_drop-shadow(0_0_12px_rgba(0,0,0,0.35))]';

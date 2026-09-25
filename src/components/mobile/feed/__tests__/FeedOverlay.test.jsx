@@ -132,6 +132,9 @@ describe('FeedOverlay (étape 4)', () => {
     expect(same).toHaveAttribute('data-compact', 'true');
     expect(same.className).toContain('text-[15px]');
     expect(same.className).toMatch(/truncate/);
+    // Lisibilité sur miniature claire : opacité pleine, ombre plus dense.
+    expect(same.className).not.toMatch(/opacity-\d/);
+    expect(same.className).toContain('rgba(0,0,0,0.85)');
   });
 
   it('the title transition is disabled under reduced motion', () => {
@@ -143,7 +146,7 @@ describe('FeedOverlay (étape 4)', () => {
     const { container } = renderOverlay({ player: soundPlayer });
     expect(container.querySelector('[class*="bg-gradient"]')).toBeNull();
     const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1.className).toContain('[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_0_12px_rgba(0,0,0,0.35)]');
+    expect(h1.className).toContain('[text-shadow:0_1px_2px_rgba(0,0,0,0.85)'); // titre compact : ombre dense
     const letra = screen.getByRole('button', { name: /ver a letra/i });
     expect(letra.querySelector('svg').getAttribute('class')).toContain('drop-shadow');
     expect(letra.querySelector('span[aria-hidden]:last-child').className).toContain('[text-shadow:');

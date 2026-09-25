@@ -6,7 +6,7 @@ import { isKaraokePublished } from '@/lib/lrc';
 import { formatTime, getPublicSlug } from './feedMedia';
 import WeekRibbon from './WeekRibbon';
 import FeedStorySheet from './FeedStorySheet';
-import { ICON_SHADOW, TEXT_SHADOW } from './feedStyles';
+import { ICON_SHADOW, TEXT_SHADOW, TEXT_SHADOW_DENSE } from './feedStyles';
 
 const SITE_URL = 'https://www.amusicadasegunda.com';
 // Courbe « strong ease-out » (changements d'état d'interface).
@@ -76,10 +76,10 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
       >
         <TitleTag
           data-compact={compact ? 'true' : 'false'}
-          className={`font-black tracking-tight text-white ${TEXT_SHADOW} transition-[font-size,line-height,opacity] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
+          className={`font-black tracking-tight text-white transition-[font-size,line-height] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
             compact
-              ? 'truncate text-[15px] leading-tight opacity-90'
-              : 'line-clamp-2 text-[28px] leading-[1.1]'
+              ? `truncate text-[15px] leading-tight ${TEXT_SHADOW_DENSE}`
+              : `line-clamp-2 text-[28px] leading-[1.1] ${TEXT_SHADOW}`
           }`}
         >
           {song.title}
