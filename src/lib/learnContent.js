@@ -46,7 +46,7 @@ export function hasLearnContent(slug) {
  * `po-ancelotti-e-eu-`). Elle ne correspond donc pas aux URLs réelles.
  *
  * ⚠️ On dérive depuis le TITRE et non depuis `song.slug` : la colonne existe en base
- * mais 53 des 59 valeurs y sont encore sans tirets (bug de `slugify_title`, corrigé
+ * mais la plupart des valeurs y sont encore sans tirets (bug de `slugify_title`, corrigé
  * par la migration 20260730120000 mais pas encore appliquée). Quand la base sera
  * réalignée, `song.slug` redeviendra utilisable et cette dérivation pourra tomber.
  *

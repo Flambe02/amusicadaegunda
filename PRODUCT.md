@@ -57,7 +57,7 @@ Karaoke, Festa, Aprender and the Roda (random wheel) are ways to spend time with
 
 ## Evidence on Hand
 
-- A real catalogue of roughly 60 original songs that grows every week. There are 57 in the static fallback `content/songs.json`, and Supabase is the source of truth. Each song has lyrics, links to its platforms, and synced karaoke on some songs.
+- A real catalogue of original songs that grows every week. Supabase is the source of truth, and `content/songs.json` is a static fallback regenerated from it. Never write the catalogue size into code or copy: compute it. Each song has lyrics, links to its platforms, and synced karaoke on some songs.
 - Brand assets are in `public/images/`.
 - Product references: `A_Musica_da_Segunda_Master_Audit_Development_Checklist_UPDATED.md` (V3, the product decisions), `Overview.md` (technical overview), `plan-apprendre-portugais-amusicadasegunda.md` (Aprender) and `spec-homepage-desktop.md` with its addendum (the desktop homepage refresh now in progress).
 - **Absent, and must not be made up:** testimonials, press coverage, audience numbers or listener counts, partnerships, awards, pricing.

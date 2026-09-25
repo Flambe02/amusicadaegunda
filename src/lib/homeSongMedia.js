@@ -34,7 +34,7 @@ export function getFullTrackUrl(song) {
 /**
  * La chanson a-t-elle une vidéo regardable ?
  * Spec §12 cas 3 : sans vidéo, « Assistir agora » devient « Ouvir agora » et la
- * durée n'est pas affichée. 14 des 64 chansons sont dans ce cas.
+ * durée n'est pas affichée. Une partie du catalogue est dans ce cas.
  */
 export function hasWatchableVideo(song) {
   return Boolean(getShortsUrl(song));
