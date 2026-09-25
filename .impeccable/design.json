@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-25T00:00:00Z",
+  "title": "Design System: A Música da Segunda",
+  "extensions": {
+    "colorMeta": {
+      "spotlight-yellow": { "role": "primary", "displayName": "Spotlight Yellow", "canonical": "#FDE047", "tonalRamp": ["#3A3000", "#5C4D00", "#857000", "#B39A05", "#DDBF1A", "#FDE047", "#FEEC8A", "#FFF7CC"] },
+      "focus-yellow": { "role": "primary", "displayName": "Focus Yellow", "canonical": "#FACC15", "tonalRamp": ["#382C00", "#5A4600", "#806300", "#A98404", "#D5A70E", "#FACC15", "#FCE07A", "#FEF3C7"] },
+      "sky-haze": { "role": "secondary", "displayName": "Sky Haze", "canonical": "rgba(125,211,252,0.12)", "tonalRamp": ["#0B2A3A", "#11445E", "#1A6285", "#2A83AF", "#4FA8D6", "#7DD3FC", "#B5E6FD", "#E0F4FE"] },
+      "stage-black": { "role": "neutral", "displayName": "Stage Black", "canonical": "#0A0A0A", "tonalRamp": ["#050505", "#0A0A0A", "#111111", "#1F1F1F", "#3D3D3D", "#6B6B6B", "#ADADAD", "#F2F2F2"] },
+      "stage-black-deep": { "role": "neutral", "displayName": "Stage Black Deep" },
+      "wing-charcoal": { "role": "neutral", "displayName": "Wing Charcoal" },
+      "tv-card": { "role": "neutral", "displayName": "TV Card", "tonalRamp": ["#08090C", "#0E1014", "#14161C", "#1E2129", "#2E323D", "#4A505F", "#7C8292", "#C7CAD3"] },
+      "on-yellow-ink": { "role": "neutral", "displayName": "On-Yellow Ink" },
+      "text-primary": { "role": "neutral", "displayName": "Stage White" },
+      "text-secondary": { "role": "neutral", "displayName": "Secondary Text (68% white)" },
+      "text-muted": { "role": "neutral", "displayName": "Muted Text (42% white)" },
+      "glass-fill": { "role": "neutral", "displayName": "Glass Fill (5% white)" },
+      "glass-fill-strong": { "role": "neutral", "displayName": "Glass Fill Strong (8–12% white)" },
+      "glass-border": { "role": "neutral", "displayName": "Glass Hairline (10% white)" },
+      "chrome-bar": { "role": "neutral", "displayName": "Chrome Bar (82% black)" },
+      "tv-dpad-cyan": { "role": "functional", "displayName": "TV D-pad Cyan" },
+      "destructive-red": { "role": "functional", "displayName": "Destructive Red" },
+      "platform-youtube": { "role": "borrowed", "displayName": "YouTube Red" },
+      "platform-spotify": { "role": "borrowed", "displayName": "Spotify Green" },
+      "platform-apple-music": { "role": "borrowed", "displayName": "Apple Music Red" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Desktop hero and page titles, weight 900, max ~14ch. TV uses fluid clamps with is-long / is-xlong steps." },
+      "headline": { "displayName": "Headline", "purpose": "Section heads and metric values." },
+      "title": { "displayName": "Title", "purpose": "Song titles, card titles, sidebar labels." },
+      "body": { "displayName": "Body", "purpose": "Descriptions at 62–72% white." },
+      "body-lead": { "displayName": "Lead", "purpose": "Hero lead paragraphs, max-w-3xl." },
+      "label-eyebrow": { "displayName": "Eyebrow", "purpose": "Uppercase kickers, badges, metric captions at 42–68% white." },
+      "label-nav": { "displayName": "Nav caption", "purpose": "Bottom-nav labels under 20px icons." },
+      "mono-meta": { "displayName": "Mono meta", "purpose": "Countdowns, version strings — tabular numbers only." }
+    },
+    "shadows": [
+      { "name": "glass-ambient", "value": "0 20px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)", "purpose": "Every glass panel." },
+      { "name": "app-soft", "value": "0 16px 40px rgba(0,0,0,0.28)", "purpose": "Floating thumbnails, small raised elements." },
+      { "name": "app-float", "value": "0 24px 80px rgba(0,0,0,0.45)", "purpose": "Drawers and dialogs." },
+      { "name": "app-nav", "value": "0 -12px 32px rgba(0,0,0,0.32)", "purpose": "Mobile bottom bar, casting upward." },
+      { "name": "spotlight-glow", "value": "0 0 0 3px rgba(253,224,71,0.32), 0 0 22px rgba(253,224,71,0.42)", "purpose": "TV focus on yellow-themed items; the only coloured shadow." },
+      { "name": "focus-ring", "value": "outline: 3px solid #050505; box-shadow: 0 0 0 5px #FACC15, 0 0 0 8px rgba(0,0,0,0.55)", "purpose": "Global :focus-visible ring (TV: 7px / 11px halo)." }
+    ],
+    "motion": [
+      { "name": "ui-state", "value": "200ms ease (transition-colors / transition-all duration-200)", "purpose": "Hover and active state changes on nav and buttons." },
+      { "name": "sidebar-state", "value": "300ms ease", "purpose": "Tablet sidebar item and icon-well transitions." },
+      { "name": "tv-focus", "value": "150ms ease on transform, border-color, box-shadow", "purpose": "D-pad focus scale (~1.04) and glow." },
+      { "name": "press", "value": "active:scale-95", "purpose": "Touch press feedback." },
+      { "name": "karaoke-ball-bob", "value": "0.42s ease-in-out infinite alternate", "purpose": "Bouncing ball above the current word." },
+      { "name": "reduced-motion", "value": "@media (prefers-reduced-motion: reduce)", "purpose": "Honoured in a11y.css and karaoke styles." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "<768px" },
+      { "name": "md (tablet sidebar)", "value": "768px" },
+      { "name": "lg (desktop top bar)", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" },
+      { "name": "tv", "value": "960×540 CSS @2x, html[data-device=tv]" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single spotlight action per view.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M8 5v14l11-7z\"/></svg>Ouvir agora</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 24px;border:none;border-radius:9999px;background:#FDE047;color:#171505;font:800 15px/1 ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color .2s ease,transform .2s ease}.ds-btn-primary:hover{background:#FEEC8A}.ds-btn-primary:active{transform:scale(.95)}.ds-btn-primary:focus-visible{outline:3px solid #050505;outline-offset:2px;box-shadow:0 0 0 5px #FACC15,0 0 0 8px rgba(0,0,0,.55)}"
+    },
+    {
+      "name": "Glass Button",
+      "kind": "button",
+      "refersTo": "button-glass",
+      "description": "Secondary actions on glass or stage.",
+      "html": "<button class=\"ds-btn-glass\">Ver letra</button>",
+      "css": ".ds-btn-glass{display:inline-flex;align-items:center;height:44px;padding:0 20px;border:1px solid rgba(255,255,255,.1);border-radius:9999px;background:rgba(255,255,255,.05);color:#fff;font:600 14px/1 ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color .2s ease}.ds-btn-glass:hover{background:rgba(255,255,255,.1)}.ds-btn-glass:active{transform:scale(.95)}.ds-btn-glass:focus-visible{outline:3px solid #050505;outline-offset:2px;box-shadow:0 0 0 5px #FACC15,0 0 0 8px rgba(0,0,0,.55)}"
+    },
+    {
+      "name": "Icon Button",
+      "kind": "button",
+      "refersTo": "button-icon",
+      "description": "Circular 44px glass control (search, info).",
+      "html": "<button class=\"ds-btn-icon\" aria-label=\"Pesquisar\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg></button>",
+      "css": ".ds-btn-icon{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid rgba(255,255,255,.1);border-radius:9999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.72);cursor:pointer;transition:background-color .2s ease,color .2s ease}.ds-btn-icon:hover{background:rgba(255,255,255,.1);color:#fff}.ds-btn-icon:focus-visible{outline:3px solid #050505;outline-offset:2px;box-shadow:0 0 0 5px #FACC15,0 0 0 8px rgba(0,0,0,.55)}"
+    },
+    {
+      "name": "Eyebrow Chip",
+      "kind": "chip",
+      "refersTo": "chip-eyebrow",
+      "description": "Uppercase kicker that opens hero panels.",
+      "html": "<span class=\"ds-chip-eyebrow\">Música da semana</span>",
+      "css": ".ds-chip-eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid rgba(255,255,255,.1);border-radius:9999px;background:rgba(255,255,255,.05);color:rgba(255,255,255,.68);font:500 11px/1.2 ui-sans-serif,system-ui,sans-serif;letter-spacing:.28em;text-transform:uppercase}"
+    },
+    {
+      "name": "New Badge",
+      "kind": "chip",
+      "refersTo": "chip-new",
+      "description": "Monday-only spotlight badge.",
+      "html": "<span class=\"ds-chip-new\">New</span>",
+      "css": ".ds-chip-new{display:inline-block;padding:2px 6px;border-radius:9999px;background:#FDE047;color:#050505;font:900 9px/1.2 ui-sans-serif,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase}"
+    },
+    {
+      "name": "Glass Panel",
+      "kind": "card",
+      "refersTo": "panel-glass",
+      "description": "The house material: frosted glass over the lit stage.",
+      "html": "<div class=\"ds-stage\"><section class=\"ds-panel\"><span class=\"ds-panel-kicker\">Segunda, 22 de setembro</span><h2 class=\"ds-panel-title\">A nova música da semana</h2><p class=\"ds-panel-body\">Toda segunda, uma notícia vira canção.</p></section></div>",
+      "css": ".ds-stage{padding:24px;background:radial-gradient(circle at top left,rgba(253,224,71,.18),transparent 40%),radial-gradient(circle at 85% 10%,rgba(125,211,252,.12),transparent 34%),linear-gradient(180deg,#111 0%,#0a0a0a 100%)}.ds-panel{padding:24px;border:1px solid rgba(255,255,255,.1);border-radius:30px;background:radial-gradient(circle at top left,rgba(253,224,71,.12),transparent 30%),rgba(255,255,255,.05);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 20px 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);color:#fff}.ds-panel-kicker{font:500 11px/1.2 ui-sans-serif,system-ui,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.45)}.ds-panel-title{margin:12px 0 8px;font:900 34px/0.95 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.025em}.ds-panel-body{margin:0;font:400 16px/1.75 ui-sans-serif,system-ui,sans-serif;color:rgba(255,255,255,.62)}"
+    },
+    {
+      "name": "Metric Tile",
+      "kind": "card",
+      "refersTo": "metric-tile",
+      "description": "Stat tile inside desktop page shells.",
+      "html": "<div class=\"ds-metric\"><div class=\"ds-metric-value\">57</div><div class=\"ds-metric-label\">Músicas</div></div>",
+      "css": ".ds-metric{padding:20px;border:1px solid rgba(255,255,255,.1);border-radius:26px;background:rgba(255,255,255,.04);width:180px}.ds-metric-value{font:900 30px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:-.025em;color:#FDE047}.ds-metric-label{margin-top:8px;font:500 11px/1.2 ui-sans-serif,system-ui,sans-serif;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.42)}"
+    },
+    {
+      "name": "Mobile Bottom Nav",
+      "kind": "nav",
+      "refersTo": "bottom-nav",
+      "description": "Fixed glass bar, five items, yellow active icon.",
+      "html": "<nav class=\"ds-bnav\"><a class=\"ds-bnav-item is-active\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></svg><span>Home</span></a><a class=\"ds-bnav-item\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"2\" width=\"6\" height=\"12\" rx=\"3\"/><path d=\"M19 10v2a7 7 0 0 1-14 0v-2M12 19v3\"/></svg><span>Karaokê</span></a><a class=\"ds-bnav-item\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/></svg><span>Pesquisa</span></a></nav>",
+      "css": ".ds-bnav{display:flex;justify-content:space-around;gap:4px;padding:8px 8px 12px;background:rgba(0,0,0,.82);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border-top:1px solid rgba(255,255,255,.12);box-shadow:0 -12px 32px rgba(0,0,0,.32)}.ds-bnav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:64px;min-height:60px;padding:8px 12px;border-radius:20px;color:rgba(255,255,255,.6);text-decoration:none;font:500 10px/1.2 ui-sans-serif,system-ui,sans-serif;transition:all .2s ease}.ds-bnav-item svg{color:rgba(255,255,255,.66)}.ds-bnav-item:hover{background:rgba(255,255,255,.08);color:#fff}.ds-bnav-item.is-active{background:rgba(255,255,255,.12);color:#fff;font-weight:600}.ds-bnav-item.is-active svg{color:#FDE047}.ds-bnav-item:focus-visible{outline:3px solid #050505;box-shadow:0 0 0 5px #FACC15,0 0 0 8px rgba(0,0,0,.55)}"
+    },
+    {
+      "name": "TV Focus Card",
+      "kind": "custom",
+      "refersTo": "tv-card",
+      "description": "Opaque D-pad card that scales and glows on focus.",
+      "html": "<button class=\"ds-tv-card\"><span class=\"ds-tv-art\"></span><span class=\"ds-tv-title\">Pacote completo</span></button>",
+      "css": ".ds-tv-card{display:flex;flex-direction:column;gap:10px;width:200px;padding:10px;border:3px solid transparent;border-radius:16px;background:#14161C;box-shadow:0 8px 22px rgba(0,0,0,.45);color:#fff;text-align:left;cursor:pointer;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}.ds-tv-art{display:block;aspect-ratio:16/9;border-radius:10px;background:linear-gradient(135deg,#2a2410,#14161c)}.ds-tv-title{font:900 17px/1.08 ui-sans-serif,system-ui,sans-serif}.ds-tv-card:hover,.ds-tv-card:focus-visible{outline:none;border-color:#FDE047;transform:scale(1.04);box-shadow:0 0 0 3px rgba(253,224,71,.32),0 0 22px rgba(253,224,71,.42)}"
+    },
+    {
+      "name": "Karaoke Active Line",
+      "kind": "custom",
+      "description": "Spotlight wipe across the sung line with bobbing ball.",
+      "html": "<div class=\"ds-kara\"><p class=\"ds-kara-past\">A PF chegou de manhã</p><p class=\"ds-kara-active\"><span class=\"ds-kara-ball\"></span>Cartão, jatinho e helicóptero</p><p class=\"ds-kara-next\">O pacote completo</p></div>",
+      "css": ".ds-kara{padding:24px;background:#0a0a0a;font:800 24px/1.3 ui-sans-serif,system-ui,sans-serif;text-align:center}.ds-kara p{margin:8px 0}.ds-kara-past{color:rgba(255,255,255,.38)}.ds-kara-next{color:rgba(255,255,255,.55)}.ds-kara-active{position:relative;display:inline-block;background:linear-gradient(90deg,#FDE047 55%,#fff 55%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(253,224,71,.28))}.ds-kara-ball{position:absolute;top:-.42em;left:55%;width:.3em;height:.3em;border-radius:9999px;background:#FDE047;box-shadow:0 0 12px rgba(253,224,71,.85);transform:translateX(-50%);animation:ds-bob .42s ease-in-out infinite alternate}@keyframes ds-bob{to{transform:translate(-50%,-.18em)}}@media (prefers-reduced-motion:reduce){.ds-kara-ball{animation:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Monday Night Stage",
+    "overview": "The interface is a dark stage after the lights go down, and the only thing lit is this week's song. Almost everything is near-black with white type at a few calibrated opacities. One saturated yellow works like a spotlight: it marks what is playing, what is selected and what to do next. Soft yellow and sky-blue light haze in from the top corners of the page like stage wash. Panels sit in front of that wash as frosted glass, so the haze stays visible behind the content.\n\nThe same world runs on every surface: mobile web and PWA, the Capacitor app, desktop, and the 10-foot Android TV interface. Mobile is immersive and full-bleed, with a fixed glass bottom bar. Desktop places the same material inside a max-1440px frame with a glass sidebar (tablet) or a glass top bar (≥1024px). TV scales type up with fluid clamps and turns focus into a yellow glow that can be read from the sofa.\n\nType is loud and heavy, and never decorative. Headlines are system sans at weight 900 with tight tracking, set close to a poster's leading. Supporting text drops sharply to small, quiet sizes. There is no webfont: the heavy type comes from weight contrast, not from a special typeface.",
+    "keyCharacteristics": [
+      "Dark-only. The palette has a `.light` definition but no route ever activates it.",
+      "One accent, Spotlight Yellow. It is rationed and always means \"this one\".",
+      "Frosted glass on black is the signature material: a 5% white fill, heavy blur, a hairline border and a deep ambient shadow.",
+      "Generous, soft geometry: 26–32px panel corners, pill buttons and chips, and 44px minimum touch targets.",
+      "Heavy display type (900) against small, widely tracked uppercase eyebrows.",
+      "Stage-wash radial gradients on the page background, never on content."
+    ],
+    "rules": [
+      { "name": "The One Spotlight Rule", "body": "Spotlight Yellow marks at most one thing per region: the current item, the primary action or the line being sung. It is never the fill for a hero block, a card background or a section band. If two yellow things compete in one viewport, one of them is wrong.", "section": "colors" },
+      { "name": "The Borrowed Colour Rule", "body": "A platform's brand colour appears only on that platform's own link or badge. Other hues in the codebase (purple, blue and emerald Tailwind classes in admin tools, the sync studio, Calendar and Youtube pages) are legacy and not part of the public system.", "section": "colors" },
+      { "name": "The Weight Contrast Rule", "body": "Hierarchy comes from weight and opacity, not from typeface changes. Headlines are 900 and white, and the context above them is small, tracked and uppercase at under 70% white. Don't bring in a webfont to create hierarchy the weights already give.", "section": "typography" },
+      { "name": "The Fluid TV Rule", "body": "TV type always uses a `clamp()` so it stays legible from across a room. Nothing on TV is set below ~0.68rem, and body copy there is ≥1.1rem.", "section": "typography" },
+      { "name": "The Glass-on-Black Rule", "body": "Glass is the house material. A panel is a 5% white fill with `backdrop-blur-xl`, a 10% white hairline border and the glass ambient shadow. Glass must sit over the lit background or other content. On flat black it reads as a dull grey box.", "section": "elevation" },
+      { "name": "The Only-Glow-Is-Yellow Rule", "body": "Coloured light is reserved for focus and the spotlight. No other hue ever glows.", "section": "elevation" },
+      { "name": "The Nested Radius Rule", "body": "An inner element's radius is smaller than its container's, reduced by roughly the padding between them: a 30px panel holds 22px items holding 16px icon wells. Two nested elements never share the same large radius.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do keep every public surface dark (Stage Black #0A0A0A under the lit stage-wash gradient). The system is dark-only.",
+      "Do reserve Spotlight Yellow (#FDE047) for the one active, primary or playing thing in a region, with On-Yellow Ink (#171505) text on yellow fills.",
+      "Do build containers from the glass recipe: a 5% white fill, `backdrop-blur-xl`, a 10% white hairline and `0 20px 60px rgba(0,0,0,0.35)` with a 1px inset top highlight.",
+      "Do set headlines at 900 with tight tracking, and set context as 11px uppercase eyebrows tracked at 0.22–0.28em.",
+      "Do keep touch targets ≥44px and use the global yellow focus ring (`src/styles/a11y.css`). The ring must be visible on every focusable element, and on TV at the larger 7px halo.",
+      "Do use `clamp()` for all TV type and respect `prefers-reduced-motion`."
+    ],
+    "donts": [
+      "Don't fill a hero, band or card background with yellow. Yellow is a spotlight, not paint.",
+      "Don't introduce new accent hues (purple, blue, emerald) on public surfaces. Those classes are legacy admin and tool styling.",
+      "Don't use a platform's brand colour anywhere except that platform's own link.",
+      "Don't put glass on flat black with nothing behind it, and don't stack glass on glass more than one level deep.",
+      "Don't give nested elements the same large radius. Step radii down, from 30 to 22 to 16.",
+      "Don't use white text on a yellow fill.",
+      "Don't let any glow be a colour other than yellow."
+    ]
+  }
+}

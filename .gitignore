@@ -70,3 +70,12 @@ push-sender/.env
 # Python bytecode cache
 __pycache__/
 *.pyc
+
+# oh-my-claudecode tool state
+.omc/
+
+# Claude Code personal settings (machine-local permissions)
+.claude/settings.local.json
+
+# Temporary one-off admin scripts (never commit)
+scripts/tmp-set-admin-password.mjs
