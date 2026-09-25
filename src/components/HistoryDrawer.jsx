@@ -7,7 +7,7 @@ import {
   DrawerTitle,
 } from './ui/drawer';
 import { ScrollArea } from './ui/scroll-area';
-import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval, addMonths } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Button } from './ui/button';
 
@@ -17,51 +17,64 @@ export default function HistoryDrawer({
   songs, // Toutes les chansons (pas seulement le mois en cours)
   onSelectSong
 }) {
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  // Mois (début de mois) contenant au moins une chanson, du plus récent au plus
+  // ancien. Le tiroir s'ouvre depuis la homepage : il applique donc la même règle
+  // qu'elle et ne peut jamais afficher un mois sans publication (cf. spec §4).
+  const monthsWithSongs = useMemo(() => {
+    if (!Array.isArray(songs) || songs.length === 0) return [];
+
+    const byTime = new Map();
+    for (const song of songs) {
+      if (!song?.release_date) continue;
+      const parsed = parseISO(song.release_date);
+      if (Number.isNaN(parsed.getTime())) continue;
+      const monthStart = startOfMonth(parsed);
+      byTime.set(monthStart.getTime(), monthStart);
+    }
+
+    return [...byTime.values()].sort((a, b) => b.getTime() - a.getTime());
+  }, [songs]);
+
+  // `null` tant que l'utilisateur n'a pas navigué : on retombe alors sur le mois
+  // publié le plus récent, et non sur le mois calendaire courant qui peut être vide.
+  const [pickedMonthTime, setPickedMonthTime] = useState(null);
+
+  const selectedMonth = useMemo(() => {
+    if (monthsWithSongs.length === 0) return null;
+    return monthsWithSongs.find((month) => month.getTime() === pickedMonthTime) || monthsWithSongs[0];
+  }, [monthsWithSongs, pickedMonthTime]);
+
+  const selectedIndex = selectedMonth
+    ? monthsWithSongs.findIndex((month) => month.getTime() === selectedMonth.getTime())
+    : -1;
 
   // Filtrer les chansons pour le mois sélectionné
   const monthSongs = useMemo(() => {
-    if (!songs || songs.length === 0) return [];
-    
+    if (!selectedMonth || !songs || songs.length === 0) return [];
+
     const monthStart = startOfMonth(selectedMonth);
     const monthEnd = endOfMonth(selectedMonth);
-    
+
     return songs.filter(song => {
       const songDate = parseISO(song.release_date);
       return isWithinInterval(songDate, { start: monthStart, end: monthEnd });
     });
   }, [songs, selectedMonth]);
 
+  // Les flèches se déplacent dans `monthsWithSongs`, donc sautent les mois sans
+  // publication : la liste affichée n'est jamais vide.
+  const canNavigatePrevious = selectedIndex >= 0 && selectedIndex < monthsWithSongs.length - 1;
+  const canNavigateNext = selectedIndex > 0;
+
   const handlePreviousMonth = () => {
-    setSelectedMonth(prev => addMonths(prev, -1));
+    const target = monthsWithSongs[selectedIndex + 1];
+    if (target) setPickedMonthTime(target.getTime());
   };
 
   const handleNextMonth = () => {
-    setSelectedMonth(prev => addMonths(prev, 1));
+    const target = monthsWithSongs[selectedIndex - 1];
+    if (target) setPickedMonthTime(target.getTime());
   };
-
-  // Vérifier si on peut naviguer vers le mois précédent/suivant
-  const canNavigatePrevious = useMemo(() => {
-    if (!songs || songs.length === 0) return false;
-    const prevMonth = addMonths(selectedMonth, -1);
-    const prevMonthStart = startOfMonth(prevMonth);
-    const prevMonthEnd = endOfMonth(prevMonth);
-    return songs.some(song => {
-      const songDate = parseISO(song.release_date);
-      return isWithinInterval(songDate, { start: prevMonthStart, end: prevMonthEnd });
-    });
-  }, [songs, selectedMonth]);
-
-  const canNavigateNext = useMemo(() => {
-    if (!songs || songs.length === 0) return false;
-    const nextMonth = addMonths(selectedMonth, 1);
-    const nextMonthStart = startOfMonth(nextMonth);
-    const nextMonthEnd = endOfMonth(nextMonth);
-    return songs.some(song => {
-      const songDate = parseISO(song.release_date);
-      return isWithinInterval(songDate, { start: nextMonthStart, end: nextMonthEnd });
-    });
-  }, [songs, selectedMonth]);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
@@ -89,7 +102,7 @@ export default function HistoryDrawer({
             </Button>
             
             <p className="text-white/90 text-sm font-medium drop-shadow-sm">
-              {format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}
+              {selectedMonth ? format(selectedMonth, 'MMMM yyyy', { locale: ptBR }) : ''}
             </p>
             
             <Button
@@ -106,6 +119,9 @@ export default function HistoryDrawer({
         
         {/* Liste des chansons */}
         <div className="px-6 pb-6 flex-1 overflow-hidden">
+          {/* Pas d'état vide : `monthsWithSongs` garantit qu'un mois affiché contient
+              toujours des chansons. Liste vide = catalogue entier vide, cas où l'on
+              n'affiche rien plutôt qu'un message d'absence de publication. */}
           {monthSongs && monthSongs.length > 0 ? (
             <ScrollArea className="h-[calc(85vh-180px)]">
               <div className="space-y-2 pr-4">
@@ -141,17 +157,7 @@ export default function HistoryDrawer({
                 ))}
               </div>
             </ScrollArea>
-          ) : (
-            <div className="text-center py-12">
-              <Clock className="w-16 h-16 text-white/40 mx-auto mb-4" />
-              <p className="text-white/90 font-medium text-lg mb-2 drop-shadow-sm">
-                Nenhuma música disponível
-              </p>
-              <p className="text-white/70 text-sm drop-shadow-sm">
-                Nenhuma música foi publicada em {format(selectedMonth, 'MMMM yyyy', { locale: ptBR })}.
-              </p>
-            </div>
-          )}
+          ) : null}
         </div>
       </DrawerContent>
     </Drawer>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useRef } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
@@ -32,10 +32,11 @@ import HistoryDrawer from '../components/HistoryDrawer';
 import { MobileHomeApp } from '@/components/mobile';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
+import DesktopHero from '@/components/home/DesktopHero';
 import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
 import { isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
 
-import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO, addMonths, isSameMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { useSEO } from '../hooks/useSEO';
@@ -186,6 +187,9 @@ export default function Home() {
   const [selectedSongForDialog, setSelectedSongForDialog] = useState(null);
   const [displayedSong, setDisplayedSong] = useState(null);
   const [isKaraokeOpen, setIsKaraokeOpen] = useState(false); // overlay karaoké (desktop)
+  // Overlay vidéo du nouveau hero (>= 1024 px). Spec §6 : « Assistir agora » ouvre
+  // la vidéo SUR le site, jamais par une redirection vers YouTube.
+  const [isHeroVideoOpen, setIsHeroVideoOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia('(max-width: 767px)').matches : false
   );
@@ -195,7 +199,38 @@ export default function Home() {
   const desktopHeroPlayerRef = useRef(null);
   const [desktopVideoResetKey, setDesktopVideoResetKey] = useState(0);
   const [desktopVolume, setDesktopVolume] = useState(72);
-  const [catalogMonthDate, setCatalogMonthDate] = useState(() => startOfMonth(new Date()));
+  // Mois (début de mois) contenant au moins une chanson publiée, du plus récent au
+  // plus ancien. Le catalogue navigue sur CETTE liste et non sur le calendrier : un
+  // mois sans publication n'est donc jamais atteignable, et la homepage n'a plus
+  // aucun état « aucune musique publiée » à afficher (cf. spec §4).
+  const monthsWithSongs = useMemo(() => {
+    if (!Array.isArray(allSongs) || allSongs.length === 0) return [];
+
+    const byTime = new Map();
+    for (const song of allSongs) {
+      if (!song?.release_date) continue;
+      const parsed = parseISO(song.release_date);
+      if (Number.isNaN(parsed.getTime())) continue;
+      const monthStart = startOfMonth(parsed);
+      byTime.set(monthStart.getTime(), monthStart);
+    }
+
+    return [...byTime.values()].sort((a, b) => b.getTime() - a.getTime());
+  }, [allSongs]);
+
+  // Mois explicitement choisi par l'utilisateur via les flèches. Reste `null` tant
+  // qu'il n'a rien choisi : on retombe alors sur le mois publié le plus récent, et
+  // non sur le mois calendaire courant qui peut être vide (ex. le 1er du mois).
+  const [pickedMonthTime, setPickedMonthTime] = useState(null);
+
+  const catalogMonthDate = useMemo(() => {
+    if (monthsWithSongs.length === 0) return null;
+    return monthsWithSongs.find((month) => month.getTime() === pickedMonthTime) || monthsWithSongs[0];
+  }, [monthsWithSongs, pickedMonthTime]);
+
+  const catalogMonthIndex = catalogMonthDate
+    ? monthsWithSongs.findIndex((month) => month.getTime() === catalogMonthDate.getTime())
+    : -1;
 
   useEffect(() => {
     logger.debug('Home useEffect triggered');
@@ -211,7 +246,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    setRecentSongs(getSongsForMonth(allSongs, catalogMonthDate));
+    setRecentSongs(catalogMonthDate ? getSongsForMonth(allSongs, catalogMonthDate) : []);
   }, [allSongs, catalogMonthDate]);
 
   const getLatestPublishedByCreatedAt = (songs) => {
@@ -416,8 +451,12 @@ export default function Home() {
     }
   };
 
+  // direction -1 = mois publié plus ancien, +1 = plus récent. `monthsWithSongs` étant
+  // trié du plus récent au plus ancien, l'index se déplace en sens inverse. Les mois
+  // sans publication sont sautés : on ne peut pas atterrir sur une grille vide.
   const handleShiftCatalogMonth = (direction) => {
-    setCatalogMonthDate((currentDate) => startOfMonth(addMonths(currentDate, direction)));
+    const target = monthsWithSongs[catalogMonthIndex - direction];
+    if (target) setPickedMonthTime(target.getTime());
   };
 
   const getSongArtwork = useCallback((song, quality = 'hqdefault') => {
@@ -460,8 +499,11 @@ export default function Home() {
     import.meta.env.DEV &&
     typeof window !== 'undefined' &&
     window.location.search.includes('legacy-home-desktop=1');
-  const isCurrentCatalogMonth = isSameMonth(catalogMonthDate, startOfMonth(new Date()));
-  const currentCatalogLabel = format(catalogMonthDate, 'MMMM yyyy', { locale: ptBR });
+  const canGoOlderCatalogMonth = catalogMonthIndex >= 0 && catalogMonthIndex < monthsWithSongs.length - 1;
+  const canGoNewerCatalogMonth = catalogMonthIndex > 0;
+  const currentCatalogLabel = catalogMonthDate
+    ? format(catalogMonthDate, 'MMMM yyyy', { locale: ptBR })
+    : '';
   const isDesktopShort = Boolean(
     displayedSong &&
       (displayedSong.youtube_music_url?.includes('/shorts/') ||
@@ -658,8 +700,32 @@ export default function Home() {
     
       {/* Desktop app shell: hero + grid + player */}
       <div className="hidden md:block space-y-8">
-        {/* Desktop hero section */}
-        <section className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8 min-h-[460px] xl:min-h-[500px]">
+        {/* Nouveau hero (>= 1024 px), spec §6. Bandeau plat aligné sur le même bord
+            gauche que le logo de la barre de navigation — c'est ce que fait le modèle
+            HTML, où toutes les bandes partagent la largeur du cadre. `-mt-4` colle la
+            bande sous la barre, sans gouttière. */}
+        <div className="hidden lg:-mx-5 lg:-mt-9 lg:block">
+          <DesktopHero
+            song={displayedSong}
+            buildArtwork={CURRENT_SONG_ARTWORK}
+            onWatch={() => setIsHeroVideoOpen(true)}
+            // `LyricsDialog` lit `selectedSongForDialog`, alimenté par la grille du
+            // catalogue. Depuis le hero il faut donc le renseigner d'abord, sinon
+            // l'overlay s'ouvre sur une chanson nulle et ne rend rien.
+            onLyrics={() => {
+              setSelectedSongForDialog(displayedSong);
+              setShowLyricsDialog(true);
+            }}
+            onSing={
+              isKaraokePublished(displayedSong) ? () => setIsKaraokeOpen(true) : null
+            }
+            onShare={() => handleShareSong(displayedSong)}
+          />
+        </div>
+
+        {/* Ancien hero — conservé pour la bande 768-1023 px, que le spec §11 verrouille.
+            Masqué dès `lg`, où le nouveau hero prend le relais. */}
+        <section className="glass-panel desktop-shell-gradient relative overflow-hidden rounded-[36px] p-6 xl:p-8 min-h-[460px] xl:min-h-[500px] lg:hidden">
           <div className="absolute inset-0 overflow-hidden">
             <img
               key={heroArtwork}
@@ -924,6 +990,9 @@ export default function Home() {
 
         {/* Desktop catalog section */}
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_340px]">
+          {/* Catalogue mensuel. Rendu seulement s'il existe au moins un mois publié :
+              catalogue entièrement vide = section masquée, jamais de message d'absence. */}
+          {catalogMonthDate && (
           <div className="space-y-5">
             <div className="flex items-end justify-between gap-4">
               <div>
@@ -939,7 +1008,8 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => handleShiftCatalogMonth(-1)}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/65 transition hover:bg-white/10 hover:text-white"
+                  disabled={!canGoOlderCatalogMonth}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/65 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Ver mês anterior
@@ -947,7 +1017,7 @@ export default function Home() {
 
                 <button
                   onClick={() => handleShiftCatalogMonth(1)}
-                  disabled={isCurrentCatalogMonth}
+                  disabled={!canGoNewerCatalogMonth}
                   className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/65 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   Mês seguinte
@@ -958,28 +1028,20 @@ export default function Home() {
 
             <div className="relative overflow-hidden">
               <div>
-                  {recentSongs.length > 0 ? (
-                    <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
-                      {recentSongs.map((song) => (
-                        <SongListItem
-                          key={song.id}
-                          song={song}
-                          onSelect={handleReplaceVideo}
-                          thumbnailUrl={getSongArtwork(song)}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="glass-panel rounded-[30px] p-10 text-center">
-                      <Music className="mx-auto mb-4 h-12 w-12 text-white/35" />
-                      <p className="text-lg font-medium text-white/72">
-                        Nenhuma música publicada em {currentCatalogLabel}
-                      </p>
-                    </div>
-                  )}
+                <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+                  {recentSongs.map((song) => (
+                    <SongListItem
+                      key={song.id}
+                      song={song}
+                      onSelect={handleReplaceVideo}
+                      thumbnailUrl={getSongArtwork(song)}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
+          )}
 
           {/* Desktop side rail */}
           <aside className="space-y-6">
@@ -997,7 +1059,7 @@ export default function Home() {
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <div className="text-2xl font-black text-white">{recentSongs.length}</div>
                   <div className="mt-1 text-[11px] uppercase tracking-[0.22em] text-white/42">
-                    Em {format(catalogMonthDate, 'MMM', { locale: ptBR })}
+                    {catalogMonthDate ? `Em ${format(catalogMonthDate, 'MMM', { locale: ptBR })}` : 'No mês'}
                   </div>
                 </div>
 
@@ -1032,8 +1094,9 @@ export default function Home() {
           </aside>
         </section>
 
-        {/* Desktop categories section */}
-        <section className="glass-panel rounded-[28px] p-6 xl:p-8">
+        {/* Desktop categories section. À partir de 1024 px : bande plate séparée par un
+            filet, comme le modèle HTML. En dessous, le panneau arrondi reste intact. */}
+        <section className="glass-panel rounded-[28px] p-6 xl:p-8 lg:-mx-5 lg:rounded-none lg:border-0 lg:border-t lg:border-white/8 lg:bg-transparent lg:px-5 lg:py-7 lg:shadow-none lg:backdrop-blur-none">
           <h2 className="text-lg font-bold text-white mb-4">Explorar por tema</h2>
           <div className="flex flex-wrap gap-2">
             {[
@@ -1063,7 +1126,7 @@ export default function Home() {
 
         {/* Desktop sticky bottom player bar */}
         <div className="sticky bottom-4 z-30">
-          <div className="glass-panel rounded-[30px] px-6 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+          <div className="glass-panel rounded-[30px] px-6 py-4 shadow-[0_24px_80px_rgba(0,0,0,0.35)] lg:-mx-5 lg:rounded-none lg:border-0 lg:border-t lg:border-white/8 lg:px-5">
             <div className="grid items-center gap-4 xl:grid-cols-[minmax(0,1fr)_auto_minmax(240px,0.8fr)]">
               {/* Cover + iframe caché + infos */}
               <div className="flex min-w-0 items-center gap-4">
@@ -1387,6 +1450,33 @@ export default function Home() {
       )}
 
       {/* ===== DIALOG PLATAFORMAS ===== */}
+      {/* Overlay vidéo du hero desktop. La vidéo est lue SUR le site : aucun clic ne
+          quitte amusicadasegunda.com. Monté seulement à l'ouverture pour ne pas
+          charger d'iframe YouTube au premier rendu. */}
+      <Dialog open={isHeroVideoOpen} onOpenChange={setIsHeroVideoOpen}>
+        <DialogContent className="glass-panel max-w-4xl overflow-hidden border-white/10 bg-[#0b0b0f]/97 p-0 text-white [&>button]:right-5 [&>button]:top-5 [&>button]:rounded-full [&>button]:border [&>button]:border-white/10 [&>button]:bg-white/5 [&>button]:p-2 [&>button]:text-white/70">
+          <DialogHeader className="border-b border-white/10 px-6 pb-4 pt-6">
+            <DialogTitle className="text-lg font-bold text-white">
+              {displayedSong?.title || 'A Música da Segunda'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="px-6 pb-6 pt-5">
+            {isHeroVideoOpen && displayedSong ? (
+              <YouTubeEmbed
+                youtubeMusicUrl={displayedSong.youtube_music_url}
+                youtubeUrl={displayedSong.youtube_url}
+                title={displayedSong.title}
+                autoplayOnActivate
+                forceActivated
+                thumbnailQuality="hqdefault"
+                shortMaxWidth={420}
+              />
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={showPlatformsDialog} onOpenChange={setShowPlatformsDialog}>
         <DialogContent className="glass-panel max-w-xl overflow-hidden border-white/10 bg-[#111111]/95 p-0 text-white [&>button]:right-5 [&>button]:top-5 [&>button]:rounded-full [&>button]:border [&>button]:border-white/10 [&>button]:bg-white/5 [&>button]:p-2 [&>button]:text-white/70">
           <DialogHeader className="border-b border-white/10 px-6 pb-5 pt-6">
