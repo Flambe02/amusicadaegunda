@@ -39,7 +39,8 @@ async function renderOpen(onOpenChange = vi.fn()) {
 }
 
 const tiles = () => screen.getAllByRole('link').filter((a) => a.getAttribute('href')?.startsWith('/?musica='));
-const tileTitles = () => tiles().map((a) => a.textContent);
+// Titre de la vignette (grille) ou de la ligne (liste compacte, qui affiche aussi le mois).
+const tileTitles = () => tiles().map((a) => a.querySelector('.font-bold')?.textContent ?? a.textContent);
 
 describe('SearchSheet (étape 10)', () => {
   it('opens with the most recent month selected; only published songs; months with songs only', async () => {
@@ -76,6 +77,56 @@ describe('SearchSheet (étape 10)', () => {
     expect(tiles().length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Limpar a busca' }));
     expect(screen.getByText('Por mês · 2026')).toBeInTheDocument();
+  });
+
+  it('opens with the keyboard closed: the field is not focused; month, theme and grid are visible', async () => {
+    await renderOpen();
+    expect(screen.getByRole('searchbox')).not.toHaveFocus();
+    expect(document.querySelector('[data-search-grid]')).not.toBeNull();
+    expect(screen.getByText('Por tema')).toBeInTheDocument();
+  });
+
+  it('while typing: a compact list (44 px square thumbnail, title, month) instead of the grid; back to the grid when cleared', async () => {
+    await renderOpen();
+    const field = screen.getByRole('searchbox');
+    fireEvent.change(field, { target: { value: 'cafe' } });
+    const list = document.querySelector('[data-search-list]');
+    expect(list).not.toBeNull();
+    expect(document.querySelector('[data-search-grid]')).toBeNull();
+    const row = list.querySelector('a');
+    expect(row).toHaveAttribute('href', '/?musica=pix');
+    expect(row.querySelector('.h-11.w-11')).not.toBeNull();
+    expect(row).toHaveTextContent('Pix');
+    expect(row).toHaveTextContent('setembro 2026');
+    fireEvent.change(field, { target: { value: '' } });
+    expect(document.querySelector('[data-search-grid]')).not.toBeNull();
+  });
+
+  it('the keyboard « Search » key and a scroll of the results close the keyboard, keeping the results', async () => {
+    await renderOpen();
+    const field = screen.getByRole('searchbox');
+    field.focus();
+    fireEvent.change(field, { target: { value: 'cafe' } });
+    fireEvent.submit(field.closest('form'));
+    expect(field).not.toHaveFocus();
+    expect(document.querySelector('[data-search-list]')).toHaveTextContent('Pix');
+    field.focus();
+    const results = document.querySelector('[data-search-results]');
+    fireEvent.touchStart(results, { touches: [{ clientY: 300 }] });
+    fireEvent.touchMove(results, { touches: [{ clientY: 260 }] });
+    expect(field).not.toHaveFocus();
+  });
+
+  it('no yellow focus ring on touch: the field is flagged when focused by a pointer', async () => {
+    await renderOpen();
+    const field = screen.getByRole('searchbox');
+    fireEvent.pointerDown(field);
+    act(() => field.focus());
+    expect(field).toHaveAttribute('data-pointer-focus', 'true');
+    expect(field.className).toContain('data-[pointer-focus=true]:focus-visible:!shadow-none');
+    act(() => field.blur());
+    act(() => field.focus()); // focus clavier (Tab) : pas de drapeau, l'anneau global s'affiche
+    expect(field).not.toHaveAttribute('data-pointer-focus');
   });
 
   it('a tile opens the feed on that song and closes the panel', async () => {

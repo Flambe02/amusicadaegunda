@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Drawer as DrawerPrimitive } from 'vaul';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { Song } from '@/api/entities';
-import { getPublicSlug } from '@/components/mobile/feed/feedMedia';
+import { getPublicSlug, monthYearLabel } from '@/components/mobile/feed/feedMedia';
 import TileImage from './TileImage';
 import {
   RECENT_SUGGESTIONS,
@@ -28,6 +28,31 @@ function loadCatalog() {
     });
   }
   return catalogPromise;
+}
+
+/**
+ * Clavier ouvert (iOS / Android) : hauteur visible et décalage du bas, lus sur
+ * `visualViewport`, pour que le panneau tienne au-dessus du clavier. null sans clavier.
+ */
+function useKeyboardInset(active) {
+  const [inset, setInset] = useState(null);
+  useEffect(() => {
+    const viewport = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!active || !viewport) return undefined;
+    const update = () => {
+      const covered = window.innerHeight - viewport.height - viewport.offsetTop;
+      setInset(covered > 80 ? { bottom: covered, height: Math.round(viewport.height - 8) } : null);
+    };
+    update();
+    viewport.addEventListener('resize', update);
+    viewport.addEventListener('scroll', update);
+    return () => {
+      viewport.removeEventListener('resize', update);
+      viewport.removeEventListener('scroll', update);
+      setInset(null);
+    };
+  }, [active]);
+  return inset;
 }
 
 const CHIP = 'flex h-9 flex-shrink-0 touch-manipulation items-center rounded-full px-4 text-sm font-semibold transition-colors';
@@ -62,9 +87,39 @@ function SongTile({ song, onPick }) {
   );
 }
 
+/**
+ * Liste compacte pendant la saisie : miniature carrée de 44 px, titre, mois. Elle
+ * tient dans la hauteur visible au-dessus du clavier.
+ */
+function SongList({ songs, onPick }) {
+  return (
+    <ul data-search-list className="-mx-1 space-y-0.5">
+      {songs.map((song) => (
+        <li key={song.id ?? song.slug ?? song.title}>
+          <Link
+            to={`/?musica=${encodeURIComponent(getPublicSlug(song))}`}
+            onClick={onPick}
+            className="flex min-h-[52px] touch-manipulation items-center gap-3 rounded-xl px-1 py-1 active:bg-white/5"
+          >
+            <span className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-white/10 bg-[#1b1c22]">
+              <TileImage song={song} />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-[15px] font-bold leading-tight text-white">{song.title}</span>
+              {monthYearLabel(song) ? (
+                <span className="mt-0.5 block text-[13px] leading-tight text-white/60">{monthYearLabel(song)}</span>
+              ) : null}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function SongGrid({ songs, onPick }) {
   return (
-    <ul className="grid grid-cols-3 gap-2">
+    <ul data-search-grid className="grid grid-cols-3 gap-2">
       {songs.map((song) => (
         <SongTile key={song.id ?? song.slug ?? song.title} song={song} onPick={onPick} />
       ))}
@@ -78,21 +133,31 @@ function SongGrid({ songs, onPick }) {
  * de `Layout`.
  *
  * Il monte du bas (≈ 94 % de la hauteur), fond #111217, coins de 26 px, poignée. En
- * tête : le champ (le clavier s'ouvre directement) et « Cancelar ». Sans saisie :
+ * tête : le champ et « Cancelar ». À l'ouverture, AUCUN focus sur le champ : clavier
+ * fermé, on voit mois, thèmes et grille (test iPhone du 2026-09-25 — le clavier ouvert
+ * d'emblée cachait tout). Le clavier s'ouvre quand on touche le champ. Sans saisie :
  * pastilles « Por mês » (seuls les mois qui ont des chansons, le plus récent choisi
  * par défaut) et « Por tema », qui se combinent ; grille de vignettes 9:16. Avec une
- * saisie : tout le catalogue, filtres masqués (H.8.3). Sans résultat : phrase courte
- * + chansons récentes, jamais une grille vide seule.
+ * saisie : tout le catalogue, filtres masqués (H.8.3), résultats en liste compacte
+ * qui tient au-dessus du clavier (hauteur du panneau = zone visible, visualViewport).
+ * Sans résultat : phrase courte + chansons récentes, jamais une liste vide seule.
+ * Faire défiler la grille ou la liste ferme le clavier ; la touche « Rechercher » du
+ * clavier aussi, en gardant les résultats.
  *
  * Fermeture : Cancelar, glissement vers le bas, Escape. Un tap sur une vignette ouvre
  * le feed sur cette chanson (`/?musica=<slug>`).
  *
- * Clavier iOS : Safari n'ouvre le clavier que si le focus est donné DANS le geste.
- * `Layout` donne donc le focus à un champ relais invisible au tap sur « Buscar » ;
- * à l'ouverture, le focus passe du relais à notre champ et le clavier reste ouvert.
+ * Anneau de focus : seulement à la navigation clavier. Un champ texte touché au doigt
+ * est « focus-visible » pour les navigateurs : on le signale (`data-pointer-focus`)
+ * pour retirer l'anneau jaune dans ce cas.
  */
 export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
   const inputRef = useRef(null);
+  const contentRef = useRef(null);
+  const pointerFocusRef = useRef(false);
+  const [pointerFocus, setPointerFocus] = useState(false);
+  const touchStartYRef = useRef(null);
+  const keyboardInset = useKeyboardInset(open);
   const [songs, setSongs] = useState(null); // null = en cours de chargement
   const [query, setQuery] = useState('');
   const [month, setMonth] = useState(null);
@@ -134,10 +199,15 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
   const shownYear = (month || months[0] || '').slice(0, 4);
 
   const close = () => onOpenChange(false);
+  /** Un défilement de la grille ou de la liste ferme le clavier. */
+  const dismissKeyboard = () => {
+    if (document.activeElement === inputRef.current) inputRef.current.blur();
+  };
   const loading = songs === null;
 
   return (
-    <DrawerPrimitive.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false}>
+    // repositionInputs={false} : la hauteur au-dessus du clavier est gérée ici (visualViewport).
+    <DrawerPrimitive.Root open={open} onOpenChange={onOpenChange} shouldScaleBackground={false} repositionInputs={false}>
       <DrawerPrimitive.Portal>
         {/* Transparente, comme celle du panneau História : pas de voile sur la vidéo du
             feed. Elle ne sert qu'à fermer au tap en dehors du panneau. */}
@@ -145,17 +215,20 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
         <DrawerPrimitive.Content
           aria-describedby={undefined}
           data-search-sheet=""
+          ref={contentRef}
+          tabIndex={-1}
           onOpenAutoFocus={(event) => {
-            // vaul coupe le focus automatique de Radix : on le donne au champ nous-mêmes.
+            // Jamais le champ : clavier fermé à l'ouverture. Le focus va au panneau
+            // lui-même (il reste piégé dedans pour la navigation clavier).
             event.preventDefault();
-            inputRef.current?.focus({ preventScroll: true });
+            contentRef.current?.focus({ preventScroll: true });
           }}
           onCloseAutoFocus={(event) => {
-            // Radix rendrait le focus au champ relais (le dernier focus avant l'ouverture),
-            // ce qui rouvrirait le clavier : on le rend au bouton « Buscar ».
             event.preventDefault();
             returnFocusRef?.current?.focus({ preventScroll: true });
           }}
+          // Clavier ouvert : le panneau se pose sur le clavier et prend la hauteur visible.
+          style={keyboardInset ? { bottom: keyboardInset.bottom, height: keyboardInset.height } : undefined}
           className="fixed inset-x-0 bottom-0 z-[200] flex h-[94svh] flex-col rounded-t-[26px] border-t border-white/10 bg-[#111217] text-white shadow-app-float outline-none motion-reduce:!animate-none motion-reduce:!transition-none"
         >
           <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-10 flex-shrink-0 rounded-full bg-white/20" />
@@ -180,18 +253,19 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
                 spellCheck={false}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
+                onPointerDown={() => { pointerFocusRef.current = true; }}
+                onFocus={() => { setPointerFocus(pointerFocusRef.current); pointerFocusRef.current = false; }}
+                onBlur={() => setPointerFocus(false)}
+                data-pointer-focus={pointerFocus ? 'true' : undefined}
                 aria-label="Buscar por título ou letra"
                 placeholder="Título ou trecho da letra"
                 // 16 px : en dessous, iOS zoome la page au focus.
-                className="h-11 w-full rounded-full bg-white/10 pl-10 pr-10 text-base text-white placeholder:text-white/50 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+                className="h-11 w-full rounded-full bg-white/10 pl-10 pr-10 text-base text-white placeholder:text-white/50 data-[pointer-focus=true]:focus-visible:!shadow-none data-[pointer-focus=true]:focus-visible:!outline-none [&::-webkit-search-cancel-button]:hidden"
               />
               {typing ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    setQuery('');
-                    inputRef.current?.focus();
-                  }}
+                  onClick={() => setQuery('')}
                   aria-label="Limpar a busca"
                   className="absolute right-0 flex h-11 w-11 touch-manipulation items-center justify-center text-white/60"
                 >
@@ -208,7 +282,16 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
             </button>
           </form>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+          <div
+            data-search-results
+            onTouchStart={(event) => { touchStartYRef.current = event.touches[0]?.clientY ?? null; }}
+            onTouchMove={(event) => {
+              const start = touchStartYRef.current;
+              if (start != null && Math.abs((event.touches[0]?.clientY ?? start) - start) > 8) dismissKeyboard();
+            }}
+            onWheel={dismissKeyboard}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]"
+          >
             {!typing && months.length > 0 ? (
               <section aria-label="Filtros" className="space-y-4 pb-4">
                 <div>
@@ -257,7 +340,7 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
                 ))}
               </ul>
             ) : results.length > 0 ? (
-              <SongGrid songs={results} onPick={close} />
+              typing ? <SongList songs={results} onPick={close} /> : <SongGrid songs={results} onPick={close} />
             ) : (
               <div>
                 <p className="pb-4 pt-2 text-base font-semibold text-white">
@@ -267,7 +350,9 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
                       : 'Nada com esse filtro. Que tal uma das mais recentes?'
                     : 'As músicas não carregaram agora.'}
                 </p>
-                {recent.length > 0 ? <SongGrid songs={recent} onPick={close} /> : null}
+                {recent.length > 0 ? (
+                  typing ? <SongList songs={recent} onPick={close} /> : <SongGrid songs={recent} onPick={close} />
+                ) : null}
               </div>
             )}
 

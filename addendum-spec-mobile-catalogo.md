@@ -43,7 +43,10 @@ Les étapes 4b à 7 de la spec restent inchangées.
 6. Seule la coquille mobile de `Layout` monte la scène (un seul lecteur audio). La Roda desktop est inchangée.
 
 **Recherche (onglet « Buscar » de la nav, depuis n'importe quel écran) :** un panneau monte du bas (≈ 94 % de la hauteur), fond #111217, coins 26 px, poignée en haut.
-- En tête : champ de recherche (titre, manchete, paroles) + « Cancelar » à droite, façon iOS. Le clavier s'ouvre directement.
+- En tête : champ de recherche (titre, paroles, `subtitle` — G.5) + « Cancelar » à droite, façon iOS. *Révisé après le test iPhone du 2026-09-25 (la version « le clavier s'ouvre directement » cachait tout) :* **à l'ouverture, aucun focus sur le champ, clavier fermé** — on voit le champ, les mois, les thèmes et la grille. Le clavier s'ouvre seulement quand on touche le champ.
+- **Pendant la saisie** : filtres masqués, résultats en **liste compacte** (miniature carrée ≈ 44 px, titre, mois), qui tient dans la hauteur visible au-dessus du clavier (`visualViewport`). Sans saisie : retour à la grille et aux filtres.
+- **Faire défiler** les résultats ou la grille ferme le clavier. La touche « Rechercher » du clavier ferme le clavier et garde les résultats.
+- **Pas d'anneau de focus jaune au toucher** : l'anneau n'apparaît qu'à la navigation clavier (`:focus-visible`, le champ étant signalé quand il est touché au doigt).
 - « Por mês · année » : pastilles des seuls mois qui ont des musiques ; le mois le plus récent sélectionné par défaut (pastille blanche pleine).
 - « Por tema » : pastilles des catégories réelles.
 - Grille 3 colonnes de miniatures 9:16 (miniature du Short, titre en bas sur un dégradé), filtrée par le mois ou le thème choisi, ou par la recherche.
@@ -128,7 +131,7 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 
 ### H.6 Ordre des étapes restantes
 Étapes 8 et 9 faites (nav, scène Catálogo, puis leurs révisions ci-dessus). Reste, dans l'ordre :
-1. **Étape 10 — Recherche** : panneau global monté dans `Layout`, ouvert par « Buscar » depuis n'importe quel écran (le clavier s'ouvre) ; contenu selon la section B (« Recherche »).
+1. **Étape 10 — Recherche** : panneau global monté dans `Layout`, ouvert par « Buscar » depuis n'importe quel écran (clavier fermé à l'ouverture, voir section B) ; contenu selon la section B (« Recherche »).
 2. **Étape 11 — Menu simplifié** (section D, décision G.6).
 3. **Étape 5 — Karaokê sur le Short** : ligne de karaokê sur la vidéo ; si elle est désynchronisée, ne pas l'afficher.
 4. **Étape 6 — Karaokê « O Palco »** (carrousel 3D, micro, état dégradé « O karaokê volta já ») : voir spec §4.2, qui remplace la liste (décision du 2026-09-25). Onglet Karaokê et « Cantar » = micro.
@@ -205,7 +208,7 @@ Aux tests sur iPhone, la variante « UI Shorts permanente » de YouTube (avatar,
 - [ ] La Caipivara danse tant que la musique joue ; repos en pause et à la fin.
 - [ ] Aucun rectangle de vidéo n'est visible autour de la Caipivara.
 - [ ] Un seul élément jaune à l'écran à tout moment.
-- [ ] La recherche s'ouvre en un tap sur « Buscar », depuis n'importe quel écran, avec le clavier ouvert.
+- [ ] La recherche s'ouvre en un tap sur « Buscar », depuis n'importe quel écran, clavier fermé (mois, thèmes et grille visibles) ; le clavier s'ouvre au toucher du champ.
 - [ ] Les mois proposés sont uniquement ceux qui ont des musiques.
 - [ ] Aucune grille vide, aucun nombre en dur.
 - [ ] Avec `prefers-reduced-motion`, aucune animation ne joue et la musique part directement.

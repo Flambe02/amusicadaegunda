@@ -153,7 +153,7 @@ describe('Layout — shell mobile', () => {
     expect(within(row).getByText('O arquivo completo, semana a semana')).toBeInTheDocument();
   });
 
-  it('Buscar opens the search panel on the current page, focuses the field, and is never active', async () => {
+  it('Buscar opens the search panel on the current page, keyboard closed (field not focused), never active', async () => {
     renderAt('/karaoke');
     const buscar = within(mobileNav()).getByRole('button', { name: 'Buscar' });
     expect(buscar).not.toHaveAttribute('aria-current');
@@ -161,7 +161,10 @@ describe('Layout — shell mobile', () => {
     fireEvent.click(buscar);
     const field = await screen.findByRole('searchbox', { name: /buscar por título ou letra/i });
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
-    await waitFor(() => expect(field).toHaveFocus());
+    await waitFor(() => expect(document.querySelector('[data-search-sheet]')).toHaveFocus());
+    expect(field).not.toHaveFocus();
+    // Plus de champ relais invisible pour forcer le clavier.
+    expect(document.querySelectorAll('body > input')).toHaveLength(0);
     // Pas de changement de page : Karaokê reste l'onglet actif (masqué aux lecteurs
     // d'écran derrière le panneau modal, d'où `hidden: true`).
     expect(within(mobileNav()).getByRole('link', { name: 'Karaokê', hidden: true })).toHaveAttribute('aria-current', 'page');

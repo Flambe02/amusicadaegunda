@@ -151,26 +151,6 @@ function getMobileActiveTab(pathname, search = '') {
   return 'inicio';
 }
 
-/**
- * Clavier iOS : Safari ne l'ouvre que si un champ reçoit le focus DANS le geste. Le
- * panneau de recherche est chargé à la demande et son champ n'existe pas encore au
- * tap : un champ relais temporaire reçoit le focus tout de suite, le panneau le
- * reprend à l'ouverture (le clavier reste ouvert), et le relais disparaît dès qu'il
- * perd le focus. 16 px pour qu'iOS ne zoome pas.
- */
-function focusKeyboardRelay() {
-  const relay = document.createElement('input');
-  relay.type = 'text';
-  relay.tabIndex = -1;
-  relay.setAttribute('aria-label', 'Buscar');
-  relay.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;pointer-events:none;';
-  relay.addEventListener('blur', () => relay.remove(), { once: true });
-  document.body.appendChild(relay);
-  relay.focus({ preventScroll: true });
-  // Filet : si le panneau ne prend jamais le focus, le relais ne reste pas.
-  window.setTimeout(() => relay.isConnected && relay.blur(), 3000);
-}
-
 export default function Layout({ children }) {
   const location = useLocation();
   const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
@@ -239,9 +219,9 @@ export default function Layout({ children }) {
     { name: 'Contato', url: 'mailto:contact@amusicadasegunda.com', external: true },
   ];
 
-  // Panneau de recherche mobile, ouvert par « Buscar » (voir focusKeyboardRelay).
+  // Panneau de recherche mobile, ouvert par « Buscar » — sans focus sur le champ :
+  // le clavier ne s'ouvre que si l'utilisateur touche le champ (test iPhone).
   const openSearch = () => {
-    focusKeyboardRelay();
     setSearchRequested(true);
     setSearchOpen(true);
   };
