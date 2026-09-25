@@ -452,9 +452,9 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext', '0:42 de 1:00');
   });
 
-  it('the fade happens ~4 s after playback starts, on first load and after a swipe', async () => {
+  it('the video shows ~0.3 s after playback starts, on first load and after a swipe', async () => {
     const { container } = await renderLoaded();
-    expect(REVEAL_DELAY_MS).toBe(4000);
+    expect(REVEAL_DELAY_MS).toBe(300);
     act(() => { players[0].ready(); players[0].play(); });
     act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS - 100); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading'); // miniature encore
@@ -467,15 +467,13 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
   });
 
-  it('keeps the thumbnail for the whole delay even with the sound on', async () => {
+  it('shows the video after the same short delay with the sound on', async () => {
     const { container } = await renderLoaded();
     const player = players[0];
-    act(() => { player.ready(); player.play(); });
+    act(() => { player.ready(); });
     fireEvent.click(screen.getByRole('button', { name: 'Ouvir com som' })); // son actif
-    act(() => { vi.advanceTimersByTime(1000); });
+    act(() => { player.play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
     expect(player.muted).toBe(false);
-    expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading');
-    act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
   });
 

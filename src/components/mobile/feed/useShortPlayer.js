@@ -17,20 +17,20 @@ import { loadYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
  * Phases (pour la vidéo courante) :
  *   'poster'   miniature seule, lecteur pas encore demandé
  *   'loading'  vidéo en cours de chargement, miniature toujours visible
- *   'playing'  la vidéo est affichée (fondu), REVEAL_DELAY_MS après le premier PLAYING,
- *              que le son soit coupé ou non. Sans zoom, l'interface de démarrage de
- *              YouTube (titre en haut, logo « Shorts » en bas) est visible de 0,5 à 3 s
- *              et disparaît vers 4 s (mesures du 2026-09-25) : la miniature, qui a le
- *              même cadrage, couvre ce moment.
+ *   'playing'  la vidéo est affichée (fondu), REVEAL_DELAY_MS après le premier PLAYING
+ *              — juste le temps d'éviter l'image noire du démarrage —, son coupé ou non.
+ *              L'interface de démarrage de YouTube (titre en haut, logo « Shorts » en bas
+ *              à droite) reste alors visible ~3 s : accepté (décision du 2026-09-25).
  *   'fallback' PLAYING pas reçu en 3 s (économie d'énergie/données, YouTube lent ou
  *              bloqué) → la miniature reste, « Toque para ouvir » relance au tap
  *   'none'     pas de Short pour cette chanson : le lecteur est arrêté et masqué
  */
 
 export const FALLBACK_DELAY_MS = 3000;
-// Décision du 2026-09-25 (zoom supprimé) : ~4 s, au premier chargement comme après
-// chaque glissement, son coupé ou non.
-export const REVEAL_DELAY_MS = 4000;
+// Décision du 2026-09-25 (test iPhone : une image figée pendant ~3 s avec la musique
+// qui joue, c'est pire que l'interface YouTube) : ~0,3 s, au premier chargement comme
+// après chaque glissement, son coupé ou non.
+export const REVEAL_DELAY_MS = 300;
 const POLL_MS = 250;
 const YT_STATE = { ENDED: 0, PLAYING: 1 };
 
