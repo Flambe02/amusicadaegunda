@@ -482,6 +482,38 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(stage(container).querySelector('[class*="bg-gradient"]')).toBeNull();
   });
 
+  it('opens on the song passed by « Ouvir » (/?musica=slug), muted, then clears the parameter', async () => {
+    const onStartApplied = vi.fn();
+    const { container } = render(
+      <MemoryRouter>
+        <MobileFeed songs={SONGS} startSlug="semana-um" onStartApplied={onStartApplied} />
+      </MemoryRouter>
+    );
+    await flush();
+    expect(currentIndex(container)).toBe(2);
+    expect(stage(container)).toHaveAttribute('aria-label', 'Semana Um');
+    expect(onStartApplied).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for the full list before placing the feed on the requested song', async () => {
+    const onStartApplied = vi.fn();
+    const { container, rerender } = render(
+      <MemoryRouter>
+        <MobileFeed songs={[WEEK]} startSlug="semana-dois" onStartApplied={onStartApplied} />
+      </MemoryRouter>
+    );
+    await flush();
+    expect(onStartApplied).not.toHaveBeenCalled();
+    rerender(
+      <MemoryRouter>
+        <MobileFeed songs={SONGS} startSlug="semana-dois" onStartApplied={onStartApplied} />
+      </MemoryRouter>
+    );
+    await flush();
+    expect(currentIndex(container)).toBe(1);
+    expect(onStartApplied).toHaveBeenCalledTimes(1);
+  });
+
   it('frames the video exactly like the thumbnail: cover, no extra zoom', () => {
     const { container } = renderFeed();
     const mount = stage(container).querySelector('[style*="100cqw"]');

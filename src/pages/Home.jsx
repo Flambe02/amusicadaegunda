@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
 import CountdownTimer from '../components/CountdownTimer';
@@ -471,6 +471,9 @@ export default function Home() {
   // Layout rend cette page deux fois (coquille mobile + coquille desktop masquée) : le
   // feed, qui crée une iframe YouTube, ne doit exister que dans la copie mobile.
   const shell = useShell();
+  // « Ouvir » depuis Catálogo : /?musica=<slug> ouvre le feed sur cette chanson.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const startSlug = searchParams.get('musica');
   // Feed mobile : la chanson de la semaine d'abord, puis le reste du catalogue du plus
   // récent au plus ancien (allSongs est déjà trié par release_date décroissante).
   const mobileFeedSongs = useMemo(() => {
@@ -1361,6 +1364,16 @@ export default function Home() {
         {isMobileViewport && shell !== 'desktop' ? (
           <MobileFeed
             songs={mobileFeedSongs}
+            startSlug={startSlug}
+            onStartApplied={() =>
+              setSearchParams(
+                (params) => {
+                  params.delete('musica');
+                  return params;
+                },
+                { replace: true }
+              )
+            }
             buildArtwork={CURRENT_SONG_ARTWORK}
             onShowLyrics={(song) => {
               // Spec §4.1 : « Letra » ouvre le LyricsDialog existant (avec le mode

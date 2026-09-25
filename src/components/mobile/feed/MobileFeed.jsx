@@ -3,7 +3,8 @@ import { ChevronUp, Play, VolumeX } from 'lucide-react';
 import FeedPoster from './FeedPoster';
 import FeedOverlay from './FeedOverlay';
 import { useShortPlayer } from './useShortPlayer';
-import { CAIPIVARA_STAGE_IMAGE, getShortVideoId } from './feedMedia';
+import { CAIPIVARA_STAGE_IMAGE, getPublicSlug, getShortVideoId } from './feedMedia';
+import { deriveSongSlug } from '@/lib/learnContent';
 import { TEXT_SHADOW } from './feedStyles';
 
 // Agrandissement de l'iframe au-delà du cadre « cover ». À 1,0 (décision du
@@ -63,8 +64,22 @@ function isActivatableTarget(target) {
  * Sans aucune chanson (Supabase ET repli statique indisponibles), la scène Caipivara
  * s'affiche : jamais d'écran vide ni de message « nenhuma música ».
  */
-export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyrics }) {
+export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyrics, startSlug = null, onStartApplied }) {
   const [index, setIndex] = useState(0);
+
+  // Ouverture sur une chanson précise (« Ouvir » depuis Catálogo, /?musica=<slug>) :
+  // le feed se place sur elle — le glissement reste possible dans les deux sens —,
+  // son coupé comme à toute arrivée, puis le paramètre est retiré de l'URL. La liste
+  // complète arrive après la chanson de la semaine : on attend qu'elle contienne le slug.
+  const startAppliedRef = useRef(false);
+  useEffect(() => {
+    if (!startSlug || startAppliedRef.current || !songs.length) return;
+    const target = songs.findIndex((song) => getPublicSlug(song) === startSlug || deriveSongSlug(song) === startSlug);
+    if (target < 0 && songs.length < 2) return; // catalogue pas encore complet
+    startAppliedRef.current = true;
+    if (target >= 0) setIndex(target);
+    onStartApplied?.();
+  }, [startSlug, songs, onStartApplied]);
   const [firstPosterSettled, setFirstPosterSettled] = useState(false);
   const [swipedEver, setSwipedEver] = useState(readSwiped);
   const [announce, setAnnounce] = useState('');
