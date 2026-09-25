@@ -189,7 +189,7 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 - [ ] La ligne de karaoké n'apparaît que pour les musiques au karaoké publié.
 - [ ] Le bouton Aprender n'apparaît que pour les musiques avec fiche.
 - [ ] Aucun nombre de musiques écrit en dur.
-- [ ] Desktop et TV identiques à `main`.
+- [ ] Desktop (≥ 768 px) identique à `feat/homepage-desktop` ; interface TV identique à `main`.
 - [ ] Moteur LRC et schéma Supabase inchangés.
 - [ ] Toutes les animations s'arrêtent avec `prefers-reduced-motion`.
 - [ ] Lighthouse mobile ≥ `main` sur performance, accessibilité et SEO.
