@@ -104,14 +104,14 @@ describe('Layout — shell mobile', () => {
   const mobileShell = () => document.querySelector('#main-mobile').parentElement;
   const mobileNav = () => mobileShell().querySelector('nav');
 
-  it('shows Início, Karaokê, Pesquisa, Roda, Menu — and no Catálogo tab', () => {
+  it('has exactly 4 tabs, in order: Início, Catálogo, Karaokê, Menu (no Pesquisa, no Roda)', () => {
     renderAt('/');
     const nav = mobileNav();
-    const links = within(nav).getAllByRole('link');
-    expect(links.map((a) => a.textContent)).toEqual(['Início', 'Karaokê', 'Pesquisa', 'Roda']);
-    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/', '/karaoke', '/search', '/roda']);
-    expect(within(nav).getByRole('button', { name: /menu/i })).toBeInTheDocument();
-    expect(within(nav).queryByText(/catálogo/i)).toBeNull();
+    const tabs = [...nav.querySelectorAll('li > a, li > button')];
+    expect(tabs.map((el) => el.textContent)).toEqual(['Início', 'Catálogo', 'Karaokê', 'Menu']);
+    expect(tabs.slice(0, 3).map((a) => a.getAttribute('href'))).toEqual(['/', '/catalogo', '/karaoke']);
+    expect(tabs[3].tagName).toBe('BUTTON'); // Menu ouvre la feuille
+    expect(within(nav).queryByText(/pesquisa|roda/i)).toBeNull();
   });
 
   it('keeps /musica reachable from the Menu sheet as « Todas as músicas »', () => {
@@ -131,18 +131,18 @@ describe('Layout — shell mobile', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it.each([
-    ['/search', 'Pesquisa'],
-    ['/roda', 'Roda'],
-  ])('marks %s active in the bottom nav', (path, label) => {
-    renderAt(path);
-    const active = within(mobileNav())
-      .getAllByRole('link')
-      .filter((a) => a.getAttribute('aria-current') === 'page');
-    expect(active.map((a) => a.textContent)).toEqual([label]);
-  });
+  it.each(['/catalogo', '/musica', '/musica/ta-chovendo-de-novo', '/categoria/politica', '/arquivo/2025'])(
+    'lights the Catálogo tab on %s',
+    (path) => {
+      renderAt(path);
+      const active = within(mobileNav())
+        .getAllByRole('link')
+        .filter((a) => a.getAttribute('aria-current') === 'page');
+      expect(active.map((a) => a.textContent)).toEqual(['Catálogo']);
+    }
+  );
 
-  it.each(['/musica', '/musica/ta-chovendo-de-novo', '/blog', '/sobre'])(
+  it.each(['/blog', '/sobre', '/festa', '/apprendre'])(
     'lights the Menu tab (no other tab) on %s',
     (path) => {
       renderAt(path);
@@ -157,6 +157,17 @@ describe('Layout — shell mobile', () => {
     const nav = mobileNav();
     expect(nav).toHaveClass('bg-app-black');
     expect(nav.className).not.toMatch(/backdrop-blur|bg-app-surface/);
+  });
+
+  it('has no « i » button in the Início header (it duplicated the Menu tab), but keeps it elsewhere', () => {
+    const { unmount } = renderAt('/');
+    const home = mobileShell().querySelector('header');
+    expect(within(home).queryByRole('link', { name: 'Sobre o projeto' })).toBeNull();
+    expect(home.querySelector('img')).not.toBeNull(); // Caipivara conservée
+    expect(within(home).getByText('A Música da Segunda')).toBeInTheDocument();
+    unmount();
+    renderAt('/karaoke');
+    expect(within(mobileShell().querySelector('header')).getByRole('link', { name: 'Sobre o projeto' })).toBeInTheDocument();
   });
 
   it.each([

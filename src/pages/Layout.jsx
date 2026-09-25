@@ -10,9 +10,10 @@ import {
   Gift,
   Info,
   FileText,
+  LayoutGrid,
+  Menu as MenuLines,
   Mic,
   Search,
-  Shuffle,
   Tv
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
@@ -116,25 +117,32 @@ function SidebarCountdown() {
   );
 }
 
-// Onglets de la barre mobile : inicio, karaoke, pesquisa, roda, menu. Toutes les pages
-// qu'on atteint depuis la feuille « Menu » (dont « Todas as músicas » → /musica) allument
-// « Menu » : le Catálogo n'est plus un onglet.
+// Onglets de la barre mobile (addendum catálogo, étape 8) : inicio, catalogo, karaoke,
+// menu. Tout ce qui parcourt les musiques (le catalogue, les fiches /musica/…, les
+// catégories, l'arquivo) allume « Catálogo » ; les pages atteintes depuis la feuille
+// « Menu » allument « Menu ».
 function getMobileActiveTab(pathname) {
   if (pathname === '/') return 'inicio';
   if (pathname === '/karaoke') return 'karaoke';
-  if (pathname === '/search') return 'pesquisa';
-  if (pathname === '/roda') return 'roda';
   if (
-    pathname === '/blog' ||
-    pathname === '/sobre' ||
-    pathname === '/tv' ||
-    pathname.startsWith('/apprendre') ||
+    pathname === '/catalogo' ||
+    pathname === '/search' ||
+    pathname === '/roda' ||
     pathname === '/musica' ||
     pathname.startsWith('/musica/') ||
     pathname === '/playlist' ||
     pathname.startsWith('/chansons') ||
     pathname.startsWith('/categoria/') ||
     pathname.startsWith('/arquivo/')
+  ) {
+    return 'catalogo';
+  }
+  if (
+    pathname === '/blog' ||
+    pathname === '/sobre' ||
+    pathname === '/tv' ||
+    pathname === '/festa' ||
+    pathname.startsWith('/apprendre')
   ) {
     return 'menu';
   }
@@ -208,14 +216,14 @@ export default function Layout({ children }) {
 
   const mobileNavItems = [
     { value: 'inicio', label: 'Início', href: '/', icon: Home },
+    // Pesquisa et Roda vivent désormais dans Catálogo (grille de 4 carrés).
+    { value: 'catalogo', label: 'Catálogo', href: '/catalogo', icon: LayoutGrid },
     // Icône de paroles, pas de micro : le karaokê fonctionne sans microphone.
     { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: ListMusic },
-    { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
-    { value: 'roda', label: 'Roda', href: '/roda', icon: Shuffle },
     {
       value: 'menu',
       label: 'Menu',
-      icon: Info,
+      icon: MenuLines,
       menuItems: [
         { value: 'inicio', label: 'Início', href: '/', icon: Home },
         {
@@ -292,14 +300,19 @@ export default function Layout({ children }) {
               <span className="text-sm font-black tracking-tight text-white">
                 A Música da Segunda
               </span>
-              {/* Right: Info */}
-              <Link
-                to={createPageUrl('Sobre')}
-                className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] touch-manipulation"
-                aria-label="Sobre o projeto"
-              >
-                <Info className="h-4 w-4 text-white/70" />
-              </Link>
+              {/* Right: Info — sauf sur l'Início, où il doublait l'onglet Menu. Une cale
+                  de même taille garde le nom centré. */}
+              {isHomePage ? (
+                <span aria-hidden="true" className="h-11 w-11 flex-shrink-0" />
+              ) : (
+                <Link
+                  to={createPageUrl('Sobre')}
+                  className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] touch-manipulation"
+                  aria-label="Sobre o projeto"
+                >
+                  <Info className="h-4 w-4 text-white/70" />
+                </Link>
+              )}
             </div>
           </div>
         </header>
