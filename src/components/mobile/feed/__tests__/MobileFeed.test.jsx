@@ -477,6 +477,11 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
   });
 
+  it('has no gradient over the video, on the current slide or the neighbours', async () => {
+    const { container } = await renderLoaded();
+    expect(stage(container).querySelector('[class*="bg-gradient"]')).toBeNull();
+  });
+
   it('frames the video exactly like the thumbnail: cover, no extra zoom', () => {
     const { container } = renderFeed();
     const mount = stage(container).querySelector('[style*="100cqw"]');

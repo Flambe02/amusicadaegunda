@@ -4,6 +4,7 @@ import FeedPoster from './FeedPoster';
 import FeedOverlay from './FeedOverlay';
 import { useShortPlayer } from './useShortPlayer';
 import { CAIPIVARA_STAGE_IMAGE, getShortVideoId } from './feedMedia';
+import { TEXT_SHADOW } from './feedStyles';
 
 // Agrandissement de l'iframe au-delà du cadre « cover ». À 1,0 (décision du
 // 2026-09-25), la vidéo a exactement le cadrage de la miniature qui la précède.
@@ -363,12 +364,6 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
         </div>
       </div>
 
-      {/* Dégradé de lisibilité sous l'en-tête transparent du shell (fixe). */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/70 via-black/30 to-transparent"
-      />
-
       {/* Mêmes changements que le glissement, pour le clavier et les lecteurs d'écran :
           invisibles jusqu'à ce qu'ils reçoivent le focus. Absents aux extrémités. */}
       <div className="absolute left-3 top-[calc(max(env(safe-area-inset-top),0.35rem)+5.5rem)] z-40 flex flex-col gap-2">
@@ -396,8 +391,7 @@ function NeighbourSlide({ song, buildArtwork, position }) {
   return (
     <div aria-hidden="true" className="absolute inset-0" style={{ transform: `translate3d(0, ${position}, 0)` }}>
       <FeedPoster song={song} buildArtwork={buildArtwork} />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-      <p className="pointer-events-none absolute bottom-6 left-4 right-24 line-clamp-2 text-[28px] font-black leading-[1.1] tracking-tight text-white">
+      <p className={`pointer-events-none absolute bottom-6 left-4 right-24 line-clamp-2 text-[28px] font-black leading-[1.1] tracking-tight text-white ${TEXT_SHADOW}`}>
         {song.title}
       </p>
     </div>

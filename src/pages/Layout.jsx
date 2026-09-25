@@ -297,7 +297,11 @@ export default function Layout({ children }) {
                 />
               </Link>
               {/* Center: Title */}
-              <span className="text-sm font-black tracking-tight text-white">
+              <span
+                className={`text-sm font-black tracking-tight text-white${
+                  isHomePage ? ' [text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_0_12px_rgba(0,0,0,0.35)]' : ''
+                }`}
+              >
                 A Música da Segunda
               </span>
               {/* Right: Info — sauf sur l'Início, où il doublait l'onglet Menu. Une cale

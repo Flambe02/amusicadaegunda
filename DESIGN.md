@@ -303,3 +303,4 @@ An opaque #14161C card with a 16px radius, a 3px transparent border and a dark d
 - **Don't** give nested elements the same large radius. Step radii down, from 30 to 22 to 16.
 - **Don't** use white text on a yellow fill.
 - **Don't** let any glow be a colour other than yellow.
+- **Don't** put a gradient, scrim or veil over the Início feed video: it darkens the video. Text and icons on the video (site name, week label, song title, rail labels and icons) stay readable with a soft shadow only: `text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.35)` (icons: the same as `filter: drop-shadow`). The rail's round buttons keep their dark translucent fill.

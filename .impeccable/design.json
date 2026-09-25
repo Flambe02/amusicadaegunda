@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-25T18:48:14.192Z",
+  "generatedAt": "2026-09-25T19:21:05.998Z",
   "title": "Design System: A Música da Segunda",
   "extensions": {
     "colorMeta": {
@@ -211,6 +211,11 @@
         "name": "focus-ring",
         "value": "outline: 3px solid #050505; box-shadow: 0 0 0 5px #FACC15, 0 0 0 8px rgba(0,0,0,0.55)",
         "purpose": "Global :focus-visible ring (TV: 7px / 11px halo)."
+      },
+      {
+        "name": "feed-text",
+        "value": "0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.35)",
+        "purpose": "Text and icons (drop-shadow) over the feed video; replaces any gradient."
       }
     ],
     "motion": [
@@ -408,7 +413,8 @@
       "Don't put glass on flat black with nothing behind it, and don't stack glass on glass more than one level deep.",
       "Don't give nested elements the same large radius. Step radii down, from 30 to 22 to 16.",
       "Don't use white text on a yellow fill.",
-      "Don't let any glow be a colour other than yellow."
+      "Don't let any glow be a colour other than yellow.",
+      "Don't put a gradient, scrim or veil over the Início feed video: it darkens the video. Text and icons on the video stay readable with a soft shadow only: `text-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.35)` (icons: the same as `filter: drop-shadow`). The rail's round buttons keep their dark translucent fill."
     ]
   }
 }

@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { isKaraokePublished } from '@/lib/lrc';
 import { getWeekLabel } from '@/lib/homeSongMedia';
 import { formatTime, getPublicSlug, isReleasedThisWeek } from './feedMedia';
+import { ICON_SHADOW, TEXT_SHADOW } from './feedStyles';
 
 const SITE_URL = 'https://www.amusicadasegunda.com';
 // Courbe « strong ease-out » (changements d'état d'interface).
@@ -66,15 +67,6 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
         </div>
       ) : null}
 
-      {/* Bas : dégradé de lisibilité. Son actif → il se replie vers le bas, pour ne pas
-          assombrir les paroles incrustées dans la vidéo. */}
-      <div
-        aria-hidden="true"
-        className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[45%] origin-bottom bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-transform duration-300 ${EASE_OUT} motion-reduce:transition-none ${
-          compact ? 'scale-y-[0.35]' : 'scale-y-100'
-        }`}
-      />
-
       {/* Bas gauche : titre (h1 de la page sur la première chanson). Même élément dans
           les deux états, seul son style change. */}
       <div
@@ -84,7 +76,7 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
       >
         <TitleTag
           data-compact={compact ? 'true' : 'false'}
-          className={`font-black tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.45)] transition-[font-size,line-height,opacity] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
+          className={`font-black tracking-tight text-white ${TEXT_SHADOW} transition-[font-size,line-height,opacity] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
             compact
               ? 'truncate text-[15px] leading-tight opacity-90'
               : 'line-clamp-2 text-[28px] leading-[1.1]'
@@ -125,12 +117,12 @@ const railClass =
   'flex min-h-[44px] w-14 touch-manipulation select-none flex-col items-center gap-1 text-white active:opacity-70';
 const railIconClass =
   'flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 backdrop-blur-md';
-const railLabelClass = 'text-[11px] font-semibold leading-none [text-shadow:0_1px_6px_rgba(0,0,0,0.6)]';
+const railLabelClass = `text-[11px] font-semibold leading-none ${TEXT_SHADOW}`;
 
 function RailButton({ label, icon: Icon, onClick, ariaLabel }) {
   return (
     <button type="button" onClick={onClick} aria-label={ariaLabel} className={railClass}>
-      <span className={railIconClass}><Icon className="h-5 w-5" aria-hidden="true" /></span>
+      <span className={railIconClass}><Icon className={`h-5 w-5 ${ICON_SHADOW}`} aria-hidden="true" /></span>
       <span aria-hidden="true" className={railLabelClass}>{label}</span>
     </button>
   );
@@ -139,7 +131,7 @@ function RailButton({ label, icon: Icon, onClick, ariaLabel }) {
 function RailLink({ label, icon: Icon, to, ariaLabel }) {
   return (
     <Link to={to} aria-label={ariaLabel} className={railClass}>
-      <span className={railIconClass}><Icon className="h-5 w-5" aria-hidden="true" /></span>
+      <span className={railIconClass}><Icon className={`h-5 w-5 ${ICON_SHADOW}`} aria-hidden="true" /></span>
       <span aria-hidden="true" className={railLabelClass}>{label}</span>
     </Link>
   );

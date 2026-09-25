@@ -142,6 +142,16 @@ describe('FeedOverlay (étape 4)', () => {
     expect(screen.getByRole('heading', { level: 1 }).className).toMatch(/motion-reduce:transition-none/);
   });
 
+  it('puts no gradient or veil on the video; text and icons get a soft shadow instead', () => {
+    const { container } = renderOverlay({ player: soundPlayer });
+    expect(container.querySelector('[class*="bg-gradient"]')).toBeNull();
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1.className).toContain('[text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_0_12px_rgba(0,0,0,0.35)]');
+    const letra = screen.getByRole('button', { name: /ver a letra/i });
+    expect(letra.querySelector('svg').getAttribute('class')).toContain('drop-shadow');
+    expect(letra.querySelector('span[aria-hidden]:last-child').className).toContain('[text-shadow:');
+  });
+
   it('never writes a news headline line (no manchete source yet)', () => {
     renderOverlay({ song: { ...SONG, subtitle: 'O mês já virou o setembro mais chuvoso' } });
     expect(screen.queryByText(/setembro mais chuvoso/)).toBeNull();
