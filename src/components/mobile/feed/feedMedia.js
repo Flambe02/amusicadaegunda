@@ -82,10 +82,15 @@ function releaseDate(song) {
 }
 
 /** « NOVA · ESTA SEMANA » ou « SETEMBRO 2026 » (majuscules par CSS). */
-export function ribbonLabel(song, now = new Date()) {
-  if (isReleasedThisWeek(song, now)) return 'Nova · esta semana';
+/** « setembro 2026 » : mois et année de sortie (panneau História, ruban). */
+export function monthYearLabel(song) {
   const date = releaseDate(song);
   return date ? format(date, 'MMMM yyyy', { locale: ptBR }) : null;
+}
+
+export function ribbonLabel(song, now = new Date()) {
+  if (isReleasedThisWeek(song, now)) return 'Nova · esta semana';
+  return monthYearLabel(song);
 }
 
 /** Texte pour les lecteurs d'écran, toujours présent : « Publicada em 21 de setembro de 2026 ». */

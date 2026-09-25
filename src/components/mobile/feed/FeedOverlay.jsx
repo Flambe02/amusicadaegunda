@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, ListMusic, Share2, Volume2, VolumeX } from 'lucide-react';
+import { FileText, ListMusic, Newspaper, Share2, Volume2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { isKaraokePublished } from '@/lib/lrc';
 import { formatTime, getPublicSlug } from './feedMedia';
 import WeekRibbon from './WeekRibbon';
+import FeedStorySheet from './FeedStorySheet';
 import { ICON_SHADOW, TEXT_SHADOW } from './feedStyles';
 
 const SITE_URL = 'https://www.amusicadasegunda.com';
@@ -30,7 +31,13 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
   // Son actif (état réel du lecteur, pause comprise) : le titre se fait discret pour
   // laisser lisibles les paroles incrustées dans la vidéo.
   const compact = !player.isMuted && player.phase === 'playing';
-  const hasVideo = player.phase !== 'none';
+  // Icône Som : seulement une fois le son activé (son coupé → « Toque para ouvir » suffit).
+  const showSound = player.phase !== 'none' && !player.isMuted;
+  // « História » : seulement si la chanson a une description — jamais de bouton vide.
+  const hasStory = typeof song?.description === 'string' && song.description.trim().length > 0;
+  const [storyOpen, setStoryOpen] = useState(false);
+  const storyButtonRef = useRef(null);
+  useEffect(() => { setStoryOpen(false); }, [song?.id, song?.title]);
 
   const copy = async (url) => {
     try {
@@ -79,17 +86,22 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
         </TitleTag>
       </div>
 
-      {/* Colonne droite : son, Letra, Cantar, Compartilhar. */}
+      {/* Colonne droite, de haut en bas : Som (si actif), Letra, História, Cantar,
+          Compartilhar. */}
       <div className="absolute bottom-6 right-3 z-30 flex flex-col items-center gap-4">
-        {hasVideo ? (
-          <RailButton
-            label="Som"
-            onClick={player.isMuted ? player.unmute : player.mute}
-            icon={player.isMuted ? VolumeX : Volume2}
-            ariaLabel={player.isMuted ? 'Ativar som' : 'Silenciar'}
-          />
+        {showSound ? (
+          <RailButton label="Som" onClick={player.mute} icon={Volume2} ariaLabel="Silenciar" />
         ) : null}
         <RailButton label="Letra" onClick={onShowLyrics} icon={FileText} ariaLabel={`Ver a letra de ${song.title}`} />
+        {hasStory ? (
+          <RailButton
+            buttonRef={storyButtonRef}
+            label="História"
+            onClick={() => setStoryOpen(true)}
+            icon={Newspaper}
+            ariaLabel={`Ler a história de ${song.title}`}
+          />
+        ) : null}
         {canSing ? (
           <RailLink
             label="Cantar"
@@ -102,6 +114,10 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
       </div>
 
       <Scrubber player={player} />
+
+      {hasStory ? (
+        <FeedStorySheet song={song} open={storyOpen} onOpenChange={setStoryOpen} returnFocusRef={storyButtonRef} />
+      ) : null}
     </>
   );
 }
@@ -112,9 +128,9 @@ const railIconClass =
   'flex h-11 w-11 items-center justify-center rounded-full border border-white/20 bg-black/40 backdrop-blur-md';
 const railLabelClass = `text-[11px] font-semibold leading-none ${TEXT_SHADOW}`;
 
-function RailButton({ label, icon: Icon, onClick, ariaLabel }) {
+function RailButton({ label, icon: Icon, onClick, ariaLabel, buttonRef }) {
   return (
-    <button type="button" onClick={onClick} aria-label={ariaLabel} className={railClass}>
+    <button ref={buttonRef} type="button" onClick={onClick} aria-label={ariaLabel} className={railClass}>
       <span className={railIconClass}><Icon className={`h-5 w-5 ${ICON_SHADOW}`} aria-hidden="true" /></span>
       <span aria-hidden="true" className={railLabelClass}>{label}</span>
     </button>
