@@ -151,7 +151,7 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 
 ## 11. Étapes (une par une, validation entre chaque)
 
-> **Ordre d'exécution révisé (2026-09-25).** L'addendum `addendum-spec-mobile-catalogo.md` remplace les étapes 8, 9 et 10 ci-dessous par ses étapes 8 à 11. Ordre retenu après l'étape 4b : **8 → 9 → 10 → 11** (addendum : nav à 4 onglets, Catálogo scène, Catálogo recherche, Menu simplifié), puis **5 → 6 → 7** (karaokê), puis **12** (vérification finale, ex-étape 11).
+> **Ordre d'exécution révisé (2026-09-25).** L'addendum `addendum-spec-mobile-catalogo.md` remplace les étapes 8, 9 et 10 ci-dessous par ses étapes 8 à 11. Ordre retenu après l'étape 4b : **8 → 9 → 10 → 11** (addendum : nav à 4 onglets, Catálogo scène, Catálogo recherche, Menu simplifié), puis **5 → 6 → 7** (karaokê), puis **12** (vérification finale, ex-étape 11). *Mis à jour le 2026-09-25 : ordre des étapes restantes et décisions depuis l'étape 8 dans la section H de l'addendum (10 → 11 → 5 → 6 → 7 → 12).*
 
 **Étape 0 — Analyse (lecture seule).** Lire les fichiers de la section 2. Rendre un rapport : composants concernés, routes, où brancher le rendu mobile, fonction YouTube, accès LRC, risques. Aucune modification.
 

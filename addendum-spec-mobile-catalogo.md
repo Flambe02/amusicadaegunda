@@ -75,7 +75,7 @@ Fichiers fournis par Florent, à placer puis à traiter comme à l'étape 1 (san
 
 ## G. Décisions complémentaires (validées le 2026-09-25)
 
-Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
+Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute. Les décisions suivantes sont en section H.
 
 1. **Redirections** : `/search` et `/roda` redirigent vers `/catalogo` **uniquement sous 768 px** (redirection côté client, depuis la copie mobile de la page). Sur desktop, les routes, les stubs et le sitemap restent inchangés.
 2. **`/catalogo` sur desktop** (≥ 768 px) : redirection vers `/musica`. `/catalogo` est `noindex` et hors sitemap. *Révisé le 2026-09-25 :* il a un **stub `noindex`** (comme `/festa` et `/search`), sinon un rechargement ou un lien direct passait par `404.html`, qui renvoie vers `/`.
@@ -83,6 +83,61 @@ Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 4. **Un seul halo** : celui qui est déjà dans les vidéos (projecteur et lueur au sol), bords fondus par le masque radial. Pas de halo CSS ajouté. En mouvement réduit, image fixe = poster du clip `caipivara-idle`.
 5. **Recherche** : sur le titre, les paroles et `subtitle`. `subtitle` sert à la recherche mais n'est jamais affiché (pas de manchete tant qu'aucune colonne dédiée n'existe).
 6. **Menu** : « Festa na TV » → `/festa`. « Newsletter » → le composant existant `ButtondownSignupForm`, dans un petit panneau qui s'ouvre depuis la ligne.
+
+---
+
+## H. Décisions prises depuis l'étape 8 (2026-09-25)
+
+Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en cas de doute.
+
+### H.1 Feed Início — vidéo
+1. **Pas de zoom** : `SHORTS_UI_ZOOM = 1.0` (constante gardée dans `MobileFeed.jsx`). Le cadrage de la vidéo est celui de la miniature. L'interface YouTube de démarrage (~3 s) et la variante « UI Shorts permanente » sont acceptées.
+2. **Vidéo affichée 0,3 s après PLAYING** (`REVEAL_DELAY_MS = 300` dans `useShortPlayer.js`), au premier chargement comme après chaque glissement, son coupé ou non. Un délai long (4 à 6 s) laissait une image figée pendant que la musique jouait : rejeté.
+3. **Aucun dégradé, voile ni scrim sur la vidéo.** Lisibilité par ombres uniquement (`src/components/mobile/feed/feedStyles.js`) : `TEXT_SHADOW` sur le texte, `ICON_SHADOW` (même ombre en `drop-shadow`) sur les icônes. Ne jamais rajouter de voile sans demander.
+4. **Titre compact** (15 px, son actif) : opacité 100 % et ombre plus dense (`TEXT_SHADOW_DENSE`).
+
+### H.2 Feed Início — son et gestes (modèle TikTok)
+1. Arrivée : vidéo muette + « Toque para ouvir ». **Le premier geste de la visite active le son**, quel qu'il soit : tap, glissement vers une autre semaine, flèche du clavier, bouton. « Toque para ouvir » n'apparaît que si le lecteur est réellement muet.
+2. Ensuite, **tap sur la vidéo = pause / lecture**. En pause : miniature floutée + icône lecture par-dessus le bloc central de YouTube.
+3. **Barre de progression manipulable** en bas de la vidéo (`data-scrubber`, zone tactile de 24 px, trait 3 → 6 px pendant le geste, temps « m:ss / m:ss »). Ce geste ne change jamais de semaine.
+4. **Clavier** : ↑/↓ = semaine précédente / suivante, Espace = pause / lecture, ←/→ = −5 s / +5 s. Deux boutons `sr-only` « Semana anterior » / « Semana seguinte ».
+5. La boucle de la vidéo est gérée par l'app (retour à 0 juste avant la fin), pas par YouTube.
+
+### H.3 Feed Início — calques
+1. **Ruban éphémère** à la place du chip permanent de la semaine (`WeekRibbon.jsx`) : « Nova · esta semana » si la chanson est sortie cette semaine (lun → dim, heure de São Paulo), sinon « mois année » (ex. « setembro 2026 »). Visible 2,5 s à l'arrivée de la vidéo et après chaque glissement, puis disparaît.
+2. **Colonne de droite**, de haut en bas : **Som** (seulement quand le son est actif, « Silenciar »), **Letra**, **História** (seulement si `description` n'est pas vide), **Cantar** (seulement si `isKaraokePublished`, → `/karaoke?musica=<slug>`), **Compartilhar** (Web Share, sinon copie du lien).
+3. **Panneau História** (`FeedStorySheet.jsx`) : monte du bas, fond #111217, coins 26 px ; titre, « mois année · thème » (toujours mois et année, même pour la chanson de la semaine), description, lien « Ver a página da música ». La vidéo continue derrière, sans voile. Focus piégé dans le panneau et rendu au bouton à la fermeture.
+4. Pas de bulle « Psiu », pas d'avatar Caipivara animé sur le feed.
+
+### H.4 Catálogo — la musique se lance au tap (remplace B.1 à B.5 d'origine)
+1. **Tap sur la Caipivara = une chanson démarre tout de suite**, son lancé dans le geste (iOS). Source : `youtube_url` (comme la Roda). Lecteur : celui du feed (`useShortPlayer`), invisible, avec l'option `loop: false` ; pas de second système. Une première chanson est tirée d'avance et tourne en muet ; le premier tap la reprend au début avec le son. Les taps suivants chargent la chanson suivante dans le geste (`loadNow`).
+2. Tirage parmi les chansons publiées **avec un lien lisible**, jamais la précédente.
+3. La Caipivara joue une animation (hat, flip ou samba, jamais deux fois la même à la suite), puis **danse** (`caipivara-dance`) tant que la musique joue avec le son ; boucle de repos en pause, à la fin, ou si le navigateur refuse le son (le bouton ▶ relance).
+4. Sous la Caipivara, discret : **titre, mois et année, fine barre de progression, bouton pause / lecture**. Liens secondaires **« História »** (même panneau que le feed, si description) et **« Ver o clipe »** (`/?musica=<slug>`, le feed sur cette chanson).
+5. **Retap = nouvelle animation + nouvelle chanson.** Taps pendant une animation : ignorés.
+6. **Plus d'étape « Que tal / Ouvir / Outra »**, pas de changement de page.
+7. Mouvement réduit : image fixe, musique lancée directement.
+8. **Raccords** : fondu de retour d'environ 400 ms pour `samba` et `flip` (150 ms pour `hat`).
+9. Seule la coquille mobile de `Layout` monte la scène (un seul lecteur audio). La Roda desktop reste inchangée.
+10. **Plus de barre de recherche sur la scène** : l'onglet « Buscar » de la nav suffit.
+
+### H.5 Icônes façon TikTok
+1. **Colonne de droite du feed** : plus de ronds sombres. Icônes pleines blanches de 32 px posées sur la vidéo avec ombre portée douce ; libellés 12 px semi-gras blancs avec ombre ; zone tactile ≥ 44 × 44 px ; colonne proche du bord droit, espacement régulier, largeur du plus long libellé. Icônes dans `src/components/mobile/icons/FilledIcons.jsx`.
+2. **Barre de navigation à 5 éléments** : voir section A (révisée). Início, Karaokê, [pastille Caipivara jaune = Catálogo, seul jaune de la barre], Buscar, Menu. « Buscar » mène à `/catalogo` en attendant le panneau de l'étape 10.
+3. **Point ouvert** : sans les ronds, la variante « UI Shorts permanente » de YouTube (ses propres boutons j'aime / partager) chevauche notre colonne. Rien n'est changé en attendant une décision (un fond léger derrière nos icônes serait un voile : à demander).
+
+### H.6 Ordre des étapes restantes
+Étapes 8 et 9 faites (nav, scène Catálogo, puis leurs révisions ci-dessus). Reste, dans l'ordre :
+1. **Étape 10 — Recherche** : panneau global monté dans `Layout`, ouvert par « Buscar » depuis n'importe quel écran (le clavier s'ouvre) ; contenu selon la section B (« Recherche »).
+2. **Étape 11 — Menu simplifié** (section D, décision G.6).
+3. **Étape 5 — Karaokê sur le Short** : ligne de karaokê sur la vidéo ; si elle est désynchronisée, ne pas l'afficher.
+4. **Étape 6 — Liste karaokê + état dégradé** (« O karaokê volta já » + lien vers le Short).
+5. **Étape 7 — Lecteur karaokê restylé.**
+6. **Étape 12 — Vérification finale.**
+
+### H.7 Méthode
+- Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.
+- **Plus de captures d'écran dans les rapports** : Florent teste lui-même sur son téléphone. Les vérifications au navigateur (Playwright) continuent, mais seuls leurs résultats figurent dans le rapport.
 
 ---
 
