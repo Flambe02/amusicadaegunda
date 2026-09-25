@@ -61,7 +61,14 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 - **Caipivara :** au repos, bulle « Psiu! Saiu a música da semana. » tant que le son n'est pas activé. Quand l'état réel du lecteur est « son actif + PLAYING », l'avatar passe en animation de danse. L'état vient du lecteur, pas du clic.
 - **Ligne de karaoké sur la vidéo :** seulement si le karaoké de la musique est publié. Synchro par lecture de `getCurrentTime()` et des LRC existants, en lecture seule. Visible uniquement avec le son actif. Sinon, la zone n'existe pas (pas de placeholder).
 - **Un seul jaune par zone :** son coupé = bouton « Toque para ouvir » ; son actif = ligne de karaoké. Rien d'autre en jaune sur la vidéo.
-- **Semaines précédentes (glissement vertical) : DÉCISION EN ATTENTE.** Ne pas implémenter dans cette spec. Prévoir seulement que le composant du feed accepte une liste de musiques, pour l'ajouter plus tard sans refonte.
+- **Semaines précédentes — navigation par glissement vertical, façon TikTok (décidé le 2026-09-25, étape 4b) :**
+  - Ordre : la plus récente en premier. Glisser vers le haut = semaine précédente ; glisser vers le bas = revenir vers la plus récente.
+  - Aucun glissement horizontal (conflit avec le geste retour d'iOS).
+  - Un seul lecteur YouTube, réutilisé d'une chanson à l'autre (`loadVideoById`). Si le son a été activé, il reste activé en changeant de chanson.
+  - Seules les miniatures des chansons voisines sont préchargées ; jamais un deuxième lecteur.
+  - Accessibilité : les mêmes changements sont possibles au clavier (flèches haut/bas) et par deux boutons avec `aria-label` pour les lecteurs d'écran.
+  - Indice discret « Deslize para a semana anterior », affiché tant que l'utilisateur n'a jamais glissé.
+  - `prefers-reduced-motion` : le changement se fait sans animation de défilement.
 
 ### 4.2 Karaokê — liste
 - En tête : carte « Música da semana » (Caipivara + titre + bouton jaune « Cantar agora ») si le karaoké de la semaine est publié. Sinon, la carte met en avant la dernière musique dont le karaoké est publié.
@@ -153,6 +160,8 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 **Étape 3 — Início, vidéo.** Miniature → IFrame API → fondu, cover, repli 3 s, tap son on/off.
 
 **Étape 4 — Início, calques.** Titre, manchete, barre de progression, colonne droite, Caipivara (bulle, danse selon l'état réel).
+
+**Étape 4b — Início, navigation entre les semaines.** Glissement vertical (haut = semaine précédente, bas = retour), lecteur unique réutilisé (`loadVideoById`, son conservé), préchargement des seules miniatures voisines, flèches haut/bas et deux boutons accessibles, indice « Deslize para a semana anterior » jusqu'au premier glissement, sans animation sous `prefers-reduced-motion`. Voir §4.1.
 
 **Étape 5 — Início, ligne de karaoké synchronisée** (conditionnée à `isKaraokePublished()`).
 
