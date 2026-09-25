@@ -17,19 +17,19 @@ import { loadYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
  * Phases (pour la vidéo courante) :
  *   'poster'   miniature seule, lecteur pas encore demandé
  *   'loading'  vidéo en cours de chargement, miniature toujours visible
- *   'playing'  la vidéo est affichée (fondu). On attend REVEAL_DELAY_MS après le premier
- *              PLAYING : YouTube superpose au démarrage son titre, son logo et un bouton,
- *              même avec controls=0, puis les masque. La miniature couvre ce moment.
- *              Si le son joue, la vidéo apparaît tout de suite.
+ *   'playing'  la vidéo est affichée (fondu), REVEAL_DELAY_MS après le premier PLAYING —
+ *              juste le temps de passer la première image noire / le spinner. L'interface
+ *              de YouTube (titre, logo, variante « Shorts » permanente) est hors champ
+ *              grâce au zoom du feed (mesures du 2026-09-25). Son actif → tout de suite.
  *   'fallback' PLAYING pas reçu en 3 s (économie d'énergie/données, YouTube lent ou
  *              bloqué) → la miniature reste, « Toque para ouvir » relance au tap
  *   'none'     pas de Short pour cette chanson : le lecteur est arrêté et masqué
  */
 
 export const FALLBACK_DELAY_MS = 3000;
-// Mesuré (Chromium, 390 px) : titre, logo et bouton YouTube restent ~5 s après le début
-// de la lecture muette, puis disparaissent. Un tap « son » les fait disparaître aussitôt.
-export const REVEAL_DELAY_MS = 6000;
+// Décision du 2026-09-25 : 0,5 s, au premier chargement comme après chaque glissement.
+// Le zoom permanent (1,22) garde hors champ l'interface de démarrage de YouTube.
+export const REVEAL_DELAY_MS = 500;
 const POLL_MS = 250;
 const YT_STATE = { ENDED: 0, PLAYING: 1 };
 
@@ -61,6 +61,8 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
   const [phase, setPhase] = useState(videoId ? 'poster' : 'none');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  // Pause demandée par l'utilisateur (pas un simple chargement ou une mise en mémoire).
+  const [isPaused, setIsPaused] = useState(false);
 
   const playerRef = useRef(null);
   const readyRef = useRef(false);
@@ -213,6 +215,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     clearRevealTimer();
     clearFallbackTimer();
     setIsPlaying(false);
+    setIsPaused(false); // une nouvelle chanson démarre toujours en lecture
 
     const player = playerRef.current;
     if (!videoId) {
@@ -313,6 +316,55 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     syncFromPlayer();
   }, [createPlayer, syncFromPlayer]);
 
+  const ready = () => Boolean(playerRef.current && readyRef.current);
+
+  /** Pause / lecture (taps suivants, Espace). Sans effet tant que le lecteur n'est pas prêt. */
+  const pause = useCallback(() => {
+    if (!ready()) return;
+    playerRef.current.pauseVideo();
+    setIsPaused(true);
+  }, []);
+
+  const play = useCallback(() => {
+    if (!ready()) return;
+    playerRef.current.playVideo();
+    setIsPaused(false);
+  }, []);
+
+  const togglePause = useCallback(() => {
+    if (isPaused) play();
+    else pause();
+  }, [isPaused, play, pause]);
+
+  /** Icône haut-parleur : couper / rétablir le son sans toucher à la lecture. */
+  const mute = useCallback(() => {
+    if (!ready()) return;
+    playerRef.current.mute();
+    syncFromPlayer();
+  }, [syncFromPlayer]);
+
+  const unmute = useCallback(() => {
+    if (!videoIdRef.current) return;
+    if (!ready()) {
+      pendingSoundRef.current = true;
+      createPlayer();
+      return;
+    }
+    const player = playerRef.current;
+    player.unMute();
+    player.setVolume(100);
+    if (!isPaused && player.getPlayerState() !== YT_STATE.PLAYING) player.playVideo();
+    syncFromPlayer();
+  }, [isPaused, createPlayer, syncFromPlayer]);
+
+  /** Barre de progression et flèches : position en secondes, bornée à la durée. */
+  const seekTo = useCallback((seconds, allowSeekAhead = true) => {
+    if (!ready()) return;
+    const duration = playerRef.current.getDuration?.() || 0;
+    const target = Math.max(0, duration ? Math.min(seconds, duration - 0.5) : seconds);
+    playerRef.current.seekTo(target, allowSeekAhead);
+  }, []);
+
   const getCurrentTime = useCallback(() => {
     try {
       return readyRef.current ? playerRef.current?.getCurrentTime?.() ?? 0 : 0;
@@ -333,9 +385,16 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     phase,
     isPlaying,
     isMuted,
+    isPaused,
     /** Son réellement audible : lecteur en lecture ET non muet. */
     isSoundOn: isPlaying && !isMuted,
     toggleSound,
+    pause,
+    play,
+    togglePause,
+    mute,
+    unmute,
+    seekTo,
     getCurrentTime,
     getDuration,
   };

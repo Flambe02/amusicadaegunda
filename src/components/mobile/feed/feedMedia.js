@@ -64,3 +64,9 @@ export function getPublicSlug(song) {
   const slug = typeof song?.slug === 'string' ? song.slug.trim() : '';
   return slug || deriveSongSlug(song);
 }
+
+/** 0:42 · 2:10 */
+export function formatTime(seconds) {
+  const total = Math.max(0, Math.floor(Number(seconds) || 0));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}

@@ -35,8 +35,8 @@ class FakePlayer {
   setVolume() {}
   unloadModule(name) { this.calls.push('unload:' + name); }
   isMuted() { return this.muted; }
-  playVideo() { this.calls.push('playVideo'); }
-  pauseVideo() { this.calls.push('pauseVideo'); }
+  playVideo() { this.calls.push('playVideo'); if (this.state === 2) this.state = 1; }
+  pauseVideo() { this.calls.push('pauseVideo'); this.state = 2; }
   stopVideo() { this.calls.push('stopVideo'); this.state = 5; }
   loadVideoById(id) { this.calls.push('loadVideoById:' + id); this.state = -1; this.time = 0; }
   seekTo(seconds) { this.calls.push('seekTo:' + seconds); this.time = seconds; }
@@ -264,14 +264,41 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(screen.getByRole('button', { name: 'Silenciar' })).toBeInTheDocument();
   });
 
-  it('keeps the sound off when it was off', async () => {
+  it('the first swipe of the visit turns the sound on (TikTok model)', async () => {
     const { container } = await renderLoaded();
     const player = players[0];
     act(() => { player.ready(); player.play(); });
+    expect(player.muted).toBe(true);
     swipe(container, -300);
+    expect(player.calls).toContain('unMute');
+    act(() => { player.play(); vi.advanceTimersByTime(300); });
+    expect(screen.queryByText('Toque para ouvir')).toBeNull();
+  });
+
+  it('after the user mutes with the speaker, later swipes keep it muted and the unmute button returns', async () => {
+    const { container } = await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); });
+    swipe(container, -300); // 1er geste : son
+    act(() => { player.play(); vi.advanceTimersByTime(300); });
+    fireEvent.click(screen.getByRole('button', { name: 'Silenciar' })); // haut-parleur
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(screen.getByText('Toque para ouvir')).toBeInTheDocument();
+    player.calls.length = 0;
+    swipe(container, +300);
     expect(player.calls).not.toContain('unMute');
     act(() => { player.play(); vi.advanceTimersByTime(300); });
-    expect(screen.getByRole('button', { name: 'Ouvir com som' })).toBeInTheDocument();
+    expect(screen.getByText('Toque para ouvir')).toBeInTheDocument();
+  });
+
+  it('keeps the button when the browser refuses the sound after a swipe (iOS)', async () => {
+    const { container } = await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); });
+    player.unMute = function refused() { this.calls.push('unMute'); }; // reste muet
+    swipe(container, -300);
+    act(() => { player.play(); vi.advanceTimersByTime(300); });
+    expect(screen.getByText('Toque para ouvir')).toBeInTheDocument();
   });
 
   it('stops the same player (no second one) on a song without a Short, and resumes it after', async () => {
@@ -336,6 +363,7 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     const button = screen.getByRole('button', { name: 'Ouvir com som' });
     fireEvent.pointerDown(button, { pointerId: 3, clientX: 100, clientY: 400 });
     fireEvent.pointerMove(button, { pointerId: 3, clientX: 100, clientY: 380 });
+    act(() => { vi.advanceTimersByTime(600); }); // lent et court : pas de changement
     fireEvent.pointerUp(button, { pointerId: 3, clientX: 100, clientY: 380 });
     fireEvent.click(button);
     expect(player.calls).not.toContain('unMute');
@@ -363,6 +391,76 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Semana anterior' }));
     expect(currentIndex(container)).toBe(1); // immédiat, sans attendre de transition
     expect(track.style.transition).not.toMatch(/transform \d+ms/);
+  });
+
+  it('taps after the sound is on pause and resume, with a big play icon and a blurred cover', async () => {
+    const { container } = await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvir com som' })); // 1er tap : son
+    act(() => { player.play(); vi.advanceTimersByTime(300); });
+    player.calls.length = 0;
+    fireEvent.click(screen.getByRole('button', { name: 'Pausar' }));
+    expect(player.calls).toContain('pauseVideo');
+    expect(container.querySelector('[data-feed-paused]')).not.toBeNull();
+    const resume = screen.getByRole('button', { name: 'Reproduzir' });
+    expect(resume.querySelector('svg')).not.toBeNull();
+    fireEvent.click(resume);
+    expect(player.calls).toContain('playVideo');
+    expect(container.querySelector('[data-feed-paused]')).toBeNull();
+  });
+
+  it('keyboard: Space = pause / play, Left / Right = -5 s / +5 s', async () => {
+    await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvir com som' }));
+    act(() => { player.play(); player.time = 20; vi.advanceTimersByTime(300); });
+    player.calls.length = 0;
+    fireEvent.keyDown(document.body, { key: ' ', code: 'Space' });
+    expect(player.calls).toContain('pauseVideo');
+    fireEvent.keyDown(document.body, { key: ' ', code: 'Space' });
+    expect(player.calls).toContain('playVideo');
+    fireEvent.keyDown(document.body, { key: 'ArrowRight' });
+    expect(player.calls).toContain('seekTo:25');
+    fireEvent.keyDown(document.body, { key: 'ArrowLeft' });
+    expect(player.calls).toContain('seekTo:20');
+  });
+
+  it('the progress bar can be dragged to seek, shows the time, and never changes week', async () => {
+    const { container } = await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); vi.advanceTimersByTime(600); });
+    const slider = screen.getByRole('slider', { name: 'Posição na música' });
+    slider.getBoundingClientRect = () => ({ left: 0, width: 400, top: 758, height: 24, right: 400, bottom: 782 });
+    slider.setPointerCapture = () => {};
+    Object.defineProperty(stage(container), 'clientHeight', { value: 800, configurable: true });
+    player.calls.length = 0;
+    fireEvent.pointerDown(slider, { pointerId: 9, clientX: 100, clientY: 770 });
+    fireEvent.pointerMove(slider, { pointerId: 9, clientX: 200, clientY: 470 }); // grand geste vertical
+    expect(screen.getByText('0:30 / 1:00')).toBeInTheDocument();
+    fireEvent.pointerUp(slider, { pointerId: 9, clientX: 200, clientY: 470 });
+    act(() => { vi.advanceTimersByTime(500); });
+    expect(player.calls).toContain('seekTo:30');
+    expect(currentIndex(container)).toBe(0);
+  });
+
+  it('the slider exposes its value as m:ss de m:ss', async () => {
+    await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); player.time = 42; vi.advanceTimersByTime(1100); });
+    expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext', '0:42 de 1:00');
+  });
+
+  it('the fade happens 0.5 s after playback starts, also after a swipe', async () => {
+    const { container } = await renderLoaded();
+    act(() => { players[0].ready(); players[0].play(); });
+    act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
+    expect(REVEAL_DELAY_MS).toBe(500);
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
+    swipe(container, -300);
+    act(() => { players[0].muted = true; players[0].play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
   });
 
   it('the first slide title is the h1; after a swipe the new song title is an h2', async () => {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ChevronUp, VolumeX } from 'lucide-react';
+import { ChevronUp, Play, VolumeX } from 'lucide-react';
 import FeedPoster from './FeedPoster';
 import FeedOverlay from './FeedOverlay';
 import { useShortPlayer } from './useShortPlayer';
@@ -20,6 +20,7 @@ const EDGE_RESISTANCE = 0.25; // aux extrémités, le cadre ne suit le doigt qu'
 const SLIDE_MS = 300;
 const EASE_DRAWER = 'cubic-bezier(0.32, 0.72, 0, 1)'; // courbe de tiroir façon iOS
 const HINT_KEY = 'amds-feed-swiped';
+const SEEK_STEP_S = 5; // flèches gauche / droite
 
 function readSwiped() {
   try {
@@ -38,6 +39,11 @@ function prefersReducedMotion() {
 function isTypingTarget(target) {
   const tag = target?.tagName;
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable;
+}
+
+// Espace sur un bouton ou un lien focalisé doit garder son rôle natif (l'activer).
+function isActivatableTarget(target) {
+  return Boolean(target?.closest?.('button, a, [role="button"], [role="slider"]'));
 }
 
 /**
@@ -66,7 +72,11 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
   const mountRef = useRef(null);
   const gestureRef = useRef(null);
   const suppressClickRef = useRef(false);
+  const suppressTimerRef = useRef(null);
   const animatingRef = useRef(false);
+  // Modèle TikTok : le PREMIER geste de la visite (tap, glissement, flèche, bouton)
+  // active le son. Ensuite le son suit l'utilisateur (icône haut-parleur).
+  const interactedRef = useRef(false);
 
   const safeIndex = Math.min(index, Math.max(songs.length - 1, 0));
   const current = songs[safeIndex] || null;
@@ -75,9 +85,28 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
 
   const videoId = getShortVideoId(current);
   const player = useShortPlayer({ videoId, canLoad: firstPosterSettled, mountRef });
-  const { phase, isMuted, toggleSound } = player;
+  const { phase, isMuted, isPaused, toggleSound, togglePause } = player;
   const videoVisible = phase === 'playing';
-  const soundOff = isMuted || !player.isPlaying;
+  // « Toque para ouvir » : seulement quand le lecteur est RÉELLEMENT muet — à l'arrivée,
+  // après un « Silenciar » de l'utilisateur, ou si le navigateur a refusé le son (iOS).
+  const showUnmute = isMuted;
+
+  // go() est mémoïsé : on lit le lecteur par une ref toujours à jour.
+  const playerRef = useRef(player);
+  playerRef.current = player;
+
+  const activateSoundOnce = () => {
+    if (interactedRef.current) return;
+    interactedRef.current = true;
+    if (playerRef.current.isMuted) playerRef.current.unmute();
+  };
+
+  /** Tap sur la vidéo : son coupé → son ; sinon pause / lecture. */
+  const onStageTap = () => {
+    interactedRef.current = true;
+    if (player.isMuted) toggleSound();
+    else togglePause();
+  };
 
   // Filet : si la première miniature ne finit jamais de charger, on lance le lecteur.
   useEffect(() => {
@@ -115,6 +144,9 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
     (direction) => {
       const target = safeIndex + direction;
       if (target < 0 || target >= songs.length || animatingRef.current) return false;
+      // Toujours appelé depuis un geste de l'utilisateur : c'est ici que le son peut
+      // être activé (une activation hors geste serait refusée par iOS).
+      activateSoundOnce();
       markSwiped();
       const song = songs[target];
       setAnnounce(`${song.title}`);
@@ -142,6 +174,8 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     if (animatingRef.current) return;
+    // La barre de progression a son propre geste : il ne change jamais de semaine.
+    if (event.target?.closest?.('[data-scrubber]')) return;
     gestureRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY, t: event.timeStamp, axis: null, dy: 0 };
   };
 
@@ -165,7 +199,12 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
     const g = gestureRef.current;
     gestureRef.current = null;
     if (!g || g.id !== event.pointerId || g.axis !== 'y') return;
-    suppressClickRef.current = true; // le geste ne doit pas aussi couper/rétablir le son
+    // Le geste ne doit pas aussi agir comme un tap. Sur écran tactile, le navigateur
+    // n'envoie en général AUCUN clic après un glissement : le verrou expire donc seul,
+    // sinon il avalerait le prochain vrai tap de l'utilisateur.
+    suppressClickRef.current = true;
+    clearTimeout(suppressTimerRef.current);
+    suppressTimerRef.current = setTimeout(() => { suppressClickRef.current = false; }, 400);
     const height = stageRef.current?.clientHeight || 1;
     const velocity = g.dy / Math.max(event.timeStamp - g.t, 1);
     let moved = false;
@@ -183,18 +222,33 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
     event.preventDefault();
   };
 
-  // ── Clavier : flèche bas = semaine précédente, flèche haut = plus récente ─────────
+  // ── Clavier ──────────────────────────────────────────────────────────────────────
+  // Flèche bas = semaine précédente, flèche haut = plus récente ; Espace = pause /
+  // lecture ; flèches gauche / droite = -5 s / +5 s.
   useEffect(() => {
     const onKeyDown = (event) => {
-      if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
       if (event.altKey || event.ctrlKey || event.metaKey || isTypingTarget(event.target)) return;
       if (document.querySelector('[role="dialog"]')) return; // Letra ouverte, menu…
-      const moved = go(event.key === 'ArrowDown' ? +1 : -1);
-      if (moved) event.preventDefault();
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        if (go(event.key === 'ArrowDown' ? +1 : -1)) event.preventDefault();
+        return;
+      }
+      if (!videoId) return;
+      if (event.key === ' ' || event.code === 'Space') {
+        if (isActivatableTarget(event.target)) return;
+        event.preventDefault();
+        onStageTap();
+        return;
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        const step = event.key === 'ArrowRight' ? SEEK_STEP_S : -SEEK_STEP_S;
+        player.seekTo(player.getCurrentTime() + step);
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [go]);
+  }); // se réabonne à chaque rendu : lit toujours l'état courant du lecteur
 
   if (!current) {
     return (
@@ -257,15 +311,35 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
             />
           </div>
 
-          {/* Bouton son plein cadre (seulement s'il y a une vidéo). */}
+          {/* Pause : YouTube affiche alors son propre bloc au centre de la vidéo (mesuré).
+              On le couvre avec la miniature floutée. */}
+          {videoId && isPaused ? (
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden" data-feed-paused>
+              <div className="absolute inset-0 scale-110 blur-xl">
+                <FeedPoster song={current} buildArtwork={buildArtwork} />
+              </div>
+              <div className="absolute inset-0 bg-black/40" />
+            </div>
+          ) : null}
+
+          {/* Contrôle plein cadre (seulement s'il y a une vidéo) : son coupé → son ;
+              sinon pause / lecture. */}
           {videoId ? (
             <button
               type="button"
-              onClick={toggleSound}
-              aria-label={soundOff ? 'Ouvir com som' : 'Silenciar'}
+              onClick={onStageTap}
+              aria-label={showUnmute ? 'Ouvir com som' : isPaused ? 'Reproduzir' : 'Pausar'}
               className="absolute inset-0 z-10 flex h-full w-full touch-manipulation select-none items-center justify-center focus-visible:outline-offset-[-6px]"
             >
-              {soundOff ? (
+              {!showUnmute && isPaused ? (
+                <span
+                  aria-hidden="true"
+                  className="flex h-20 w-20 items-center justify-center rounded-full border border-white/30 bg-black/40 text-white backdrop-blur-md"
+                >
+                  <Play className="ml-1 h-9 w-9 fill-current" />
+                </span>
+              ) : null}
+              {showUnmute ? (
                 <span
                   aria-hidden="true"
                   className="inline-flex h-12 items-center gap-2 rounded-full bg-app-yellow px-6 text-base font-black text-[#171505] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
