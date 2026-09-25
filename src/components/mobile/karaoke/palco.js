@@ -4,9 +4,34 @@
  */
 import { parseLrc } from '@/lib/lrc';
 
-/** Carte centrale : 188 × 334 (9:16). */
-export const CARD_W = 188;
-export const CARD_H = 334;
+/**
+ * Carte centrale, toujours en 9:16 : 150 × 267 au plus, 120 × 213 au moins. Sa taille
+ * suit la hauteur réellement disponible (l'écran Karaokê tient sur une seule page, sans
+ * défilement, barres de Safari affichées comprises).
+ */
+export const CARD_MAX_H = 267; // 150 px de large
+export const CARD_MIN_H = 213; // 120 px de large
+// Place rendue à la zone du carrousel par chaque palier de resserrement.
+export const VERSE_SPACE_PX = 30; // ligne du premier vers + sa marge
+export const COMPACT_SPACE_PX = 48; // les deux sur-titres + marges resserrées
+
+/**
+ * Palier de mise en page selon la hauteur disponible (l'écran tient toujours sur une
+ * page, le micro reste visible) :
+ *   'full'    tout est affiché, carte jusqu'à 150 × 267 ;
+ *   'noVerse' la ligne du premier vers est masquée d'abord, la carte garde sa taille ;
+ *   'compact' écran très bas : la carte est au minimum (120 × 213) et les deux
+ *             sur-titres (« O palco é seu », mois) sont masqués, marges resserrées.
+ * `areaHeight` = hauteur actuelle de la zone du carrousel, mesurée dans le palier
+ * `current` (on en déduit la hauteur qu'elle aurait dans les autres paliers).
+ */
+export function palcoLayout(areaHeight, current = 'full') {
+  const extra = { full: 0, noVerse: VERSE_SPACE_PX, compact: VERSE_SPACE_PX + COMPACT_SPACE_PX }[current] || 0;
+  const base = areaHeight - extra; // hauteur de la zone en palier 'full'
+  if (base >= CARD_MAX_H) return 'full';
+  if (base + VERSE_SPACE_PX >= CARD_MIN_H) return 'noVerse';
+  return 'compact';
+}
 export const SLIDE_MS = 550;
 // Seuil du glissement horizontal, et bande du bord gauche laissée au geste retour d'iOS.
 export const SWIPE_THRESHOLD_PX = 30;

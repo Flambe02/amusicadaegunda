@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { averageColor, cardLayout, firstVerse, NEUTRAL_TINT } from '../palco';
+import { averageColor, cardLayout, firstVerse, NEUTRAL_TINT, palcoLayout, CARD_MAX_H, CARD_MIN_H } from '../palco';
 
 const WEEK = { id: 'w', title: 'Chanson da Semana', slug: 'semana', release_date: '2026-09-21', youtube_music_url: 'https://www.youtube.com/shorts/WWWWWWWWWWW' };
 vi.mock('@/api/entities', () => ({ Song: { list: vi.fn(() => Promise.resolve([WEEK])) } }));
@@ -55,6 +55,23 @@ describe('palco — pure helpers', () => {
 
   it('reduced motion: cards simply offset, no rotation, no depth', () => {
     expect(cardLayout(1, true).transform).toBe('translate3d(78%, 0, 0)');
+  });
+
+  it('cards stay 9:16 between 120 × 213 and 150 × 267', () => {
+    expect(CARD_MAX_H).toBe(267);
+    expect(CARD_MIN_H).toBe(213);
+    expect(Math.round((CARD_MAX_H * 9) / 16)).toBe(150);
+    expect(Math.round((CARD_MIN_H * 9) / 16)).toBe(120);
+  });
+
+  it('when height runs short: hide the first verse first, then shrink the card, then go compact — never scroll', () => {
+    expect(palcoLayout(300, 'full')).toBe('full'); // place pour une carte de 150 px
+    expect(palcoLayout(250, 'full')).toBe('noVerse'); // le vers part d'abord
+    expect(palcoLayout(280, 'noVerse')).toBe('noVerse'); // 250 en palier « full » : toujours sans vers
+    expect(palcoLayout(300, 'noVerse')).toBe('full'); // assez de place : le vers revient
+    expect(palcoLayout(170, 'full')).toBe('compact'); // même sans vers, < 213 : compact
+    expect(palcoLayout(206, 'compact')).toBe('compact');
+    expect(palcoLayout(270, 'compact')).toBe('noVerse'); // 222 sans le palier compact : il se lève
   });
 
   it('first verse = the first non-empty LRC line, or null', () => {

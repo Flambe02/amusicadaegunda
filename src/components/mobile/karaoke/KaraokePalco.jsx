@@ -8,13 +8,15 @@ import { getPublicSlug, monthYearLabel } from '@/components/mobile/feed/feedMedi
 import { TEXT_SHADOW } from '@/components/mobile/feed/feedStyles';
 import { MicFilled } from '@/components/mobile/icons/FilledIcons';
 import {
-  CARD_W,
+  CARD_MAX_H,
+  CARD_MIN_H,
   EDGE_GUARD_PX,
   NEUTRAL_TINT,
   SLIDE_MS,
   SWIPE_THRESHOLD_PX,
   cardLayout,
   firstVerse,
+  palcoLayout,
   sampleTint,
 } from './palco';
 import '@/styles/karaoke-palco.css';
@@ -126,20 +128,40 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
     go(i);
   };
 
-  const verse = degraded ? null : firstVerse(current);
+  // Premier vers : masqué d'abord si la hauteur manque (la carte reste à 150 px tant
+  // que possible) ; le micro, lui, reste toujours visible.
+  const areaRef = useRef(null);
+  const [layoutMode, setLayoutMode] = useState('full');
+  const layoutModeRef = useRef('full');
+  useEffect(() => {
+    const area = areaRef.current;
+    if (!area || typeof ResizeObserver === 'undefined') return undefined;
+    const check = () => {
+      const next = palcoLayout(area.clientHeight, layoutModeRef.current);
+      if (next !== layoutModeRef.current) {
+        layoutModeRef.current = next;
+        setLayoutMode(next);
+      }
+    };
+    const observer = new ResizeObserver(check);
+    observer.observe(area);
+    check();
+    return () => observer.disconnect();
+  }, []);
+  const compact = layoutMode === 'compact';
+  const verse = degraded || layoutMode !== 'full' ? null : firstVerse(current);
   const period = current ? monthYearLabel(current) : null;
   const tintColor = `rgb(${tint[0]}, ${tint[1]}, ${tint[2]})`;
-  // Largeur fixée par la seule largeur d'écran (Safari iOS : une largeur tirée de la
-  // hauteur disponible tombait à ~90 px, barres du navigateur affichées) : 188 × 334 dès
-  // 392 px de large, jamais moins de 160 px. Si la hauteur manque, la page défile.
-  const cardSize = { width: `clamp(160px, 48vw, ${CARD_W}px)` };
+  // Hauteur de la carte = hauteur de la zone du carrousel, bornée entre 213 et 267 px
+  // (120 à 150 px de large, 9:16) : grande quand il y a la place, plus petite sinon.
+  const cardSize = { height: `clamp(${CARD_MIN_H}px, 100%, ${CARD_MAX_H}px)`, aspectRatio: '9 / 16' };
 
   return (
     <div
       data-palco
-      // Au moins la hauteur de la zone de contenu ; plus haute si l'écran est court (la
-      // zone défile). Les voisines débordent sur les côtés : rognées horizontalement.
-      className="relative isolate flex min-h-full w-full flex-col overflow-x-hidden bg-app-black text-white"
+      // Une seule page, verrouillée à la hauteur de la zone de contenu : aucun défilement
+      // (comme le feed), barres de Safari affichées comprises.
+      className="relative isolate flex h-full w-full flex-col overflow-hidden bg-app-black text-white"
     >
       {/* Halo diffus de la couleur de la miniature centrale, en fondu entre les chansons. */}
       <div
@@ -150,10 +172,12 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
       />
 
       {/* En-tête : « Karaokê », « O palco é seu », télé → Festa. */}
-      <header className="flex items-start justify-between px-4 pt-4">
+      <header className="flex flex-shrink-0 items-start justify-between px-4 pt-3">
         <div>
           <h1 className="text-[30px] font-black leading-none tracking-tight">Karaokê</h1>
-          <p className="mt-2 text-[11px] font-medium uppercase tracking-[0.28em] text-white/70">O palco é seu</p>
+          {compact ? null : (
+            <p className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.28em] text-white/70">O palco é seu</p>
+          )}
         </div>
         <Link
           to="/festa"
@@ -165,7 +189,12 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
       </header>
 
       {/* Carrousel 3D. */}
-      <div className="relative mt-3 flex flex-1 flex-col items-center justify-center">
+      <div
+        ref={areaRef}
+        data-palco-area
+        data-layout={layoutMode}
+        className={`relative flex min-h-0 flex-1 items-center justify-center ${compact ? 'mt-1' : 'mt-2'}`}
+      >
         {/* Projecteur : cône jaune sur la carte centrale. */}
         {current ? (
           // Centré par ses bords, pas par une translation : l'animation d'oscillation
@@ -184,10 +213,10 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
           onPointerMove={onPointerMove}
           onPointerUp={onPointerEnd}
           onPointerCancel={onPointerEnd}
-          className="relative z-10 w-full [touch-action:pan-y]"
+          className="relative z-10 flex h-full w-full items-center justify-center [touch-action:pan-y]"
           style={{ perspective: reduceMotion ? 'none' : '1000px' }}
         >
-          <ul className="relative mx-auto aspect-[9/16] [transform-style:preserve-3d]" style={cardSize}>
+          <ul className="relative [transform-style:preserve-3d]" style={cardSize}>
             {items.length === 0 ? (
               <li aria-hidden="true" className="absolute inset-0 rounded-[22px] border border-white/10 bg-white/5" />
             ) : (
@@ -228,25 +257,25 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
             )}
           </ul>
         </div>
+      </div>
 
-        {/* Chanson centrale : mois et année, titre, premier vers. */}
-        <div className="relative z-10 mt-5 w-full px-6 text-center">
-          {period ? (
-            <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-white/70">{period}</p>
-          ) : null}
-          {current ? (
-            <h2 className="mt-1.5 line-clamp-2 text-2xl font-black leading-tight tracking-tight">{current.title}</h2>
-          ) : null}
-          {verse ? (
-            <p data-palco-verse className="palco-verse mx-auto mt-2 max-w-[20rem] truncate text-base font-bold">
-              {verse}
-            </p>
-          ) : null}
-        </div>
+      {/* Chanson centrale : mois et année, titre, premier vers. */}
+      <div className={`relative z-10 w-full flex-shrink-0 px-6 text-center ${compact ? 'mt-1' : 'mt-3'}`}>
+        {period && !compact ? (
+          <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-white/70">{period}</p>
+        ) : null}
+        {current ? (
+          <h2 className="mt-1 line-clamp-2 text-2xl font-black leading-tight tracking-tight">{current.title}</h2>
+        ) : null}
+        {verse ? (
+          <p data-palco-verse className="palco-verse mx-auto mt-1.5 max-w-[20rem] truncate text-base font-bold">
+            {verse}
+          </p>
+        ) : null}
       </div>
 
       {/* Bas : précédent, micro (seul jaune plein de l'écran), suivant. */}
-      <div className="relative z-10 flex items-center justify-center gap-8 px-6 pb-6 pt-5">
+      <div className={`relative z-10 flex flex-shrink-0 items-center justify-center gap-8 px-6 ${compact ? 'pb-2 pt-1.5' : 'pb-3 pt-3'}`}>
         {degraded ? (
           <p className="flex min-h-[76px] items-center text-lg font-extrabold">O karaokê volta já</p>
         ) : (
