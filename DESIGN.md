@@ -16,7 +16,6 @@ colors:
   glass-fill-strong: "rgba(255,255,255,0.08)"
   glass-border: "rgba(255,255,255,0.10)"
   chrome-bar: "rgba(0,0,0,0.82)"
-  surface-strong: "rgba(0,0,0,0.78)"
   sky-haze: "rgba(125,211,252,0.12)"
   tv-dpad-cyan: "#22D3EE"
   destructive-red: "#DC2626"
@@ -124,15 +123,12 @@ components:
     textColor: "{colors.text-muted}"
     typography: "{typography.label-nav}"
     rounded: "12px"
+    height: "48px"
   nav-item-mobile-active:
     backgroundColor: "transparent"
     textColor: "{colors.spotlight-yellow}"
-  nav-featured-karaoke:
-    backgroundColor: "{colors.wing-charcoal}"
-    rounded: "{rounded.pill}"
-    size: "64px"
   bottom-nav:
-    backgroundColor: "{colors.surface-strong}"
+    backgroundColor: "{colors.stage-black-deep}"
   tv-card:
     backgroundColor: "{colors.tv-card}"
     textColor: "{colors.text-primary}"
@@ -172,13 +168,12 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 
 ### Neutral
 - **Stage Black** (#0A0A0A): the page, karaoke and TV background.
-- **Stage Black Deep** (#050505): the deepest black, used for the focus-ring outline and text on yellow badges.
+- **Stage Black Deep** (#050505): the deepest black, used for the opaque mobile bottom nav, the focus-ring outline and text on yellow badges.
 - **Wing Charcoal** (#111111): the top of the page's vertical gradient, which fades to Stage Black.
 - **TV Card** (#14161C): the opaque card surface on TV, where blur is too expensive.
 - **Text ramp:** white at 100% (headings, active labels), 68–72% (secondary copy), 42–55% (muted meta, eyebrows) and 30% (footnotes).
 - **Glass Fill / Glass Fill Strong / Glass Border** (white at 5% / 8–12% / 10%): panel, hover and hairline border surfaces.
 - **Chrome Bar** (black at 80–92%): the fixed headers, always under a heavy backdrop blur.
-- **Surface Strong** (black at 78%): the mobile bottom nav, under `backdrop-blur-2xl`.
 
 ### Functional and borrowed
 - **TV D-pad Cyan** (#22D3EE): the default D-pad focus colour inside some TV grids. Karaoke contexts switch it to yellow.
@@ -213,7 +208,7 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 
 ## Layout
 
-- **Mobile (<768px):** the page is a fixed-height `100svh` immersive app shell. `html` and `body` don't scroll; an inner container (`#mobile-scroll`) does. There is a compact glass top header (52px, hidden on Início and Sobre) and a fixed glass bottom nav (about 64px plus the safe area) with five items: Início, Catálogo, Karaokê (raised), Roleta, Menu. Side gutter is 16px and vertical rhythm is 14px.
+- **Mobile (<768px):** the page is a fixed-height `100svh` immersive app shell. `html` and `body` don't scroll; an inner container (`#mobile-scroll`) does. There is a compact top header (52px): transparent and floating over the content on Início, hidden on Sobre, opaque glass elsewhere. At the bottom sits an opaque nav (about 62px plus the safe area) with five equal tabs: Início, Karaokê, Pesquisa, Roda, Menu. Side gutter is 16px and vertical rhythm is 14px.
 - **Tablet (768–1023px):** a fixed 260px glass sidebar sits inset 16px from the viewport edge with rounded 30px corners. Content is offset by `ml-[260px]`.
 - **Desktop (≥1024px):** a fixed 72px glass top bar with centred nav at a max width of 1440px. Content has `px-6 / xl:px-8 / 2xl:px-10` and a footer bar. Pages use `DesktopPageShell`, a glass hero panel with badge, display title, lead, actions and a 2–3-column metric grid, plus an optional 340px side column at 2xl.
 - **TV:** a 960×540 CSS viewport at 2× density, with generous safe margins (`scroll-margin: 12vh 8vw` on focus) and horizontal rows of cards moved through by D-pad.
@@ -263,10 +258,11 @@ The components are tactile and confident, with a pill for every action, glass fo
 - **Internal Padding:** 24px (28px at xl) for panels and 20px for tiles.
 
 ### Navigation
-- **Mobile bottom bar** (`src/components/mobile/AppBottomNav.jsx`, fed by `mobileNavItems` in `src/pages/Layout.jsx`): a Surface Strong background (black at 78%) with `backdrop-blur-2xl`, a 1px top hairline at 12% white, the upward Nav shadow and the bottom safe-area inset. It is a grid of equal columns (currently Início, Catálogo, Karaokê, Roleta, Menu). Each item is a 12px-radius target with a 20px icon over a 10px semibold caption, and inactive items are white at 55%. The active item turns both icon and caption Spotlight Yellow, with no pill behind it. The only tactile feedback is a 5% white wash on press.
-  - **Featured item (Karaokê):** a raised 64px circle that overflows the bar by 28px, holding the 52px Caipivara microphone icon on a Wing Charcoal fill with a deep drop shadow. Its border is 2px, Spotlight Yellow when the page is active and 15% white otherwise. It is the only element that breaks out of the bar.
-  - **Menu sheet:** the last item opens a bottom sheet (28px top radius, Wing Charcoal fill, 10% white top hairline, a 40×6px grabber at 22% white) over a 60% black scrim with a small blur. Its rows are 16px-radius, with a 40px icon well (12px radius, 8% white fill) and a 16px semibold white label. It has no yellow, and the scrim button closes it.
-  - **Top header (mobile only):** 52px of glass at 92% black with a bottom hairline and the Caipivara avatar at left, the name centred and an info button at right. It is hidden on Início and Sobre, which run edge to edge.
+- **Mobile bottom bar** (`src/components/mobile/AppBottomNav.jsx`, fed by `mobileNavItems` in `src/pages/Layout.jsx`): an opaque Stage Black Deep (#050505) bar with no blur, so nothing shows through it, not even the Início video. It has a 1px top hairline at 12% white, the upward Nav shadow and the bottom safe-area inset. Five equal tabs sit in a grid: Início, Karaokê, Pesquisa, Roda, Menu. Each is a 48px-tall, 12px-radius target with a 20px line icon over a 10px semibold caption; inactive tabs are white at 55%. The active tab turns both icon and caption Spotlight Yellow, with no pill behind it, and it is the bar's only yellow. Press feedback is a 5% white wash.
+  - **Karaokê tab:** a lyrics icon (music list), never a microphone, because the karaoke works without one. It is flat like the other tabs; nothing breaks out of the bar.
+  - **Menu tab:** opens a bottom sheet rather than a page. It lights up for every page reached from the sheet (Todas as músicas, Blog, Sobre, TV, Aprender), since those pages have no tab of their own.
+  - **Menu sheet:** a bottom sheet (28px top radius, Wing Charcoal fill, 10% white top hairline, a 40×6px grabber at 20% white) over a 60% black scrim with a small blur, capped at 85% of the screen height and scrolling inside. Its rows are 16px-radius and at least 44px tall, with a 40px icon well (12px radius, 10% white fill, icon at 70% white), a 16px semibold white label and an optional 14px description at 70% white. "Todas as músicas" (O arquivo completo, semana a semana) leads to `/musica`. The sheet has no yellow; the scrim button and Escape close it.
+  - **Top header (mobile only):** 52px with the Caipivara avatar at left, the name centred and an info button (Sobre) at right. On Início it is transparent and floats over the content, and only the avatar and the info button catch taps, so the rest of the area passes touches through to the video. On Sobre it is hidden. Everywhere else it is glass at 90% black with a bottom hairline.
 - **Tablet sidebar:** a 260px glass panel with a 30px radius and a yellow radial glow at the top. The brand block at the top combines the Caipivara avatar with an eyebrow and the name. Nav items are 22px-radius rows with 40px icon wells and a status dot that turns yellow when active.
 - **Desktop top bar:** 72px tall at 80% black with `backdrop-blur-xl`. On the left is the logo (a 44px, 12px-radius square) with the name at 15px/700. The centred nav has 15px links, and a 40px circular search button sits on the right.
 

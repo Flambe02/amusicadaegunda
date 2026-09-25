@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Bell, ChevronLeft, ChevronRight, Play, Share2, SkipBack, SkipForward } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Play, Share2, SkipBack, SkipForward } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AppButton from './AppButton';
 import AppCard from './AppCard';
 import AppChip from './AppChip';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
-import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 import { getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 
 const CATEGORY_LABELS = {
@@ -170,30 +170,9 @@ export default function MobileHomeApp({
 
   return (
     <div className="flex h-full min-h-full flex-col overflow-x-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(253,224,71,0.10),transparent_30%),linear-gradient(180deg,#050505_0%,#0b0b0b_48%,#050505_100%)] px-4 pb-4 pt-[max(env(safe-area-inset-top),0.6rem)] text-app-white">
-      <header className="mb-2 grid min-h-[54px] grid-cols-[44px_1fr_44px] items-center">
-        <span aria-hidden="true" />
-        <Link to="/" className="mx-auto flex flex-col items-center">
-          <span className="h-8 w-8 overflow-hidden rounded-lg border border-app-border bg-app-surface">
-            <img
-              src={BRAND_SQUARE_SMALL}
-              alt="A Musica da Segunda"
-              className="h-full w-full object-cover"
-              width="32"
-              height="32"
-            />
-          </span>
-          <span className="mt-0.5 text-center text-[10px] font-black leading-tight text-app-yellow">
-            A MUSICA<br />DA SEGUNDA
-          </span>
-        </Link>
-        <button
-          type="button"
-          className="ml-auto flex h-10 w-10 items-center justify-center rounded-full border border-app-border bg-black/32 text-white/70"
-          aria-label="Receber notificacoes"
-        >
-          <Bell className="h-5 w-5" />
-        </button>
-      </header>
+      {/* L'en-tête (logo, nom, Sobre) est celui de Layout, transparent par-dessus cet
+          écran sur l'Início : on réserve seulement sa place. */}
+      <div aria-hidden="true" className="mb-2 min-h-[54px]" />
 
       <main className="mx-auto flex w-full max-w-[390px] min-h-0 flex-1 flex-col gap-2.5 landscape:max-w-[860px] landscape:flex-row landscape:items-stretch landscape:gap-3">
         <section className="flex min-h-0 flex-1 flex-col landscape:basis-3/5">

@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Home,
   Library,
+  ListMusic,
   Gift,
   Info,
   FileText,
@@ -15,7 +16,6 @@ import {
   Tv
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
-import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
@@ -115,21 +115,27 @@ function SidebarCountdown() {
   );
 }
 
+// Onglets de la barre mobile : inicio, karaoke, pesquisa, roda, menu. Toutes les pages
+// qu'on atteint depuis la feuille « Menu » (dont « Todas as músicas » → /musica) allument
+// « Menu » : le Catálogo n'est plus un onglet.
 function getMobileActiveTab(pathname) {
+  if (pathname === '/') return 'inicio';
   if (pathname === '/karaoke') return 'karaoke';
-  if (pathname === '/roda') return 'roleta';
-  if (pathname === '/blog') return 'blog';
   if (pathname === '/search') return 'pesquisa';
-  if (pathname === '/sobre') return 'sobre';
-  if (pathname === '/apprendre') return 'apprender';
+  if (pathname === '/roda') return 'roda';
   if (
+    pathname === '/blog' ||
+    pathname === '/sobre' ||
+    pathname === '/tv' ||
+    pathname.startsWith('/apprendre') ||
     pathname === '/musica' ||
     pathname.startsWith('/musica/') ||
     pathname === '/playlist' ||
     pathname.startsWith('/chansons') ||
-    pathname.startsWith('/categoria/')
+    pathname.startsWith('/categoria/') ||
+    pathname.startsWith('/arquivo/')
   ) {
-    return 'catalogo';
+    return 'menu';
   }
   return 'inicio';
 }
@@ -201,15 +207,23 @@ export default function Layout({ children }) {
 
   const mobileNavItems = [
     { value: 'inicio', label: 'Início', href: '/', icon: Home },
-    { value: 'catalogo', label: 'Catálogo', href: '/musica', icon: Library },
-    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: CapivaraMicIcon, featured: true },
-    { value: 'roleta', label: 'Roleta', href: '/roda', icon: Shuffle },
+    // Icône de paroles, pas de micro : le karaokê fonctionne sans microphone.
+    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: ListMusic },
+    { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
+    { value: 'roda', label: 'Roda', href: '/roda', icon: Shuffle },
     {
       value: 'menu',
       label: 'Menu',
       icon: Info,
       menuItems: [
         { value: 'inicio', label: 'Início', href: '/', icon: Home },
+        {
+          value: 'musicas',
+          label: 'Todas as músicas',
+          description: 'O arquivo completo, semana a semana',
+          href: '/musica',
+          icon: Library,
+        },
         { value: 'roleta', label: 'Roda', href: '/roda', icon: Gift },
         { value: 'blog', label: 'Blog', href: '/blog', icon: FileText },
         { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
@@ -242,14 +256,24 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <div className="md:hidden flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
+      <div className="md:hidden relative flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
-        <header className={`z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl${isImmersiveMobilePage ? ' hidden' : ''}`}>
+        {/* En-tête mobile. Início : transparent, posé PAR-DESSUS le contenu (le feed passe
+            dessous) ; la zone vide laisse passer les taps vers la vidéo, seuls le logo et
+            le bouton Sobre captent. Sobre : masqué. Ailleurs : verre opaque à 92 %. */}
+        <header
+          data-mobile-header={isHomePage ? 'overlay' : isImmersiveMobilePage ? 'hidden' : 'solid'}
+          className={
+            isHomePage
+              ? 'pointer-events-none absolute inset-x-0 top-0 z-40 text-white'
+              : `z-40 flex-shrink-0 border-b border-white/10 bg-black/90 text-white backdrop-blur-2xl${isImmersiveMobilePage ? ' hidden' : ''}`
+          }
+        >
           <div className="px-3 pb-2 pt-[max(env(safe-area-inset-top),0.35rem)]">
             <div className="flex min-h-[52px] items-center justify-between gap-2">
               {/* Left: Logo */}
-              <Link to="/" className="flex h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/8 shadow-sm">
+              <Link to="/" className="pointer-events-auto flex h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/10 shadow-sm">
                 <img
                   src={BRAND_SQUARE_SMALL}
                   alt="Logo A Musica da Segunda"
@@ -267,10 +291,10 @@ export default function Layout({ children }) {
               {/* Right: Info */}
               <Link
                 to={createPageUrl('Sobre')}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] touch-manipulation"
+                className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] touch-manipulation"
                 aria-label="Sobre o projeto"
               >
-                <Info className="h-4 w-4 text-white/72" />
+                <Info className="h-4 w-4 text-white/70" />
               </Link>
             </div>
           </div>
