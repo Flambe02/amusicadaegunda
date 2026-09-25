@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import Layout from '../../pages/Layout';
+import { useShell } from '@/components/mobile/ShellContext';
 
 // Mock environment variables
 vi.mock('@/lib/supabase', () => ({
@@ -173,5 +174,27 @@ describe('Layout — shell mobile', () => {
     const header = mobileShell().querySelector('header');
     expect(header.className).toMatch(/pointer-events-none/);
     expect(header.className).not.toMatch(/bg-black|backdrop-blur|border-b/);
+  });
+});
+
+// Layout rend ses enfants deux fois ; chaque copie doit savoir où elle vit, pour que
+// ce qui coûte (iframe YouTube du feed) ne soit monté que dans la coquille mobile.
+describe('Layout — ShellContext', () => {
+  function WhereAmI() {
+    return <span data-testid="shell">{useShell()}</span>;
+  }
+
+  it('tells each copy of the page which shell it is in', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <Layout>
+          <WhereAmI />
+        </Layout>
+      </MemoryRouter>
+    );
+    const shells = screen.getAllByTestId('shell').map((el) => el.textContent).sort();
+    expect(shells).toEqual(['desktop', 'mobile']);
+    expect(document.querySelector('#main-mobile [data-testid="shell"]').textContent).toBe('mobile');
+    expect(document.querySelector('#main-desktop [data-testid="shell"]').textContent).toBe('desktop');
   });
 });

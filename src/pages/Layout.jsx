@@ -16,6 +16,7 @@ import {
   Tv
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
+import { ShellContext } from '@/components/mobile/ShellContext';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
@@ -302,7 +303,7 @@ export default function Layout({ children }) {
 
         <main id="main-mobile" className="relative min-h-0 flex-1 overflow-hidden">
           <div id="mobile-scroll" className={`min-h-0 h-full overflow-y-auto overscroll-behavior-contain${isImmersiveMobilePage ? '' : ' pb-[env(safe-area-inset-bottom)]'}`}>
-            {children}
+            <ShellContext.Provider value="mobile">{children}</ShellContext.Provider>
           </div>
         </main>
 
@@ -464,7 +465,7 @@ export default function Layout({ children }) {
           {/* `lg:pb-10` : le pied de page plat vient se coller au contenu comme dans le
               modèle. Le `pb-32` d'origine reste pour la bande 768-1023 px. */}
           <main id="main-desktop" className="relative z-10 min-h-screen px-6 pb-32 pt-4 lg:pb-10 xl:px-8 2xl:px-10">
-            {children}
+            <ShellContext.Provider value="desktop">{children}</ShellContext.Provider>
           </main>
 
           {/* Pied de page plat (>= 1024 px), calqué sur le modèle HTML : deux rangées

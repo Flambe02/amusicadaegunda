@@ -13,7 +13,6 @@ import {
   Play,
   FileText,
   Share2,
-  Clock,
   SkipBack,
   SkipForward,
   Volume2,
@@ -29,7 +28,8 @@ import LyricsDialog from '../components/LyricsDialog';
 import LyricsDrawer from '../components/LyricsDrawer';
 import PlatformsDrawer from '../components/PlatformsDrawer';
 import HistoryDrawer from '../components/HistoryDrawer';
-import { MobileHomeApp } from '@/components/mobile';
+import MobileFeed from '@/components/mobile/feed/MobileFeed';
+import { useShell } from '@/components/mobile/ShellContext';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
 import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import DesktopHero from '@/components/home/DesktopHero';
@@ -345,17 +345,6 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const handleReplaceMobileVideo = useCallback((song) => {
-    if (!song) return;
-    logger.debug('handleReplaceMobileVideo appelé avec:', song.title);
-    setDisplayedSong(song);
-    setVideoActivated(true);
-    setShowFullDescription(false);
-    setPlayerBarActive(false);
-    setPlayerBarPlaying(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
   // Navigation rapide entre les vidéos
   // Note: allSongs est trié du plus récent (index 0) au plus ancien
   const getCurrentSongIndex = () => {
@@ -378,20 +367,6 @@ export default function Home() {
     if (currentIndex > 0) {
       const nextSong = allSongs[currentIndex - 1]; // Plus récente
       handleReplaceVideo(nextSong, null);
-    }
-  };
-
-  const handlePreviousMobileSong = () => {
-    const currentIndex = getCurrentSongIndex();
-    if (currentIndex >= 0 && currentIndex < allSongs.length - 1) {
-      handleReplaceMobileVideo(allSongs[currentIndex + 1]);
-    }
-  };
-
-  const handleNextMobileSong = () => {
-    const currentIndex = getCurrentSongIndex();
-    if (currentIndex > 0) {
-      handleReplaceMobileVideo(allSongs[currentIndex - 1]);
     }
   };
 
@@ -493,6 +468,10 @@ export default function Home() {
   }, [displayedSong, getSongArtwork]);
 
   const heroArtwork = getSongArtwork(displayedSong) || BRAND_SQUARE_MEDIUM;
+  // Layout rend cette page deux fois (coquille mobile + coquille desktop masquée) : le
+  // feed, qui crée une iframe YouTube, ne doit exister que dans la copie mobile.
+  const shell = useShell();
+  const mobileFeedSongs = useMemo(() => (currentSong ? [currentSong] : []), [currentSong]);
 
   const dialogArtwork = getSongArtwork(selectedSongForDialog) || BRAND_SQUARE_MEDIUM;
   const shouldRenderLegacyDesktop =
@@ -509,10 +488,6 @@ export default function Home() {
       (displayedSong.youtube_music_url?.includes('/shorts/') ||
         displayedSong.youtube_url?.includes('/shorts/'))
   );
-
-  const handleActivateMobileVideo = useCallback(() => {
-    setVideoActivated(true);
-  }, []);
 
   // ID YouTube extrait de youtube_url (ou youtube_music_url en fallback)
   const youtubeIdForPlayer = extractYouTubeId(
@@ -662,42 +637,6 @@ export default function Home() {
 
   return (
     <div className="mx-auto h-full max-w-md md:max-w-2xl lg:max-w-none lg:p-5">
-      {/* Header Mobile legacy disabled: the shell header now owns the top bar */}
-      <div className="hidden text-center mb-8">
-        <div className="flex items-center justify-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
-            <img
-              src="/images/Musica da segunda.webp"
-              alt="Logo A Musica da Segunda - Parodias Musicais do Brasil"
-              className="w-full h-full object-cover"
-              loading="eager"
-              fetchPriority="high"
-              width="64"
-              height="64"
-            />
-          </div>
-          
-          <div className="text-left flex-1">
-            <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-lg mb-1">
-              A Musica da Segunda
-            </h1>
-            <p className="text-white/80 font-medium text-sm md:text-base drop-shadow-md">
-              Descubra musica nova toda segunda-feira
-            </p>
-          </div>
-
-          {/* Bouton Historique dans le header */}
-          <button
-            onClick={() => setShowHistoryDrawer(true)}
-            className="w-12 h-12 bg-white/20 backdrop-blur-xl hover:bg-white/30 rounded-full flex items-center justify-center shadow-xl border border-white/20 transition-all duration-300 hover:scale-110 active:scale-95 touch-manipulation flex-shrink-0"
-            aria-label="Historique"
-            title="Historique"
-          >
-            <Clock className="w-5 h-5 text-white drop-shadow-lg" />
-          </button>
-        </div>
-      </div>
-    
       {/* Desktop app shell: hero + grid + player */}
       <div className="hidden md:block space-y-8">
         {/* Nouveau hero (>= 1024 px), spec §6. Bandeau plat aligné sur le même bord
@@ -1406,23 +1345,15 @@ export default function Home() {
         </>
       )}
 
-      {/* ===== LAYOUT MOBILE APP-LIKE ===== */}
+      {/* ===== MOBILE (< 768 px) : feed plein écran autour du Short de la semaine =====
+          Monté UNIQUEMENT quand le viewport est mobile (pas seulement masqué en CSS) :
+          l'arbre desktop, lui, reste monté et caché, et ne doit jamais coexister avec
+          une iframe YouTube du feed. On passe la chanson de la SEMAINE (currentSong),
+          pas celle affichée par l'historique desktop. */}
       <div className="md:hidden h-full">
-        <MobileHomeApp
-          currentSong={displayedSong}
-          videoActivated={isMobileViewport && videoActivated}
-          onListen={handleActivateMobileVideo}
-          onCloseVideo={() => setVideoActivated(false)}
-          onShowPlatforms={() => setShowPlatformsDrawer(true)}
-          onShowLyrics={() => handleShowLyrics(displayedSong)}
-          onShareSong={() => handleShareSong(displayedSong)}
-          onShare={() => handleShareSong(displayedSong)}
-          onPreviousSong={handlePreviousMobileSong}
-          onNextSong={handleNextMobileSong}
-          canNavigatePrevious={canNavigatePrevious()}
-          canNavigateNext={canNavigateNext()}
-          heroArtwork={heroArtwork}
-        />
+        {isMobileViewport && shell !== 'desktop' ? (
+          <MobileFeed songs={mobileFeedSongs} buildArtwork={CURRENT_SONG_ARTWORK} />
+        ) : null}
       </div>
       <LyricsDrawer
         open={showLyricsDrawer}
