@@ -4,7 +4,11 @@ import { MemoryRouter } from 'react-router-dom';
 import MobileFeed from '../MobileFeed';
 import { FALLBACK_DELAY_MS, REVEAL_DELAY_MS } from '../useShortPlayer';
 
-vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
+vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }), toast: vi.fn(() => ({ dismiss: vi.fn() })) }));
+
+// Plateforme : « web » par défaut ; un test simule l'app Android.
+const platformMock = vi.hoisted(() => ({ value: 'web' }));
+vi.mock('@/native', () => ({ getPlatform: () => platformMock.value }));
 
 // jsdom n'a pas de PointerEvent : version minimale pour piloter le glissement.
 if (typeof window.PointerEvent === 'undefined') {
@@ -240,6 +244,28 @@ describe('MobileFeed — Short de la semaine (étape 3)', () => {
     const player = players[0];
     unmount();
     expect(player.calls).toContain('destroy');
+  });
+
+  it('Android app (not TV): starts with the sound, no play cue; web keeps the muted start', async () => {
+    platformMock.value = 'android';
+    try {
+      const { container } = await renderLoaded();
+      expect(container.querySelector('[data-play-cue]')).toBeNull();
+      const player = players[0];
+      act(() => { player.ready(); });
+      expect(player.calls).toContain('unMute'); // sans aucun geste
+      expect(player.calls).not.toContain('mute');
+    } finally {
+      platformMock.value = 'web';
+    }
+  });
+
+  it('web: muted start and the play cue (no sound without a gesture)', async () => {
+    const { container } = await renderLoaded();
+    expect(container.querySelector('[data-play-cue]')).not.toBeNull();
+    act(() => { players[0].ready(); });
+    expect(players[0].calls).toContain('mute');
+    expect(players[0].calls).not.toContain('unMute');
   });
 
   it('never renders an empty screen or a « nenhuma música » message', () => {

@@ -6,6 +6,8 @@ import { useShortPlayer } from './useShortPlayer';
 import { CAIPIVARA_STAGE_IMAGE, getPublicSlug, getShortVideoId } from './feedMedia';
 import { deriveSongSlug } from '@/lib/learnContent';
 import { TEXT_SHADOW } from './feedStyles';
+import { getPlatform } from '@/native';
+import { isTV } from '@/tv/platform';
 import CaipivaraStage from '@/components/mobile/catalogo/CaipivaraStage';
 import { getSongAudioId } from '@/components/mobile/catalogo/stageDraw';
 
@@ -34,6 +36,15 @@ const SOUND_REFUSAL_CHECK_MS = 900; // délai avant de conclure que le son a ét
 function readSwiped() {
   try {
     return localStorage.getItem(HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Son sans geste préalable : seulement dans l'app Android, jamais sur TV. */
+function canStartWithSound() {
+  try {
+    return getPlatform() === 'android' && !isTV();
   } catch {
     return false;
   }
@@ -132,7 +143,10 @@ export default function MobileFeed({
   useEffect(() => { setAudioSong(null); }, [ouvirSlug]);
 
   const videoId = ouvirOpen ? getSongAudioId(audioSong || ouvirSong) : getShortVideoId(current);
-  const player = useShortPlayer({ videoId, canLoad: firstPosterSettled, mountRef, loop: !ouvirOpen });
+  // App Android (hors TV) : la WebView autorise le son sans geste (MainActivity) → la
+  // chanson démarre avec le son, sans repère de départ. Site web et iOS : inchangés.
+  const [startWithSound] = useState(canStartWithSound);
+  const player = useShortPlayer({ videoId, canLoad: firstPosterSettled, mountRef, loop: !ouvirOpen, startWithSound });
   const { phase, isMuted, isPaused, toggleSound, togglePause } = player;
   const videoVisible = phase === 'playing';
   // Son coupé (état RÉEL du lecteur) : à l'arrivée, après « Silenciar », ou si le
@@ -143,7 +157,7 @@ export default function MobileFeed({
   // bouton lecture blanc translucide au centre de la vidéo, visible dès l'arrivée et
   // jusqu'au premier geste de la visite, puis plus jamais — sauf si le son est refusé
   // (iOS, économie d'énergie). Le haut-parleur barré reste en haut à droite.
-  const [playCue, setPlayCue] = useState(true);
+  const [playCue, setPlayCue] = useState(!startWithSound);
   const refusalTimerRef = useRef(null);
   useEffect(() => () => clearTimeout(refusalTimerRef.current), []);
   /** Après un geste qui demande le son : s'il reste coupé, le repère revient. */
@@ -183,6 +197,19 @@ export default function MobileFeed({
       watchForRefusal();
     } else togglePause();
   };
+
+  // App Android : le son est d'emblée actif, donc le premier geste ne sert plus à
+  // l'activer. Si la WebView le refuse malgré tout, le repère de départ revient.
+  useEffect(() => {
+    if (!startWithSound) return;
+    interactedRef.current = true;
+  }, [startWithSound]);
+  const soundCheckedRef = useRef(false);
+  useEffect(() => {
+    if (!startWithSound || soundCheckedRef.current || phase !== 'playing') return;
+    soundCheckedRef.current = true;
+    watchForRefusal();
+  }, [startWithSound, phase]);
 
   // Filet : si la première miniature ne finit jamais de charger, on lance le lecteur.
   useEffect(() => {

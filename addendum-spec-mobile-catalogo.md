@@ -162,6 +162,15 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 2. **Un seul « Link copiado » à la fois**, fermé après 3 s. (Cause du doublon : le composant Toast du site ignore `duration` et ne se fermait jamais ; chaque tap en empilait un. Le Toaster n'affiche plus les toasts fermés.)
 3. Tests sur téléphone : serveur de dev en https sur l'IP locale (certificat auto-signé, hors dépôt), sinon `navigator.share` et le presse-papiers sont bloqués.
 
+### H.12 App Android — son sans geste (2026-09-25)
+1. Dans l'app Android (Capacitor), la WebView autorise la lecture avec le son sans geste préalable (`setMediaPlaybackRequiresUserGesture(false)` dans `MainActivity.java`), **sauf sur TV** (interface TV identique à `main`).
+2. Côté web, le feed détecte l'app Android hors TV (`getPlatform() === 'android'` et `!isTV()`) : la chanson de la semaine démarre directement avec le son, sans repère de départ. Si la WebView refuse malgré tout, le repère revient.
+3. Site web et iOS : inchangés (son coupé à l'arrivée, repère de départ, premier geste).
+4. ⚠️ Le dossier `android/` est ignoré par git (`.gitignore`) : la modification de `MainActivity.java` n'existe que sur le poste de build ; à reporter à la main si le projet natif est régénéré.
+
+### H.13 Point à surveiller — interface permanente de YouTube Shorts (2026-09-25)
+Aux tests sur iPhone, la variante « UI Shorts permanente » de YouTube (avatar, @AMusicadaSegunda, j'aime, partage) apparaît plus souvent que prévu. **Rien n'est changé pour l'instant** (H.1.1, H.5.3) ; à réévaluer si elle devient la norme (options connues : agrandissement `SHORTS_UI_ZOOM`, fond derrière la colonne — tous deux refusés à ce jour).
+
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.
 - **Plus de captures d'écran dans les rapports** : Florent teste lui-même sur son téléphone. Les vérifications au navigateur (Playwright) continuent, mais seuls leurs résultats figurent dans le rapport.

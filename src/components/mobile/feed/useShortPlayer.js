@@ -62,8 +62,10 @@ const LOOP_LEAD_S = 0.4; // > intervalle de sondage (250 ms) : la fin n'est jama
  * Options :
  *   loop (défaut true) — le feed boucle sur le Short. Le Catálogo passe `false` : la
  *   chanson s'arrête à la fin (`isEnded`), la Caipivara retourne au repos.
+ *   startWithSound (défaut false) — seulement quand la plateforme autorise le son sans
+ *   geste (app Android, voir MainActivity) : le lecteur démarre avec le son.
  */
-export function useShortPlayer({ videoId, canLoad, mountRef, loop = true }) {
+export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startWithSound = false }) {
   const [phase, setPhase] = useState(videoId ? 'poster' : 'none');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -78,7 +80,9 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true }) {
   const readyRef = useRef(false);
   const creatingRef = useRef(false);
   const everPlayedRef = useRef(false);
-  const pendingSoundRef = useRef(false);
+  // `startWithSound` (app Android, qui autorise le son sans geste) : le son est rétabli
+  // dès que le lecteur est prêt, comme un tap mis en attente.
+  const pendingSoundRef = useRef(startWithSound);
   const fallbackTimerRef = useRef(null);
   const revealTimerRef = useRef(null);
   const videoIdRef = useRef(videoId);
