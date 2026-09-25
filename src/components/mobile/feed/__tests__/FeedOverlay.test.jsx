@@ -57,13 +57,10 @@ describe('feedMedia — semaine et slug', () => {
 });
 
 describe('FeedOverlay (étape 4)', () => {
-  it('shows « Esta semana » only for a song released this week, the real week label otherwise', () => {
-    const { unmount } = renderOverlay();
-    expect(screen.getByText('Esta semana')).toBeInTheDocument();
-    unmount();
-    renderOverlay({ song: { ...SONG, release_date: '2026-09-14' } });
+  it('no longer shows a permanent week chip (replaced by the ephemeral ribbon)', () => {
+    renderOverlay();
     expect(screen.queryByText('Esta semana')).toBeNull();
-    expect(screen.getByText('Semana de 14 de setembro')).toBeInTheDocument();
+    expect(document.querySelector('[data-ribbon]')).not.toBeNull();
   });
 
   it('renders the song title as the page h1 on the first slide, h2 otherwise', () => {

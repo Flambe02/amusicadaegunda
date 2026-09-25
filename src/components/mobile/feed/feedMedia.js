@@ -3,6 +3,8 @@
  * (`youtube_music_url` = le Short, `youtube_url` = la chanson complète) : aucune
  * lecture directe des colonnes ici.
  */
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { extractYouTubeId } from '@/lib/utils';
 import { getShortsUrl, getHeroImage } from '@/lib/homeSongMedia';
 import { deriveSongSlug } from '@/lib/learnContent';
@@ -69,4 +71,27 @@ export function getPublicSlug(song) {
 export function formatTime(seconds) {
   const total = Math.max(0, Math.floor(Number(seconds) || 0));
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+// ── Ruban de la semaine (WeekRibbon) ───────────────────────────────────────────────
+function releaseDate(song) {
+  const value = String(song?.release_date || '').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = parseISO(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** « NOVA · ESTA SEMANA » ou « SETEMBRO 2026 » (majuscules par CSS). */
+export function ribbonLabel(song, now = new Date()) {
+  if (isReleasedThisWeek(song, now)) return 'Nova · esta semana';
+  const date = releaseDate(song);
+  return date ? format(date, 'MMMM yyyy', { locale: ptBR }) : null;
+}
+
+/** Texte pour les lecteurs d'écran, toujours présent : « Publicada em 21 de setembro de 2026 ». */
+export function ribbonSpokenDate(song, now = new Date()) {
+  const date = releaseDate(song);
+  if (!date) return null;
+  const spoken = `Publicada em ${format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}`;
+  return isReleasedThisWeek(song, now) ? `Música desta semana. ${spoken}` : spoken;
 }

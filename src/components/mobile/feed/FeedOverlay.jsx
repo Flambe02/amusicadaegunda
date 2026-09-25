@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { FileText, ListMusic, Share2, Volume2, VolumeX } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { isKaraokePublished } from '@/lib/lrc';
-import { getWeekLabel } from '@/lib/homeSongMedia';
-import { formatTime, getPublicSlug, isReleasedThisWeek } from './feedMedia';
+import { formatTime, getPublicSlug } from './feedMedia';
+import WeekRibbon from './WeekRibbon';
 import { ICON_SHADOW, TEXT_SHADOW } from './feedStyles';
 
 const SITE_URL = 'https://www.amusicadasegunda.com';
@@ -24,7 +24,6 @@ const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
  */
 export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics }) {
   const { toast } = useToast();
-  const weekChip = isReleasedThisWeek(song) ? 'Esta semana' : getWeekLabel(song);
   const slug = getPublicSlug(song);
   const canSing = isKaraokePublished(song) && Boolean(slug);
   const TitleTag = isFirst ? 'h1' : 'h2';
@@ -58,14 +57,8 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
 
   return (
     <>
-      {/* Haut : chip de semaine, sous le nom du site (en-tête transparent du shell). */}
-      {weekChip ? (
-        <div className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),0.35rem)+3.25rem)] z-20 flex justify-center">
-          <span className="rounded-full border border-white/20 bg-black/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md">
-            {weekChip}
-          </span>
-        </div>
-      ) : null}
+      {/* Haut : ruban éphémère de la semaine, sous l'en-tête (remplace le chip permanent). */}
+      <WeekRibbon song={song} phase={player.phase} />
 
       {/* Bas gauche : titre (h1 de la page sur la première chanson). Même élément dans
           les deux états, seul son style change. */}
