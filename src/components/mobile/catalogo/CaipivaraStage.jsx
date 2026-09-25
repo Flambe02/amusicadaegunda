@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { BookOpen, Clapperboard, Pause, Play } from 'lucide-react';
+import { Pause, Play, SkipForward } from 'lucide-react';
 import { useShortPlayer } from '@/components/mobile/feed/useShortPlayer';
 import FeedStorySheet from '@/components/mobile/feed/FeedStorySheet';
-import { formatTime, getPublicSlug, monthYearLabel } from '@/components/mobile/feed/feedMedia';
+import WeekRibbon from '@/components/mobile/feed/WeekRibbon';
+import { Rail, RailButton, RailLink } from '@/components/mobile/feed/FeedRail';
+import { useShareSong } from '@/components/mobile/feed/useShareSong';
+import { formatTime, getPublicSlug } from '@/components/mobile/feed/feedMedia';
+import {
+  ClipFilled,
+  LyricsSheetFilled,
+  MusicListFilled,
+  NewspaperFilled,
+  ShareArrowFilled,
+} from '@/components/mobile/icons/FilledIcons';
+import LyricsDialog from '@/components/LyricsDialog';
+import { isKaraokePublished } from '@/lib/lrc';
 import { ANIMATIONS, DANCE_CLIP, IDLE_CLIP, getSongAudioId, pickAnimation, pickSong } from './stageDraw';
 
 // Filet : si une animation ne se termine jamais (lecture refusée, réseau), on rend la
@@ -16,6 +27,26 @@ const CROSSFADE = 'transition-opacity duration-150 ease-out';
 const CROSSFADE_LONG = 'transition-opacity duration-[400ms] ease-out';
 // Les bords de la vidéo se fondent dans le fond de la page : aucun rectangle visible.
 const EDGE_MASK = 'radial-gradient(ellipse closest-side at 50% 50%, #000 62%, transparent 100%)';
+
+// « Ou toque em mim » : affiché jusqu'au premier changement de chanson par un tap sur
+// la Caipivara, puis plus jamais sur cet appareil (comme l'indice « Deslize » du feed).
+const RETAP_HINT_KEY = 'amds-catalogo-retap';
+
+function readRetapUsed() {
+  try {
+    return localStorage.getItem(RETAP_HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function rememberRetapUsed() {
+  try {
+    localStorage.setItem(RETAP_HINT_KEY, '1');
+  } catch {
+    /* stockage indisponible : l'indice reviendra, sans gêne */
+  }
+}
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -101,6 +132,8 @@ export default function CaipivaraStage({ songs = [] }) {
   const [animation, setAnimation] = useState(null);
   const [warmAnimations, setWarmAnimations] = useState(false);
   const [storyOpen, setStoryOpen] = useState(false);
+  const [lyricsOpen, setLyricsOpen] = useState(false);
+  const [retapUsed, setRetapUsed] = useState(readRetapUsed);
 
   const mountRef = useRef(null);
   const storyButtonRef = useRef(null);
@@ -183,11 +216,17 @@ export default function CaipivaraStage({ songs = [] }) {
     currentRef.current = song;
     setCurrent(song);
     setStoryOpen(false);
+    setLyricsOpen(false);
   }, []);
 
   const draw = useCallback(() => {
     if (busyRef.current) return; // tap pendant une animation : ignoré
     startAnimation();
+    if (currentRef.current && !retapUsed) {
+      // Changement de chanson par la Caipivara : l'indice a servi.
+      rememberRetapUsed();
+      setRetapUsed(true);
+    }
     if (!currentRef.current && queued) {
       startSong(queued, true);
       return;
@@ -195,7 +234,15 @@ export default function CaipivaraStage({ songs = [] }) {
     const song = pickSong(songs, currentRef.current);
     if (song) startSong(song, false);
     else pendingStartRef.current = true; // catalogue pas encore là : dès qu'il arrive
-  }, [queued, songs, startAnimation, startSong]);
+  }, [queued, songs, startAnimation, startSong, retapUsed]);
+
+  /** « Outra » : même tirage que le tap sur la Caipivara (animation + chanson suivante). */
+  const next = useCallback(() => {
+    if (busyRef.current) return;
+    startAnimation();
+    const song = pickSong(songs, currentRef.current);
+    if (song) startSong(song, false);
+  }, [songs, startAnimation, startSong]);
 
   // Tap fait avant l'arrivée du catalogue : la musique part dès qu'il est là (hors du
   // geste — si le navigateur refuse le son, le bouton ▶ le relance).
@@ -227,8 +274,9 @@ export default function CaipivaraStage({ songs = [] }) {
   };
 
   const slug = current ? getPublicSlug(current) : null;
-  const period = current ? monthYearLabel(current) : '';
   const hasStory = Boolean(String(current?.description || '').trim());
+  const canSing = Boolean(current) && isKaraokePublished(current) && Boolean(slug);
+  const share = useShareSong(current || {});
 
   return (
     <div className="relative flex h-full w-full flex-col items-center overflow-hidden bg-app-black text-white [container-type:size]">
@@ -242,7 +290,10 @@ export default function CaipivaraStage({ songs = [] }) {
         className="pointer-events-none fixed left-0 top-0 -z-10 h-[200px] w-[200px] opacity-0"
       />
 
-      <div className="flex min-h-0 w-full flex-1 items-center justify-center pt-4">
+      {/* Ruban éphémère du feed, à chaque nouvelle chanson (rien avant le premier tap). */}
+      <WeekRibbon song={current} phase={player.phase} topClass="top-3" />
+
+      <div className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center pt-4">
         <button
           type="button"
           onClick={draw}
@@ -308,16 +359,58 @@ export default function CaipivaraStage({ songs = [] }) {
             )}
           </div>
         </button>
+
+        {current && !retapUsed ? (
+          <p className="mt-1 text-sm font-medium text-white/60">Ou toque em mim</p>
+        ) : null}
+
+        {/* Colonne d'icônes, identique au feed : Letra, História, Cantar, Compartilhar, Clipe. */}
+        {current ? (
+          <Rail className="absolute bottom-2 right-1.5">
+            <RailButton
+              label="Letra"
+              onClick={() => setLyricsOpen(true)}
+              icon={LyricsSheetFilled}
+              ariaLabel={`Ver a letra de ${current.title}`}
+            />
+            {hasStory ? (
+              <RailButton
+                buttonRef={storyButtonRef}
+                label="História"
+                onClick={() => setStoryOpen(true)}
+                icon={NewspaperFilled}
+                ariaLabel={`Ler a história de ${current.title}`}
+              />
+            ) : null}
+            {canSing ? (
+              <RailLink
+                label="Cantar"
+                to={`/karaoke?musica=${encodeURIComponent(slug)}`}
+                icon={MusicListFilled}
+                ariaLabel={`Cantar ${current.title} no karaokê`}
+              />
+            ) : null}
+            <RailButton label="Compartilhar" onClick={share} icon={ShareArrowFilled} ariaLabel={`Compartilhar ${current.title}`} />
+            {slug ? (
+              <RailLink
+                label="Clipe"
+                to={`/?musica=${encodeURIComponent(slug)}`}
+                icon={ClipFilled}
+                ariaLabel={`Ver o clipe de ${current.title}`}
+              />
+            ) : null}
+          </Rail>
+        ) : null}
       </div>
 
-      <div className="flex min-h-[10.5rem] w-full flex-col items-center px-6 pb-6 pt-2 text-center">
+      {/* Bas de l'écran : titre, barre de progression, pause et « Outra » — rien d'autre. */}
+      <div className="flex min-h-[7rem] w-full flex-col items-center px-6 pb-6 pt-2 text-center">
         {current ? (
-          <div className="flex w-full max-w-[20rem] flex-col items-center">
-            <div className="flex w-full items-center gap-3">
-              <div aria-live="polite" className="min-w-0 flex-1 text-left">
-                <p className="truncate text-base font-bold leading-tight">{current.title}</p>
-                {period ? <p className="mt-0.5 text-xs font-medium text-white/60">{period}</p> : null}
-              </div>
+          <div className="flex w-full max-w-[22rem] flex-col items-center">
+            <div className="flex w-full items-center gap-2">
+              <p aria-live="polite" className="min-w-0 flex-1 truncate text-left text-base font-bold leading-tight">
+                {current.title}
+              </p>
               <button
                 type="button"
                 onClick={togglePlayback}
@@ -328,31 +421,18 @@ export default function CaipivaraStage({ songs = [] }) {
                   ? <Pause className="h-5 w-5" fill="currentColor" aria-hidden="true" />
                   : <Play className="ml-0.5 h-5 w-5" fill="currentColor" aria-hidden="true" />}
               </button>
+              <button
+                type="button"
+                onClick={next}
+                aria-label="Outra música"
+                className="flex h-11 flex-shrink-0 touch-manipulation items-center gap-1.5 rounded-full border border-white/25 pl-3 pr-4 text-sm font-semibold text-white active:bg-white/10"
+              >
+                <SkipForward className="h-4 w-4" fill="currentColor" aria-hidden="true" />
+                Outra
+              </button>
             </div>
             <div className="mt-3 w-full">
               <SongProgress player={player} />
-            </div>
-            <div className="mt-3 flex items-center gap-5 text-sm font-semibold text-white/70">
-              {hasStory ? (
-                <button
-                  ref={storyButtonRef}
-                  type="button"
-                  onClick={() => setStoryOpen(true)}
-                  className="inline-flex min-h-11 touch-manipulation items-center gap-1.5 active:text-white"
-                >
-                  <BookOpen className="h-4 w-4" aria-hidden="true" />
-                  História
-                </button>
-              ) : null}
-              {slug ? (
-                <Link
-                  to={`/?musica=${encodeURIComponent(slug)}`}
-                  className="inline-flex min-h-11 touch-manipulation items-center gap-1.5 active:text-white"
-                >
-                  <Clapperboard className="h-4 w-4" aria-hidden="true" />
-                  Ver o clipe
-                </Link>
-              ) : null}
             </div>
           </div>
         ) : (
@@ -361,6 +441,17 @@ export default function CaipivaraStage({ songs = [] }) {
           </p>
         )}
       </div>
+
+      {current ? (
+        <LyricsDialog
+          open={lyricsOpen}
+          onOpenChange={setLyricsOpen}
+          song={current}
+          title="Letras da Musica"
+          maxHeight="h-96"
+          showIcon={false}
+        />
+      ) : null}
 
       {hasStory ? (
         <FeedStorySheet song={current} open={storyOpen} onOpenChange={setStoryOpen} returnFocusRef={storyButtonRef} />

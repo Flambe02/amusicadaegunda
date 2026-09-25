@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
 import { isKaraokePublished } from '@/lib/lrc';
 import { formatTime, getPublicSlug } from './feedMedia';
 import WeekRibbon from './WeekRibbon';
 import FeedStorySheet from './FeedStorySheet';
+import { Rail, RailButton, RailLink } from './FeedRail';
+import { useShareSong } from './useShareSong';
 import {
   LyricsSheetFilled,
   MusicListFilled,
@@ -12,9 +12,8 @@ import {
   ShareArrowFilled,
   SpeakerFilled,
 } from '@/components/mobile/icons/FilledIcons';
-import { ICON_SHADOW, TEXT_SHADOW, TEXT_SHADOW_DENSE } from './feedStyles';
+import { TEXT_SHADOW, TEXT_SHADOW_DENSE } from './feedStyles';
 
-const SITE_URL = 'https://www.amusicadasegunda.com';
 // Courbe « strong ease-out » (changements d'état d'interface).
 const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
 
@@ -30,7 +29,6 @@ const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
  * (retirés après test sur iPhone, 2026-09-25).
  */
 export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics }) {
-  const { toast } = useToast();
   const slug = getPublicSlug(song);
   const canSing = isKaraokePublished(song) && Boolean(slug);
   const TitleTag = isFirst ? 'h1' : 'h2';
@@ -45,28 +43,7 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
   const storyButtonRef = useRef(null);
   useEffect(() => { setStoryOpen(false); }, [song?.id, song?.title]);
 
-  const copy = async (url) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      toast({ title: 'Link copiado', description: 'Cole onde quiser para compartilhar.', duration: 3000 });
-    } catch {
-      toast({ title: 'Não deu para copiar', description: url, duration: 5000 });
-    }
-  };
-
-  const share = async () => {
-    const url = slug ? `${SITE_URL}/musica/${slug}/` : window.location.href;
-    const payload = { title: `${song.title} — A Música da Segunda`, url };
-    if (navigator.share) {
-      try {
-        await navigator.share(payload);
-      } catch (error) {
-        if (error?.name !== 'AbortError') copy(url);
-      }
-      return;
-    }
-    copy(url);
-  };
+  const share = useShareSong(song);
 
   return (
     <>
@@ -94,7 +71,7 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
 
       {/* Colonne droite, de haut en bas : Som (si actif), Letra, História, Cantar,
           Compartilhar. Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
-      <div data-rail className="absolute bottom-6 right-1.5 z-30 flex flex-col items-stretch gap-3">
+      <Rail className="absolute bottom-6 right-1.5">
         {showSound ? (
           <RailButton label="Som" onClick={player.mute} icon={SpeakerFilled} ariaLabel="Silenciar" />
         ) : null}
@@ -117,7 +94,7 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
           />
         ) : null}
         <RailButton label="Compartilhar" onClick={share} icon={ShareArrowFilled} ariaLabel={`Compartilhar ${song.title}`} />
-      </div>
+      </Rail>
 
       <Scrubber player={player} />
 
@@ -125,31 +102,6 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
         <FeedStorySheet song={song} open={storyOpen} onOpenChange={setStoryOpen} returnFocusRef={storyButtonRef} />
       ) : null}
     </>
-  );
-}
-
-// Zone tactile ≥ 44 × 44 px (≥ 56 × 52) ; icône pleine de 32 px, ombre portée douce.
-// Largeur = le plus long libellé (« Compartilhar »), sinon il déborde de l'écran.
-const railClass =
-  'flex min-h-[44px] min-w-[56px] touch-manipulation select-none flex-col items-center gap-1 py-0.5 text-white active:opacity-70';
-const railIconClass = `h-8 w-8 ${ICON_SHADOW}`;
-const railLabelClass = `whitespace-nowrap text-xs font-semibold leading-none ${TEXT_SHADOW}`;
-
-function RailButton({ label, icon: Icon, onClick, ariaLabel, buttonRef }) {
-  return (
-    <button ref={buttonRef} type="button" onClick={onClick} aria-label={ariaLabel} className={railClass}>
-      <Icon className={railIconClass} />
-      <span aria-hidden="true" className={railLabelClass}>{label}</span>
-    </button>
-  );
-}
-
-function RailLink({ label, icon: Icon, to, ariaLabel }) {
-  return (
-    <Link to={to} aria-label={ariaLabel} className={railClass}>
-      <Icon className={railIconClass} />
-      <span aria-hidden="true" className={railLabelClass}>{label}</span>
-    </Link>
   );
 }
 

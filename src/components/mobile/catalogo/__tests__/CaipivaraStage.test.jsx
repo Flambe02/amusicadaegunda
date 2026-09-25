@@ -33,6 +33,7 @@ let reduceMotion = false;
 beforeEach(() => {
   reduceMotion = false;
   resetPlayer();
+  localStorage.clear();
   vi.useFakeTimers({ shouldAdvanceTime: true });
   window.matchMedia = vi.fn().mockImplementation((query) => ({
     matches: query.includes('reduce') ? reduceMotion : false, media: query,
@@ -119,13 +120,46 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(screen.queryByRole('button', { name: 'Outra' })).toBeNull();
   });
 
-  it('shows title, month and year, a thin progress bar and play/pause under the Caipivara', () => {
-    renderStage();
+  it('bottom keeps only title, progress bar, play/pause and « Outra » (no month/year line)', () => {
+    renderStage([SONGS[0]]);
     fireEvent.click(caipivara());
-    const song = songOfVideo(lastVideoId());
-    expect(screen.getByText(song.title)).toBeInTheDocument();
+    expect(screen.getByText(SONGS[0].title)).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Progresso da música' })).toHaveAttribute('aria-valuetext', '0:30 de 2:00');
     expect(screen.getByRole('button', { name: 'Tocar' })).toBeInTheDocument(); // son pas encore confirmé par le lecteur
+    expect(screen.getByRole('button', { name: 'Outra música' })).toHaveTextContent('Outra');
+    // Le mois n'apparaît plus que dans le ruban éphémère.
+    const outsideRibbon = screen.queryAllByText(/agosto 2026/i).filter((el) => !el.closest('[data-ribbon]'));
+    expect(outsideRibbon).toHaveLength(0);
+    expect(document.querySelector('[data-ribbon]')).toHaveTextContent(/agosto 2026/i);
+  });
+
+  it('« Outra » plays an animation and loads another song inside the gesture', () => {
+    const { container } = renderStage();
+    fireEvent.click(caipivara());
+    const firstSong = songOfVideo(lastVideoId());
+    fireEvent.ended(visibleAnimation(container));
+    fireEvent.click(screen.getByRole('button', { name: 'Outra música' }));
+    expect(visibleAnimation(container)).toBeTruthy();
+    expect(player.loadNow).toHaveBeenCalledTimes(1);
+    expect(songOfVideo(player.loadNow.mock.calls[0][0]).id).not.toBe(firstSong.id);
+  });
+
+  it('« Ou toque em mim » shows after the first song until the Caipivara is tapped again, then never on this device', () => {
+    const { container, unmount } = renderStage();
+    expect(screen.queryByText('Ou toque em mim')).toBeNull();
+    fireEvent.click(caipivara());
+    expect(screen.getByText('Ou toque em mim')).toBeInTheDocument();
+    fireEvent.ended(visibleAnimation(container));
+    fireEvent.click(screen.getByRole('button', { name: 'Outra música' })); // Outra ne compte pas
+    fireEvent.ended(visibleAnimation(container));
+    expect(screen.getByText('Ou toque em mim')).toBeInTheDocument();
+    fireEvent.click(caipivara());
+    expect(screen.queryByText('Ou toque em mim')).toBeNull();
+    expect(localStorage.getItem('amds-catalogo-retap')).toBe('1');
+    unmount();
+    renderStage();
+    fireEvent.click(caipivara());
+    expect(screen.queryByText('Ou toque em mim')).toBeNull();
   });
 
   it('a new tap: another animation and another song, loaded inside the gesture', () => {
@@ -184,11 +218,24 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(caipivara()).toHaveAttribute('data-stage', 'idle');
   });
 
-  it('« História » only when the song has a description; « Ver o clipe » opens the feed on it', () => {
+  it('right rail like the feed: Letra, História, Cantar (if published), Compartilhar, Clipe → feed', () => {
+    const karaoke = { ...SONGS[0], lrc_content: '[00:01.00]Chove', karaoke_published: true };
+    renderStage([karaoke]);
+    expect(document.querySelector('[data-rail]')).toBeNull(); // rien avant le premier tap
+    fireEvent.click(caipivara());
+    const rail = document.querySelector('[data-rail]');
+    expect([...rail.children].map((el) => el.textContent)).toEqual(['Letra', 'História', 'Cantar', 'Compartilhar', 'Clipe']);
+    expect(screen.getByRole('link', { name: /ver o clipe/i })).toHaveAttribute('href', '/?musica=ta-chovendo-de-novo');
+    expect(screen.getByRole('link', { name: /cantar/i })).toHaveAttribute('href', '/karaoke?musica=ta-chovendo-de-novo');
+    // Plus de liens « História » / « Ver o clipe » en bas de l'écran.
+    expect(screen.queryByText('Ver o clipe')).toBeNull();
+  });
+
+  it('« História » only when the song has a description; no Cantar without published karaoke', () => {
     const { rerender } = renderStage([SONGS[0]]);
     fireEvent.click(caipivara());
     expect(screen.getByRole('button', { name: /história/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /ver o clipe/i })).toHaveAttribute('href', '/?musica=ta-chovendo-de-novo');
+    expect(screen.queryByRole('link', { name: /cantar/i })).toBeNull();
     rerender(<MemoryRouter><CaipivaraStage songs={[SONGS[1]]} /></MemoryRouter>);
     fireEvent.ended(document.querySelector('video.opacity-100[data-clip="hat"], video.opacity-100[data-clip="flip"], video.opacity-100[data-clip="samba"]'));
     fireEvent.click(caipivara());

@@ -135,6 +135,12 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 5. **Étape 7 — Lecteur karaokê restylé.**
 6. **Étape 12 — Vérification finale.**
 
+### H.4 bis — Catálogo après le test sur iPhone (2026-09-25, remplace H.4.4)
+1. **« Outra »** (icône piste suivante + libellé) à côté de pause : même tirage que la Caipivara (animation + chanson suivante). Le tap sur la Caipivara reste un geste secondaire, annoncé par « Ou toque em mim » sous elle, jusqu'au premier changement de chanson par ce tap (mémorisé sur l'appareil, `amds-catalogo-retap`).
+2. **Ruban** : le ruban éphémère du feed (`WeekRibbon`) à chaque nouvelle chanson ; plus de ligne mois / année sous le titre.
+3. **Colonne d'icônes à droite, identique au feed** (`FeedRail.jsx`, partagé) : Letra (le `LyricsDialog` du feed), História (si description), Cantar (si karaokê publié), Compartilhar, **Clipe** (`/?musica=<slug>`). Le bas de l'écran ne garde que titre, barre de progression, pause et Outra.
+4. **Plus de bouton ⓘ** dans l'en-tête mobile, sur aucune page (l'onglet Menu le remplace). Desktop inchangé.
+
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.
 - **Plus de captures d'écran dans les rapports** : Florent teste lui-même sur son téléphone. Les vérifications au navigateur (Playwright) continuent, mais seuls leurs résultats figurent dans le rapport.

@@ -15,7 +15,14 @@ export const RIBBON_VISIBLE_MS = 2500;
  * « eyebrow » (DESIGN.md), jamais de jaune. La date reste toujours lisible par les
  * lecteurs d'écran (texte visuellement masqué).
  */
-export default function WeekRibbon({ song, phase }) {
+// Position par défaut : sous l'en-tête transparent posé sur la vidéo de l'Início.
+const FEED_TOP = 'top-[calc(max(env(safe-area-inset-top),0.35rem)+3.5rem)]';
+
+/**
+ * `topClass` : la scène du Catálogo, sous un en-tête opaque, le place en haut de sa
+ * propre zone. Sans chanson (`song` nul), rien n'est affiché.
+ */
+export default function WeekRibbon({ song, phase, topClass = FEED_TOP }) {
   const label = ribbonLabel(song);
   const spoken = ribbonSpokenDate(song);
   const songKey = song?.id ?? song?.slug ?? song?.title;
@@ -64,7 +71,7 @@ export default function WeekRibbon({ song, phase }) {
         <div
           aria-hidden="true"
           data-ribbon={state}
-          className="pointer-events-none absolute left-0 top-[calc(max(env(safe-area-inset-top),0.35rem)+3.5rem)] z-20"
+          className={`pointer-events-none absolute left-0 z-20 ${topClass}`}
         >
           <span
             className={`block rounded-r-full bg-black/55 py-1.5 pl-4 pr-4 text-[11px] font-medium uppercase tracking-[0.28em] text-white backdrop-blur-md ${position}`}

@@ -71,6 +71,18 @@ export function ShareArrowFilled(props) {
   );
 }
 
+/** Clipe : écran vidéo arrondi, triangle de lecture évidé. */
+export function ClipFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path
+        fillRule="evenodd"
+        d="M5.5 3h13A2.5 2.5 0 0 1 21 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-13A2.5 2.5 0 0 1 5.5 3Zm4.4 5.2v7.6c0 .6.7 1 1.2.7l5.9-3.8a.8.8 0 0 0 0-1.4l-5.9-3.8c-.5-.3-1.2.1-1.2.7Z"
+      />
+    </FilledIcon>
+  );
+}
+
 /** Nav — Início actif : maison pleine, porte évidée. */
 export function HomeFilled(props) {
   return (

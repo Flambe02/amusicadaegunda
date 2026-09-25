@@ -310,8 +310,8 @@ export default function Layout({ children }) {
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
         {/* En-tête mobile. Início : transparent, posé PAR-DESSUS le contenu (le feed passe
-            dessous) ; la zone vide laisse passer les taps vers la vidéo, seuls le logo et
-            le bouton Sobre captent. Sobre : masqué. Ailleurs : verre opaque à 92 %. */}
+            dessous) ; la zone vide laisse passer les taps vers la vidéo, seul le logo
+            capte. Sobre : masqué. Ailleurs : verre opaque à 92 %. */}
         <header
           data-mobile-header={isHomePage ? 'overlay' : isImmersiveMobilePage ? 'hidden' : 'solid'}
           className={
@@ -345,19 +345,9 @@ export default function Layout({ children }) {
               >
                 A Música da Segunda
               </span>
-              {/* Right: Info — sauf sur l'Início, où il doublait l'onglet Menu. Une cale
-                  de même taille garde le nom centré. */}
-              {isHomePage ? (
-                <span aria-hidden="true" className="h-11 w-11 flex-shrink-0" />
-              ) : (
-                <Link
-                  to={createPageUrl('Sobre')}
-                  className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] touch-manipulation"
-                  aria-label="Sobre o projeto"
-                >
-                  <Info className="h-4 w-4 text-white/70" />
-                </Link>
-              )}
+              {/* Pas de bouton « i » (Sobre) : il doublait l'onglet Menu, sur toutes les
+                  pages mobiles. Une cale de même taille garde le nom centré. */}
+              <span aria-hidden="true" className="h-11 w-11 flex-shrink-0" />
             </div>
           </div>
         </header>

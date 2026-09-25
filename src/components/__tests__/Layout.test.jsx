@@ -207,16 +207,16 @@ describe('Layout — shell mobile', () => {
     expect(nav.className).not.toMatch(/backdrop-blur|bg-app-surface|shadow/);
   });
 
-  it('has no « i » button in the Início header (it duplicated the Menu tab), but keeps it elsewhere', () => {
-    const { unmount } = renderAt('/');
-    const home = mobileShell().querySelector('header');
-    expect(within(home).queryByRole('link', { name: 'Sobre o projeto' })).toBeNull();
-    expect(home.querySelector('img')).not.toBeNull(); // Caipivara conservée
-    expect(within(home).getByText('A Música da Segunda')).toBeInTheDocument();
-    unmount();
-    renderAt('/karaoke');
-    expect(within(mobileShell().querySelector('header')).getByRole('link', { name: 'Sobre o projeto' })).toBeInTheDocument();
-  });
+  it.each(['/', '/karaoke', '/catalogo', '/blog'])(
+    'has no « i » button in the mobile header on %s (the Menu tab replaces it)',
+    (path) => {
+      renderAt(path);
+      const header = mobileShell().querySelector('header');
+      expect(within(header).queryByRole('link', { name: 'Sobre o projeto' })).toBeNull();
+      expect(header.querySelector('img')).not.toBeNull(); // Caipivara conservée
+      expect(within(header).getByText('A Música da Segunda')).toBeInTheDocument();
+    }
+  );
 
   it.each([
     ['/', 'overlay'],
