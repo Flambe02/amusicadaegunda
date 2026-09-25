@@ -300,7 +300,9 @@ export default function CaipivaraStage({ songs = [] }) {
           aria-label="Toque na Caipivara e ela escolhe uma música pra você"
           data-stage={animation ? 'animating' : dancing ? 'dancing' : 'idle'}
           className="relative aspect-[9/16] touch-manipulation select-none rounded-[40px] focus-visible:outline-offset-4"
-          style={{ width: 'min(64cqw, 250px, calc((100cqh - 230px) * 0.5625))' }}
+          // 170 px : la colonne d'icônes (≈ 78 px avec sa marge) de chaque côté, plus un peu d'air — elle
+          // ne doit jamais mordre sur la zone tactile de la Caipivara (vérifié à 360 px).
+          style={{ width: 'min(64cqw, 250px, calc(100cqw - 170px), calc((100cqh - 230px) * 0.5625))' }}
         >
           <div
             aria-hidden="true"
