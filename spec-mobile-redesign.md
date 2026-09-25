@@ -194,6 +194,18 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 - [ ] Toutes les animations s'arrêtent avec `prefers-reduced-motion`.
 - [ ] Lighthouse mobile ≥ `main` sur performance, accessibilité et SEO.
 
+**Étape 4b — navigation entre les semaines :**
+
+- [ ] Glisser vers le haut affiche la semaine précédente ; glisser vers le bas revient vers la plus récente. La plus récente est affichée en premier.
+- [ ] Aucun glissement horizontal ne change de chanson (le geste retour d'iOS reste intact).
+- [ ] Il n'existe jamais plus d'une iframe YouTube dans la page, pendant et après un changement de chanson.
+- [ ] Le lecteur est réutilisé (`loadVideoById`) : si le son était actif, il reste actif sur la nouvelle chanson ; s'il était coupé, il reste coupé.
+- [ ] Seules les miniatures des chansons voisines (précédente et suivante) sont préchargées ; aucune autre vidéo ni aucun autre lecteur n'est chargé.
+- [ ] Les flèches haut/bas du clavier et deux boutons avec `aria-label` (semaine précédente / semaine suivante) produisent les mêmes changements que le glissement.
+- [ ] Aux extrémités (chanson la plus récente, chanson la plus ancienne), le bouton et le geste sans destination sont inopérants et le bouton correspondant n'est pas proposé.
+- [ ] L'indice « Deslize para a semana anterior » est visible tant que l'utilisateur n'a jamais glissé, puis ne réapparaît plus.
+- [ ] Avec `prefers-reduced-motion`, le changement de chanson se fait sans animation de défilement.
+
 ## 13. Livrables par étape
 
 - Diff de l'étape uniquement.
