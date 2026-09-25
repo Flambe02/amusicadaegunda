@@ -16,6 +16,7 @@ colors:
   glass-fill-strong: "rgba(255,255,255,0.08)"
   glass-border: "rgba(255,255,255,0.10)"
   chrome-bar: "rgba(0,0,0,0.82)"
+  surface-strong: "rgba(0,0,0,0.78)"
   sky-haze: "rgba(125,211,252,0.12)"
   tv-dpad-cyan: "#22D3EE"
   destructive-red: "#DC2626"
@@ -108,11 +109,6 @@ components:
     typography: "{typography.label-eyebrow}"
     rounded: "{rounded.pill}"
     padding: "8px 16px"
-  chip-new:
-    backgroundColor: "{colors.spotlight-yellow}"
-    textColor: "{colors.stage-black-deep}"
-    rounded: "{rounded.pill}"
-    padding: "2px 6px"
   panel-glass:
     backgroundColor: "{colors.glass-fill}"
     textColor: "{colors.text-primary}"
@@ -127,15 +123,16 @@ components:
     backgroundColor: "transparent"
     textColor: "{colors.text-muted}"
     typography: "{typography.label-nav}"
-    rounded: "{rounded.lg}"
-    height: "60px"
-    width: "64px"
+    rounded: "12px"
   nav-item-mobile-active:
-    backgroundColor: "{colors.glass-fill-strong}"
-    textColor: "{colors.text-primary}"
+    backgroundColor: "transparent"
+    textColor: "{colors.spotlight-yellow}"
+  nav-featured-karaoke:
+    backgroundColor: "{colors.wing-charcoal}"
+    rounded: "{rounded.pill}"
+    size: "64px"
   bottom-nav:
-    backgroundColor: "{colors.chrome-bar}"
-    height: "{spacing.bottom-nav}"
+    backgroundColor: "{colors.surface-strong}"
   tv-card:
     backgroundColor: "{colors.tv-card}"
     textColor: "{colors.text-primary}"
@@ -167,7 +164,7 @@ Type is loud and heavy, and never decorative. Headlines are system sans at weigh
 The palette is a near-black stage with a white text ramp and one yellow spotlight. Everything else is either functional (focus, destructive) or borrowed from a streaming platform.
 
 ### Primary
-- **Spotlight Yellow** (#FDE047): the single brand accent. It marks the active nav item (icon colour and indicator dot), the primary CTA fill, the "New" Monday badge, the karaoke line being sung, and accent metrics. It also tints the stage wash (`rgba(253,224,71,0.08–0.18)` radial gradients), text selection (28% alpha) and the scrollbar hover. On a yellow fill, text is **On-Yellow Ink** (#171505) or Stage Black, never white.
+- **Spotlight Yellow** (#FDE047): the single brand accent. It marks the active nav item (icon colour and indicator dot), the primary CTA fill, the karaoke line being sung, and accent metrics. It also tints the stage wash (`rgba(253,224,71,0.08–0.18)` radial gradients), text selection (28% alpha) and the scrollbar hover. On a yellow fill, text is **On-Yellow Ink** (#171505) or Stage Black, never white.
 - **Focus Yellow** (#FACC15): the slightly deeper yellow used only for the keyboard and remote focus ring. Keeping it separate from Spotlight Yellow lets a focused-and-active element still show the ring.
 
 ### Secondary
@@ -180,7 +177,8 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 - **TV Card** (#14161C): the opaque card surface on TV, where blur is too expensive.
 - **Text ramp:** white at 100% (headings, active labels), 68–72% (secondary copy), 42–55% (muted meta, eyebrows) and 30% (footnotes).
 - **Glass Fill / Glass Fill Strong / Glass Border** (white at 5% / 8–12% / 10%): panel, hover and hairline border surfaces.
-- **Chrome Bar** (black at 80–92%): the fixed headers and the bottom nav, always under a heavy backdrop blur.
+- **Chrome Bar** (black at 80–92%): the fixed headers, always under a heavy backdrop blur.
+- **Surface Strong** (black at 78%): the mobile bottom nav, under `backdrop-blur-2xl`.
 
 ### Functional and borrowed
 - **TV D-pad Cyan** (#22D3EE): the default D-pad focus colour inside some TV grids. Karaoke contexts switch it to yellow.
@@ -215,7 +213,7 @@ The palette is a near-black stage with a white text ramp and one yellow spotligh
 
 ## Layout
 
-- **Mobile (<768px):** the page is a fixed-height `100svh` immersive app shell. `html` and `body` don't scroll; an inner container (`#mobile-scroll`) does. There is a compact glass top header (52px) and a fixed glass bottom nav (64px plus the safe area) with five items: Home, Karaokê, Pesquisa, Roda, Menu. Side gutter is 16px and vertical rhythm is 14px.
+- **Mobile (<768px):** the page is a fixed-height `100svh` immersive app shell. `html` and `body` don't scroll; an inner container (`#mobile-scroll`) does. There is a compact glass top header (52px, hidden on Início and Sobre) and a fixed glass bottom nav (about 64px plus the safe area) with five items: Início, Catálogo, Karaokê (raised), Roleta, Menu. Side gutter is 16px and vertical rhythm is 14px.
 - **Tablet (768–1023px):** a fixed 260px glass sidebar sits inset 16px from the viewport edge with rounded 30px corners. Content is offset by `ml-[260px]`.
 - **Desktop (≥1024px):** a fixed 72px glass top bar with centred nav at a max width of 1440px. Content has `px-6 / xl:px-8 / 2xl:px-10` and a footer bar. Pages use `DesktopPageShell`, a glass hero panel with badge, display title, lead, actions and a 2–3-column metric grid, plus an optional 340px side column at 2xl.
 - **TV:** a 960×540 CSS viewport at 2× density, with generous safe margins (`scroll-margin: 12vh 8vw` on focus) and horizontal rows of cards moved through by D-pad.
@@ -256,7 +254,6 @@ The components are tactile and confident, with a pill for every action, glass fo
 
 ### Chips
 - **Eyebrow badge:** a Glass Fill pill with a hairline border and 11px uppercase text at 0.28em tracking and 68% white. It opens page heroes.
-- **"New" badge:** a tiny Spotlight Yellow pill with 9px black uppercase text at 0.12em tracking. It appears on Mondays until the menu has been seen.
 
 ### Cards / Containers
 - **Corner Style:** 30–32px for panels and 26px for metric tiles.
@@ -266,7 +263,10 @@ The components are tactile and confident, with a pill for every action, glass fo
 - **Internal Padding:** 24px (28px at xl) for panels and 20px for tiles.
 
 ### Navigation
-- **Mobile bottom bar:** a Chrome Bar background with `backdrop-blur-2xl`, a top hairline and the upward Nav shadow. Items are 64×60px, 20px-radius targets with a 20px icon over a 10px caption. The inactive item is white at 56–66%. The active item has a Spotlight Yellow icon, a white semibold caption and a 12% white pill behind it.
+- **Mobile bottom bar** (`src/components/mobile/AppBottomNav.jsx`, fed by `mobileNavItems` in `src/pages/Layout.jsx`): a Surface Strong background (black at 78%) with `backdrop-blur-2xl`, a 1px top hairline at 12% white, the upward Nav shadow and the bottom safe-area inset. It is a grid of equal columns (currently Início, Catálogo, Karaokê, Roleta, Menu). Each item is a 12px-radius target with a 20px icon over a 10px semibold caption, and inactive items are white at 55%. The active item turns both icon and caption Spotlight Yellow, with no pill behind it. The only tactile feedback is a 5% white wash on press.
+  - **Featured item (Karaokê):** a raised 64px circle that overflows the bar by 28px, holding the 52px Caipivara microphone icon on a Wing Charcoal fill with a deep drop shadow. Its border is 2px, Spotlight Yellow when the page is active and 15% white otherwise. It is the only element that breaks out of the bar.
+  - **Menu sheet:** the last item opens a bottom sheet (28px top radius, Wing Charcoal fill, 10% white top hairline, a 40×6px grabber at 22% white) over a 60% black scrim with a small blur. Its rows are 16px-radius, with a 40px icon well (12px radius, 8% white fill) and a 16px semibold white label. It has no yellow, and the scrim button closes it.
+  - **Top header (mobile only):** 52px of glass at 92% black with a bottom hairline and the Caipivara avatar at left, the name centred and an info button at right. It is hidden on Início and Sobre, which run edge to edge.
 - **Tablet sidebar:** a 260px glass panel with a 30px radius and a yellow radial glow at the top. The brand block at the top combines the Caipivara avatar with an eyebrow and the name. Nav items are 22px-radius rows with 40px icon wells and a status dot that turns yellow when active.
 - **Desktop top bar:** 72px tall at 80% black with `backdrop-blur-xl`. On the left is the logo (a 44px, 12px-radius square) with the name at 15px/700. The centred nav has 15px links, and a 40px circular search button sits on the right.
 
