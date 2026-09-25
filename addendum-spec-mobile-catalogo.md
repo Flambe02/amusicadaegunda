@@ -72,7 +72,7 @@ Fichiers fournis par Florent, à placer puis à traiter comme à l'étape 1 (san
 Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 
 1. **Redirections** : `/search` et `/roda` redirigent vers `/catalogo` **uniquement sous 768 px** (redirection côté client, depuis la copie mobile de la page). Sur desktop, les routes, les stubs et le sitemap restent inchangés.
-2. **`/catalogo` sur desktop** (≥ 768 px) : redirection vers `/musica`. `/catalogo` est `noindex`, sans stub ni entrée de sitemap.
+2. **`/catalogo` sur desktop** (≥ 768 px) : redirection vers `/musica`. `/catalogo` est `noindex` et hors sitemap. *Révisé le 2026-09-25 :* il a un **stub `noindex`** (comme `/festa` et `/search`), sinon un rechargement ou un lien direct passait par `404.html`, qui renvoie vers `/`.
 3. **« Ouvir »** : navigation vers `/?musica=<slug>`. Le feed s'ouvre positionné sur cette chanson (le glissement reste possible dans les deux sens), son coupé avec « Toque para ouvir », puis le paramètre est retiré de l'URL.
 4. **Un seul halo** : celui qui est déjà dans les vidéos (projecteur et lueur au sol), bords fondus par le masque radial. Pas de halo CSS ajouté. En mouvement réduit, image fixe = poster du clip `caipivara-idle`.
 5. **Recherche** : sur le titre, les paroles et `subtitle`. `subtitle` sert à la recherche mais n'est jamais affiché (pas de manchete tant qu'aucune colonne dédiée n'existe).

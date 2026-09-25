@@ -286,6 +286,15 @@ ${songListHtml}
       description: 'Entre na festa, escolha músicas para a fila do karaokê e aplauda ao vivo.'
     },
     {
+      // ✅ SEO: /catalogo est l'onglet Catálogo de la nav mobile. La page indexée
+      // reste /musica (le desktop y est redirigé) : stub 200 + noindex, hors sitemap,
+      // pour qu'un rechargement ou un lien direct ne tombe pas dans 404.html (qui
+      // renvoie vers "/"). Addendum catálogo §G.2.
+      path: '/catalogo',
+      title: 'Catálogo — A Música da Segunda',
+      description: 'Todas as paródias de A Música da Segunda: toque na Caipivara e ela escolhe uma música pra você.'
+    },
+    {
       path: '/apprendre',
       title: 'Modo Aprender — Aprenda português brasileiro com paródias | A Música da Segunda',
       description: 'Beta: aprenda expressões reais do português brasileiro a partir das paródias de A Música da Segunda. Tradução linha a linha, karaokê e caderno de vocabulário.'
@@ -526,9 +535,11 @@ ${songListHtml}
 
     // ✅ SEO: /blog ré-affiche les mêmes descriptions que /musica/[slug] (contenu
     // dupliqué) ; /search est une route utilitaire (recherche désactivée) ; /festa
-    // n'a de sens que via un code de session partagé en direct. Toutes en
-    // noindex,follow : page navigable mais pas indexée.
-    const pageRobots = (page.path === '/blog' || page.path === '/search' || page.path === '/festa')
+    // n'a de sens que via un code de session partagé en direct ; /catalogo est un
+    // onglet mobile dont la page indexée est /musica. Toutes en noindex,follow :
+    // page navigable mais pas indexée.
+    const NOINDEX_PAGES = ['/blog', '/search', '/festa', '/catalogo'];
+    const pageRobots = NOINDEX_PAGES.includes(page.path)
       ? 'noindex, follow'
       : 'index, follow, max-video-preview:0';
 
