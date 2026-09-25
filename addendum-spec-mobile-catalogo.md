@@ -124,7 +124,7 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 ### H.5 Icônes façon TikTok
 1. **Colonne de droite du feed** : plus de ronds sombres. Icônes pleines blanches de 32 px posées sur la vidéo avec ombre portée douce ; libellés 12 px semi-gras blancs avec ombre ; zone tactile ≥ 44 × 44 px ; colonne proche du bord droit, espacement régulier, largeur du plus long libellé. Icônes dans `src/components/mobile/icons/FilledIcons.jsx`.
 2. **Barre de navigation à 5 éléments** : voir section A (révisée). Início, Karaokê, [pastille Caipivara jaune = Catálogo, seul jaune de la barre], Buscar, Menu. « Buscar » mène à `/catalogo` en attendant le panneau de l'étape 10.
-3. **Point ouvert** : sans les ronds, la variante « UI Shorts permanente » de YouTube (ses propres boutons j'aime / partager) chevauche notre colonne. Rien n'est changé en attendant une décision (un fond léger derrière nos icônes serait un voile : à demander).
+3. **Chevauchement accepté (décision du 2026-09-25)** : sans les ronds, la variante « UI Shorts permanente » de YouTube (ses propres boutons j'aime / partager) chevauche notre colonne. C'est accepté : **aucun fond derrière nos icônes** (ce serait un voile sur la vidéo).
 
 ### H.6 Ordre des étapes restantes
 Étapes 8 et 9 faites (nav, scène Catálogo, puis leurs révisions ci-dessus). Reste, dans l'ordre :
@@ -138,6 +138,13 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.
 - **Plus de captures d'écran dans les rapports** : Florent teste lui-même sur son téléphone. Les vérifications au navigateur (Playwright) continuent, mais seuls leurs résultats figurent dans le rapport.
+
+### H.8 Réponses anticipées (2026-09-25)
+1. **Étape 10, chanson sans Short dans la grille** : miniature YouTube de `youtube_url` recadrée en 9:16, sinon la pochette, sinon une vignette sombre avec le titre. Jamais de case vide.
+2. **Étape 10, mois + thème** : les deux filtres se combinent. Sans résultat : phrase courte + chansons récentes.
+3. **Étape 10, recherche tapée** : elle porte sur tout le catalogue ; les filtres mois / thème sont masqués pendant la saisie et reviennent quand la recherche est effacée.
+4. **Étape 5** : la désynchronisation de la ligne de karaoké sur le Short est jugée chanson par chanson, pendant le test sur téléphone.
+5. **Étape 7** : le bouton « Aprender » réutilise la détection existante des fiches Aprender (celle qui affiche le bouton Aprender dans le panneau Letra).
 
 ---
 

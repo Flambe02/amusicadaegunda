@@ -70,7 +70,7 @@ typography:
   label-nav:
     fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
     fontSize: "10px"
-    fontWeight: 600
+    fontWeight: 500
     lineHeight: 1.2
   mono-meta:
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace"

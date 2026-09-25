@@ -52,13 +52,14 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 
 ### 4.1 Início — feed plein écran
 - Zone vidéo = hauteur de l'écran moins la bottom nav. Le Short 9:16 couvre la zone (comportement « cover », perte latérale de 11 à 13 % selon l'écran). **Cadrage (décision du 2026-09-25) :** la vidéo a exactement le cadrage de la miniature qui la précède, sans agrandissement supplémentaire (réglage `SHORTS_UI_ZOOM` = 1,0, conservé pour pouvoir y revenir). YouTube affiche parfois son interface Shorts pendant toute la lecture (variante tirée au hasard par YouTube) : c'est accepté.
-- **Chargement en deux temps :** la miniature YouTube s'affiche d'abord (élément LCP), puis le lecteur YouTube IFrame API (`youtube-nocookie.com`, `autoplay=1`, `mute=1`, `playsinline=1`, `loop=1`, `playlist=<id>`, `controls=0`) se charge après le premier rendu. Fondu vers la vidéo **environ 0,3 s après le début de la lecture** (PLAYING) — juste le temps d'éviter l'image noire du démarrage —, au premier chargement comme après chaque glissement, que le son soit coupé ou non. *(Révisé le 2026-09-25 : un délai de 4 s laissait l'image figée pendant que la musique jouait, ressenti comme pire que l'interface YouTube.)* L'interface de démarrage de YouTube (titre en haut, logo « Shorts » en bas à droite) reste alors visible environ 3 s : c'est accepté. La boucle est gérée par l'application (retour au début juste avant la fin), pas par `loop=1&playlist=<id>`, et un seul lecteur est réutilisé (`loadVideoById`).
+- **Chargement en deux temps :** la miniature YouTube s'affiche d'abord (élément LCP), puis le lecteur YouTube IFrame API (`youtube-nocookie.com`, `autoplay=1`, `mute=1`, `playsinline=1`, `controls=0` ; **ni `loop=1` ni `playlist=<id>`**, qui figeaient la boucle sur la première vidéo) se charge après le premier rendu. Fondu vers la vidéo **environ 0,3 s après le début de la lecture** (PLAYING) — juste le temps d'éviter l'image noire du démarrage —, au premier chargement comme après chaque glissement, que le son soit coupé ou non. *(Révisé le 2026-09-25 : un délai de 4 s laissait l'image figée pendant que la musique jouait, ressenti comme pire que l'interface YouTube.)* L'interface de démarrage de YouTube (titre en haut, logo « Shorts » en bas à droite) reste alors visible environ 3 s : c'est accepté. La boucle est gérée par l'application (retour au début juste avant la fin), pas par `loop=1&playlist=<id>`, et un seul lecteur est réutilisé (`loadVideoById`).
 - **Repli :** si PLAYING n'arrive pas en 3 s (mode économie d'énergie, économie de données), la miniature reste avec « Toque para ouvir ». Jamais d'écran vide.
-- **Calque au-dessus de l'iframe :** l'utilisateur ne touche jamais l'interface YouTube. Tap n'importe où sur la vidéo ou sur « Toque para ouvir » → `unMute()` (+ `playVideo()` si en repli). Second tap → `mute()`.
-- **Haut :** « A Música da Segunda » + chip « Esta semana » sur un dégradé sombre de lisibilité.
-- **Bas gauche (sur dégradé sombre) :** titre 900, manchete factuelle, ligne de karaoké (voir ci-dessous), fine barre de progression en bas de la zone vidéo (depuis `getCurrentTime()` / durée).
-- **Colonne droite :** avatar Caipivara (cercle 56 px, recadré tête), puis Letra (ouvre le LyricsDialog existant), Cantar (vers le karaoké de cette musique, affiché seulement si `isKaraokePublished()`), Compartilhar (Web Share API, repli copie du lien).
-- **Caipivara :** au repos, bulle « Psiu! Saiu a música da semana. » tant que le son n'est pas activé. Quand l'état réel du lecteur est « son actif + PLAYING », l'avatar passe en animation de danse. L'état vient du lecteur, pas du clic.
+- **Calque au-dessus de l'iframe :** l'utilisateur ne touche jamais l'interface YouTube. Le premier geste de la visite (tap, glissement, flèche, bouton) active le son (`unMute()`, + `playVideo()` si en repli) ; « Toque para ouvir » n'apparaît que si le lecteur est réellement muet. Ensuite, tap = pause / lecture ; le son se coupe par le bouton Som de la colonne. Détail : addendum H.2.
+- **Aucun dégradé, voile ni scrim sur la vidéo** (addendum H.1.3). Le texte et les icônes posés sur la vidéo restent lisibles par une ombre douce seulement (`feedStyles.js`).
+- **Haut :** « A Música da Segunda » + ruban éphémère de la semaine (2,5 s, addendum H.3.1), pas de chip permanent.
+- **Bas gauche :** titre 900 (28 px son coupé, 15 px compact son actif), ligne de karaoké (voir ci-dessous), barre de progression manipulable en bas de la zone vidéo (depuis `getCurrentTime()` / durée). Pas de manchete tant qu'aucune colonne dédiée n'existe.
+- **Colonne droite (icônes pleines sans rond, addendum H.5.1) :** Som (seulement son actif), Letra, História (seulement si `description`), Cantar (vers le karaoké de cette musique, affiché seulement si `isKaraokePublished()`), Compartilhar (Web Share API, repli copie du lien).
+- **Caipivara :** pas d'avatar, pas de bulle « Psiu », pas de danse sur le feed (addendum H.3.4). La Caipivara vit dans le header (image fixe) et sur la scène du Catálogo.
 - **Ligne de karaoké sur la vidéo :** seulement si le karaoké de la musique est publié. Synchro par lecture de `getCurrentTime()` et des LRC existants, en lecture seule. Visible uniquement avec le son actif. Sinon, la zone n'existe pas (pas de placeholder).
 - **Un seul jaune par zone :** son coupé = bouton « Toque para ouvir » ; son actif = ligne de karaoké. Rien d'autre en jaune sur la vidéo.
 - **Semaines précédentes — navigation par glissement vertical, façon TikTok (décidé le 2026-09-25, étape 4b) :**
@@ -84,11 +85,13 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 - Aucune modification du moteur de synchro.
 
 ### 4.4 Pesquisa
-- Champ de recherche (titre, manchete, paroles) en haut.
+> Remplacée par la recherche en panneau de l'addendum (section B, décisions G.5 et H.8).
+
+- Champ de recherche (titre, paroles et `subtitle`) en haut. `subtitle` sert à la recherche mais n'est jamais affiché.
 - Chips des thèmes existants (catégories réelles du site).
 - Chips « Por mês » : uniquement les mois qui ont des musiques (logique monthsWithSongs).
 - Sans saisie : liste « Recentes ». Avec saisie sans résultat : message court + suggestions de musiques récentes, jamais une liste vide seule.
-- Eyebrow avec le nombre réel de musiques, calculé.
+- Eyebrow avec le nombre réel de musiques, calculé (écran Pesquisa d'origine ; le panneau de l'addendum n'en affiche pas).
 
 ### 4.5 Roda
 - Roue avec la Caipivara au centre, pointeur blanc en haut.
@@ -123,7 +126,7 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 
 - Cibles tactiles ≥ 44 px. Vrais `<button>` et `<a>`. `aria-label` sur les boutons icône.
 - Anneau de focus global de `a11y.css` visible partout.
-- Contraste ≥ 4,5:1 sur le texte (dégradés de lisibilité sous le texte posé sur la vidéo).
+- Contraste ≥ 4,5:1 sur le texte. Sur la vidéo du feed, par ombre portée uniquement (pas de dégradé, addendum H.1.3).
 - `prefers-reduced-motion` : pas de danse, pas de pulse, pas de balayage, pas de rotation.
 - Le bouton son annonce son état (« Ouvir com som » / « Silenciar »).
 
@@ -142,9 +145,9 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 
 ## 10. Procédure de test par étape
 
-- `npm run build` sans erreur ni warning nouveau.
+- `npx vite build` sans erreur ni warning nouveau (pas `npm run build` en local : son prebuild interroge Supabase et réécrit `content/`, son postbuild écrit `docs/` et notifie IndexNow).
 - Test manuel sur les trois viewports.
-- Vérification que le desktop (≥ 768 px) est pixel-identique à `main`.
+- Vérification que le desktop (≥ 768 px) est pixel-identique à `feat/homepage-desktop`, et l'interface TV identique à `main`.
 - `/impeccable audit` ciblé sur les écrans modifiés, sans nouveau problème bloquant.
 
 ---
@@ -184,10 +187,10 @@ Méthode : une étape à la fois. Chaque étape se termine par un rapport et s'a
 ## 12. Critères d'acceptation (binaires)
 
 - [ ] Sous 768 px, la home affiche le Short de la semaine en plein écran, son coupé, sans action de l'utilisateur (ou la miniature + « Toque para ouvir » si l'autoplay est bloqué).
-- [ ] Un tap active le son ; un second le coupe.
+- [ ] Le premier geste active le son ; ensuite un tap met en pause / relance, et le bouton Som de la colonne coupe le son.
 - [ ] Aucun écran vide ni placeholder, sur aucun des cas limites de la section 6.
 - [ ] Jamais plus d'un élément jaune par zone.
-- [ ] La Caipivara danse uniquement quand le son joue réellement.
+- [ ] Sur le Catálogo, la Caipivara danse uniquement quand le son joue réellement (le feed n'a plus d'avatar Caipivara).
 - [ ] La ligne de karaoké n'apparaît que pour les musiques au karaoké publié.
 - [ ] Le bouton Aprender n'apparaît que pour les musiques avec fiche.
 - [ ] Aucun nombre de musiques écrit en dur.
