@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ChevronUp, Play, VolumeX } from 'lucide-react';
+import { ChevronUp, Play } from 'lucide-react';
 import FeedPoster from './FeedPoster';
 import FeedOverlay from './FeedOverlay';
 import { useShortPlayer } from './useShortPlayer';
@@ -29,7 +29,6 @@ const SLIDE_MS = 300;
 const EASE_DRAWER = 'cubic-bezier(0.32, 0.72, 0, 1)'; // courbe de tiroir façon iOS
 const HINT_KEY = 'amds-feed-swiped';
 const SEEK_STEP_S = 5; // flèches gauche / droite
-const SOUND_HINT_MS = 3000; // pastille « Toque para ativar o som »
 const SOUND_REFUSAL_CHECK_MS = 900; // délai avant de conclure que le son a été refusé
 
 function readSwiped() {
@@ -140,40 +139,23 @@ export default function MobileFeed({
   // navigateur a refusé le son (iOS, économie d'énergie).
   const showUnmute = isMuted;
 
-  // Pastille « Toque para ativar o som » (décision du 2026-09-25, remplace le gros
-  // bouton jaune) : discrète, ~3 s à l'arrivée puis fondu ; elle revient si le son est
-  // refusé après un geste. Le haut-parleur barré reste en haut à droite (FeedOverlay).
-  const [soundHint, setSoundHint] = useState(false);
-  const soundHintTimerRef = useRef(null);
+  // Repère de départ (test iPhone du 2026-09-25, remplace la pastille) : un grand
+  // bouton lecture blanc translucide au centre de la vidéo, visible dès l'arrivée et
+  // jusqu'au premier geste de la visite, puis plus jamais — sauf si le son est refusé
+  // (iOS, économie d'énergie). Le haut-parleur barré reste en haut à droite.
+  const [playCue, setPlayCue] = useState(true);
   const refusalTimerRef = useRef(null);
-  const arrivalHintShownRef = useRef(false);
-  const flashSoundHint = useCallback(() => {
-    clearTimeout(soundHintTimerRef.current);
-    setSoundHint(true);
-    soundHintTimerRef.current = setTimeout(() => setSoundHint(false), SOUND_HINT_MS);
-  }, []);
-  useEffect(() => () => {
-    clearTimeout(soundHintTimerRef.current);
-    clearTimeout(refusalTimerRef.current);
-  }, []);
-  // Arrivée : dès que la vidéo (ou la miniature de repli) est là, si le lecteur est muet.
-  useEffect(() => {
-    if (arrivalHintShownRef.current || interactedRef.current) return;
-    if ((phase === 'playing' || phase === 'fallback') && isMuted) {
-      arrivalHintShownRef.current = true;
-      flashSoundHint();
-    }
-  }, [phase, isMuted, flashSoundHint]);
-  /** Après un geste qui demande le son : s'il reste coupé, la pastille revient. */
+  useEffect(() => () => clearTimeout(refusalTimerRef.current), []);
+  /** Après un geste qui demande le son : s'il reste coupé, le repère revient. */
   const watchForRefusal = () => {
     clearTimeout(refusalTimerRef.current);
     refusalTimerRef.current = setTimeout(() => {
-      if (playerRef.current.isMuted && playerRef.current.phase !== 'none') flashSoundHint();
+      if (playerRef.current.isMuted && playerRef.current.phase !== 'none') setPlayCue(true);
     }, SOUND_REFUSAL_CHECK_MS);
   };
   const requestSound = () => {
     interactedRef.current = true;
-    setSoundHint(false);
+    setPlayCue(false);
     playerRef.current.unmute();
     watchForRefusal();
   };
@@ -186,7 +168,7 @@ export default function MobileFeed({
     if (interactedRef.current) return;
     interactedRef.current = true;
     if (playerRef.current.isMuted) {
-      setSoundHint(false);
+      setPlayCue(false);
       playerRef.current.unmute();
       watchForRefusal();
     }
@@ -196,7 +178,7 @@ export default function MobileFeed({
   const onStageTap = () => {
     interactedRef.current = true;
     if (player.isMuted) {
-      setSoundHint(false);
+      setPlayCue(false);
       toggleSound();
       watchForRefusal();
     } else togglePause();
@@ -440,6 +422,15 @@ export default function MobileFeed({
               aria-label={showUnmute ? 'Ouvir com som' : isPaused ? 'Reproduzir' : 'Pausar'}
               className="absolute inset-0 z-10 flex h-full w-full touch-manipulation select-none items-center justify-center focus-visible:outline-offset-[-6px]"
             >
+              {playCue && showUnmute ? (
+                <span
+                  aria-hidden="true"
+                  data-play-cue
+                  className="flex h-[72px] w-[72px] items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md"
+                >
+                  <Play className="ml-1 h-8 w-8 fill-current" />
+                </span>
+              ) : null}
               {!showUnmute && isPaused ? (
                 <span
                   aria-hidden="true"
@@ -459,8 +450,6 @@ export default function MobileFeed({
             onRequestSound={requestSound}
             onOuvir={canOuvir ? openOuvir : undefined}
           />
-
-          {videoId ? <SoundHint visible={soundHint && showUnmute} /> : null}
 
           {older && !swipedEver ? <SwipeHint /> : null}
         </div>
@@ -510,29 +499,6 @@ function NeighbourSlide({ song, buildArtwork, position }) {
       <p className={`pointer-events-none absolute bottom-6 left-4 right-24 line-clamp-2 text-[28px] font-black leading-[1.1] tracking-tight text-white ${TEXT_SHADOW}`}>
         {song.title}
       </p>
-    </div>
-  );
-}
-
-/**
- * Pastille « Toque para ativar o som » : en haut de la vidéo, sous le ruban de la
- * semaine ; fond sombre translucide, texte blanc, jamais de jaune. Apparaît et
- * s'efface en fondu (sans transition sous mouvement réduit). Purement visuelle : le
- * bouton plein cadre porte déjà « Ouvir com som » pour les lecteurs d'écran.
- */
-function SoundHint({ visible }) {
-  return (
-    <div
-      aria-hidden="true"
-      data-sound-hint={visible ? 'shown' : 'hidden'}
-      className={`pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),0.35rem)+6.25rem)] z-20 flex justify-center transition-opacity duration-500 ease-out motion-reduce:transition-none ${
-        visible ? 'opacity-100' : 'opacity-0'
-      }`}
-    >
-      <span className="inline-flex items-center gap-2 rounded-full bg-black/55 px-4 py-2 text-[13px] font-semibold text-white backdrop-blur-md">
-        <VolumeX className="h-4 w-4" aria-hidden="true" />
-        Toque para ativar o som
-      </span>
     </div>
   );
 }
