@@ -17,19 +17,20 @@ import { loadYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
  * Phases (pour la vidéo courante) :
  *   'poster'   miniature seule, lecteur pas encore demandé
  *   'loading'  vidéo en cours de chargement, miniature toujours visible
- *   'playing'  la vidéo est affichée (fondu), REVEAL_DELAY_MS après le premier PLAYING —
- *              juste le temps de passer la première image noire / le spinner. L'interface
- *              de YouTube (titre, logo, variante « Shorts » permanente) est hors champ
- *              grâce au zoom du feed (mesures du 2026-09-25). Son actif → tout de suite.
+ *   'playing'  la vidéo est affichée (fondu), REVEAL_DELAY_MS après le premier PLAYING,
+ *              que le son soit coupé ou non. Sans zoom, l'interface de démarrage de
+ *              YouTube (titre en haut, logo « Shorts » en bas) est visible de 0,5 à 3 s
+ *              et disparaît vers 4 s (mesures du 2026-09-25) : la miniature, qui a le
+ *              même cadrage, couvre ce moment.
  *   'fallback' PLAYING pas reçu en 3 s (économie d'énergie/données, YouTube lent ou
  *              bloqué) → la miniature reste, « Toque para ouvir » relance au tap
  *   'none'     pas de Short pour cette chanson : le lecteur est arrêté et masqué
  */
 
 export const FALLBACK_DELAY_MS = 3000;
-// Décision du 2026-09-25 : 0,5 s, au premier chargement comme après chaque glissement.
-// Le zoom permanent (1,22) garde hors champ l'interface de démarrage de YouTube.
-export const REVEAL_DELAY_MS = 500;
+// Décision du 2026-09-25 (zoom supprimé) : ~4 s, au premier chargement comme après
+// chaque glissement, son coupé ou non.
+export const REVEAL_DELAY_MS = 4000;
 const POLL_MS = 250;
 const YT_STATE = { ENDED: 0, PLAYING: 1 };
 
@@ -268,13 +269,6 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     const id = setInterval(syncFromPlayer, POLL_MS);
     return () => clearInterval(id);
   }, [syncFromPlayer]);
-
-  // Son actif pendant l'attente → on montre la vidéo sans attendre.
-  useEffect(() => {
-    if (!everPlayedRef.current || isMuted || !isPlaying) return;
-    clearRevealTimer();
-    setPhase('playing');
-  }, [isMuted, isPlaying]);
 
   // Onglet masqué → pause (batterie) ; retour → reprise si la vidéo tournait.
   useEffect(() => {

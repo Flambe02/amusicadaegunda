@@ -430,7 +430,7 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
   it('the progress bar can be dragged to seek, shows the time, and never changes week', async () => {
     const { container } = await renderLoaded();
     const player = players[0];
-    act(() => { player.ready(); player.play(); vi.advanceTimersByTime(600); });
+    act(() => { player.ready(); player.play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
     const slider = screen.getByRole('slider', { name: 'Posição na música' });
     slider.getBoundingClientRect = () => ({ left: 0, width: 400, top: 758, height: 24, right: 400, bottom: 782 });
     slider.setPointerCapture = () => {};
@@ -448,19 +448,43 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
   it('the slider exposes its value as m:ss de m:ss', async () => {
     await renderLoaded();
     const player = players[0];
-    act(() => { player.ready(); player.play(); player.time = 42; vi.advanceTimersByTime(1100); });
+    act(() => { player.ready(); player.play(); player.time = 42; vi.advanceTimersByTime(REVEAL_DELAY_MS + 1100); });
     expect(screen.getByRole('slider')).toHaveAttribute('aria-valuetext', '0:42 de 1:00');
   });
 
-  it('the fade happens 0.5 s after playback starts, also after a swipe', async () => {
+  it('the fade happens ~4 s after playback starts, on first load and after a swipe', async () => {
     const { container } = await renderLoaded();
+    expect(REVEAL_DELAY_MS).toBe(4000);
     act(() => { players[0].ready(); players[0].play(); });
-    act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
-    expect(REVEAL_DELAY_MS).toBe(500);
+    act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS - 100); });
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading'); // miniature encore
+    act(() => { vi.advanceTimersByTime(110); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
     swipe(container, -300);
-    act(() => { players[0].muted = true; players[0].play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
+    act(() => { players[0].play(); vi.advanceTimersByTime(REVEAL_DELAY_MS - 100); });
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading');
+    act(() => { vi.advanceTimersByTime(110); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
+  });
+
+  it('keeps the thumbnail for the whole delay even with the sound on', async () => {
+    const { container } = await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); });
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvir com som' })); // son actif
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(player.muted).toBe(false);
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading');
+    act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS); });
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
+  });
+
+  it('frames the video exactly like the thumbnail: cover, no extra zoom', () => {
+    const { container } = renderFeed();
+    const mount = stage(container).querySelector('[style*="100cqw"]');
+    // Le navigateur normalise les espaces du calc() : on les ignore.
+    expect(mount.style.width.replace(/\s/g, '').endsWith('*1)')).toBe(true);
+    expect(mount.style.height.replace(/\s/g, '').endsWith('*1)')).toBe(true);
   });
 
   it('the first slide title is the h1; after a swipe the new song title is an h2', async () => {

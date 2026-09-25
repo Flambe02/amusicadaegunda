@@ -5,12 +5,13 @@ import FeedOverlay from './FeedOverlay';
 import { useShortPlayer } from './useShortPlayer';
 import { CAIPIVARA_STAGE_IMAGE, getShortVideoId } from './feedMedia';
 
-// YouTube superpose parfois son interface Shorts pendant toute la lecture (avatar de
-// chaîne, muet et « ⋮ » en haut, j'aime/partager sur le bord droit, titre et chaîne en
-// bas), à ~50–60 px des bords de l'iframe. On agrandit l'iframe au-delà du cadre
-// « cover » pour que ces éléments tombent hors champ : ~73 % de la largeur et ~82 %
-// de la hauteur de la vidéo restent visibles (décision du 2026-09-25).
-const SHORTS_UI_ZOOM = 1.22;
+// Agrandissement de l'iframe au-delà du cadre « cover ». À 1,0 (décision du
+// 2026-09-25), la vidéo a exactement le cadrage de la miniature qui la précède.
+// Conservé comme réglage : YouTube superpose parfois son interface Shorts pendant
+// toute la lecture (avatar, muet et « ⋮ » en haut, j'aime/partager à droite, titre et
+// chaîne en bas, jusqu'à ~85 px des bords) ; 1,22 la sortait du champ, au prix de
+// ~27 % de largeur et ~18 % de hauteur coupées. Accepté tel quel à 1,0.
+const SHORTS_UI_ZOOM = 1.0;
 
 // Glissement entre semaines (étape 4b).
 const SWIPE_DISTANCE = 0.2; // part de la hauteur à dépasser pour changer de chanson
@@ -290,7 +291,7 @@ export default function MobileFeed({ songs = [], buildArtwork = null, onShowLyri
             onSettled={() => setFirstPosterSettled(true)}
           />
 
-          {/* Vidéo : iframe 9:16 en « cover », agrandie de SHORTS_UI_ZOOM pour sortir
+          {/* Vidéo : iframe 9:16 en « cover » (× SHORTS_UI_ZOOM, 1,0 aujourd'hui), pour
               l'interface YouTube du champ. Masquée sans transition au changement de
               chanson, fondu seulement à l'apparition. */}
           <div
