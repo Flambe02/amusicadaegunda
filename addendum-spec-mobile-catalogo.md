@@ -26,15 +26,17 @@ Les étapes 4b à 7 de la spec restent inchangées.
 - En bas, au-dessus de la nav : une barre de recherche en verre (≈ 50 px de haut, pleine largeur moins 16 px de marge) : icône loupe + « Buscar música, tema ou mês ».
 - `h1` visuellement masqué : « Catálogo de músicas ».
 
-**Tap sur la Caipivara (toute sa surface est un bouton, avec `aria-label`) :**
-1. Une animation est tirée au hasard parmi les trois, jamais deux fois la même à la suite :
-   - `caipivara-hat` — fouille dans le chapeau, en sort une note. Ligne : « Deixa eu procurar no chapéu… »
-   - `caipivara-flip` — salto arrière. Ligne : « Segura essa! »
-   - `caipivara-samba` — pirouette et pas de samba. Ligne : « Rodando a roda… »
-2. La vidéo d'animation joue une fois par-dessus la boucle de repos (fondu enchaîné court), puis on revient à la boucle de repos.
-3. À la fin, la ligne devient « Que tal “Titre” ? » avec deux pastilles : **Ouvir** (jaune, seul jaune de l'écran) qui ouvre la musique dans le feed Início, et **Outra** (contour) qui relance un tirage.
-4. Tirage au hasard parmi toutes les musiques publiées, sans reproposer la musique qui vient d'être proposée.
-5. Taps répétés pendant une animation : ignorés.
+**Tap sur la Caipivara (toute sa surface est un bouton, avec `aria-label`)** — *révisé le 2026-09-25 : c'est la musique qui se lance, pas la vidéo (principe de la Roda). L'étape « Que tal / Ouvir / Outra » est supprimée ; pas de changement de page.*
+1. Une chanson est tirée (publiée, avec un lien `youtube_url` lisible, jamais la précédente) et **sa musique démarre tout de suite**, son lancé dans le geste du tap (contrainte iOS).
+   - Source : la même que la Roda, `youtube_url` (la chanson entière, pas le Short).
+   - Lecteur : le moteur YouTube du feed (`useShortPlayer`), un seul lecteur, invisible, sans boucle (`loop: false`). Pas de second système.
+   - Pour que le son parte dans le geste, le lecteur est créé à l'arrivée sur la page avec une première chanson tirée d'avance, en muet ; le premier tap la reprend au début et rétablit le son. Les taps suivants chargent la chanson suivante sur le même lecteur, dans le geste (`loadNow`).
+   - Si le navigateur refuse le son, la Caipivara reste au repos et le bouton ▶ relance.
+2. En même temps, une animation est tirée parmi les trois (jamais deux fois la même à la suite) : `caipivara-hat`, `caipivara-flip`, `caipivara-samba`. Elle joue une fois, puis la Caipivara enchaîne sur la boucle `caipivara-dance` tant que la musique joue avec le son. Retour à la boucle de repos en pause ou à la fin de la chanson. Fondu de retour : 150 ms pour `hat`, ≈ 400 ms pour `flip` et `samba` (ils ne finissent pas dans la pose de repos).
+3. Sous la Caipivara, discret : titre, mois et année, fine barre de progression (lecture seule), bouton pause/lecture.
+4. Deux liens secondaires : « História » (le panneau du feed, seulement si `description` existe) et « Ver o clipe » (`/?musica=<slug>`, le feed sur cette chanson).
+5. Nouveau tap = nouvelle animation + nouvelle chanson. Taps répétés pendant une animation : ignorés.
+6. Seule la coquille mobile de `Layout` monte la scène (un seul lecteur audio). La Roda desktop est inchangée.
 
 **Recherche (tap sur la barre du bas) :** un panneau monte du bas (≈ 94 % de la hauteur), fond #111217, coins 26 px, poignée en haut.
 - En tête : champ de recherche (titre, manchete, paroles) + « Cancelar » à droite, façon iOS. Le clavier s'ouvre directement.
@@ -45,7 +47,7 @@ Les étapes 4b à 7 de la spec restent inchangées.
 - Fermeture : Cancelar, glissement vers le bas, Escape.
 - Le lien « Ver todas as músicas » vers `/musica` apparaît en bas de la grille.
 
-**Mouvement réduit (`prefers-reduced-motion`) :** Caipivara en image fixe (pas de boucle, pas d'animation au tap : le résultat s'affiche directement), panneau sans glissement.
+**Mouvement réduit (`prefers-reduced-motion`) :** Caipivara en image fixe (pas de boucle, pas d'animation ni de danse), la musique part directement au tap ; panneau sans glissement.
 
 **Données :** aucun nombre en dur. Si Supabase est indisponible, `content/songs.json` suffit pour la scène et la grille.
 
@@ -73,7 +75,7 @@ Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 
 1. **Redirections** : `/search` et `/roda` redirigent vers `/catalogo` **uniquement sous 768 px** (redirection côté client, depuis la copie mobile de la page). Sur desktop, les routes, les stubs et le sitemap restent inchangés.
 2. **`/catalogo` sur desktop** (≥ 768 px) : redirection vers `/musica`. `/catalogo` est `noindex` et hors sitemap. *Révisé le 2026-09-25 :* il a un **stub `noindex`** (comme `/festa` et `/search`), sinon un rechargement ou un lien direct passait par `404.html`, qui renvoie vers `/`.
-3. **« Ouvir »** : navigation vers `/?musica=<slug>`. Le feed s'ouvre positionné sur cette chanson (le glissement reste possible dans les deux sens), son coupé avec « Toque para ouvir », puis le paramètre est retiré de l'URL.
+3. **« Ouvir »** (devenu « Ver o clipe » avec la refonte audio) : navigation vers `/?musica=<slug>`. Le feed s'ouvre positionné sur cette chanson (le glissement reste possible dans les deux sens), son coupé avec « Toque para ouvir », puis le paramètre est retiré de l'URL.
 4. **Un seul halo** : celui qui est déjà dans les vidéos (projecteur et lueur au sol), bords fondus par le masque radial. Pas de halo CSS ajouté. En mouvement réduit, image fixe = poster du clip `caipivara-idle`.
 5. **Recherche** : sur le titre, les paroles et `subtitle`. `subtitle` sert à la recherche mais n'est jamais affiché (pas de manchete tant qu'aucune colonne dédiée n'existe).
 6. **Menu** : « Festa na TV » → `/festa`. « Newsletter » → le composant existant `ButtondownSignupForm`, dans un petit panneau qui s'ouvre depuis la ligne.
@@ -97,11 +99,12 @@ Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 - [ ] La nav mobile a exactement 4 onglets, dans l'ordre Início, Catálogo, Karaokê, Menu.
 - [ ] Les anciennes routes de Pesquisa et Roda mènent à `/catalogo`, sans erreur.
 - [ ] Sur Catálogo, seule la Caipivara bouge ; aucune liste n'est visible avant l'ouverture de la recherche.
-- [ ] Chaque tap joue une des trois animations, jamais deux fois la même à la suite, et propose une musique différente de la précédente.
+- [ ] Chaque tap joue une des trois animations, jamais deux fois la même à la suite, et lance tout de suite une musique différente de la précédente, avec le son (iPhone compris).
+- [ ] La Caipivara danse tant que la musique joue ; repos en pause et à la fin.
 - [ ] Aucun rectangle de vidéo n'est visible autour de la Caipivara.
 - [ ] Un seul élément jaune à l'écran à tout moment.
 - [ ] La recherche s'ouvre en un tap depuis le bas de l'écran, avec le clavier ouvert.
 - [ ] Les mois proposés sont uniquement ceux qui ont des musiques.
 - [ ] Aucune grille vide, aucun nombre en dur.
-- [ ] Avec `prefers-reduced-motion`, aucune animation ne joue et le résultat s'affiche directement.
+- [ ] Avec `prefers-reduced-motion`, aucune animation ne joue et la musique part directement.
 - [ ] Desktop identique à `feat/homepage-desktop`, TV identique à `main`.

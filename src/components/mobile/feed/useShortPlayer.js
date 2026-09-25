@@ -58,12 +58,21 @@ function prefersSaveData() {
  */
 const LOOP_LEAD_S = 0.4; // > intervalle de sondage (250 ms) : la fin n'est jamais atteinte
 
-export function useShortPlayer({ videoId, canLoad, mountRef }) {
+/**
+ * Options :
+ *   loop (défaut true) — le feed boucle sur le Short. Le Catálogo passe `false` : la
+ *   chanson s'arrête à la fin (`isEnded`), la Caipivara retourne au repos.
+ */
+export function useShortPlayer({ videoId, canLoad, mountRef, loop = true }) {
   const [phase, setPhase] = useState(videoId ? 'poster' : 'none');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   // Pause demandée par l'utilisateur (pas un simple chargement ou une mise en mémoire).
   const [isPaused, setIsPaused] = useState(false);
+  // Fin de la vidéo atteinte (seulement sans boucle).
+  const [isEnded, setIsEnded] = useState(false);
+  const loopRef = useRef(loop);
+  loopRef.current = loop;
 
   const playerRef = useRef(null);
   const readyRef = useRef(false);
@@ -102,7 +111,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     try {
       const muted = player.isMuted();
       const playing = player.getPlayerState() === YT_STATE.PLAYING;
-      if (playing) {
+      if (playing && loopRef.current) {
         const duration = player.getDuration?.() || 0;
         if (duration > 1 && player.getCurrentTime() >= duration - LOOP_LEAD_S) player.seekTo(0, true);
       }
@@ -178,6 +187,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
             },
             onStateChange: (event) => {
               if (event.data === YT_STATE.PLAYING) {
+                setIsEnded(false);
                 hideCaptions(event.target);
                 clearFallbackTimer();
                 if (!everPlayedRef.current) {
@@ -188,8 +198,12 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
               }
               // Filet de sécurité de la boucle, si le sondage a raté la fin.
               if (event.data === YT_STATE.ENDED) {
-                event.target.seekTo(0, true);
-                event.target.playVideo();
+                if (loopRef.current) {
+                  event.target.seekTo(0, true);
+                  event.target.playVideo();
+                } else {
+                  setIsEnded(true);
+                }
               }
               syncFromPlayer();
             },
@@ -217,6 +231,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     clearFallbackTimer();
     setIsPlaying(false);
     setIsPaused(false); // une nouvelle chanson démarre toujours en lecture
+    setIsEnded(false);
 
     const player = playerRef.current;
     if (!videoId) {
@@ -325,6 +340,24 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     setIsPaused(false);
   }, []);
 
+  /**
+   * Charge ET lance une vidéo tout de suite, dans le geste de l'utilisateur (iOS), sans
+   * attendre le rendu suivant. Le parent passe ensuite le même `videoId` : l'effet de
+   * changement de chanson voit qu'elle est déjà chargée et ne recharge rien.
+   * Renvoie false si le lecteur n'est pas prêt (l'effet s'en chargera).
+   */
+  const loadNow = useCallback((id) => {
+    if (!id || !ready()) return false;
+    const player = playerRef.current;
+    loadedIdRef.current = id;
+    player.loadVideoById(id);
+    player.unMute();
+    player.setVolume(100);
+    setIsPaused(false);
+    setIsEnded(false);
+    return true;
+  }, []);
+
   const togglePause = useCallback(() => {
     if (isPaused) play();
     else pause();
@@ -380,12 +413,14 @@ export function useShortPlayer({ videoId, canLoad, mountRef }) {
     isPlaying,
     isMuted,
     isPaused,
+    isEnded,
     /** Son réellement audible : lecteur en lecture ET non muet. */
     isSoundOn: isPlaying && !isMuted,
     toggleSound,
     pause,
     play,
     togglePause,
+    loadNow,
     mute,
     unmute,
     seekTo,

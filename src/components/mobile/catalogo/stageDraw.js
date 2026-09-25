@@ -2,6 +2,8 @@
  * Tirages de la scène Catálogo (addendum catálogo §B) — fonctions pures, testables.
  */
 
+import { extractYouTubeId } from '@/lib/utils';
+
 const CLIP_BASE = '/videos/caipivara';
 
 /** Boucle de repos, jouée en continu. */
@@ -10,6 +12,14 @@ export const IDLE_CLIP = {
   webm: `${CLIP_BASE}/caipivara-idle.webm`,
   mp4: `${CLIP_BASE}/caipivara-idle.mp4`,
   poster: `${CLIP_BASE}/caipivara-idle-poster.webp`,
+};
+
+/** Boucle de danse, tant que la musique joue avec le son. */
+export const DANCE_CLIP = {
+  key: 'dance',
+  webm: `${CLIP_BASE}/caipivara-dance.webm`,
+  mp4: `${CLIP_BASE}/caipivara-dance.mp4`,
+  poster: `${CLIP_BASE}/caipivara-dance-poster.webp`,
 };
 
 /** Les trois animations tirées au tap, avec la ligne affichée pendant qu'elles jouent. */
@@ -50,11 +60,22 @@ export function pickAnimation(lastKey, random = Math.random) {
 const songKey = (song) => song?.id ?? song?.slug ?? song?.title;
 
 /**
- * Une chanson publiée au hasard, jamais celle qui vient d'être proposée (sauf s'il n'y
- * en a qu'une). Aucun nombre en dur : le tirage porte sur la liste reçue.
+ * La musique vient de la même source que la Roda : `youtube_url` (la chanson entière,
+ * pas le Short). null si la chanson n'a pas de lien lisible.
+ */
+export function getSongAudioId(song) {
+  return extractYouTubeId(song?.youtube_url) || null;
+}
+
+/**
+ * Une chanson publiée ET jouable au hasard (jamais une chanson muette), jamais celle
+ * qui vient d'être jouée (sauf s'il n'y en a qu'une). Aucun nombre en dur : le tirage
+ * porte sur la liste reçue.
  */
 export function pickSong(songs, lastSong, random = Math.random) {
-  const published = (songs || []).filter((song) => song && (!song.status || song.status === 'published'));
+  const published = (songs || []).filter(
+    (song) => song && (!song.status || song.status === 'published') && getSongAudioId(song)
+  );
   if (!published.length) return null;
   const lastKey = songKey(lastSong);
   const choices = published.filter((song) => songKey(song) !== lastKey);

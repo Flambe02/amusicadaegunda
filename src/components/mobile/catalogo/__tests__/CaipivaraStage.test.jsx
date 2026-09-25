@@ -2,24 +2,44 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import CaipivaraStage from '../CaipivaraStage';
-import { ANIMATIONS, pickAnimation, pickSong } from '../stageDraw';
+import { ANIMATIONS, getSongAudioId, pickAnimation, pickSong } from '../stageDraw';
+
+// Le moteur YouTube (useShortPlayer) est testé avec le feed ; ici on vérifie ce que la
+// scène lui demande, et quand.
+const player = {};
+const hookCalls = [];
+function resetPlayer() {
+  Object.assign(player, {
+    phase: 'playing', isPlaying: false, isMuted: true, isPaused: false, isEnded: false, isSoundOn: false,
+    play: vi.fn(), pause: vi.fn(), seekTo: vi.fn(), unmute: vi.fn(), mute: vi.fn(),
+    loadNow: vi.fn(() => true), toggleSound: vi.fn(), togglePause: vi.fn(),
+    getCurrentTime: () => 30, getDuration: () => 120,
+  });
+  hookCalls.length = 0;
+}
+vi.mock('@/components/mobile/feed/useShortPlayer', () => ({
+  useShortPlayer: (options) => { hookCalls.push(options); return player; },
+}));
 
 const SONGS = [
-  { id: 1, title: 'Tá Chovendo de Novo', slug: 'ta-chovendo-de-novo', status: 'published' },
-  { id: 2, title: 'Europa Deu Vácuo no Boi', slug: 'europa-deu-vacuo-no-boi', status: 'published' },
-  { id: 3, title: 'Combo Master', slug: 'combo-master', status: 'published' },
-  { id: 4, title: 'Rascunho', slug: 'rascunho', status: 'draft' },
+  { id: 1, title: 'Tá Chovendo de Novo', slug: 'ta-chovendo-de-novo', status: 'published', release_date: '2026-08-31', youtube_url: 'https://music.youtube.com/watch?v=AAAAAAAAAA1', description: 'Chove em São Paulo.' },
+  { id: 2, title: 'Europa Deu Vácuo no Boi', slug: 'europa-deu-vacuo-no-boi', status: 'published', release_date: '2026-07-06', youtube_url: 'https://youtu.be/BBBBBBBBBB2' },
+  { id: 3, title: 'Combo Master', slug: 'combo-master', status: 'published', release_date: '2026-06-01', youtube_url: 'https://www.youtube.com/watch?v=CCCCCCCCCC3' },
+  { id: 4, title: 'Rascunho', slug: 'rascunho', status: 'draft', youtube_url: 'https://youtu.be/DDDDDDDDDD4' },
+  { id: 5, title: 'Sem Link', slug: 'sem-link', status: 'published', youtube_url: '' },
 ];
 
 let reduceMotion = false;
 beforeEach(() => {
   reduceMotion = false;
+  resetPlayer();
   vi.useFakeTimers({ shouldAdvanceTime: true });
   window.matchMedia = vi.fn().mockImplementation((query) => ({
     matches: query.includes('reduce') ? reduceMotion : false, media: query,
-    addEventListener: vi.fn(), removeEventListener: vi.fn(),
+    addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(),
   }));
   window.HTMLMediaElement.prototype.play = vi.fn();
+  window.HTMLMediaElement.prototype.pause = vi.fn();
 });
 afterEach(() => { vi.useRealTimers(); });
 
@@ -29,10 +49,12 @@ const renderStage = (songs = SONGS) => render(
   </MemoryRouter>
 );
 const caipivara = () => screen.getByRole('button', { name: /toque na caipivara/i });
-const endAnimation = (container) => {
-  const playing = [...container.querySelectorAll('video[data-clip]')].find((v) => v.className.includes('opacity-100') && v.dataset.clip !== 'idle');
-  fireEvent.ended(playing);
-};
+const visibleAnimation = (container) =>
+  [...container.querySelectorAll('video[data-clip]')].find(
+    (v) => v.className.includes('opacity-100') && ANIMATIONS.some((a) => a.key === v.dataset.clip)
+  );
+const lastVideoId = () => hookCalls[hookCalls.length - 1].videoId;
+const songOfVideo = (videoId) => SONGS.find((s) => getSongAudioId(s) === videoId);
 
 describe('stageDraw — tirages', () => {
   it('never draws the same animation twice in a row', () => {
@@ -45,128 +67,165 @@ describe('stageDraw — tirages', () => {
     expect(ANIMATIONS.map((a) => a.key)).toEqual(['hat', 'flip', 'samba']);
   });
 
-  it('draws among published songs only, never the one just proposed', () => {
+  it('draws among published songs with a playable link only, never the previous one', () => {
     let last = null;
     for (let i = 0; i < 60; i++) {
       const song = pickSong(SONGS, last);
       expect(song.status).toBe('published');
+      expect(getSongAudioId(song)).toMatch(/^[A-Za-z0-9_-]{11}$/);
       expect(song.id).not.toBe(last?.id);
       last = song;
     }
     expect(pickSong([], null)).toBeNull();
+    expect(pickSong([SONGS[4]], null)).toBeNull(); // jamais une chanson muette
+  });
+
+  it('takes the music from youtube_url (the Roda source), not from the Short', () => {
+    expect(getSongAudioId({ youtube_url: 'https://music.youtube.com/watch?v=AAAAAAAAAA1', youtube_music_url: 'https://youtube.com/shorts/ZZZZZZZZZZ9' })).toBe('AAAAAAAAAA1');
   });
 });
 
-describe('CaipivaraStage — la scène (étape 9)', () => {
-  it('only the Caipivara moves: the idle loop plays, no list is shown, the h1 is visually hidden', () => {
+describe('CaipivaraStage — la musique se lance au tap', () => {
+  it('prepares one song in advance on the hidden player, without a loop, and shows nothing of it yet', () => {
     const { container } = renderStage();
-    expect(container.querySelector('video[data-clip="idle"]')).toHaveAttribute('loop');
-    expect(container.querySelector('ul, ol')).toBeNull();
-    expect(screen.getByRole('heading', { level: 1, name: 'Catálogo de músicas' })).toHaveClass('sr-only');
+    const options = hookCalls[hookCalls.length - 1];
+    expect(options.loop).toBe(false);
+    expect(options.canLoad).toBe(true);
+    expect(songOfVideo(options.videoId)).toBeTruthy();
+    expect(container.querySelector('[data-audio-player]')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByText('Toque em mim e eu escolho uma música pra você.')).toBeInTheDocument();
+    expect(screen.queryByRole('progressbar')).toBeNull();
   });
 
-  it('loads the three animations lightly (metadata) until the first tap', () => {
-    const { container } = renderStage();
-    for (const key of ['hat', 'flip', 'samba']) {
-      expect(container.querySelector(`video[data-clip="${key}"]`)).toHaveAttribute('preload', 'metadata');
-    }
+  it('first tap: restarts the prepared song and turns the sound on inside the gesture', () => {
+    renderStage();
+    const prepared = songOfVideo(lastVideoId());
     fireEvent.click(caipivara());
-    expect(container.querySelector('video[data-clip="hat"]')).toHaveAttribute('preload', 'auto');
+    // Appels synchrones, dans le gestionnaire du tap (contrainte iOS).
+    expect(player.play).toHaveBeenCalled();
+    expect(player.seekTo).toHaveBeenCalledWith(0);
+    expect(player.unmute).toHaveBeenCalled();
+    expect(player.loadNow).not.toHaveBeenCalled();
+    expect(screen.getByText(prepared.title)).toBeInTheDocument();
   });
 
-  it('a tap plays one animation with its line, then proposes a song with Ouvir and Outra', () => {
+  it('plays an animation at the tap; no « Que tal / Ouvir / Outra » step', () => {
     const { container } = renderStage();
     fireEvent.click(caipivara());
     expect(caipivara()).toHaveAttribute('data-stage', 'animating');
-    const lines = ANIMATIONS.map((a) => a.line);
-    expect(lines.some((line) => screen.queryByText(line))).toBe(true);
-    endAnimation(container);
-    expect(caipivara()).toHaveAttribute('data-stage', 'result');
-    expect(screen.getByText(/^Que tal “.+”\?$/)).toBeInTheDocument();
-    const ouvir = screen.getByRole('link', { name: 'Ouvir' });
-    expect(ouvir.getAttribute('href')).toMatch(/^\/\?musica=/);
-    expect(ouvir.className).toContain('bg-app-yellow');
-    expect(screen.getByRole('button', { name: 'Outra' }).className).not.toMatch(/yellow/);
+    expect(visibleAnimation(container)).toBeTruthy();
+    expect(screen.queryByText(/que tal/i)).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Ouvir' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Outra' })).toBeNull();
+  });
+
+  it('shows title, month and year, a thin progress bar and play/pause under the Caipivara', () => {
+    renderStage();
+    fireEvent.click(caipivara());
+    const song = songOfVideo(lastVideoId());
+    expect(screen.getByText(song.title)).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Progresso da música' })).toHaveAttribute('aria-valuetext', '0:30 de 2:00');
+    expect(screen.getByRole('button', { name: 'Tocar' })).toBeInTheDocument(); // son pas encore confirmé par le lecteur
+  });
+
+  it('a new tap: another animation and another song, loaded inside the gesture', () => {
+    const { container, rerender } = renderStage();
+    fireEvent.click(caipivara());
+    const firstClip = visibleAnimation(container).dataset.clip;
+    const firstSong = songOfVideo(lastVideoId());
+    fireEvent.ended(visibleAnimation(container));
+
+    fireEvent.click(caipivara());
+    expect(visibleAnimation(container).dataset.clip).not.toBe(firstClip);
+    expect(player.loadNow).toHaveBeenCalledTimes(1);
+    const nextId = player.loadNow.mock.calls[0][0];
+    expect(songOfVideo(nextId).id).not.toBe(firstSong.id);
+    rerender(<MemoryRouter><CaipivaraStage songs={SONGS} /></MemoryRouter>);
+    expect(lastVideoId()).toBe(nextId);
   });
 
   it('ignores repeated taps during an animation', () => {
-    const { container } = renderStage();
+    renderStage();
     fireEvent.click(caipivara());
-    const playingBefore = container.querySelectorAll('video.opacity-100[data-clip]:not([data-clip="idle"])');
     fireEvent.click(caipivara());
     fireEvent.click(caipivara());
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
-    expect(container.querySelectorAll('video.opacity-100[data-clip]:not([data-clip="idle"])')).toHaveLength(playingBefore.length);
+    expect(player.loadNow).not.toHaveBeenCalled();
   });
 
-  it('« Outra » draws again: another animation and another song than the previous ones', () => {
-    const { container } = renderStage();
+  it('dances while the music plays with sound; back to the idle loop on pause or at the end', () => {
+    const { container, rerender } = renderStage();
     fireEvent.click(caipivara());
-    const firstClip = [...container.querySelectorAll('video.opacity-100[data-clip]')].find((v) => v.dataset.clip !== 'idle').dataset.clip;
-    endAnimation(container);
-    const firstTitle = screen.getByText(/^Que tal/).textContent;
-    fireEvent.click(screen.getByRole('button', { name: 'Outra' }));
-    const secondClip = [...container.querySelectorAll('video.opacity-100[data-clip]')].find((v) => v.dataset.clip !== 'idle').dataset.clip;
-    expect(secondClip).not.toBe(firstClip);
-    endAnimation(container);
-    expect(screen.getByText(/^Que tal/).textContent).not.toBe(firstTitle);
+    fireEvent.ended(visibleAnimation(container));
+    const rerenderWith = (state) => {
+      Object.assign(player, state);
+      rerender(<MemoryRouter><CaipivaraStage songs={SONGS} /></MemoryRouter>);
+    };
+    rerenderWith({ isPlaying: true, isMuted: false, isSoundOn: true });
+    expect(caipivara()).toHaveAttribute('data-stage', 'dancing');
+    expect(container.querySelector('video[data-clip="dance"]').className).toContain('opacity-100');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Pausar' }));
+    expect(player.pause).toHaveBeenCalled();
+    rerenderWith({ isPlaying: false, isPaused: true, isSoundOn: false });
+    expect(caipivara()).toHaveAttribute('data-stage', 'idle');
+
+    rerenderWith({ isPlaying: false, isPaused: false, isEnded: true, isSoundOn: false });
+    expect(caipivara()).toHaveAttribute('data-stage', 'idle');
+    fireEvent.click(screen.getByRole('button', { name: 'Tocar' }));
+    expect(player.play).toHaveBeenCalled();
+    expect(player.unmute).toHaveBeenCalled();
   });
 
-  it('shows the result even if an animation never ends (playback refused)', () => {
+  it('gives the hand back if an animation never ends', () => {
     renderStage();
     fireEvent.click(caipivara());
     act(() => { vi.advanceTimersByTime(7100); });
-    expect(caipivara()).toHaveAttribute('data-stage', 'result');
+    expect(caipivara()).toHaveAttribute('data-stage', 'idle');
   });
 
-  it('a tap made before the catalogue has loaded still starts, and the song is drawn at the end', () => {
-    const { container, rerender } = renderStage([]);
+  it('« História » only when the song has a description; « Ver o clipe » opens the feed on it', () => {
+    const { rerender } = renderStage([SONGS[0]]);
+    fireEvent.click(caipivara());
+    expect(screen.getByRole('button', { name: /história/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ver o clipe/i })).toHaveAttribute('href', '/?musica=ta-chovendo-de-novo');
+    rerender(<MemoryRouter><CaipivaraStage songs={[SONGS[1]]} /></MemoryRouter>);
+    fireEvent.ended(document.querySelector('video.opacity-100[data-clip="hat"], video.opacity-100[data-clip="flip"], video.opacity-100[data-clip="samba"]'));
+    fireEvent.click(caipivara());
+    expect(screen.getByText(SONGS[1].title)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /história/i })).toBeNull();
+  });
+
+  it('a tap before the catalogue has loaded still animates, and the music starts as soon as it arrives', () => {
+    const { rerender } = renderStage([]);
     fireEvent.click(caipivara());
     expect(caipivara()).toHaveAttribute('data-stage', 'animating');
-    rerender(
-      <MemoryRouter>
-        <CaipivaraStage songs={SONGS} />
-      </MemoryRouter>
-    );
-    endAnimation(container);
-    expect(caipivara()).toHaveAttribute('data-stage', 'result');
-    expect(screen.getByRole('link', { name: 'Ouvir' })).toBeInTheDocument();
+    rerender(<MemoryRouter><CaipivaraStage songs={SONGS} /></MemoryRouter>);
+    expect(player.unmute.mock.calls.length + player.loadNow.mock.calls.length).toBeGreaterThan(0);
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('goes back to the invitation if the catalogue is still unavailable at the end', () => {
-    const { container } = renderStage([]);
-    fireEvent.click(caipivara());
-    endAnimation(container);
-    expect(caipivara()).toHaveAttribute('data-stage', 'idle');
-    expect(screen.getByText('Toque em mim e eu escolho uma música pra você.')).toBeInTheDocument();
-  });
-
-  it('under reduced motion: still image, no animation, the result shows at once', () => {
+  it('under reduced motion: still image, no video, the music starts at once', () => {
     reduceMotion = true;
     const { container } = renderStage();
     expect(container.querySelector('video')).toBeNull();
     expect(container.querySelector('img[src*="caipivara-idle-poster"]')).not.toBeNull();
     fireEvent.click(caipivara());
-    expect(caipivara()).toHaveAttribute('data-stage', 'result');
-    expect(screen.getByRole('link', { name: 'Ouvir' })).toBeInTheDocument();
+    expect(player.unmute).toHaveBeenCalled();
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
   });
 
-  it('blends the video edges into the page (radial mask), no rectangle', () => {
-    const { container } = renderStage();
-    const mask = container.querySelector('video[data-clip="idle"]').parentElement;
-    expect(mask.style.maskImage || mask.style.webkitMaskImage).toMatch(/radial-gradient/);
-  });
-
-  it('fades flip and samba back to the idle loop over 400 ms (hat stays at 150 ms)', () => {
+  it('fades flip and samba back over 400 ms (hat stays at 150 ms)', () => {
     const { container } = renderStage();
     expect(container.querySelector('video[data-clip="hat"]').className).toContain('duration-150');
     expect(container.querySelector('video[data-clip="flip"]').className).toContain('duration-[400ms]');
     expect(container.querySelector('video[data-clip="samba"]').className).toContain('duration-[400ms]');
   });
 
-  it('never writes a song count', () => {
+  it('blends the video edges into the page (radial mask), and never writes a song count', () => {
     const { container } = renderStage();
+    const mask = container.querySelector('video[data-clip="idle"]').parentElement;
+    expect(mask.style.maskImage || mask.style.webkitMaskImage).toMatch(/radial-gradient/);
     expect(container.textContent).not.toMatch(/\d+\s*(músicas|paródias|canções)/i);
   });
 });
