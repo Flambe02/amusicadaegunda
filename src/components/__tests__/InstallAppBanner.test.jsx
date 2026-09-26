@@ -22,7 +22,7 @@ describe('InstallAppBanner — jamais par-dessus des contrôles sur mobile', () 
   });
 
   it('is hidden on mobile while a control screen is shown (feed, Catálogo, O Palco, karaoke player)', () => {
-    const css = indexCss;
+    const css = indexCss.replace(/\r\n/g, '\n'); // fins de ligne Windows (checkout local) ou Linux (CI)
     const rule = css.slice(css.indexOf('@media (max-width: 767px) {\n  body:has('));
     expect(rule).toMatch(/body:has\(\[data-feed-phase\], \[data-catalogo-stage\], \[data-palco\], \.karaoke-overlay\.km-m\) \[data-install-banner\] \{\s*display: none;/);
   });
