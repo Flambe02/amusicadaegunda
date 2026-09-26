@@ -79,3 +79,13 @@ __pycache__/
 
 # Temporary one-off admin scripts (never commit)
 scripts/tmp-set-admin-password.mjs
+
+# Artefacts Android (générés, ne pas committer)
+*.apk
+*.aab
+*.idsig
+.gradle/
+local.properties
+
+# Résultats Playwright
+.playwright-results/

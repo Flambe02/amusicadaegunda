@@ -36,19 +36,12 @@ export default defineConfig(({ command, mode }) => ({
         manualChunks(id) {
           if (id.includes('node_modules')) {
             // Supabase client (~100KB, rarement mis à jour)
-            if (id.includes('@supabase') || id.includes('supabase')) {
+            if (id.includes('@supabase')) {
               return 'vendor-supabase';
             }
             // date-fns (~30KB, utilisé seulement sur certaines pages)
             if (id.includes('date-fns')) {
               return 'vendor-date';
-            }
-            // Heavy libs split for better lazy route loading
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
-            if (id.includes('framer-motion')) {
-              return 'vendor-motion';
             }
             // React + Radix UI + lucide etc. groupés ensemble
             // (Radix UI utilise React.forwardRef au top-level → split cross-chunk
