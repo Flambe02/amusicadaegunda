@@ -53,3 +53,18 @@ Renseigner l'empreinte SHA-256 de la clé de signature Play dans `assetlinks.jso
 **Déjà corrigé :** le `Toaster` n'affiche plus les toasts fermés (`open: false`) ; « Link copiado » (Compartilhar) remplace le précédent et se ferme seul après 3 s (`useShareSong.jsx`).
 
 **Chantier.** Faire respecter `duration` pour tous les toasts (fermeture automatique, par ex. dans `Toaster` ou dans `toast()`), avec une durée par défaut raisonnable, et vérifier chaque appel existant (admin compris).
+
+## 11. PWA hors connexion, niveau 1
+
+**Objectif.** Que l'app s'ouvre et reste utile sans réseau, sans jamais afficher d'écran cassé ni vide.
+
+- **Application** : garder en cache les écrans, icônes, polices système et assets Caipivara (image, posters, boucles vidéo) pour qu'elle s'ouvre hors ligne.
+- **Catalogue** : garder en cache titres, mois, thèmes et les miniatures déjà affichées.
+- **Textes** : garder en cache les paroles publiées et les textes História des chansons consultées, lisibles hors ligne (Letra, História, Aprender).
+- **Écran « Sem conexão »** propre, avec la Caipivara, là où le réseau est indispensable (feed vidéo, écoute, karaokê).
+
+**Garde-fous.**
+- Pas de cache des vidéos ni de l'audio YouTube (interdit par YouTube, impossible avec le lecteur intégré).
+- Ne jamais mettre en cache de paroles non publiées (`isKaraokePublished`, statut `published`).
+- Limites de stockage d'iOS pour les PWA (quota réduit, purge possible).
+- **Vérifier d'abord le service worker existant** (notifications push, mise à jour de l'app) pour ne pas le casser — voir aussi la panne du 2026-07-29 (le SW avortait les requêtes Supabase en vol).
