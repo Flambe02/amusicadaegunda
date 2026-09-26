@@ -159,6 +159,17 @@ export default function KaraokePage() {
   ) : null;
 
   if (shell === 'mobile' && isMobileViewport) {
+    // Étape 7 : sous O Palco, le lecteur laisse la barre du bas visible (onglet
+    // Karaokê actif) et prend le style mobile. La copie desktop garde le lecteur tel quel.
+    const mobilePlayerOverlay = current ? (
+      <KaraokePlayer
+        key={current.id}
+        song={current}
+        mobileShell
+        onEnded={() => setCurrent(null)}
+        onClose={() => setCurrent(null)}
+      />
+    ) : null;
     return (
       <>
         <Helmet><html lang="pt-BR" /></Helmet>
@@ -168,7 +179,7 @@ export default function KaraokePage() {
           unavailable={Boolean(error) || (!isLoading && totalEligible === 0)}
           onSing={sing}
         />
-        {playerOverlay}
+        {mobilePlayerOverlay}
       </>
     );
   }

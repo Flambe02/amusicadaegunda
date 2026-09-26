@@ -934,3 +934,53 @@
 }
 .vocab-action--known { border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.12); color: #34d399; }
 .vocab-action:focus-visible { outline: 3px solid #fde047; outline-offset: 2px; }
+
+/* ============================================================================
+   LEITOR — ecrã de leitura da aba Karaokê móvel (étape 7, prop `mobileShell`,
+   classe .km-m no .karaoke-overlay). Só < 768 px, nunca TV nem Modo Aprender :
+   desktop e TV não recebem esta classe. Espírito d'O Palco : miniatura do Short
+   muito desfocada ao fundo, fundo escuro, um só amarelo (Começar, depois pausa).
+   ========================================================================== */
+.km-m-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #050505;
+}
+.km-m-backdrop img {
+  filter: blur(36px) saturate(1.1);
+  transform: scale(1.25);
+  opacity: 0.3;
+}
+.km-m-backdrop::after { /* escurece : a letra fica legível sobre qualquer miniatura */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(5, 5, 5, 0.55) 0%, rgba(5, 5, 5, 0.72) 55%, rgba(5, 5, 5, 0.9) 100%);
+}
+/* Barra de progresso branca : o único amarelo da barra de controlo é a pausa. */
+.km-m .km-progress-fill {
+  background: #fff;
+  box-shadow: none;
+}
+/* Contagem 3-2-1 em branco (a pausa amarela já está no ecrã). */
+.km-m .karaoke-countdown {
+  color: #fff;
+  text-shadow: 0 0 32px rgba(255, 255, 255, 0.35);
+}
+/* A barra de navegação por baixo já trata da safe area. */
+.km-m .km-controls {
+  justify-content: center;
+  gap: 1.75rem;
+  padding-bottom: 0.75rem;
+}
+.km-m .km-ctrl {
+  flex: 0 0 4.75rem;
+  text-decoration: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .km-m .karaoke-start-btn { animation: none; }
+  .km-m .karaoke-countdown { animation: none; }
+}

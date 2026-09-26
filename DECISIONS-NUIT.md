@@ -34,3 +34,30 @@ Chaque décision qui revenait normalement à Florent : la question, l'option cho
 - **Constat** : pour un nouveau visiteur sur iPhone, la bannière d'installation (qui existait déjà, `InstallAppBanner.jsx`, fixée à 88 px du bas) recouvre la barre de progression et les boutons du Catálogo, jusqu'à ce qu'on la ferme.
 - **Option choisie** : ne rien changer cette nuit. Cette bannière est hors du périmètre de la refonte et se ferme d'un tap. Elle est notée dans `TODO-apres-refonte.md`.
 - **Revenir en arrière** : sans objet.
+
+## 5. Étape 7 — où appliquer le restyle du lecteur karaokê
+
+- **Question** : `KaraokePlayer` sert au desktop, à la TV, à la page d'une chanson et au Modo Aprender. Où appliquer le style mobile ?
+- **Option choisie** : seulement sur l'écran ouvert depuis O Palco (onglet Karaokê mobile), avec une prop `mobileShell` passée par la copie mobile de `/karaoke`. Le lecteur ouvert depuis la page d'une chanson ou depuis une leçon Aprender garde son style actuel.
+- **Pourquoi** : c'est le plus prudent pour tenir « desktop identique, TV identique ». Sans cette prop, le rendu est inchangé, et un test le vérifie. C'est aussi le parcours décrit par la spec (onglet Karaokê actif).
+- **Revenir en arrière** : retirer `mobileShell` dans `src/pages/Karaoke.jsx` (copie mobile). Tout le reste dépend de cette prop.
+
+## 6. Étape 7 — contenu de la barre de contrôle mobile
+
+- **Question** : la spec prévoit « revenir d'une ligne, pause, Aprender ». Que deviennent Voltar 10 s, Repetir, Mixer et Finalizar ?
+- **Option choisie** : sur mobile, la barre du bas contient exactement « Linha anterior », Pausar et Aprender (seulement pour une chanson avec fiche). Le Mixer reste accessible par l'icône de l'en-tête (déjà présente), et « Voltar » en haut à gauche ferme le lecteur. La note d'énergie reste affichée à la fin naturelle de la chanson quand le medidor est actif.
+- **Pourquoi** : c'est la lecture littérale de la spec, avec un seul jaune (la pause).
+- **Revenir en arrière** : dans `KaraokePlayer.jsx`, bloc `data-km-controls="mobile"` : ajouter les boutons voulus (ceux du `footer.km-controls` desktop, juste en dessous).
+
+## 7. Étape 7 — ce que fait « Aprender »
+
+- **Question** : le bouton Aprender doit-il ouvrir le panneau Aprender de Letra, ou la leçon ?
+- **Option choisie** : un lien vers la leçon de la chanson (`/apprendre/<slug>`, l'écran Modo Aprender existant), qui met la musique en pause. La détection est celle du panneau Letra (`hasLearnContent`) : aujourd'hui « Camarada Quer CPF » et « Eu Sou um Ovo ».
+- **Pourquoi** : c'est l'écran existant le plus simple et le plus complet, sans nouveau panneau à superposer au lecteur.
+- **Revenir en arrière** : remplacer le `<Link>` du bloc mobile par un bouton qui ouvre ce que tu préfères.
+
+## 8. Étape 7 — lignes au-delà de la suivante
+
+- **Question** : la spec fixe les lignes chantées à 30 % et la suivante à 72 %, sans rien dire des lignes plus loin.
+- **Option choisie** : 40 % de blanc, soit entre les deux. Les deux lignes déjà chantées restent visibles à 30 %.
+- **Revenir en arrière** : `mShellColor` dans `KaraokePlayer.jsx`.

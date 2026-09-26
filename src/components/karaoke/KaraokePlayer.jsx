@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense, Fragment } from 'react';
 import { createPortal } from 'react-dom';
+import { Link } from 'react-router-dom';
 import {
   ArrowLeft, Play, Pause, Music, Loader2, Settings2, Mic,
   SkipBack, SkipForward, Square, RotateCcw, X,
@@ -26,6 +27,7 @@ import MicrophonePermissionDialog from '@/components/karaoke/pitch/MicrophonePer
 import { statusMeta } from '@/components/karaoke/pitch/pitchStatusMeta';
 import { usePitchReference } from '@/hooks/usePitchReference';
 import { usePitchGuide } from '@/hooks/usePitchGuide';
+import TileImage from '@/components/mobile/search/TileImage';
 import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
 import TvDuetLyricsView from '@/tv/components/TvDuetLyricsView';
 import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
@@ -128,6 +130,14 @@ async function translateText(text, target) {
  *                            dans learnContent.js) — pas un cursus, juste un filtre de
  *                            contenu. Changeable seulement sur l'écran d'intro (avant
  *                            « Começar ») ; affiché en lecture seule pendant le chant.
+ *  - mobileShell : bool  écran de lecture de l'onglet Karaokê mobile (< 768 px, passé
+ *                  UNIQUEMENT par la copie mobile de /karaoke, « O Palco » ; sans effet
+ *                  en tvMode et en learningMode). Restyle de l'étape 7, dans l'esprit
+ *                  d'O Palco : la barre du bas reste visible (le calque s'arrête
+ *                  au-dessus, `--app-nav-h`), miniature du Short, fond sombre, un seul
+ *                  jaune (Começar, puis pause) ; lignes chantées à 30 %, suivante à
+ *                  72 % ; barre de contrôle = ligne précédente, pause, Aprender
+ *                  (seulement avec fiche). Desktop et TV : strictement inchangés.
  *  - onLearningLevelChange : (level) => void  remonté par l'écran d'intro quand
  *                            l'utilisateur change de niveau — la persistance
  *                            (`localStorage`, `learnLevel.js`) est de la responsabilité
@@ -141,7 +151,7 @@ export default function KaraokePlayer({
   song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null,
   applauseScore = null, tomatoScore = null, remoteEnergyLevel = null, remoteEnergyGrade = null,
   initialSessionOptions = null, learningMode = false, translationLanguage = null,
-  learningLevel = 'beginner', onLearningLevelChange = null,
+  learningLevel = 'beginner', onLearningLevelChange = null, mobileShell = false,
 }) {
   const { YT, ready: apiReady, error: apiError } = useYouTubeIframeApi();
 
@@ -325,6 +335,8 @@ export default function KaraokePlayer({
   }, [baseLines, tvMode]);
   const artwork = song?.cover_image
     || getYouTubeThumbnailUrl(song?.youtube_url || song?.youtube_music_url, 'hqdefault');
+  // Écran de lecture de l'onglet Karaokê mobile (étape 7) — voir la prop `mobileShell`.
+  const mShell = mobileShell && !tvMode && !learningMode;
 
   // ── Modo Aprender · fiche de traduction curatée (bêta, 2 chansons) ──
   // Le slug est DÉRIVÉ DU TITRE (pas `song.slug`) : voir `deriveSongSlug` dans
@@ -710,6 +722,17 @@ export default function KaraokePlayer({
     try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
   }, [lines, seekToLine, seekBy]);
 
+  // Linha anterior (barre de contrôle mobile, étape 7) : revient au début de la ligne
+  // qui précède la ligne active (la première ligne si on est dessus, le début de la
+  // chanson avant la première). Même chemin que Repetir (seekToLine), puis lecture.
+  const handlePrevLine = useCallback(() => {
+    const di = displayIdxRef.current;
+    const target = di > 0 ? lines[di - 1] : lines[0];
+    if (di >= 0 && target?.time != null) seekToLine(target.time, 0.2);
+    else seekTo(0);
+    try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
+  }, [lines, seekToLine, seekTo]);
+
   // Recomeçar (barre de commandes TV + panneau Opções) : pause, seekTo(0), reset de
   // la ligne LRC active et des stats d'énergie de LA TENTATIVE en cours (aucune
   // donnée persistée de session/fila touchée), puis reprise automatique. Verrou
@@ -992,14 +1015,27 @@ export default function KaraokePlayer({
   const hasNext = queueInfo && queueInfo.index < queueInfo.total - 1;
 
   return createPortal(
-    <div className="karaoke-overlay fixed inset-0 z-[9999] flex flex-col bg-[#050505] text-white">
+    <div
+      className={`karaoke-overlay fixed inset-0 flex flex-col bg-[#050505] text-white ${mShell ? 'km-m z-[150]' : 'z-[9999]'}`}
+      // Mobile : la barre du bas reste visible sous le lecteur (sa hauteur, safe area
+      // comprise) ; les panneaux Buscar et Menu (z-200) s'ouvrent par-dessus.
+      style={mShell ? { bottom: 'var(--app-nav-h, 0px)' } : undefined}
+      data-karaoke-shell={mShell ? 'mobile' : undefined}
+    >
       {/* Player YT invisible — toujours monté */}
       <div className="pointer-events-none absolute left-0 top-0 h-px w-px overflow-hidden opacity-0">
         <div ref={hostRef} />
       </div>
 
       {/* Fundo limpo (só móvel/web) : brilho amarelo subtil + gradiente — sem imagem/capa. */}
-      {!tvMode && <div className="karaoke-clean-bg" aria-hidden="true" />}
+      {!tvMode && !mShell && <div className="karaoke-clean-bg" aria-hidden="true" />}
+      {/* Mobile (étape 7) : la miniature du Short, très floue et assombrie — fond sombre,
+          sans jaune, dans l'esprit du halo d'O Palco. */}
+      {mShell && (
+        <div className="km-m-backdrop" aria-hidden="true">
+          <TileImage song={song} eager />
+        </div>
+      )}
 
       {/* Barre supérieure — padding haut = safe-area (sinon passe sous l'encoche/barre d'état) */}
       <header className="relative z-30 flex items-center gap-3 px-4 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)] md:px-6 md:pb-4 md:pt-[max(env(safe-area-inset-top),1rem)]">
@@ -1104,8 +1140,8 @@ export default function KaraokePlayer({
       )}
 
       {phase === 'intro' ? (
-        <div className="relative flex flex-1 flex-col items-center justify-center gap-5 overflow-hidden px-6 text-center">
-          <div className="karaoke-spotlights" aria-hidden="true" />
+        <div className={`relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 text-center ${mShell ? 'z-10 min-h-0 gap-3' : 'gap-5'}`}>
+          {!mShell && <div className="karaoke-spotlights" aria-hidden="true" />}
           {apiError ? (
             <>
               <Music className="h-10 w-10 text-white/30" />
@@ -1129,10 +1165,22 @@ export default function KaraokePlayer({
                   {remoteEnergyGrade.emoji} {remoteEnergyGrade.grade} <span className="text-white/45">(microfone do celular)</span>
                 </p>
               )}
-              {artwork && (
+              {mShell ? (
+                /* Carte 9:16 d'O Palco : miniature du Short (mêmes replis que la grille),
+                   hauteur selon l'écran pour que tout tienne sans défilement. */
+                <div
+                  data-km-card
+                  className="relative aspect-[9/16] shrink-0 overflow-hidden rounded-[22px] border border-white/10 bg-white/5"
+                  style={{ height: 'clamp(120px, calc(100% - 15rem), 267px)' }}
+                >
+                  <TileImage song={song} eager />
+                </div>
+              ) : artwork && (
                 <img src={artwork} alt="" className="relative h-28 w-28 rounded-3xl border border-white/15 object-cover shadow-[0_0_70px_rgba(253,224,71,0.22)] md:h-44 md:w-44" />
               )}
-              <h1 className="karaoke-neon relative max-w-3xl text-4xl font-black leading-tight md:text-6xl">{song?.title}</h1>
+              <h1 className={mShell
+                ? 'relative line-clamp-2 max-w-sm text-2xl font-black leading-tight text-white'
+                : 'karaoke-neon relative max-w-3xl text-4xl font-black leading-tight md:text-6xl'}>{song?.title}</h1>
               <p className="relative text-sm text-white/55 md:text-base">{song?.artist || 'A Música da Segunda'}</p>
 
               {/* Modo Aprender simplifié : niveau + aperçu AVANT de lancer (§6 de la
@@ -1271,18 +1319,24 @@ export default function KaraokePlayer({
                   {hasLines ? (
                     lines.map((line, i) => {
                       // Limpa o ecrã : esconde as frases já cantadas, mantendo apenas a
-                      // imediatamente anterior à ativa (i >= displayIdx - 1).
-                      if (i < displayIdx - 1) return null;
+                      // imediatamente anterior à ativa (i >= displayIdx - 1). Mobile
+                      // (étape 7) : les deux précédentes, à 30 % de blanc.
+                      if (i < displayIdx - (mShell ? 2 : 1)) return null;
                       // Écran d'apprentissage compact (§4) : seulement précédente/active/suivante,
                       // pas de fenêtre longue — le karaokê normal garde tout son comportement.
                       if (learningMode && i > displayIdx + 1) return null;
                       const distance = displayIdx < 0 ? i + 1 : Math.abs(i - displayIdx);
                       const isActive = i === displayIdx;
                       const duetColor = opts.dueto ? DUET_COLORS[i % 2] : null;
+                      // Mobile (étape 7) : chantées 30 %, suivante 72 %, plus loin 40 %.
+                      const mShellColor = !mShell || isActive ? undefined
+                        : i < displayIdx ? 'rgba(255,255,255,0.3)'
+                        : i === displayIdx + 1 ? 'rgba(255,255,255,0.72)'
+                        : 'rgba(255,255,255,0.4)';
                       return (
                         <Fragment key={`${i}-${line.time}`}>
                           <p ref={isActive ? activeLineRef : null}
-                            className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive ? '' : distance === 1 ? 'text-white/45' : 'text-white/25'].join(' ')}
+                            className={['mx-auto max-w-5xl font-black leading-tight transition-all duration-300 ease-out', isActive || mShell ? '' : distance === 1 ? 'text-white/45' : 'text-white/25'].join(' ')}
                             style={{
                               // learningMode : la ligne + zone d'apprentissage partagent une hauteur
                               // compacte — un min(vw, vh) borne aussi par la hauteur (mobile paysage
@@ -1294,7 +1348,7 @@ export default function KaraokePlayer({
                                 : (learningMode ? `calc(clamp(0.85rem, min(3.5vw, 5vh), 1.4rem) * ${scale})` : `calc(clamp(1rem, 4vw, 1.6rem) * ${scale})`),
                               marginBlock: isActive ? '0.55em' : '0.42em',
                               opacity: distance > 3 ? 0.12 : undefined,
-                              color: !isActive && duetColor ? `${duetColor}66` : undefined,
+                              color: !isActive && duetColor ? `${duetColor}66` : mShellColor,
                             }}>
                             {isActive
                               ? (Array.isArray(line.words) && line.words.length > 0
@@ -1423,8 +1477,38 @@ export default function KaraokePlayer({
         </div>
       )}
 
+      {/* Contrôles bas mobile (étape 7) : ligne précédente, pause (seul jaune), Aprender
+          (seulement pour une chanson avec fiche Modo Aprender, même détection que le
+          panneau Letra). Le mixer reste dans l'en-tête ; fermer = Voltar. */}
+      {phase === 'live' && mShell && (
+        <footer className="km-controls" data-km-controls="mobile">
+          <button type="button" className="km-ctrl" onClick={handlePrevLine} aria-label="Voltar uma linha">
+            <span className="km-ctrl-icon"><SkipBack className="h-5 w-5" /></span>
+            <span className="km-ctrl-label">Linha anterior</span>
+          </button>
+          <button type="button" className="km-ctrl km-ctrl--main" onClick={togglePlay} disabled={!playerReady}
+            aria-label={isPlaying ? 'Pausar música' : 'Continuar música'}>
+            <span className="km-ctrl-icon">
+              {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="ml-0.5 h-8 w-8 fill-current" />}
+            </span>
+            <span className="km-ctrl-label">{isPlaying ? 'Pausar' : 'Continuar'}</span>
+          </button>
+          {hasLearnContent(learnSlug) ? (
+            <Link
+              to={`/apprendre/${learnSlug}`}
+              onClick={() => { try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ } }}
+              className="km-ctrl"
+              aria-label={`Aprender com ${song?.title || 'esta música'}`}
+            >
+              <span className="km-ctrl-icon"><BookOpen className="h-5 w-5" /></span>
+              <span className="km-ctrl-label">Aprender</span>
+            </Link>
+          ) : null}
+        </footer>
+      )}
+
       {/* Contrôles bas (live) — masqués en TV (D-pad : OK=play/pause, ←/→=±10s, Retour=sair) */}
-      {phase === 'live' && !tvMode && (
+      {phase === 'live' && !tvMode && !mShell && (
         <footer className="km-controls">
           <button type="button" className="km-ctrl" onClick={() => seekBy(-10)} aria-label="Voltar 10 segundos">
             <span className="km-ctrl-icon"><SkipBack className="h-5 w-5" /></span>

@@ -1,4 +1,4 @@
-import { Suspense, useRef, useState } from 'react';
+import { Suspense, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 /**
@@ -16,12 +16,34 @@ import { Link } from 'react-router-dom';
  *   { value, label, icon, activeIcon, onSelect, buttonRef? } action (Buscar), jamais active
  *   { value, label, icon, activeIcon, sheet: Component }     ouvre un panneau (Menu)
  *     sheet reçoit { open, onOpenChange, returnFocusRef }
+ *
+ * Sa hauteur réelle (safe area comprise) est publiée dans `--app-nav-h` sur <html> :
+ * le lecteur karaokê mobile, en plein écran, s'arrête juste au-dessus (étape 7).
  */
 export default function AppBottomNav({ items = [], activeValue }) {
   const [openSheet, setOpenSheet] = useState(null);
   // Le panneau (chargé à la demande) n'est monté qu'après la première ouverture.
   const [sheetRequested, setSheetRequested] = useState(false);
   const sheetButtonRef = useRef(null);
+  const navRef = useRef(null);
+
+  // Hauteur publiée pour les calques plein écran qui doivent laisser la barre visible.
+  // Coquille masquée (desktop) : 0 px.
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const root = document.documentElement;
+    if (!nav) return undefined;
+    const publish = () => root.style.setProperty('--app-nav-h', `${nav.offsetHeight}px`);
+    publish();
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(publish) : null;
+    observer?.observe(nav);
+    window.addEventListener('resize', publish);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', publish);
+      root.style.removeProperty('--app-nav-h');
+    };
+  }, []);
 
   const renderItemContent = (item, isActive) => {
     const Icon = isActive && item.activeIcon ? item.activeIcon : item.icon;
@@ -45,6 +67,7 @@ export default function AppBottomNav({ items = [], activeValue }) {
   return (
     <>
       <nav
+        ref={navRef}
         className="z-40 flex-shrink-0 border-t border-white/10 bg-black pb-[env(safe-area-inset-bottom)]"
         aria-label="Navegação principal"
       >

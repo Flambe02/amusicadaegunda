@@ -21,13 +21,16 @@ vi.mock('@/api/entities', () => ({
 
 // Lecteur plein écran : stub léger (évite l'API YouTube).
 vi.mock('@/components/karaoke/KaraokePlayer', () => ({
-  default: ({ song }) => <div data-testid="karaoke-player">A cantar: {song.title}</div>,
+  default: ({ song, mobileShell }) => (
+    <div data-testid="karaoke-player" data-mobile-shell={mobileShell ? 'true' : 'false'}>A cantar: {song.title}</div>
+  ),
 }));
 
 // Capacitor absent en test : le stub renvoie une promesse rejetée (comme le web pur).
 vi.mock('@capacitor/app', () => ({ App: { addListener: () => Promise.reject(new Error('no native')) } }));
 
 import KaraokePage from '../Karaoke';
+import { ShellContext } from '@/components/mobile/ShellContext';
 
 // La page vit sous le Router de l'app (elle lit ?musica=). `LocationProbe` expose
 // l'URL courante pour vérifier que le paramètre est retiré après usage.
@@ -161,6 +164,37 @@ describe('KaraokePage', () => {
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /cantar agora/i }));
     expect(await screen.findByTestId('karaoke-player')).toBeInTheDocument();
+    // Desktop : le lecteur plein écran d'origine, sans le style mobile.
+    expect(screen.getByTestId('karaoke-player')).toHaveAttribute('data-mobile-shell', 'false');
+  });
+});
+
+describe('KaraokePage — mobile (O Palco) : écran de lecture (étape 7)', () => {
+  it('the microphone opens the player in its mobile shell (bottom nav stays visible)', async () => {
+    const previous = window.matchMedia;
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query.includes('max-width: 767px'), media: query,
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), addListener: vi.fn(), removeListener: vi.fn(),
+    }));
+    try {
+      const user = userEvent.setup();
+      render(
+        <HelmetProvider>
+          <MemoryRouter initialEntries={['/karaoke']}>
+            <ShellContext.Provider value="mobile">
+              <KaraokePage />
+            </ShellContext.Provider>
+          </MemoryRouter>
+        </HelmetProvider>,
+      );
+      // La carte centrale et le micro portent le même libellé : on prend le micro (76 px).
+      const mic = (await screen.findAllByRole('button', { name: 'Cantar Camarada Quer CPF' }))
+        .find((button) => button.className.includes('76px'));
+      await user.click(mic);
+      expect(await screen.findByTestId('karaoke-player')).toHaveAttribute('data-mobile-shell', 'true');
+    } finally {
+      window.matchMedia = previous;
+    }
   });
 });
 

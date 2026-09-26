@@ -95,6 +95,13 @@ Pas de liste : une scène (sous 768 px ; desktop inchangé). **L'écran tient to
 - Barre de contrôle : revenir d'une ligne, pause (seul élément jaune), bouton « Aprender ».
 - **Bouton « Aprender » : affiché uniquement pour les musiques qui ont une fiche Modo Aprender** (pilotes actuels). Masqué sinon, sans placeholder.
 - Aucune modification du moteur de synchro.
+- **Réalisé (étape 7, nuit du 2026-09-26)** — seulement sur l'écran ouvert depuis O Palco (prop `mobileShell` de `KaraokePlayer`, passée par la copie mobile de `/karaoke`). Desktop, TV et Modo Aprender : inchangés.
+  - le lecteur s'arrête au-dessus de la barre du bas (`--app-nav-h`, publiée par la barre) ; les panneaux Buscar et Menu s'ouvrent par-dessus ;
+  - « Começar » : la miniature du Short en carte 9:16 (150 × 267 au plus, plus petite si l'écran est bas), titre blanc 24 px 900 (plus de néon jaune), Começar = le seul jaune ; pas de faisceaux violets ;
+  - fond : la miniature du Short très floue et assombrie ; barre de progression blanche ; compte à rebours blanc ;
+  - lignes : les deux précédentes à 30 %, la suivante à 72 %, les autres à 40 % ;
+  - barre de contrôle : « Linha anterior », pause (seul jaune), « Aprender » (lien vers la leçon `/apprendre/<slug>`, seulement avec fiche). Le mixer reste dans l'en-tête ; Voltar ferme (plus de 10 s / Repetir / Mixer / Finalizar dans la barre du bas mobile) ;
+  - tout tient sans défilement à 360 × 640, 375 × 667 et 390 × 844, barres de Safari comprises (vérifié dans WebKit).
 
 ### 4.4 Pesquisa
 > Remplacée par la recherche en panneau de l'addendum (section B, décisions G.5 et H.8).
