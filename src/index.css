@@ -293,4 +293,11 @@
     height: auto;
     min-height: 0;
   }
+  /* …mais sur iPhone, ce viewport-là est lui aussi raccourci (position: fixed s'y
+     accroche) : #root prend la hauteur réelle de l'écran, mesurée par
+     src/lib/iosStandaloneHeight.js, qui ne pose l'attribut que si l'écart existe. */
+  html[data-ios-standalone] #root {
+    bottom: auto;
+    height: var(--app-screen-h);
+  }
 }
