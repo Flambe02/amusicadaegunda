@@ -10,7 +10,9 @@ import { hideNativeSplash } from '@/utils/splash';
 import { isTV } from '@/tv/platform';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
 
-const PushCTA = lazy(() => import('@/components/PushCTA'));
+// Invite « Activer les notifications » retirée (2026-09-26) : la table Supabase
+// `push_subscriptions` et la fonction d'envoi `push` ne sont pas en place en ligne,
+// l'abonnement échouait toujours. Voir TODO-apres-refonte.md §18 pour la réactiver.
 const InstallAppBanner = lazy(() => import('@/components/InstallAppBanner'));
 // Le bundle TV est chargé à la demande UNIQUEMENT sur TV → aucun coût pour mobile/web.
 const TvApp = lazy(() => import('@/tv/TvApp'));
@@ -132,7 +134,6 @@ function App() {
       {deferredUiReady ? (
         <Suspense fallback={null}>
           <InstallAppBanner />
-          <PushCTA />
         </Suspense>
       ) : null}
     </>
