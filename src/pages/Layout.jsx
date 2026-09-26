@@ -17,6 +17,7 @@ import {
 import { AppBottomNav } from '@/components/mobile';
 import { HomeFilled, MenuFilled, MicFilled, SearchFilled } from '@/components/mobile/icons/FilledIcons';
 import { ShellContext } from '@/components/mobile/ShellContext';
+import RotateOverlay from '@/components/mobile/RotateOverlay';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
@@ -544,6 +545,10 @@ export default function Layout({ children }) {
           </footer>
         </div>
       </div>
+
+      {/* Téléphone en paysage : « Gire o celular » par-dessus tout (hors des deux
+          coquilles : en paysage, un téléphone dépasse souvent 768 px de large). */}
+      <RotateOverlay />
 
       {deferredAuxUiReady ? (
         <Suspense fallback={null}>

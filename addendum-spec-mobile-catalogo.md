@@ -175,6 +175,11 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 ### H.13 Point à surveiller — interface permanente de YouTube Shorts (2026-09-25)
 Aux tests sur iPhone, la variante « UI Shorts permanente » de YouTube (avatar, @AMusicadaSegunda, j'aime, partage) apparaît plus souvent que prévu. **Rien n'est changé pour l'instant** (H.1.1, H.5.3) ; à réévaluer si elle devient la norme (options connues : agrandissement `SHORTS_UI_ZOOM`, fond derrière la colonne — tous deux refusés à ce jour).
 
+### H.14 Pas d'affichage horizontal sur mobile (2026-09-25)
+1. **App Android** : portrait uniquement sur téléphone (`setRequestedOrientation` portrait dans `MainActivity`, patch `native-patches/capacitor-android/MainActivity.patch`) ; la TV reste en paysage.
+2. **PWA** : `"orientation": "portrait"` dans `public/manifest.json` (déjà en place).
+3. **Navigateur mobile** : un téléphone (pointeur grossier, paysage, hauteur ≤ 500 px) tourné en paysage voit un écran plein par-dessus l'app — fond noir, Caipivara en image fixe, « Gire o celular » (dialogue modal, texte annoncé aux lecteurs d'écran). La vidéo ou la musique en cours se met en pause et reprend au retour en portrait (lecteur commun `useShortPlayer` : feed, calque Ouvir, Catálogo). Tablettes et desktop non concernés.
+
 ### H.7 Méthode
 - Une étape à la fois, rapport de la section 13 de la spec, arrêt et attente de validation explicite. Un commit par décision.
 - **Plus de captures d'écran dans les rapports** : Florent teste lui-même sur son téléphone. Les vérifications au navigateur (Playwright) continuent, mais seuls leurs résultats figurent dans le rapport.

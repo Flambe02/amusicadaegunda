@@ -246,6 +246,17 @@ describe('MobileFeed — Short de la semaine (étape 3)', () => {
     expect(player.calls).toContain('destroy');
   });
 
+  it('phone turned to landscape (« Gire o celular »): pauses the playing player, resumes it back in portrait', async () => {
+    await renderLoaded();
+    const player = players[0];
+    act(() => { player.ready(); player.play(); });
+    player.calls.length = 0;
+    act(() => { window.dispatchEvent(new CustomEvent('amds:orientation-block', { detail: { blocked: true } })); });
+    expect(player.calls).toContain('pauseVideo');
+    act(() => { window.dispatchEvent(new CustomEvent('amds:orientation-block', { detail: { blocked: false } })); });
+    expect(player.calls).toContain('playVideo');
+  });
+
   it('Android app (not TV): starts with the sound, no play cue; web keeps the muted start', async () => {
     platformMock.value = 'android';
     try {

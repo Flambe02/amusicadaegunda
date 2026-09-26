@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
+import { ORIENTATION_BLOCK_EVENT } from '@/components/mobile/orientation';
 
 /**
  * UN SEUL lecteur YouTube pour tout le feed mobile (spec mobile §4.1, étapes 3 et 4b).
@@ -288,6 +289,25 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
     const id = setInterval(syncFromPlayer, POLL_MS);
     return () => clearInterval(id);
   }, [syncFromPlayer]);
+
+  // Téléphone tourné en paysage (écran « Gire o celular ») → pause ; retour en
+  // portrait → reprise si la musique tournait. Même principe que l'onglet masqué.
+  useEffect(() => {
+    let resumeOnPortrait = false;
+    const onOrientationBlock = (event) => {
+      const player = playerRef.current;
+      if (!player || !readyRef.current) return;
+      if (event.detail?.blocked) {
+        resumeOnPortrait = player.getPlayerState() === YT_STATE.PLAYING;
+        if (resumeOnPortrait) player.pauseVideo();
+      } else if (resumeOnPortrait) {
+        resumeOnPortrait = false;
+        player.playVideo();
+      }
+    };
+    window.addEventListener(ORIENTATION_BLOCK_EVENT, onOrientationBlock);
+    return () => window.removeEventListener(ORIENTATION_BLOCK_EVENT, onOrientationBlock);
+  }, []);
 
   // Onglet masqué → pause (batterie) ; retour → reprise si la vidéo tournait.
   useEffect(() => {
