@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9.1.0';
+const CACHE_VERSION = 'v9.2.0';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
 const SHELL_MANIFEST_URL = '/sw-assets.json';
 
