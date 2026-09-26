@@ -143,12 +143,21 @@ export default function KaraokePage() {
   const canSurprise = results.length > 0;
 
   // Sous 768 px, la copie mobile de la page est « O Palco » (carrousel 3D, micro) ; la
-  // copie desktop garde le catalogue ci-dessous, inchangé.
-  const [isMobileViewport] = useState(() =>
+  // copie desktop garde le catalogue ci-dessous, inchangé. Le point de rupture est suivi
+  // en direct (fenêtre redimensionnée, écran partagé de tablette), comme dans Home.
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
     typeof window !== 'undefined' && typeof window.matchMedia === 'function'
       ? window.matchMedia('(max-width: 767px)').matches
       : false
   );
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+    updateViewport();
+    mediaQuery.addEventListener?.('change', updateViewport);
+    return () => mediaQuery.removeEventListener?.('change', updateViewport);
+  }, []);
   const playerOverlay = current ? (
     <KaraokePlayer
       key={current.id}

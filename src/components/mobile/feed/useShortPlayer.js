@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
-import { ORIENTATION_BLOCK_EVENT } from '@/components/mobile/orientation';
+import { ORIENTATION_BLOCK_EVENT, matchesPhoneLandscape } from '@/components/mobile/orientation';
 
 /**
  * UN SEUL lecteur YouTube pour tout le feed mobile (spec mobile §4.1, étapes 3 et 4b).
@@ -85,6 +85,11 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
   // dès que le lecteur est prêt, comme un tap mis en attente.
   const pendingSoundRef = useRef(startWithSound);
   const fallbackTimerRef = useRef(null);
+  // Écran « Gire o celular » : état retenu même quand le lecteur n'est pas encore prêt
+  // (bascule reçue pendant sa création, ou téléphone déjà en paysage au chargement),
+  // et appliqué dès qu'il l'est — jamais de lecture derrière le message.
+  const orientationBlockedRef = useRef(matchesPhoneLandscape());
+  const resumeOnPortraitRef = useRef(false);
   const revealTimerRef = useRef(null);
   const videoIdRef = useRef(videoId);
   const loadedIdRef = useRef(null);
@@ -180,7 +185,16 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
               hideCaptions(player);
               // La chanson a pu changer pendant la création du lecteur.
               const wanted = videoIdRef.current;
-              if (!wanted) {
+              if (wanted && orientationBlockedRef.current) {
+                // Paysage : la vidéo est préparée sans jouer ; elle démarre au retour
+                // en portrait.
+                resumeOnPortraitRef.current = true;
+                if (wanted !== loadedIdRef.current) {
+                  loadedIdRef.current = wanted;
+                  if (typeof player.cueVideoById === 'function') player.cueVideoById(wanted);
+                  else { player.loadVideoById(wanted); player.pauseVideo(); }
+                }
+              } else if (!wanted) {
                 player.stopVideo?.();
               } else if (wanted !== loadedIdRef.current) {
                 loadedIdRef.current = wanted;
@@ -191,6 +205,13 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
               syncFromPlayer();
             },
             onStateChange: (event) => {
+              // Filet : aucune lecture pendant l'écran « Gire o celular ».
+              if (event.data === YT_STATE.PLAYING && orientationBlockedRef.current) {
+                resumeOnPortraitRef.current = true;
+                event.target.pauseVideo();
+                syncFromPlayer();
+                return;
+              }
               if (event.data === YT_STATE.PLAYING) {
                 setIsEnded(false);
                 hideCaptions(event.target);
@@ -292,16 +313,20 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
 
   // Téléphone tourné en paysage (écran « Gire o celular ») → pause ; retour en
   // portrait → reprise si la musique tournait. Même principe que l'onglet masqué.
+  // L'état est retenu même avant que le lecteur soit prêt (appliqué dans onReady).
   useEffect(() => {
-    let resumeOnPortrait = false;
     const onOrientationBlock = (event) => {
+      const blocked = Boolean(event.detail?.blocked);
+      orientationBlockedRef.current = blocked;
       const player = playerRef.current;
       if (!player || !readyRef.current) return;
-      if (event.detail?.blocked) {
-        resumeOnPortrait = player.getPlayerState() === YT_STATE.PLAYING;
-        if (resumeOnPortrait) player.pauseVideo();
-      } else if (resumeOnPortrait) {
-        resumeOnPortrait = false;
+      if (blocked) {
+        if (player.getPlayerState() === YT_STATE.PLAYING) {
+          resumeOnPortraitRef.current = true;
+          player.pauseVideo();
+        }
+      } else if (resumeOnPortraitRef.current) {
+        resumeOnPortraitRef.current = false;
         player.playVideo();
       }
     };
