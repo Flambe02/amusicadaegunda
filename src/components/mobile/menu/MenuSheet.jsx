@@ -14,7 +14,8 @@ const ROW =
  * Buscar (#111217, coins 26 px, poignée, pas de voile).
  *
  * En tête : la Caipivara, « A Música da Segunda », « Nova música toda segunda-feira ».
- * Lignes : Catálogo (/catalogo), Festa na TV (/festa), Sobre o projeto. Puis les
+ * Lignes : Catálogo (/musica, le catalogue complet — la scène /catalogo a déjà sa
+ * pastille au centre de la barre), Festa na TV (/festa), Sobre o projeto. Puis les
  * plateformes en pastilles neutres. Blog et Aprender restent accessibles par leur URL
  * et depuis Sobre. Icônes pleines blanches façon TikTok, aucun jaune.
  */
@@ -70,14 +71,17 @@ export default function MenuSheet({ open, onOpenChange, returnFocusRef }) {
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3">
             <ul data-menu-rows className="space-y-0.5">
               {[
-                { to: '/catalogo', label: 'Catálogo', icon: CatalogFilled },
+                { to: '/musica', label: 'Catálogo', description: 'Todas as músicas, semana a semana', icon: CatalogFilled },
                 { to: '/festa', label: 'Festa na TV', icon: TvFilled },
                 { to: '/sobre', label: 'Sobre o projeto', icon: InfoFilled },
-              ].map(({ to, label, icon: Icon }) => (
+              ].map(({ to, label, description, icon: Icon }) => (
                 <li key={to}>
                   <Link to={to} onClick={close} className={ROW}>
                     <Icon className="h-7 w-7 flex-shrink-0 text-white" />
-                    <span className="min-w-0 flex-1 text-base font-semibold">{label}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-semibold">{label}</span>
+                      {description ? <span className="block text-sm leading-snug text-white/60">{description}</span> : null}
+                    </span>
                     <ChevronRight className="h-5 w-5 flex-shrink-0 text-white/40" aria-hidden="true" />
                   </Link>
                 </li>

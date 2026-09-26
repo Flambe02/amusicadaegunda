@@ -151,12 +151,15 @@ describe('Layout — shell mobile', () => {
     expect(within(dialog).getByText('A Música da Segunda')).toBeInTheDocument();
     expect(within(dialog).getByText('Nova música toda segunda-feira')).toBeInTheDocument();
     expect(dialog.querySelector('img[src*="caipivara"]')).not.toBeNull();
-    const rows = [...dialog.querySelectorAll('[data-menu-rows] > li > a, [data-menu-rows] > li > button')].map((el) => el.textContent);
+    const rows = [...dialog.querySelectorAll('[data-menu-rows] > li > a > span > span:first-child')].map((el) => el.textContent);
     expect(rows).toEqual(['Catálogo', 'Festa na TV', 'Sobre o projeto']);
-    expect(within(dialog).getByRole('link', { name: 'Catálogo' })).toHaveAttribute('href', '/catalogo');
+    // « Catálogo » = le catalogue complet (/musica), pas la scène /catalogo (pastille).
+    const catalogo = within(dialog).getByRole('link', { name: /^Catálogo/ });
+    expect(catalogo).toHaveAttribute('href', '/musica');
+    expect(within(catalogo).getByText('Todas as músicas, semana a semana')).toBeInTheDocument();
     expect(within(dialog).getByRole('link', { name: 'Festa na TV' })).toHaveAttribute('href', '/festa');
     expect(within(dialog).getByRole('link', { name: 'Sobre o projeto' })).toHaveAttribute('href', '/sobre');
-    for (const gone of [/início/i, /todas as músicas/i, /roda/i, /pesquisa/i, /blog/i, /app para tv/i, /aprender/i, /newsletter/i]) {
+    for (const gone of [/início/i, /roda/i, /pesquisa/i, /blog/i, /app para tv/i, /aprender/i, /newsletter/i]) {
       expect(within(dialog).queryByText(gone)).toBeNull();
     }
     const pills = within(dialog).getAllByRole('link').filter((a) => a.getAttribute('target') === '_blank');

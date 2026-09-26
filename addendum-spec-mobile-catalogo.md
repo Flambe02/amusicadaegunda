@@ -69,8 +69,8 @@ Fichiers fournis par Florent, à placer puis à traiter comme à l'étape 1 (san
 ## D. Menu simplifié
 
 - En tête : avatar Caipivara, « A Música da Segunda », « Nova música toda segunda-feira ».
-- Lignes (*version finale du 2026-09-25*) : **Catálogo** (`/catalogo`), **Festa na TV** (`/festa`, remplace « App para TV »), **Sobre o projeto**, puis les plateformes. **Pas de Newsletter** (ligne et panneau retirés ; le formulaire Buttondown reste celui de `/apprendre`, inchangé).
-- Plus de lignes Início, Todas as músicas, Roda, Pesquisa, Blog, Aprender Beta, App para TV ni Newsletter. **Blog et Aprender** restent accessibles par leur URL et depuis **Sobre** (deux liens discrets ajoutés en bas de la page Sobre mobile). « Todas as músicas » : depuis le panneau de recherche (« Ver todas as músicas »).
+- Lignes (*version finale du 2026-09-25*) : **Catálogo** (`/musica`, le catalogue complet, sous-titre « Todas as músicas, semana a semana » — la scène `/catalogo` a déjà sa pastille au centre de la barre), **Festa na TV** (`/festa`, remplace « App para TV »), **Sobre o projeto**, puis les plateformes. **Pas de Newsletter** (ligne et panneau retirés ; le formulaire Buttondown reste celui de `/apprendre`, inchangé).
+- Plus de lignes Início, Roda, Pesquisa, Blog, Aprender Beta, App para TV ni Newsletter. **Blog et Aprender** restent accessibles par leur URL et depuis **Sobre** (deux liens discrets ajoutés en bas de la page Sobre mobile). `/musica` : depuis cette ligne Catálogo et depuis le panneau de recherche (« Ver todas as músicas »).
 - Même style que le reste de l'app : panneau qui monte du bas (#111217, coins 26 px, poignée, pas de voile), icônes pleines blanches façon TikTok, aucun jaune.
 - Plateformes d'écoute en pastilles neutres (pas de couleur de marque hors de leur propre lien).
 - Aucun témoignage, chiffre d'audience ou presse.
