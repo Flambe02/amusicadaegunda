@@ -85,6 +85,7 @@ Pas de liste : une scène (sous 768 px ; desktop inchangé). **L'écran tient to
 - **Icônes** : onglet Karaokê de la barre = micro (plein et blanc actif, contour sinon) ; « Cantar » de la colonne (feed et Catálogo) = le même micro. *(Remplace « icône de paroles, pas de micro » : le karaokê fonctionne toujours sans micro.)*
 
 ### 4.3 Karaokê — lecture (restyle uniquement)
+- **Barre de navigation du bas affichée** (décision du 2026-09-25) : sur l'écran de lecture du karaokê, y compris l'écran « Começar », la barre du bas reste visible comme sur les autres écrans, onglet Karaokê actif. Le contenu tient au-dessus de la barre, sans défilement. (Étape 7, après l'étape 5.)
 - Ligne en cours : remplissage jaune mot à mot + petite balle jaune, comme la signature décrite dans `DESIGN.md`.
 - Lignes chantées à 30 % de blanc, ligne suivante à 72 %, fondu haut et bas par masque.
 - Barre de contrôle : revenir d'une ligne, pause (seul élément jaune), bouton « Aprender ».
