@@ -155,6 +155,7 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 3. **Short** : un extrait dont le décalage avec la chanson complète est inconnu → pas de ligne tant que le Short n'a pas été vérifié chanson par chanson sur téléphone. Pour l'activer : ajouter le slug à `FEED_KARAOKE_SHORT_VERIFIED_SLUGS` (`src/components/mobile/feed/feedKaraoke.js`).
 4. Calque Ouvir ouvert (le lecteur joue une autre chanson) : jamais de ligne.
 5. Affichage : au-dessus du titre compact, 20 px 900, deux lignes au plus, remplissage jaune de gauche à droite (seul jaune de la vidéo), ombre portée ; mouvement réduit : ligne entièrement jaune ; rien entre deux lignes.
+6. **Vérification sur téléphone** (serveur de dev seulement, jamais en production) : ouvrir le feed avec `?verificar-karaoke=1` (par ex. `/?musica=<slug>&verificar-karaoke=1`) affiche la ligne sur tous les Shorts pendant la session ; `?verificar-karaoke=0` l'arrête. Un Short jugé synchronisé rejoint `FEED_KARAOKE_SHORT_VERIFIED_SLUGS`.
 
 ### H.9 Feed — Som et Ouvir (2026-09-25, remplace H.3.2)
 1. **Som** sort de la colonne : petite icône haut-parleur en haut à droite de la vidéo, à l'emplacement de l'ancien bouton ⓘ, visible seulement une fois le son activé.

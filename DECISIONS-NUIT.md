@@ -67,3 +67,10 @@ Chaque décision qui revenait normalement à Florent : la question, l'option cho
 - **Constat** : l'accessibilité est meilleure (100 contre 99), le SEO est égal (100), mais la performance est plus basse sur l'accueil (médiane ≈ 39 contre 49) et sur `/karaoke` (≈ 51 contre 58). Le CLS de l'accueil vaut 0,32 dans la plupart des mesures.
 - **Option choisie** : ne rien changer en profondeur cette nuit. L'écart vient surtout du feed vidéo, qui est le choix produit. Une tentative contre le CLS (voisines cachées au repos) n'a rien changé à la mesure : elle a été annulée, pour ne pas toucher au geste de glissement juste avant ton test. Détail et pistes : `TODO-apres-refonte.md` §14.
 - **Revenir en arrière** : sans objet (aucun changement conservé).
+
+## 10. Étape 5 — comment juger la synchro des Shorts sans les afficher
+
+- **Question** : la ligne est masquée sur les Shorts tant qu'ils ne sont pas vérifiés. Comment les vérifier sans la voir ?
+- **Option choisie** : un mode de vérification limité au serveur de dev (`import.meta.env.DEV`, donc absent du build de production). Sur https://192.168.0.163:5443/, ouvrir `/?musica=<slug>&verificar-karaoke=1` : la ligne s'affiche sur tous les Shorts pendant la session, et `?verificar-karaoke=0` l'arrête.
+- **Pourquoi** : c'est le moyen le plus simple de faire ton test chanson par chanson, sans rien exposer aux visiteurs.
+- **Revenir en arrière** : supprimer `isShortsVerifyMode` dans `feedKaraoke.js` et son appel dans `canShowFeedKaraoke`.

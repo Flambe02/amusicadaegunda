@@ -11,6 +11,25 @@ import { getPublicSlug } from './feedMedia';
  */
 export const FEED_KARAOKE_SHORT_VERIFIED_SLUGS = new Set([]);
 
+const VERIFY_KEY = 'amds-verificar-karaoke';
+
+/**
+ * Vérification sur téléphone, **serveur de dev seulement** (jamais en production) :
+ * ouvrir le feed avec `?verificar-karaoke=1` affiche la ligne sur tous les Shorts pendant
+ * la session, pour juger leur synchro chanson par chanson (`?verificar-karaoke=0` l'arrête).
+ */
+export function isShortsVerifyMode() {
+  if (!import.meta.env.DEV || typeof window === 'undefined') return false;
+  try {
+    const param = new URLSearchParams(window.location.search).get('verificar-karaoke');
+    if (param === '1') sessionStorage.setItem(VERIFY_KEY, '1');
+    if (param === '0') sessionStorage.removeItem(VERIFY_KEY);
+    return sessionStorage.getItem(VERIFY_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 // Sans fin explicite ni ligne suivante, une ligne dure au plus ce temps.
 const DEFAULT_LINE_S = 4;
 
@@ -34,6 +53,6 @@ export function lineProgress(parsed, index, t) {
 export function canShowFeedKaraoke(song, mode) {
   if (!isKaraokePublished(song)) return false;
   if (mode === 'audio') return true;
-  if (mode === 'video') return FEED_KARAOKE_SHORT_VERIFIED_SLUGS.has(getPublicSlug(song));
+  if (mode === 'video') return FEED_KARAOKE_SHORT_VERIFIED_SLUGS.has(getPublicSlug(song)) || isShortsVerifyMode();
   return false;
 }

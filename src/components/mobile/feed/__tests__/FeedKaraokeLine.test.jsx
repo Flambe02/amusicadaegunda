@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import FeedKaraokeLine from '../FeedKaraokeLine';
-import { FEED_KARAOKE_SHORT_VERIFIED_SLUGS, canShowFeedKaraoke, lineProgress } from '../feedKaraoke';
+import { FEED_KARAOKE_SHORT_VERIFIED_SLUGS, canShowFeedKaraoke, isShortsVerifyMode, lineProgress } from '../feedKaraoke';
 import { parseLrc } from '@/lib/lrc';
 
 const LRC = '[00:02.00]Primeira linha\n[00:06.00]Segunda linha\n[00:10.00]Terceira linha';
@@ -44,6 +44,23 @@ describe('feedKaraoke — helpers (read-only LRC)', () => {
     // Rien ne joue, ou le calque Ouvir recouvre le feed : jamais.
     expect(canShowFeedKaraoke(SONG, 'none')).toBe(false);
     expect(canShowFeedKaraoke(SONG, undefined)).toBe(false);
+  });
+
+  it('dev-only verify mode: ?verificar-karaoke=1 shows the line on every Short for the session, =0 stops it', () => {
+    const previous = window.location.href;
+    try {
+      window.history.replaceState(null, '', '/?verificar-karaoke=1');
+      expect(isShortsVerifyMode()).toBe(true);
+      window.history.replaceState(null, '', '/');
+      expect(canShowFeedKaraoke(SONG, 'video')).toBe(true); // gardé pour la session
+      expect(canShowFeedKaraoke({ ...SONG, karaoke_published: false }, 'video')).toBe(false);
+      window.history.replaceState(null, '', '/?verificar-karaoke=0');
+      expect(isShortsVerifyMode()).toBe(false);
+      expect(canShowFeedKaraoke(SONG, 'video')).toBe(false);
+    } finally {
+      sessionStorage.clear();
+      window.history.replaceState(null, '', previous);
+    }
   });
 
   it('line progress runs 0 → 1 from the line start to the next line', () => {
