@@ -278,10 +278,10 @@
   }
 }
 
-/* PWA installée sur téléphone (iOS, barre d'état translucide) : 100svh y est plus court
-   que l'écran (de la hauteur de la barre d'état), ce qui laissait une bande vide sous
-   la barre de navigation. En mode standalone, #root couvre tout l'écran ; la coquille
-   mobile le suit (h-full). Dans le navigateur, rien ne change. */
+/* PWA installée sur téléphone : #root couvre toute la zone de la page ; la coquille
+   mobile le suit (h-full). Dans le navigateur, rien ne change. La bande noire sous la
+   barre de navigation (iOS 26) ne se règle PAS ici : elle est hors de la page — voir
+   apple-mobile-web-app-status-bar-style dans index.html (« black », pas translucent). */
 @media (max-width: 767px) and (display-mode: standalone) {
   html,
   body {

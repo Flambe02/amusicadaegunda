@@ -33,7 +33,12 @@
 
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- « black », PAS « black-translucent » : dans l'app installée iOS 26, avec translucent,
+         WebKit (bug 301108) dessine la page sous la barre d'état mais la dimensionne sans
+         elle → bande noire NON peignable en bas (aucun CSS/JS ne la remplit, vérifié
+         2026-09-26). Avec « black », la page commence sous la barre d'état et touche le bas.
+         iOS ne lit ce tag qu'à l'installation : réinstaller l'app pour voir l'effet. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <meta name="apple-mobile-web-app-title" content="A Música da Segunda" />
     <meta name="application-name" content="A Música da Segunda" />
     <meta name="theme-color" content="#050505" />
