@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
 import { getDocumentTitle } from '@/lib/documentTitle';
+import { BRAND_LOGO_SMALL } from '@/lib/imageAssets';
 
 // Composant d'intégration YouTube générique (remplace l'embed TikTok)
 // Props attendues: youtube_music_url, youtube_url, title
@@ -358,7 +359,10 @@ export default function Youtube() {
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
             <img 
-              src="images/Musica da segunda.jpg" 
+              src={BRAND_LOGO_SMALL}
+              width={64}
+              height={64}
+              decoding="async"
               alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
               className="w-full h-full object-cover"
             />
