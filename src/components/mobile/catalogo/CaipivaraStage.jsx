@@ -81,8 +81,9 @@ function ClipSources({ clip }) {
  *
  * Tap sur la Caipivara : une animation (jamais deux fois la même à la suite) + une
  * chanson (jamais la précédente). Puis boucle de danse tant que la musique joue avec
- * le son ; boucle de repos en pause, à la fin, ou si le navigateur a refusé le son
- * (le bouton ▶ le relance). Pas de changement de page.
+ * le son ; boucle de repos en pause, ou si le navigateur a refusé le son (le bouton ▶
+ * le relance). À la fin d'une chanson, la Caipivara en choisit une autre toute seule
+ * (comme « Outra »). Pas de changement de page.
  *
  * Mouvement réduit : image fixe, la musique part directement.
  *
@@ -219,6 +220,24 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
     const song = pickSong(songs, currentRef.current);
     if (song) startSong(song, false);
   }, [songs, startAnimation, startSong]);
+
+  // Fin de la chanson : la Caipivara en choisit une autre, comme « Outra » (même
+  // lecteur, hors du geste — si le navigateur refuse le son, ▶ le relance). Une seule
+  // fois par chanson finie ; rien tant que personne n'a lancé la musique.
+  const ended = player.isEnded;
+  const endedSongRef = useRef(null);
+  useEffect(() => {
+    if (!ended) {
+      endedSongRef.current = null;
+      return;
+    }
+    const song = currentRef.current;
+    if (!song || endedSongRef.current === song) return;
+    endedSongRef.current = song;
+    if (!busyRef.current) startAnimation();
+    const nextSong = pickSong(songs, song);
+    if (nextSong) startSong(nextSong, false);
+  }, [ended, songs, startAnimation, startSong]);
 
   // Tap fait avant l'arrivée du catalogue : la musique part dès qu'il est là (hors du
   // geste — si le navigateur refuse le son, le bouton ▶ le relance).

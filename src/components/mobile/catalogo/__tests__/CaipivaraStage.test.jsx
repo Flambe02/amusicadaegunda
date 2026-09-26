@@ -193,7 +193,7 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(player.loadNow).not.toHaveBeenCalled();
   });
 
-  it('dances while the music plays with sound; back to the idle loop on pause or at the end', () => {
+  it('dances while the music plays with sound; back to the idle loop on pause', () => {
     const { container, rerender } = renderStage();
     fireEvent.click(caipivara());
     fireEvent.ended(visibleAnimation(container));
@@ -210,11 +210,59 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     rerenderWith({ isPlaying: false, isPaused: true, isSoundOn: false });
     expect(caipivara()).toHaveAttribute('data-stage', 'idle');
 
-    rerenderWith({ isPlaying: false, isPaused: false, isEnded: true, isSoundOn: false });
-    expect(caipivara()).toHaveAttribute('data-stage', 'idle');
     fireEvent.click(screen.getByRole('button', { name: 'Tocar' }));
     expect(player.play).toHaveBeenCalled();
     expect(player.unmute).toHaveBeenCalled();
+  });
+
+  it('at the end of a song, the Caipivara picks another one by itself (once per song)', () => {
+    const { container, rerender } = renderStage();
+    fireEvent.click(caipivara());
+    fireEvent.ended(visibleAnimation(container));
+    const first = songOfVideo(lastVideoId());
+    const rerenderWith = (state) => {
+      Object.assign(player, state);
+      rerender(<MemoryRouter><CaipivaraStage songs={SONGS} /></MemoryRouter>);
+    };
+    rerenderWith({ isPlaying: true, isMuted: false, isSoundOn: true });
+    expect(player.loadNow).not.toHaveBeenCalled();
+
+    rerenderWith({ isPlaying: false, isEnded: true, isSoundOn: false });
+    expect(player.loadNow).toHaveBeenCalledTimes(1);
+    const next = songOfVideo(player.loadNow.mock.calls[0][0]);
+    expect(next.id).not.toBe(first.id);
+    expect(screen.getByText(next.title)).toBeInTheDocument();
+    expect(visibleAnimation(container)).toBeTruthy();
+
+    // Même fin re-rendue : pas de second enchaînement.
+    rerenderWith({ isEnded: true });
+    expect(player.loadNow).toHaveBeenCalledTimes(1);
+  });
+
+  it('a song that ends before anyone started the music does not chain', () => {
+    const { rerender } = renderStage();
+    Object.assign(player, { isEnded: true });
+    rerender(<MemoryRouter><CaipivaraStage songs={SONGS} /></MemoryRouter>);
+    expect(player.loadNow).not.toHaveBeenCalled();
+  });
+
+  it('Ouvir layer: the feed player ending also chains to another song', () => {
+    const external = {
+      ...player, isSoundOn: true, isMuted: false, isPlaying: true,
+      loadNow: vi.fn(() => true), play: vi.fn(), unmute: vi.fn(),
+    };
+    const onSongChange = vi.fn();
+    const view = (p) => (
+      <MemoryRouter>
+        <CaipivaraStage songs={SONGS} player={p} initialSong={SONGS[0]} onSongChange={onSongChange} />
+      </MemoryRouter>
+    );
+    const { rerender } = render(view(external));
+    rerender(view({ ...external, isEnded: true, isPlaying: false, isSoundOn: false }));
+    expect(external.loadNow).toHaveBeenCalledTimes(1);
+    const next = songOfVideo(external.loadNow.mock.calls[0][0]);
+    expect(next.id).not.toBe(SONGS[0].id);
+    expect(onSongChange).toHaveBeenLastCalledWith(next);
   });
 
   it('gives the hand back if an animation never ends', () => {
