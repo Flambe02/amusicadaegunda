@@ -10,6 +10,11 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/images/caipivara-favicon-192.png" />
     <link rel="shortcut icon" type="image/png" href="/images/caipivara-favicon-32.png" />
 
+    <!-- Accueil mobile : la miniature du Short (i.ytimg.com) est l'image principale (LCP) ;
+         la connexion est ouverte dès le HTML, avant que le JavaScript ne la découvre. -->
+    <link rel="preconnect" href="https://i.ytimg.com" />
+    <link rel="dns-prefetch" href="https://i.ytimg.com" />
+
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple/apple-touch-icon-180x180.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple/apple-touch-icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple/apple-touch-icon-144x144.png" />
