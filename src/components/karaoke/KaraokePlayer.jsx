@@ -595,6 +595,7 @@ export default function KaraokePlayer({
   const tvTimeCurrentRef = useRef(null);
   const tvTimeTotalRef = useRef(null);
   const mProgressRef = useRef(null);
+  const mTrackRef = useRef(null); // curseur (role slider) : valeur lue par les lecteurs d'écran
   const mTimeCurRef = useRef(null);
   const mTimeTotalRef = useRef(null);
   const durationRef = useRef(0); // durée réelle (média) — pour le seek de la barre mobile
@@ -614,6 +615,10 @@ export default function KaraokePlayer({
         if (mProgressRef.current) mProgressRef.current.style.width = pct;
         if (mTimeCurRef.current) mTimeCurRef.current.textContent = formatTvTime(t);
         if (mTimeTotalRef.current) mTimeTotalRef.current.textContent = d > 0 ? formatTvTime(d) : '--:--';
+        if (mTrackRef.current) {
+          mTrackRef.current.setAttribute('aria-valuenow', String(d > 0 ? Math.round(Math.min(100, (t / d) * 100)) : 0));
+          mTrackRef.current.setAttribute('aria-valuetext', `${formatTvTime(t)} de ${d > 0 ? formatTvTime(d) : '--:--'}`);
+        }
       } catch { /* ignore */ }
     }, 250);
     return () => clearInterval(id);
@@ -1097,12 +1102,14 @@ export default function KaraokePlayer({
         <div className="km-progress">
           <span ref={mTimeCurRef} className="km-progress-time">0:00</span>
           <div
+            ref={mTrackRef}
             className="km-progress-track"
             role="slider"
             tabIndex={0}
             aria-label="Progresso da música"
             aria-valuemin={0}
             aria-valuemax={100}
+            aria-valuenow={0}
             onPointerDown={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               seekToFraction((e.clientX - rect.left) / rect.width);

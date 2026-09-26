@@ -116,6 +116,16 @@ describe('KaraokePlayer — écran de lecture mobile (étape 7)', () => {
     expect(seekCalls[seekCalls.length - 1]).toBeCloseTo(0.8, 5); // « Linha um » − 0,2 s
   });
 
+  it('the progress slider exposes its value to screen readers (axe: aria-required-attr)', async () => {
+    const user = userEvent.setup();
+    renderPlayer({ mobileShell: true });
+    await start(user);
+    const slider = screen.getByRole('slider', { name: 'Progresso da música' });
+    // t = 5 s sur 100 s, relevé toutes les 250 ms.
+    await waitFor(() => expect(slider).toHaveAttribute('aria-valuenow', '5'), { timeout: 2000 });
+    expect(slider).toHaveAttribute('aria-valuetext', '0:05 de 1:40');
+  });
+
   it('ignored in learningMode (the Aprender lesson keeps its own screen)', () => {
     renderPlayer({ mobileShell: true, learningMode: true, translationLanguage: 'fr' });
     expect(document.querySelector('.karaoke-overlay')).not.toHaveAttribute('data-karaoke-shell');

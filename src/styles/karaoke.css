@@ -984,3 +984,10 @@
   .km-m .karaoke-start-btn { animation: none; }
   .km-m .karaoke-countdown { animation: none; }
 }
+/* O Palco fica montado por baixo do leitor móvel : as suas animações (projetor,
+   equalizador, onda do micro, verso) param enquanto o leitor está aberto. */
+body:has(.karaoke-overlay.km-m) [data-palco] *,
+body:has(.karaoke-overlay.km-m) [data-palco] *::before,
+body:has(.karaoke-overlay.km-m) [data-palco] *::after {
+  animation-play-state: paused !important;
+}
