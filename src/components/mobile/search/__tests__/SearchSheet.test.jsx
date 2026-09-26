@@ -112,15 +112,18 @@ describe('SearchSheet (étape 10)', () => {
     expect(document.querySelector('[data-search-list]')).toHaveTextContent('Pix');
     field.focus();
     const results = document.querySelector('[data-search-results]');
-    fireEvent.touchStart(results, { touches: [{ clientY: 300 }] });
-    fireEvent.touchMove(results, { touches: [{ clientY: 260 }] });
+    // Gestes tactiles complets (clientX/clientY, touches et changedTouches) : la
+    // bibliothèque de verrouillage du défilement de vaul les lit.
+    const touch = (y) => [{ identifier: 1, clientX: 180, clientY: y, target: results }];
+    fireEvent.touchStart(results, { touches: touch(300), changedTouches: touch(300) });
+    fireEvent.touchMove(results, { touches: touch(260), changedTouches: touch(260) });
     expect(field).not.toHaveFocus();
   });
 
   it('no yellow focus ring on touch: the field is flagged when focused by a pointer', async () => {
     await renderOpen();
     const field = screen.getByRole('searchbox');
-    fireEvent.pointerDown(field);
+    fireEvent.pointerDown(field, { pointerId: 1, clientX: 180, clientY: 120 });
     act(() => field.focus());
     expect(field).toHaveAttribute('data-pointer-focus', 'true');
     expect(field.className).toContain('data-[pointer-focus=true]:focus-visible:!shadow-none');
