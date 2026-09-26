@@ -97,3 +97,9 @@ Renseigner l'empreinte SHA-256 de la clé de signature Play dans `assetlinks.jso
 - **Poids** : le lecteur YouTube et le Short qui démarre seul (≈ 1,4 Mo) expliquent l'essentiel de l'écart. C'est le choix produit du feed ; l'iframe arrive bien après le premier rendu, comme le veut la spec.
 - **LCP (miniature du Short)** : elle n'est découverte qu'après le JS et les données (≈ 5 s de délai de chargement, contre 2,5 s sur `main`). Piste : précharger la miniature `oar2` de la chanson de la semaine dans le HTML statique de l'accueil (`generate-stubs.cjs`, calculée au build).
 - **CLS de 0,32 sur l'accueil**, dans la plupart des mesures, jamais sur `main`. Attribué d'abord à la diapositive voisine hors champ (remise en page au chargement de la police Roboto), puis à `<body>` une fois la voisine cachée. Le masquage n'a rien changé et a été annulé. Non reproduit hors Lighthouse (Playwright, même profil Android, avec ou sans bridage). À analyser avec une trace Performance de Chrome.
+
+## 15. Restyle mobile du lecteur karaokê ouvert depuis la page d'une chanson
+
+**Constat (décision 5 validée, 2026-09-26).** Le style de l'étape 7 (prop `mobileShell` de `KaraokePlayer`) n'est appliqué qu'au lecteur ouvert depuis O Palco. Ouvert depuis `/musica/<slug>` sur mobile, le lecteur garde l'ancien style plein écran : titre néon, faisceaux violets, cinq boutons, barre du bas masquée.
+
+**Chantier.** Passer `mobileShell` depuis la copie mobile de la page chanson (`src/pages/Song.jsx`, seulement sous 768 px, jamais sur la copie desktop). Vérifier l'onglet actif de la barre du bas (la pastille Catálogo s'allume sur les pages chanson), l'absence de défilement à 375 × 667, et que le desktop reste identique.
