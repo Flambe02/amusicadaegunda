@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HelmetProvider } from 'react-helmet-async';
 import { MemoryRouter, useLocation } from 'react-router-dom';
@@ -210,5 +210,43 @@ describe('KaraokePage — lien direct ?musica= (bouton « Cantar » du feed mobi
     expect(await screen.findByText('Camarada Quer CPF')).toBeInTheDocument();
     expect(screen.queryByTestId('karaoke-player')).toBeNull();
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent(/^.karaoke$/));
+  });
+});
+
+describe('KaraokePage — le point de rupture 768 px est suivi en direct', () => {
+  it('crossing 768 px after mount switches the mobile copy to O Palco (and back), without a reload', async () => {
+    const previous = window.matchMedia;
+    let mobile = false;
+    let listeners = [];
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      get matches() { return query.includes('max-width: 767px') ? mobile : false; },
+      media: query,
+      addEventListener: (_type, fn) => listeners.push(fn),
+      removeEventListener: (_type, fn) => { listeners = listeners.filter((l) => l !== fn); },
+      addListener: vi.fn(), removeListener: vi.fn(),
+    }));
+    const cross = (next) => act(() => { mobile = next; listeners.forEach((fn) => fn()); });
+    try {
+      const { container } = render(
+        <HelmetProvider>
+          <MemoryRouter initialEntries={['/karaoke']}>
+            <ShellContext.Provider value="mobile">
+              <KaraokePage />
+            </ShellContext.Provider>
+          </MemoryRouter>
+        </HelmetProvider>,
+      );
+      // Monté en viewport desktop : le catalogue desktop.
+      expect(await screen.findByText('Camarada Quer CPF')).toBeInTheDocument();
+      expect(container.querySelector('[data-palco]')).toBeNull();
+      // La fenêtre passe sous 768 px : O Palco, sans remonter la page.
+      cross(true);
+      await waitFor(() => expect(container.querySelector('[data-palco]')).not.toBeNull());
+      // Et retour au-dessus de 768 px.
+      cross(false);
+      await waitFor(() => expect(container.querySelector('[data-palco]')).toBeNull());
+    } finally {
+      window.matchMedia = previous;
+    }
   });
 });
