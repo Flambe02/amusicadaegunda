@@ -17,7 +17,7 @@
   "maskableIconUrl": "https://www.amusicadasegunda.com/icons/pwa/icon-512x512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "C:\\Users\\flore\\OneDrive\\POIVRON_ROUGE\\PIM\\MusicaDa2nda\\android.keystore",
+    "path": "F:\\Projets\\MusicaDa2nda\\android.keystore",
     "alias": "android"
   },
   "appVersionName": "1",
