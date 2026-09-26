@@ -61,3 +61,9 @@ Chaque décision qui revenait normalement à Florent : la question, l'option cho
 - **Question** : la spec fixe les lignes chantées à 30 % et la suivante à 72 %, sans rien dire des lignes plus loin.
 - **Option choisie** : 40 % de blanc, soit entre les deux. Les deux lignes déjà chantées restent visibles à 30 %.
 - **Revenir en arrière** : `mShellColor` dans `KaraokePlayer.jsx`.
+
+## 9. Étape 12 — critère « Lighthouse mobile ≥ main » non tenu sur la performance
+
+- **Constat** : l'accessibilité est meilleure (100 contre 99), le SEO est égal (100), mais la performance est plus basse sur l'accueil (médiane ≈ 39 contre 49) et sur `/karaoke` (≈ 51 contre 58). Le CLS de l'accueil vaut 0,32 dans la plupart des mesures.
+- **Option choisie** : ne rien changer en profondeur cette nuit. L'écart vient surtout du feed vidéo, qui est le choix produit. Une tentative contre le CLS (voisines cachées au repos) n'a rien changé à la mesure : elle a été annulée, pour ne pas toucher au geste de glissement juste avant ton test. Détail et pistes : `TODO-apres-refonte.md` §14.
+- **Revenir en arrière** : sans objet (aucun changement conservé).

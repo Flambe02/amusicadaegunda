@@ -68,3 +68,30 @@ Renseigner l'empreinte SHA-256 de la clé de signature Play dans `assetlinks.jso
 - Ne jamais mettre en cache de paroles non publiées (`isKaraokePublished`, statut `published`).
 - Limites de stockage d'iOS pour les PWA (quota réduit, purge possible).
 - **Vérifier d'abord le service worker existant** (notifications push, mise à jour de l'app) pour ne pas le casser — voir aussi la panne du 2026-07-29 (le SW avortait les requêtes Supabase en vol).
+
+## 12. Restyle mobile de la page `/musica` (à faire, pas commencé)
+
+**Objectif.** Mettre la page `/musica` (le catalogue complet, atteint depuis le Menu « Catálogo — Todas as músicas, semana a semana ») au niveau des nouveaux écrans mobiles : fond Stage Black, un seul jaune par zone, vignettes 9:16 de la grille de recherche (`TileImage`), pas de défilement horizontal, cibles ≥ 44 px.
+
+**Garde-fous.** Sous 768 px seulement ; desktop identique à `feat/homepage-desktop`. La page est indexée : tout changement de contenu se fait aussi dans les stubs (`generate-stubs.cjs`), sans régression SEO.
+
+## 13. Bannière « Instalar no iPhone » au-dessus des contrôles
+
+**Constat (nuit du 2026-09-26).** Pour un nouveau visiteur sur iPhone, `InstallAppBanner.jsx` (fixe, 88 px au-dessus du bas, `z-[120]`) recouvre le bas des écrans mobiles — la barre de progression et les boutons du Catálogo par exemple — jusqu'à ce qu'on la ferme. Le lecteur karaokê mobile (`z-[150]`) passe au-dessus. Son texte parle encore de `beforeinstallprompt`, jargon technique.
+
+**Chantier.** La repositionner au-dessus de la barre du bas (`--app-nav-h`) sans masquer les contrôles, ou ne l'afficher que sur l'Início ; réécrire son texte en portugais simple.
+
+## 14. Accueil mobile : performance Lighthouse et décalage (CLS)
+
+**Constat (vérification finale, nuit du 2026-09-26).** Lighthouse mobile en local, builds de production, 3 mesures chacun :
+
+| Page | Build | Performance | Accessibilité | SEO |
+|---|---|---|---|---|
+| Accueil | HEAD | 38 à 49 | 100 | 100 |
+| Accueil | `main` | 45 à 59 | 99 | 100 |
+| `/karaoke` | HEAD | 48 à 59 | 100 | 100 |
+| `/karaoke` | `main` | 57 à 63 | 100 | 100 |
+
+- **Poids** : le lecteur YouTube et le Short qui démarre seul (≈ 1,4 Mo) expliquent l'essentiel de l'écart. C'est le choix produit du feed ; l'iframe arrive bien après le premier rendu, comme le veut la spec.
+- **LCP (miniature du Short)** : elle n'est découverte qu'après le JS et les données (≈ 5 s de délai de chargement, contre 2,5 s sur `main`). Piste : précharger la miniature `oar2` de la chanson de la semaine dans le HTML statique de l'accueil (`generate-stubs.cjs`, calculée au build).
+- **CLS de 0,32 sur l'accueil**, dans la plupart des mesures, jamais sur `main`. Attribué d'abord à la diapositive voisine hors champ (remise en page au chargement de la police Roboto), puis à `<body>` une fois la voisine cachée. Le masquage n'a rien changé et a été annulé. Non reproduit hors Lighthouse (Playwright, même profil Android, avec ou sans bridage). À analyser avec une trace Performance de Chrome.
