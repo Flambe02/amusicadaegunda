@@ -101,9 +101,27 @@ detectStorageMode().then(() => {
         devLog(`🎯 Mode de stockage final: ${currentStorageMode === 'supabase' ? 'Supabase ☁️' : 'localStorage 💾'}`);
 });
 
+// Requêtes identiques EN COURS partagées (aucun cache après la réponse, donc jamais
+// de données périmées) : Layout rend chaque page deux fois (coquilles mobile et
+// desktop), et l'accueil téléchargeait deux fois la liste des chansons (2 × ≈ 210 Ko).
+const inFlight = new Map();
+function shareInFlight(key, load) {
+  if (!inFlight.has(key)) {
+    const promise = load().finally(() => inFlight.delete(key));
+    inFlight.set(key, promise);
+  }
+  // Chaque appelant reçoit son propre tableau (un tri sur place ne touche pas l'autre).
+  return inFlight.get(key).then((result) => (Array.isArray(result) ? result.slice() : result));
+}
+
 // ===== ENTITÉS AVEC FALLBACK AUTOMATIQUE =====
 export const Song = {
-  list: async (orderBy = '-release_date', limit = null) => {
+  list: (orderBy = '-release_date', limit = null) =>
+    shareInFlight(`list:${orderBy}:${limit}`, () => listSongs(orderBy, limit)),
+
+  getCurrent: () => shareInFlight('getCurrent', getCurrentSong),
+
+  _listUncached: async (orderBy = '-release_date', limit = null) => {
     const numericLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : null;
     try {
       // Forcer l'utilisation de Supabase
@@ -149,7 +167,7 @@ export const Song = {
     }
   },
 
-  getCurrent: async () => {
+  _getCurrentUncached: async () => {
     try {
       // Forcer l'utilisation de Supabase si disponible
       if (useSupabase) {
@@ -377,3 +395,11 @@ export const getCurrentStorageMode = () => currentStorageMode;
 export const isSupabaseAvailable = () => {
   return useSupabase;
 };
+
+// Implémentations réelles, derrière le partage des requêtes en cours.
+function listSongs(orderBy, limit) {
+  return Song._listUncached(orderBy, limit);
+}
+function getCurrentSong() {
+  return Song._getCurrentUncached();
+}
