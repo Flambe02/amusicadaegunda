@@ -1,9 +1,23 @@
 --- a/android/app/src/main/java/com/amusicadasegunda/app/MainActivity.java
 +++ b/android/app/src/main/java/com/amusicadasegunda/app/MainActivity.java
-@@ -16,6 +16,19 @@
+@@ -2,6 +2,7 @@
+ 
+ import android.app.UiModeManager;
+ import android.content.Context;
++import android.content.pm.ActivityInfo;
+ import android.content.pm.PackageManager;
+ import android.content.res.Configuration;
+ import android.os.Bundle;
+@@ -16,6 +17,25 @@
      public void onCreate(Bundle savedInstanceState) {
          super.onCreate(savedInstanceState);
  
++        // ── Téléphones : portrait uniquement (jamais d'affichage horizontal) ──────
++        // La TV reste en paysage.
++        if (!isTelevision()) {
++            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
++        }
++
 +        // ── Son sans geste préalable (téléphones Android seulement) ───────────────
 +        // La chanson de la semaine démarre directement avec le son dans l'app : la
 +        // WebView n'exige plus de geste pour lire un média avec le son (iframe YouTube
