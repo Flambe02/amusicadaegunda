@@ -39,10 +39,10 @@ const railLabels = (container) =>
   [...container.querySelectorAll('[data-rail] > a, [data-rail] > button')].map((el) => el.getAttribute('aria-label'));
 
 describe('Colonne droite — Som et História', () => {
-  it('orders the rail: Som (sound on), Letra, História, Cantar, Compartilhar', () => {
+  it('orders the rail: Letra, História, Cantar, Compartilhar — Som is no longer in it (top right)', () => {
     const { container } = renderOverlay();
+    expect(screen.getByRole('button', { name: 'Silenciar' }).closest('[data-rail]')).toBeNull();
     expect(railLabels(container)).toEqual([
-      'Silenciar',
       'Ver a letra de Tá Chovendo de Novo',
       'Ler a história de Tá Chovendo de Novo',
       'Cantar Tá Chovendo de Novo no karaokê',
@@ -53,7 +53,7 @@ describe('Colonne droite — Som et História', () => {
   it('TikTok style: filled 32 px icons straight on the video (no dark disc), 12 px semibold labels, ≥ 44 px targets', () => {
     const { container } = renderOverlay();
     const items = container.querySelectorAll('[data-rail] > a, [data-rail] > button');
-    expect(items).toHaveLength(5);
+    expect(items).toHaveLength(4);
     for (const item of items) {
       expect(item.className).toMatch(/min-h-\[44px\]/);
       expect(item.className).toMatch(/min-w-\[56px\]/);
@@ -68,10 +68,11 @@ describe('Colonne droite — Som et História', () => {
     expect(container.querySelector('[data-rail] [class*="bg-black"], [data-rail] [class*="rounded-full"]')).toBeNull();
   });
 
-  it('shows the Som icon only once the sound is on', () => {
+  it('sound off: no « Silenciar »; the crossed-out speaker (Ativar o som) sits top right, outside the rail', () => {
     const { container } = renderOverlay({ player: muted });
     expect(railLabels(container)[0]).toBe('Ver a letra de Tá Chovendo de Novo');
-    expect(screen.queryByRole('button', { name: /silenciar|ativar som/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Silenciar' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Ativar o som' }).closest('[data-rail]')).toBeNull();
   });
 
   it('never shows an empty História button: no description (or only spaces) → no button', () => {
