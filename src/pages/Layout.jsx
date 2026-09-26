@@ -241,7 +241,7 @@ export default function Layout({ children }) {
       label: 'Menu',
       icon: MenuLines,
       activeIcon: MenuFilled,
-      // Menu simplifié (étape 11) : Festa na TV, Sobre, Newsletter, plateformes.
+      // Menu simplifié (étape 11) : Catálogo, Festa na TV, Sobre, plateformes.
       sheet: MenuSheet,
     },
   ];

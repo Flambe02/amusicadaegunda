@@ -69,9 +69,9 @@ Fichiers fournis par Florent, à placer puis à traiter comme à l'étape 1 (san
 ## D. Menu simplifié
 
 - En tête : avatar Caipivara, « A Música da Segunda », « Nova música toda segunda-feira ».
-- Lignes (*révisé le 2026-09-25*) : **Festa na TV** (`/festa`, remplace « App para TV »), **Sobre o projeto**, **Newsletter** (Buttondown `amusicadasegunda`, `ButtondownSignupForm` dans un petit panneau), puis les plateformes.
-- Plus de lignes Início, Todas as músicas, Roda, Pesquisa, Blog, Aprender Beta ni App para TV. **Blog et Aprender** restent accessibles par leur URL et depuis **Sobre** (deux liens discrets ajoutés en bas de la page Sobre mobile). « Todas as músicas » : depuis le panneau de recherche (« Ver todas as músicas »).
-- Même style que le reste de l'app : panneau qui monte du bas (#111217, coins 26 px, poignée, pas de voile), icônes pleines blanches façon TikTok, pas de jaune sauf l'action principale (le bouton d'inscription de la Newsletter).
+- Lignes (*version finale du 2026-09-25*) : **Catálogo** (`/catalogo`), **Festa na TV** (`/festa`, remplace « App para TV »), **Sobre o projeto**, puis les plateformes. **Pas de Newsletter** (ligne et panneau retirés ; le formulaire Buttondown reste celui de `/apprendre`, inchangé).
+- Plus de lignes Início, Todas as músicas, Roda, Pesquisa, Blog, Aprender Beta, App para TV ni Newsletter. **Blog et Aprender** restent accessibles par leur URL et depuis **Sobre** (deux liens discrets ajoutés en bas de la page Sobre mobile). « Todas as músicas » : depuis le panneau de recherche (« Ver todas as músicas »).
+- Même style que le reste de l'app : panneau qui monte du bas (#111217, coins 26 px, poignée, pas de voile), icônes pleines blanches façon TikTok, aucun jaune.
 - Plateformes d'écoute en pastilles neutres (pas de couleur de marque hors de leur propre lien).
 - Aucun témoignage, chiffre d'audience ou presse.
 
@@ -86,7 +86,7 @@ Elles précisent les sections ci-dessus et prévalent sur elles en cas de doute.
 3. **« Ouvir »** (devenu « Ver o clipe » avec la refonte audio) : navigation vers `/?musica=<slug>`. Le feed s'ouvre positionné sur cette chanson (le glissement reste possible dans les deux sens), son coupé (bouton lecture central, H.10), puis le paramètre est retiré de l'URL.
 4. **Un seul halo** : celui qui est déjà dans les vidéos (projecteur et lueur au sol), bords fondus par le masque radial. Pas de halo CSS ajouté. En mouvement réduit, image fixe = poster du clip `caipivara-idle`.
 5. **Recherche** : sur le titre, les paroles et `subtitle`. `subtitle` sert à la recherche mais n'est jamais affiché (pas de manchete tant qu'aucune colonne dédiée n'existe).
-6. **Menu** : « Festa na TV » → `/festa`. « Newsletter » → le composant existant `ButtondownSignupForm`, dans un petit panneau qui s'ouvre depuis la ligne.
+6. **Menu** : « Festa na TV » → `/festa`. ~~« Newsletter » dans un petit panneau~~ — *retirée du Menu le 2026-09-25 (voir D).*
 
 ---
 

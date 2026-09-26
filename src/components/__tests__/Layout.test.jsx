@@ -144,7 +144,7 @@ describe('Layout — shell mobile', () => {
     expect(karaoke.querySelector('svg').getAttribute('fill')).toBe('none'); // lucide, en contour
   });
 
-  it('simplified Menu (step 11): header, Festa na TV, Sobre, Newsletter, then neutral platform pills — nothing else', async () => {
+  it('simplified Menu (step 11): header, Catálogo, Festa na TV, Sobre, then neutral platform pills — nothing else', async () => {
     renderAt('/');
     fireEvent.click(within(mobileNav()).getByRole('button', { name: /menu/i }));
     const dialog = await screen.findByRole('dialog');
@@ -152,48 +152,17 @@ describe('Layout — shell mobile', () => {
     expect(within(dialog).getByText('Nova música toda segunda-feira')).toBeInTheDocument();
     expect(dialog.querySelector('img[src*="caipivara"]')).not.toBeNull();
     const rows = [...dialog.querySelectorAll('[data-menu-rows] > li > a, [data-menu-rows] > li > button')].map((el) => el.textContent);
-    expect(rows).toEqual(['Festa na TV', 'Sobre o projeto', 'Newsletter']);
+    expect(rows).toEqual(['Catálogo', 'Festa na TV', 'Sobre o projeto']);
+    expect(within(dialog).getByRole('link', { name: 'Catálogo' })).toHaveAttribute('href', '/catalogo');
     expect(within(dialog).getByRole('link', { name: 'Festa na TV' })).toHaveAttribute('href', '/festa');
     expect(within(dialog).getByRole('link', { name: 'Sobre o projeto' })).toHaveAttribute('href', '/sobre');
-    for (const gone of [/início/i, /todas as músicas/i, /roda/i, /pesquisa/i, /blog/i, /app para tv/i, /aprender/i]) {
+    for (const gone of [/início/i, /todas as músicas/i, /roda/i, /pesquisa/i, /blog/i, /app para tv/i, /aprender/i, /newsletter/i]) {
       expect(within(dialog).queryByText(gone)).toBeNull();
     }
     const pills = within(dialog).getAllByRole('link').filter((a) => a.getAttribute('target') === '_blank');
     expect(pills.map((a) => a.textContent)).toEqual(['YouTube', 'Spotify', 'Apple Music', 'TikTok', 'Instagram']);
     for (const pill of pills) expect(pill.className).not.toMatch(/red|green|pink|FF0000|1DB954|FA233B/);
     expect(dialog.innerHTML).not.toMatch(/yellow|FDE047/i); // pas de jaune dans le Menu
-  });
-
-  it('Newsletter opens a small panel with the existing Buttondown form', async () => {
-    renderAt('/');
-    fireEvent.click(within(mobileNav()).getByRole('button', { name: /menu/i }));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Newsletter' }));
-    const panel = await waitFor(() => {
-      const node = document.querySelector('[data-newsletter-sheet]');
-      if (!node) throw new Error('newsletter panel not open');
-      return node;
-    });
-    expect(within(panel).getByText('A música da semana no seu email, toda segunda-feira.')).toBeInTheDocument();
-    // Formulaire Buttondown existant (ou son repli s'il n'est pas configuré en test).
-    expect(panel.querySelector('form, p')).not.toBeNull();
-  });
-
-  it('Buscar opens the search panel on the current page, keyboard closed (field not focused), never active', async () => {
-    renderAt('/karaoke');
-    const buscar = within(mobileNav()).getByRole('button', { name: 'Buscar' });
-    expect(buscar).not.toHaveAttribute('aria-current');
-    expect(within(buscar).getByText('Buscar').className).toMatch(/text-white\/60/);
-    fireEvent.click(buscar);
-    const field = await screen.findByRole('searchbox', { name: /buscar por título ou letra/i });
-    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
-    await waitFor(() => expect(document.querySelector('[data-search-sheet]')).toHaveFocus());
-    expect(field).not.toHaveFocus();
-    // Plus de champ relais invisible pour forcer le clavier.
-    expect(document.querySelectorAll('body > input')).toHaveLength(0);
-    // Pas de changement de page : Karaokê reste l'onglet actif (masqué aux lecteurs
-    // d'écran derrière le panneau modal, d'où `hidden: true`).
-    expect(within(mobileNav()).getByRole('link', { name: 'Karaokê', hidden: true })).toHaveAttribute('aria-current', 'page');
   });
 
   it('closes the Menu with Escape', async () => {

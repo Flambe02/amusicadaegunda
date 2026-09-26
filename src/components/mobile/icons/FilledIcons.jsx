@@ -130,14 +130,11 @@ export function InfoFilled(props) {
   );
 }
 
-/** Menu — Newsletter : enveloppe pleine, rabat évidé. */
-export function MailFilled(props) {
+/** Menu — Catálogo : trois vignettes 9:16 côte à côte (la grille du catalogue). */
+export function CatalogFilled(props) {
   return (
     <FilledIcon {...props}>
-      <path
-        fillRule="evenodd"
-        d="M4.5 4.5h15A2.5 2.5 0 0 1 22 7v10a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 17V7a2.5 2.5 0 0 1 2.5-2.5Zm.9 2.6a.9.9 0 0 0-.5 1.6l6.5 4.6c.4.3.9.3 1.2 0l6.5-4.6a.9.9 0 1 0-1-1.5L12 11.4 6.1 7.2a.9.9 0 0 0-.7-.1Z"
-      />
+      <path d="M3.8 4h3.4A1.8 1.8 0 0 1 9 5.8v12.4A1.8 1.8 0 0 1 7.2 20H3.8A1.8 1.8 0 0 1 2 18.2V5.8A1.8 1.8 0 0 1 3.8 4Zm6.5 0h3.4a1.8 1.8 0 0 1 1.8 1.8v12.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8V5.8A1.8 1.8 0 0 1 10.3 4Zm6.5 0h3.4A1.8 1.8 0 0 1 22 5.8v12.4a1.8 1.8 0 0 1-1.8 1.8h-3.4a1.8 1.8 0 0 1-1.8-1.8V5.8A1.8 1.8 0 0 1 16.8 4Z" />
     </FilledIcon>
   );
 }

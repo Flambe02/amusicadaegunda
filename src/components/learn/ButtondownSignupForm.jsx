@@ -17,11 +17,7 @@ import { BUTTONDOWN_CONFIGURED, BUTTONDOWN_CONFIRMATION_URL, BUTTONDOWN_FORM_ACT
  * contrôle), un message de confirmation INLINE s'affiche immédiatement ici — c'est lui
  * que §6.5 vise par « soumission en arrière-plan avec message de confirmation inline ».
  */
-/**
- * `submitLabel` / `inputId` : réutilisation hors d'Aprender (Newsletter du Menu mobile) ;
- * les valeurs par défaut sont celles de /apprendre, inchangées.
- */
-export default function ButtondownSignupForm({ submitLabel = 'Quero entrar na beta', inputId = 'apprender-email' } = {}) {
+export default function ButtondownSignupForm() {
   const [submitted, setSubmitted] = useState(false);
 
   if (!BUTTONDOWN_CONFIGURED) {
@@ -47,11 +43,11 @@ export default function ButtondownSignupForm({ submitLabel = 'Quero entrar na be
         }}
         className="flex flex-col gap-2.5 sm:flex-row"
       >
-        <label htmlFor={inputId} className="sr-only">Endereço de email</label>
+        <label htmlFor="apprender-email" className="sr-only">Endereço de email</label>
         <div className="relative flex-1">
           <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" aria-hidden="true" />
           <input
-            id={inputId}
+            id="apprender-email"
             type="email"
             name="email"
             required
@@ -65,7 +61,7 @@ export default function ButtondownSignupForm({ submitLabel = 'Quero entrar na be
           type="submit"
           className="h-12 shrink-0 rounded-full bg-[#FDE047] px-6 text-sm font-black text-black transition hover:brightness-95 active:scale-[0.98]"
         >
-          {submitLabel}
+          Quero entrar na beta
         </button>
       </form>
 
