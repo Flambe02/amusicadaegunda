@@ -565,11 +565,17 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
   it('the video shows ~0.3 s after playback starts, on first load and after a swipe', async () => {
     const { container } = await renderLoaded();
     expect(REVEAL_DELAY_MS).toBe(300);
+    // Conteneur de l'iframe : caché (visibility + opacité) jusqu'au fondu — sinon le
+    // passage 16:9 → vertical du lecteur YouTube compte comme décalage (CLS).
+    const videoWrap = () => stage(container).querySelector('iframe').parentElement.parentElement;
     act(() => { players[0].ready(); players[0].play(); });
     act(() => { vi.advanceTimersByTime(REVEAL_DELAY_MS - 100); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading'); // miniature encore
+    expect(videoWrap().className).toContain('invisible');
     act(() => { vi.advanceTimersByTime(110); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
+    expect(videoWrap().className).not.toContain('invisible');
+    expect(videoWrap().className).toContain('opacity-100');
     swipe(container, -300);
     act(() => { players[0].play(); vi.advanceTimersByTime(REVEAL_DELAY_MS - 100); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading');

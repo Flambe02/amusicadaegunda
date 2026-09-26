@@ -431,13 +431,16 @@ export default function MobileFeed({
 
           {/* Vidéo : iframe 9:16 en « cover » (× SHORTS_UI_ZOOM, 1,0 aujourd'hui), pour
               l'interface YouTube du champ. Masquée sans transition au changement de
-              chanson, fondu seulement à l'apparition. */}
+              chanson, fondu seulement à l'apparition. Avant le fondu, un Short est aussi
+              `visibility: hidden` : au chargement, YouTube passe sa zone vidéo de 16:9 au
+              vertical, et Chrome comptait ce décalage (CLS 0,32) même à opacité 0. Le mode
+              audio (chanson sans Short) garde l'opacité seule. */}
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${
               videoVisible
                 ? 'opacity-100 transition-opacity duration-500 ease-out motion-reduce:transition-none'
-                : 'opacity-0'
+                : slideMode === 'video' ? 'invisible opacity-0' : 'opacity-0'
             }`}
           >
             <div
