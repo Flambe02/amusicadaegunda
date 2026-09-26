@@ -277,3 +277,20 @@
     display: none;
   }
 }
+
+/* PWA installée sur téléphone (iOS, barre d'état translucide) : 100svh y est plus court
+   que l'écran (de la hauteur de la barre d'état), ce qui laissait une bande vide sous
+   la barre de navigation. En mode standalone, #root couvre tout l'écran ; la coquille
+   mobile le suit (h-full). Dans le navigateur, rien ne change. */
+@media (max-width: 767px) and (display-mode: standalone) {
+  html,
+  body {
+    background: #000;
+  }
+  #root {
+    position: fixed;
+    inset: 0;
+    height: auto;
+    min-height: 0;
+  }
+}

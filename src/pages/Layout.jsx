@@ -195,7 +195,7 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <div className="md:hidden relative flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
+      <div className="md:hidden relative flex min-h-0 flex-col h-full overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
         {/* En-tête mobile. Início : transparent, posé PAR-DESSUS le contenu (le feed passe
