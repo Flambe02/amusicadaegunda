@@ -36,60 +36,6 @@ function getNextMondayMs() {
   return Math.max(target.getTime() - now.getTime(), 0);
 }
 
-/**
- * Nombres en toutes lettres. Le modèle HTML écrit « em um dia e quatro horas »,
- * pas « 1d 04h 25m » : le décompte du pied de page se lit comme une promesse
- * éditoriale, pas comme une minuterie brute (spec §10).
- * Deux listes car le portugais accorde : « um dia » mais « uma hora ».
- */
-const NOMBRES_MASC = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete'];
-const NOMBRES_FEM = [
-  'zero', 'uma', 'duas', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove',
-  'dez', 'onze', 'doze', 'treze', 'catorze', 'quinze', 'dezesseis', 'dezessete',
-  'dezoito', 'dezenove', 'vinte', 'vinte e uma', 'vinte e duas', 'vinte e três',
-];
-
-function enToutesLettres(valeur, liste) {
-  return liste[valeur] || String(valeur);
-}
-
-/** Décompte éditorial du pied de page desktop (>= 1024 px). */
-function FooterCountdown() {
-  const [ms, setMs] = useState(() => getNextMondayMs());
-
-  useEffect(() => {
-    // Une minute suffit : le libellé ne descend pas sous l'heure sauf tout à la fin.
-    const t = setInterval(() => setMs(getNextMondayMs()), 60000);
-    return () => clearInterval(t);
-  }, []);
-
-  // Spec §10 : jamais de valeur négative, jamais « 0d 00h 00m ». Passé l'échéance,
-  // le décompte disparaît au lieu d'annoncer un retard.
-  if (ms <= 0) return null;
-
-  const totalHeures = Math.floor(ms / 3600000);
-  const jours = Math.floor(totalHeures / 24);
-  const heures = totalHeures % 24;
-
-  const morceaux = [];
-  if (jours > 0) {
-    morceaux.push(`${enToutesLettres(jours, NOMBRES_MASC)} ${jours > 1 ? 'dias' : 'dia'}`);
-  }
-  if (heures > 0) {
-    morceaux.push(`${enToutesLettres(heures, NOMBRES_FEM)} ${heures > 1 ? 'horas' : 'hora'}`);
-  }
-  if (morceaux.length === 0) {
-    const minutes = Math.max(Math.floor(ms / 60000), 1);
-    morceaux.push(`${enToutesLettres(minutes, NOMBRES_FEM)} ${minutes > 1 ? 'minutos' : 'minuto'}`);
-  }
-
-  return (
-    <span className="text-[12px] text-white/50">
-      Próxima notícia em música: segunda, em {morceaux.join(' e ')}
-    </span>
-  );
-}
-
 function SidebarCountdown() {
   const [ms, setMs] = useState(() => getNextMondayMs());
 
@@ -195,31 +141,6 @@ export default function Layout({ children }) {
     if (page.name === 'Catálogo' && (location.pathname === '/musica' || location.pathname.startsWith('/musica/'))) return true;
     return location.pathname === page.url;
   };
-
-  // Barre horizontale desktop (>= 1024 px), cf. addendum §3. Volontairement plus
-  // courte que `pages` : « Catálogo » fusionne dans « Músicas », et Blog / TV /
-  // Aprender descendent en pied de page. Aucune route n'est supprimée.
-  // `pages` reste la source de la sidebar, conservée entre 768 et 1023 px.
-  const topBarPages = [
-    { name: 'Início', url: '/', match: (p) => p === '/' },
-    { name: 'Músicas', url: '/musica', match: (p) => p === '/musica' || p.startsWith('/musica/') },
-    { name: 'Karaokê', url: '/karaoke', match: (p) => p === '/karaoke' },
-    { name: 'Roda', url: '/roda', match: (p) => p === '/roda' },
-    { name: 'Sobre', url: '/sobre', match: (p) => p === '/sobre' },
-  ];
-
-  // Pied de page desktop. Reprend la ligne du modèle HTML, augmentée de « Blog » et
-  // « App para TV » que l'addendum §3 y fait descendre depuis la navigation.
-  // Routes inchangées ; « Contato » vise le mail déjà utilisé sur /sobre, faute de
-  // route dédiée — pas de lien mort.
-  const footerLinks = [
-    { name: 'Blog', url: '/blog' },
-    { name: 'App para TV', url: '/tv' },
-    { name: `Arquivo ${new Date().getFullYear()}`, url: `/arquivo/${new Date().getFullYear()}` },
-    { name: 'Guia da paródia', url: '/guia' },
-    { name: 'Apprendre le portugais', url: '/apprendre' },
-    { name: 'Contato', url: 'mailto:contact@amusicadasegunda.com', external: true },
-  ];
 
   // Panneau de recherche mobile, ouvert par « Buscar » — sans focus sur le champ :
   // le clavier ne s'ouvre que si l'utilisateur touche le champ (test iPhone).
@@ -341,11 +262,8 @@ export default function Layout({ children }) {
       <div className="hidden md:block min-h-screen text-white">
         <a href="#main-desktop" className="skip-link">Ir para o conteudo</a>
 
-        {/* Sidebar verticale — conservée telle quelle entre 768 et 1023 px. Le spec
-            §11 borne la refonte à >= 1024 px et verrouille tout ce qui est en dessous,
-            or la coquille desktop démarre à 768 px : cette bande garde donc l'ancienne
-            navigation, la barre horizontale prend le relais à partir de `lg`. */}
-        <aside className="hidden md:flex lg:hidden fixed inset-y-0 left-0 z-40 w-[260px] p-4">
+        {/* Desktop sidebar shell */}
+        <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[260px] p-4">
           <div className="glass-panel desktop-shell-gradient relative flex h-full w-full flex-col overflow-hidden rounded-[30px] px-5 py-6">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.2),_transparent_65%)]" />
 
@@ -423,112 +341,15 @@ export default function Layout({ children }) {
           </div>
         </aside>
 
-        {/* Barre de navigation horizontale (>= 1024 px). Aucun bouton à fond plein :
-            le jaune plein reste réservé aux deux actions de la page (cf. addendum §3). */}
-        <header className="fixed inset-x-0 top-0 z-40 hidden border-b border-white/8 bg-black/80 backdrop-blur-xl lg:block">
-          <div className="mx-auto flex h-[72px] max-w-[1440px] items-center gap-8 px-8">
-            <Link to="/" className="flex flex-shrink-0 items-center gap-3" aria-label="A Música da Segunda, página inicial">
-              <span className="h-11 w-11 overflow-hidden rounded-xl border border-white/10 bg-white/10">
-                <img
-                  src={BRAND_SQUARE_MEDIUM}
-                  alt=""
-                  aria-hidden="true"
-                  className="h-full w-full object-cover"
-                  loading="eager"
-                  decoding="async"
-                  width="44"
-                  height="44"
-                />
-              </span>
-              <span className="text-[15px] font-bold leading-[1.15] text-white">
-                A Música
-                <br />
-                da Segunda
-              </span>
-            </Link>
-
-            <nav className="flex flex-1 items-center justify-center gap-8" aria-label="Navegação principal">
-              {topBarPages.map((page) => {
-                const active = page.match(location.pathname);
-
-                return (
-                  <Link
-                    key={page.name}
-                    to={page.url}
-                    aria-current={active ? 'page' : undefined}
-                    className={`relative py-2 text-[15px] transition-colors ${
-                      active
-                        ? 'font-semibold text-[#FDE047] after:absolute after:inset-x-0 after:-bottom-0.5 after:h-[2px] after:rounded-full after:bg-[#FDE047] after:content-[""]'
-                        : 'text-white/70 hover:text-white'
-                    }`}
-                  >
-                    {page.name}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <Link
-              to="/search"
-              aria-label="Pesquisar músicas"
-              aria-current={location.pathname === '/search' ? 'page' : undefined}
-              className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 transition-colors ${
-                location.pathname === '/search'
-                  ? 'bg-white/10 text-[#FDE047]'
-                  : 'bg-white/[0.04] text-white/70 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              <Search className="h-[18px] w-[18px]" aria-hidden="true" />
-            </Link>
-          </div>
-        </header>
-
         {/* Desktop content area */}
-        <div className="relative min-h-screen md:ml-[260px] lg:ml-0 lg:pt-[72px]">
+        <div className="relative min-h-screen md:ml-[260px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(253,224,71,0.08),_transparent_18%),radial-gradient(circle_at_85%_10%,_rgba(255,255,255,0.06),_transparent_20%)]" />
 
-          {/* `lg:pb-10` : le pied de page plat vient se coller au contenu comme dans le
-              modèle. Le `pb-32` d'origine reste pour la bande 768-1023 px. */}
-          <main id="main-desktop" className="relative z-10 min-h-screen px-6 pb-32 pt-4 lg:pb-10 xl:px-8 2xl:px-10">
+          <main id="main-desktop" className="relative z-10 min-h-screen px-6 pb-32 pt-4 xl:px-8 2xl:px-10">
             <ShellContext.Provider value="desktop">{children}</ShellContext.Provider>
           </main>
 
-          {/* Pied de page plat (>= 1024 px), calqué sur le modèle HTML : deux rangées
-              séparées par un filet, bord à bord, sans arrondi ni panneau flottant. */}
-          <footer className="relative z-10 hidden lg:block">
-            <div className="flex items-center justify-between gap-6 border-t border-white/8 px-6 py-4 xl:px-8 2xl:px-10">
-              <span className="text-[12px] text-white/50">
-                <span className="text-[#FDE047]" aria-hidden="true">—</span> Notícia. Humor. Música.
-              </span>
-
-              <FooterCountdown />
-            </div>
-
-            <div className="border-t border-white/6 px-6 pb-6 pt-3 xl:px-8 2xl:px-10">
-              <nav
-                className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/35"
-                aria-label="Mais do projeto"
-              >
-                {footerLinks.map((link, index) => (
-                  <span key={link.url} className="flex items-center gap-2">
-                    {index > 0 ? <span aria-hidden="true">·</span> : null}
-                    {link.external ? (
-                      <a href={link.url} className="transition-colors hover:text-white/70">
-                        {link.name}
-                      </a>
-                    ) : (
-                      <Link to={link.url} className="transition-colors hover:text-white/70">
-                        {link.name}
-                      </Link>
-                    )}
-                  </span>
-                ))}
-              </nav>
-            </div>
-          </footer>
-
-          {/* Pied de page d'origine, conservé tel quel pour la bande 768-1023 px. */}
-          <footer className="relative z-10 px-6 pb-6 lg:hidden xl:px-8 2xl:px-10">
+          <footer className="relative z-10 px-6 pb-6 xl:px-8 2xl:px-10">
             <div className="glass-panel rounded-[28px] px-6 py-4">
               <p className="text-center text-[11px] uppercase tracking-[0.24em] text-white/38">
                 (c) 2026 A Musica da Segunda. The Pimentao Rouge Project.
