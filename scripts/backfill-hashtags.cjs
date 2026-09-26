@@ -16,8 +16,8 @@ const DRY_RUN      = process.argv.includes('--dry-run');
 const OVERWRITE_ALL = process.argv.includes('--all');
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY
-  || process.env.SUPABASE_SERVICE_KEY
+// Service key: never under a VITE_ prefix (Vite would ship it in the public bundle).
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY
   || process.env.VITE_SUPABASE_ANON_KEY
   || process.env.SUPABASE_ANON_KEY;
 
