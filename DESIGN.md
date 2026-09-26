@@ -285,6 +285,9 @@ The components are tactile and confident, with a pill for every action, glass fo
 - **Tablet sidebar:** a 260px glass panel with a 30px radius and a yellow radial glow at the top. The brand block at the top combines the Caipivara avatar with an eyebrow and the name. Nav items are 22px-radius rows with 40px icon wells and a status dot that turns yellow when active.
 - **Desktop top bar:** 72px tall at 80% black with `backdrop-blur-xl`. On the left is the logo (a 44px, 12px-radius square) with the name at 15px/700. The centred nav has 15px links, and a 40px circular search button sits on the right.
 
+### Feed song without a Short
+When a song has no Short, the feed slide shows the Caipivara scene on Stage Black instead of a video: the idle loop, crossfading in 150ms to the dance loop only while the full track (the same hidden player) actually plays with sound; the clips carry their own spotlight and floor glow, edges blended by a radial mask; reduced motion shows the still idle poster. Title, month ribbon, rail (without Ouvir), progress bar and the play cue work as for a video. Without any YouTube link, the Caipivara stays at rest with Letra and História.
+
 ### « Gire o celular » (phones in landscape)
 A phone held in landscape in the browser (coarse pointer, landscape, height ≤ 500px) gets a full-screen cover above everything (z 400): pure black, the still 3D Caipivara (up to 160px, never a video loop) and « Gire o celular » in 24px 900 white. The playing video or song pauses and resumes back in portrait. Tablets and desktop never see it; the Android app and the PWA are locked to portrait.
 

@@ -372,17 +372,56 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(screen.getByRole('button', { name: 'Ativar o som' })).toBeInTheDocument();
   });
 
-  it('stops the same player (no second one) on a song without a Short, and resumes it after', async () => {
+  it('song without a Short but with a youtube_url: the SAME hidden player plays the full track, the Caipivara scene shows', async () => {
     const { container } = await renderLoaded();
-    act(() => { players[0].ready(); players[0].play(); });
+    const player = players[0];
+    act(() => { player.ready(); player.play(); });
     swipe(container, -300);
-    swipe(container, -300); // OLDEST : pas de Short
-    expect(stage(container)).toHaveAttribute('data-feed-phase', 'none');
-    expect(players[0].calls).toContain('stopVideo');
-    expect(screen.queryByRole('button', { name: /ouvir com som|silenciar/i })).toBeNull();
+    swipe(container, -300); // OLDEST : pas de Short, youtube_url présent
+    expect(players).toHaveLength(1);
+    expect(container.querySelectorAll('iframe')).toHaveLength(1);
+    expect(player.calls).toContain('loadVideoById:ZZZZZZZZZZZ'); // la chanson complète
+    const scene = container.querySelector('[data-feed-scene="audio"]');
+    expect(scene).not.toBeNull();
+    expect(scene.querySelector('[data-caipivara-loop]')).toHaveAttribute('data-caipivara-loop', 'idle');
+    // L'iframe reste cachée (audio seul), même une fois la lecture lancée.
+    act(() => { player.play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 50); });
+    expect(stage(container).querySelector('[aria-hidden="true"].opacity-0 iframe, .opacity-0 > div > iframe')).not.toBeNull();
+    // Mêmes règles que les Shorts : son actif → la Caipivara danse ; pas d'icône Ouvir.
+    act(() => { player.muted = false; vi.advanceTimersByTime(300); });
+    expect(scene.querySelector('[data-caipivara-loop]')).toHaveAttribute('data-caipivara-loop', 'dancing');
+    expect(screen.queryByRole('button', { name: /ouvir a música completa/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Pausar' }));
+    expect(player.calls).toContain('pauseVideo');
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(scene.querySelector('[data-caipivara-loop]')).toHaveAttribute('data-caipivara-loop', 'idle');
+    // Retour à un Short : même lecteur, la vidéo revient.
     swipe(container, +300);
     expect(players).toHaveLength(1);
-    expect(players[0].calls.filter((c) => c === 'loadVideoById:BBBBBBBBBBB')).toHaveLength(2);
+    expect(player.calls.filter((c) => c === 'loadVideoById:BBBBBBBBBBB')).toHaveLength(2);
+  });
+
+  it('song with neither a Short nor a youtube_url: the Caipivara at rest, no player, Letra still there — never an empty screen', async () => {
+    const bare = song(9, 'Sem Links', null, { youtube_url: '', description: 'Uma história.' });
+    const { container } = await renderLoaded([WEEK, bare]);
+    act(() => { players[0].ready(); players[0].play(); });
+    swipe(container, -300);
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'none');
+    expect(players[0].calls).toContain('stopVideo');
+    expect(container.querySelector('[data-feed-scene="none"] [data-caipivara-loop]')).toHaveAttribute('data-caipivara-loop', 'idle');
+    expect(screen.queryByRole('button', { name: /ouvir com som|silenciar|pausar/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /ver a letra/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /ler a história/i })).toBeInTheDocument();
+  });
+
+  it('reduced motion: the Caipivara scene is the still poster', async () => {
+    reduceMotion = true;
+    const bare = song(9, 'Sem Links', null, { youtube_url: '' });
+    const { container } = await renderLoaded([bare]);
+    const loop = container.querySelector('[data-caipivara-loop]');
+    expect(loop).toHaveAttribute('data-caipivara-loop', 'still');
+    expect(loop.querySelector('video')).toBeNull();
+    expect(loop.querySelector('img').getAttribute('src')).toContain('caipivara-idle-poster');
   });
 
   it('only renders the neighbours thumbnails (previous and next), nothing beyond', async () => {

@@ -9,6 +9,7 @@ import { TEXT_SHADOW } from './feedStyles';
 import { getPlatform } from '@/native';
 import { isTV } from '@/tv/platform';
 import CaipivaraStage from '@/components/mobile/catalogo/CaipivaraStage';
+import CaipivaraLoop from '@/components/mobile/catalogo/CaipivaraLoop';
 import { getSongAudioId } from '@/components/mobile/catalogo/stageDraw';
 
 // Sous l'en-tête transparent de l'Início (52 px + zone de sécurité).
@@ -142,13 +143,21 @@ export default function MobileFeed({
   const [audioSong, setAudioSong] = useState(null); // chanson jouée dans le calque
   useEffect(() => { setAudioSong(null); }, [ouvirSlug]);
 
-  const videoId = ouvirOpen ? getSongAudioId(audioSong || ouvirSong) : getShortVideoId(current);
+  // Chanson sans Short (décision du 2026-09-25) : le même lecteur, caché, joue la
+  // chanson complète (`youtube_url`) avec les mêmes règles ; à l'écran, la scène de la
+  // Caipivara. Ni Short ni `youtube_url` : la Caipivara au repos, sans lecteur.
+  const shortId = getShortVideoId(current);
+  const fullTrackId = shortId ? null : getSongAudioId(current);
+  const slideMode = shortId ? 'video' : fullTrackId ? 'audio' : 'none';
+  const videoId = ouvirOpen ? getSongAudioId(audioSong || ouvirSong) : shortId || fullTrackId;
   // App Android (hors TV) : la WebView autorise le son sans geste (MainActivity) → la
   // chanson démarre avec le son, sans repère de départ. Site web et iOS : inchangés.
   const [startWithSound] = useState(canStartWithSound);
   const player = useShortPlayer({ videoId, canLoad: firstPosterSettled, mountRef, loop: !ouvirOpen, startWithSound });
   const { phase, isMuted, isPaused, toggleSound, togglePause } = player;
-  const videoVisible = phase === 'playing';
+  // L'iframe n'est montrée que pour un Short : en mode audio, elle reste cachée.
+  const videoVisible = phase === 'playing' && slideMode === 'video';
+  const caipivaraDancing = slideMode === 'audio' && player.isSoundOn;
   // Son coupé (état RÉEL du lecteur) : à l'arrivée, après « Silenciar », ou si le
   // navigateur a refusé le son (iOS, économie d'énergie).
   const showUnmute = isMuted;
@@ -210,6 +219,11 @@ export default function MobileFeed({
     soundCheckedRef.current = true;
     watchForRefusal();
   }, [startWithSound, phase]);
+
+  // Sans Short, pas de miniature à attendre : le lecteur (audio) peut être créé.
+  useEffect(() => {
+    if (slideMode !== 'video') setFirstPosterSettled(true);
+  }, [slideMode]);
 
   // Filet : si la première miniature ne finit jamais de charger, on lance le lecteur.
   useEffect(() => {
@@ -334,7 +348,8 @@ export default function MobileFeed({
     if (!player.loadNow(id)) player.unmute(); // lecteur pas prêt : « Toque para ouvir » dans le calque
     onOpenOuvir?.(slug);
   };
-  const canOuvir = Boolean(onOpenOuvir && getSongAudioId(current) && getPublicSlug(current));
+  // Ouvir : seulement quand la vidéo est un Short (sinon la chanson complète joue déjà).
+  const canOuvir = Boolean(onOpenOuvir && slideMode === 'video' && getSongAudioId(current) && getPublicSlug(current));
 
   // ── Clavier ──────────────────────────────────────────────────────────────────────
   // Flèche bas = semaine précédente, flèche haut = plus récente ; Espace = pause /
@@ -400,13 +415,19 @@ export default function MobileFeed({
 
         {/* Diapositive courante — jamais démontée : l'iframe unique y vit. */}
         <div className="absolute inset-0">
-          <FeedPoster
-            key={current.id ?? current.title}
-            song={current}
-            buildArtwork={buildArtwork}
-            priority={safeIndex === 0}
-            onSettled={() => setFirstPosterSettled(true)}
-          />
+          {slideMode === 'video' ? (
+            <FeedPoster
+              key={current.id ?? current.title}
+              song={current}
+              buildArtwork={buildArtwork}
+              priority={safeIndex === 0}
+              onSettled={() => setFirstPosterSettled(true)}
+            />
+          ) : (
+            // Sans Short : la scène de la Caipivara (danse seulement quand la musique
+            // joue réellement avec le son). Jamais d'écran vide.
+            <CaipivaraScene dancing={caipivaraDancing} mode={slideMode} />
+          )}
 
           {/* Vidéo : iframe 9:16 en « cover » (× SHORTS_UI_ZOOM, 1,0 aujourd'hui), pour
               l'interface YouTube du champ. Masquée sans transition au changement de
@@ -431,7 +452,7 @@ export default function MobileFeed({
 
           {/* Pause : YouTube affiche alors son propre bloc au centre de la vidéo (mesuré).
               On le couvre avec la miniature floutée. */}
-          {videoId && isPaused ? (
+          {slideMode === 'video' && videoId && isPaused ? (
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden" data-feed-paused>
               <div className="absolute inset-0 scale-110 blur-xl">
                 <FeedPoster song={current} buildArtwork={buildArtwork} />
@@ -519,10 +540,20 @@ export default function MobileFeed({
 const SR_NAV_BUTTON =
   'sr-only rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus-visible:not-sr-only';
 
+/** Scène de la Caipivara pour une chanson sans Short (fond noir, au-dessus du titre). */
+function CaipivaraScene({ dancing, mode }) {
+  return (
+    <div data-feed-scene={mode} className="absolute inset-0 flex items-center justify-center bg-app-black pb-28 pt-16">
+      <CaipivaraLoop dancing={dancing} className="h-full max-h-[520px] max-w-[80cqw]" />
+    </div>
+  );
+}
+
 function NeighbourSlide({ song, buildArtwork, position }) {
+  const hasShort = Boolean(getShortVideoId(song));
   return (
     <div aria-hidden="true" className="absolute inset-0" style={{ transform: `translate3d(0, ${position}, 0)` }}>
-      <FeedPoster song={song} buildArtwork={buildArtwork} />
+      {hasShort ? <FeedPoster song={song} buildArtwork={buildArtwork} /> : <CaipivaraScene dancing={false} mode="neighbour" />}
       <p className={`pointer-events-none absolute bottom-6 left-4 right-24 line-clamp-2 text-[28px] font-black leading-[1.1] tracking-tight text-white ${TEXT_SHADOW}`}>
         {song.title}
       </p>
