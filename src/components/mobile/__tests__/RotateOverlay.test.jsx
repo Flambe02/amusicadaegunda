@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
-import RotateOverlay from '../RotateOverlay';
+import RotateOverlay, { ROTATE_OVERLAY_Z } from '../RotateOverlay';
 import { ORIENTATION_BLOCK_EVENT, PHONE_LANDSCAPE_QUERY } from '../orientation';
 
 let matches = false;
@@ -27,8 +27,8 @@ describe('RotateOverlay — phones in landscape', () => {
   });
 
   it('portrait: nothing; landscape: full black screen, still Caipivara and « Gire o celular », read by screen readers', () => {
-    const { container } = render(<RotateOverlay />);
-    expect(container.querySelector('[data-rotate-overlay]')).toBeNull();
+    render(<RotateOverlay />);
+    expect(document.querySelector('[data-rotate-overlay]')).toBeNull();
     rotate(true);
     const dialog = screen.getByRole('dialog', { name: 'Gire o celular' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
@@ -38,7 +38,7 @@ describe('RotateOverlay — phones in landscape', () => {
     expect(dialog.querySelector('video')).toBeNull(); // image fixe
     expect(screen.getByText('Gire o celular')).toHaveAttribute('aria-live', 'assertive');
     rotate(false);
-    expect(container.querySelector('[data-rotate-overlay]')).toBeNull();
+    expect(document.querySelector('[data-rotate-overlay]')).toBeNull();
   });
 
   it('broadcasts each change so the players pause and resume', () => {
@@ -50,5 +50,24 @@ describe('RotateOverlay — phones in landscape', () => {
     rotate(false);
     window.removeEventListener(ORIENTATION_BLOCK_EVENT, onEvent);
     expect(events).toEqual([false, true, false]);
+  });
+
+  it('stays above every overlay: a top-level layer on <body>, at the highest z-index — above the karaoke player (z-[9999])', () => {
+    // Le lecteur karaokê plein écran (page chanson, Aprender) est lui aussi un portail sur <body>.
+    const player = document.createElement('div');
+    player.className = 'karaoke-overlay fixed inset-0 z-[9999]';
+    document.body.appendChild(player);
+    try {
+      const { container } = render(<div className="relative z-10"><RotateOverlay /></div>);
+      rotate(true);
+      const overlay = document.querySelector('[data-rotate-overlay]');
+      expect(overlay.parentElement).toBe(document.body); // hors de tout contexte d'empilement
+      expect(container.contains(overlay)).toBe(false);
+      expect(Number(overlay.style.zIndex)).toBe(ROTATE_OVERLAY_Z);
+      expect(ROTATE_OVERLAY_Z).toBe(2147483647);
+      expect(ROTATE_OVERLAY_Z).toBeGreaterThan(9999);
+    } finally {
+      player.remove();
+    }
   });
 });
