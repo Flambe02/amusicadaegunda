@@ -115,3 +115,15 @@ Renseigner l'empreinte SHA-256 de la clé de signature Play dans `assetlinks.jso
 **Constat (2026-09-26).** Lighthouse mobile, médiane de 3 : 58 sur HEAD contre 68 sur `main`. Le LCP est meilleur (6,3 s contre 8,7 s), mais le temps de blocage JavaScript est de **465 ms contre 68 ms** (O Palco : carrousel 3D, échantillonnage de couleur sur canvas, animations).
 
 **Pistes.** Différer l'échantillonnage de couleur (`requestIdleCallback`), ne calculer que la carte centrale, alléger le rendu initial du carrousel (cartes voisines après la première peinture), puis remesurer contre `main`.
+
+## 18. Notifications push : invite retirée, à réactiver seulement quand la chaîne est en place
+
+**Constat (2026-09-26, test sur iPhone, PWA installée).** « Activer les notifications » échouait toujours : « Could not find the table 'public.push_subscriptions' in the schema cache » puis « Erreur API: Load failed ». La table n'a jamais été créée sur la base en ligne (la migration `20241230000000_create_push_subscriptions.sql` n'y est pas appliquée), et la fonction d'envoi `push` (`/push/subscribe`, `/push/send`) ne répond pas. Même abonné, personne n'aurait reçu de notification.
+
+**Fait.** L'invite (`PushCTA`) est retirée de l'app. Le code d'abonnement (`src/lib/push.js`), l'envoi depuis l'admin (`notifyAllSubscribers`, qui échoue en silence) et le gestionnaire `push` du service worker restent en place.
+
+**Pour réactiver** (dans cet ordre) :
+1. appliquer à la main, dans le dashboard Supabase (jamais `supabase db push`, voir la mémoire du projet), les migrations `push_subscriptions` : création, contrainte d'unicité, RLS ;
+2. déployer la fonction `supabase/functions/push`, avec ses secrets VAPID (clé privée côté Supabase, clé publique `VITE_VAPID_PUBLIC_KEY` côté build) ;
+3. tester l'abonnement, puis un envoi réel, sur iPhone (PWA installée, iOS 16.4 ou plus) et sur Android ;
+4. seulement ensuite, remettre l'invite (restaurer `src/components/PushCTA.jsx` depuis l'historique git) et traduire ses textes en portugais (ils sont en français).
