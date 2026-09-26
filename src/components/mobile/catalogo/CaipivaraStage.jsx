@@ -16,7 +16,7 @@ import {
 } from '@/components/mobile/icons/FilledIcons';
 import LyricsDialog from '@/components/LyricsDialog';
 import { isKaraokePublished } from '@/lib/lrc';
-import { ANIMATIONS, DANCE_CLIP, IDLE_CLIP, getSongAudioId, pickAnimation, pickSong } from './stageDraw';
+import { ANIMATIONS, DANCE_CLIP, EDGE_VIGNETTE, IDLE_CLIP, getSongAudioId, pickAnimation, pickSong } from './stageDraw';
 
 // Filet : si une animation ne se termine jamais (lecture refusée, réseau), on rend la
 // main à la boucle de repos ou de danse.
@@ -25,8 +25,6 @@ const CROSSFADE = 'transition-opacity duration-150 ease-out';
 // flip et samba ne finissent pas dans la pose de repos : fondu plus long pour adoucir le
 // raccord (décision du 2026-09-25).
 const CROSSFADE_LONG = 'transition-opacity duration-[400ms] ease-out';
-// Les bords de la vidéo se fondent dans le fond de la page : aucun rectangle visible.
-const EDGE_MASK = 'radial-gradient(ellipse closest-side at 50% 50%, #000 62%, transparent 100%)';
 
 // « Ou toque em mim » : affiché jusqu'au premier changement de chanson par un tap sur
 // la Caipivara, puis plus jamais sur cet appareil (comme l'indice « Deslize » du feed).
@@ -83,8 +81,9 @@ function ClipSources({ clip }) {
  *
  * Tap sur la Caipivara : une animation (jamais deux fois la même à la suite) + une
  * chanson (jamais la précédente). Puis boucle de danse tant que la musique joue avec
- * le son ; boucle de repos en pause, à la fin, ou si le navigateur a refusé le son
- * (le bouton ▶ le relance). Pas de changement de page.
+ * le son ; boucle de repos en pause, ou si le navigateur a refusé le son (le bouton ▶
+ * le relance). À la fin d'une chanson, la Caipivara en choisit une autre toute seule
+ * (comme « Outra »). Pas de changement de page.
  *
  * Mouvement réduit : image fixe, la musique part directement.
  *
@@ -222,6 +221,24 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
     if (song) startSong(song, false);
   }, [songs, startAnimation, startSong]);
 
+  // Fin de la chanson : la Caipivara en choisit une autre, comme « Outra » (même
+  // lecteur, hors du geste — si le navigateur refuse le son, ▶ le relance). Une seule
+  // fois par chanson finie ; rien tant que personne n'a lancé la musique.
+  const ended = player.isEnded;
+  const endedSongRef = useRef(null);
+  useEffect(() => {
+    if (!ended) {
+      endedSongRef.current = null;
+      return;
+    }
+    const song = currentRef.current;
+    if (!song || endedSongRef.current === song) return;
+    endedSongRef.current = song;
+    if (!busyRef.current) startAnimation();
+    const nextSong = pickSong(songs, song);
+    if (nextSong) startSong(nextSong, false);
+  }, [ended, songs, startAnimation, startSong]);
+
   // Tap fait avant l'arrivée du catalogue : la musique part dès qu'il est là (hors du
   // geste — si le navigateur refuse le son, le bouton ▶ le relance).
   useEffect(() => {
@@ -290,11 +307,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
           // de la scène et « Toque para ouvir » — tout tient sans défilement (vérifié à 375 × 667).
           style={{ width: 'min(64cqw, 250px, calc(100cqw - 170px), calc((100cqh - 240px) * 0.5625))' }}
         >
-          <div
-            aria-hidden="true"
-            className="absolute inset-0"
-            style={{ WebkitMaskImage: EDGE_MASK, maskImage: EDGE_MASK }}
-          >
+          <div aria-hidden="true" className="absolute inset-0">
             {reduceMotion ? (
               <img src={IDLE_CLIP.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
@@ -345,6 +358,8 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
                 ))}
               </>
             )}
+            {/* Bords fondus dans le fond, par-dessus les vidéos (voir EDGE_VIGNETTE). */}
+            <div data-edge-vignette className="pointer-events-none absolute inset-0" style={{ backgroundImage: EDGE_VIGNETTE }} />
           </div>
         </button>
 

@@ -62,7 +62,7 @@ const LOOP_LEAD_S = 0.4; // > intervalle de sondage (250 ms) : la fin n'est jama
 /**
  * Options :
  *   loop (défaut true) — le feed boucle sur le Short. Le Catálogo passe `false` : la
- *   chanson s'arrête à la fin (`isEnded`), la Caipivara retourne au repos.
+ *   chanson s'arrête à la fin (`isEnded`), la Caipivara en enchaîne une autre.
  *   startWithSound (défaut false) — seulement quand la plateforme autorise le son sans
  *   geste (app Android, voir MainActivity) : le lecteur démarre avec le son.
  */

@@ -6,6 +6,14 @@ import { extractYouTubeId } from '@/lib/utils';
 
 const CLIP_BASE = '/videos/caipivara';
 
+/**
+ * Bords des clips fondus dans le fond de la scène (#050505, app-black) : un voile
+ * radial POSÉ SUR les vidéos, et non un `mask-image` autour d'elles. Sur iPhone, une
+ * <video> dans un calque masqué perdait parfois sa mise à l'échelle après un fondu
+ * (animation, danse) et s'affichait à sa taille native (432×768), en gros plan.
+ */
+export const EDGE_VIGNETTE = 'radial-gradient(ellipse closest-side at 50% 50%, transparent 62%, #050505 100%)';
+
 /** Boucle de repos, jouée en continu. */
 export const IDLE_CLIP = {
   key: 'idle',
