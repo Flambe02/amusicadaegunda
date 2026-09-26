@@ -337,10 +337,14 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(container.querySelector('video[data-clip="samba"]').className).toContain('duration-[400ms]');
   });
 
-  it('blends the video edges into the page (radial mask), and never writes a song count', () => {
+  it('blends the video edges into the page with a vignette ON TOP of the videos, never a mask around them (iPhone zoom)', () => {
     const { container } = renderStage();
-    const mask = container.querySelector('video[data-clip="idle"]').parentElement;
-    expect(mask.style.maskImage || mask.style.webkitMaskImage).toMatch(/radial-gradient/);
+    const layer = container.querySelector('video[data-clip="idle"]').parentElement;
+    expect(layer.style.maskImage || layer.style.webkitMaskImage || '').toBe('');
+    const vignette = layer.querySelector('[data-edge-vignette]');
+    expect(vignette).toBe(layer.lastElementChild);
+    expect(vignette.style.backgroundImage).toMatch(/radial-gradient/);
+    expect(container.innerHTML).not.toMatch(/mask-image/i);
     expect(container.textContent).not.toMatch(/\d+\s*(músicas|paródias|canções)/i);
   });
 });

@@ -16,7 +16,7 @@ import {
 } from '@/components/mobile/icons/FilledIcons';
 import LyricsDialog from '@/components/LyricsDialog';
 import { isKaraokePublished } from '@/lib/lrc';
-import { ANIMATIONS, DANCE_CLIP, IDLE_CLIP, getSongAudioId, pickAnimation, pickSong } from './stageDraw';
+import { ANIMATIONS, DANCE_CLIP, EDGE_VIGNETTE, IDLE_CLIP, getSongAudioId, pickAnimation, pickSong } from './stageDraw';
 
 // Filet : si une animation ne se termine jamais (lecture refusée, réseau), on rend la
 // main à la boucle de repos ou de danse.
@@ -25,8 +25,6 @@ const CROSSFADE = 'transition-opacity duration-150 ease-out';
 // flip et samba ne finissent pas dans la pose de repos : fondu plus long pour adoucir le
 // raccord (décision du 2026-09-25).
 const CROSSFADE_LONG = 'transition-opacity duration-[400ms] ease-out';
-// Les bords de la vidéo se fondent dans le fond de la page : aucun rectangle visible.
-const EDGE_MASK = 'radial-gradient(ellipse closest-side at 50% 50%, #000 62%, transparent 100%)';
 
 // « Ou toque em mim » : affiché jusqu'au premier changement de chanson par un tap sur
 // la Caipivara, puis plus jamais sur cet appareil (comme l'indice « Deslize » du feed).
@@ -290,11 +288,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
           // de la scène et « Toque para ouvir » — tout tient sans défilement (vérifié à 375 × 667).
           style={{ width: 'min(64cqw, 250px, calc(100cqw - 170px), calc((100cqh - 240px) * 0.5625))' }}
         >
-          <div
-            aria-hidden="true"
-            className="absolute inset-0"
-            style={{ WebkitMaskImage: EDGE_MASK, maskImage: EDGE_MASK }}
-          >
+          <div aria-hidden="true" className="absolute inset-0">
             {reduceMotion ? (
               <img src={IDLE_CLIP.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
@@ -345,6 +339,8 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
                 ))}
               </>
             )}
+            {/* Bords fondus dans le fond, par-dessus les vidéos (voir EDGE_VIGNETTE). */}
+            <div data-edge-vignette className="pointer-events-none absolute inset-0" style={{ backgroundImage: EDGE_VIGNETTE }} />
           </div>
         </button>
 

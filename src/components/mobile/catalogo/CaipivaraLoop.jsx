@@ -1,8 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { DANCE_CLIP, IDLE_CLIP } from './stageDraw';
-
-// Les bords de la vidéo se fondent dans le fond : aucun rectangle visible.
-const EDGE_MASK = 'radial-gradient(ellipse closest-side at 50% 50%, #000 62%, transparent 100%)';
+import { DANCE_CLIP, EDGE_VIGNETTE, IDLE_CLIP } from './stageDraw';
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -49,7 +46,6 @@ export default function CaipivaraLoop({ dancing = false, className = '' }) {
       aria-hidden="true"
       data-caipivara-loop={reduceMotion ? 'still' : dancing ? 'dancing' : 'idle'}
       className={`relative aspect-[9/16] ${className}`}
-      style={{ WebkitMaskImage: EDGE_MASK, maskImage: EDGE_MASK }}
     >
       {reduceMotion ? (
         <img src={IDLE_CLIP.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -84,6 +80,8 @@ export default function CaipivaraLoop({ dancing = false, className = '' }) {
           </video>
         </>
       )}
+      {/* Bords fondus dans le fond, par-dessus les vidéos (voir EDGE_VIGNETTE). */}
+      <div data-edge-vignette className="pointer-events-none absolute inset-0" style={{ backgroundImage: EDGE_VIGNETTE }} />
     </div>
   );
 }
