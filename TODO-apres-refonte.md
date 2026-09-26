@@ -103,3 +103,15 @@ Renseigner l'empreinte SHA-256 de la clé de signature Play dans `assetlinks.jso
 **Constat (décision 5 validée, 2026-09-26).** Le style de l'étape 7 (prop `mobileShell` de `KaraokePlayer`) n'est appliqué qu'au lecteur ouvert depuis O Palco. Ouvert depuis `/musica/<slug>` sur mobile, le lecteur garde l'ancien style plein écran : titre néon, faisceaux violets, cinq boutons, barre du bas masquée.
 
 **Chantier.** Passer `mobileShell` depuis la copie mobile de la page chanson (`src/pages/Song.jsx`, seulement sous 768 px, jamais sur la copie desktop). Vérifier l'onglet actif de la barre du bas (la pastille Catálogo s'allume sur les pages chanson), l'absence de défilement à 375 × 667, et que le desktop reste identique.
+
+## 16. ⚠️ Reprendre le desktop : annuler l'annulation de `657bf89e`
+
+**Contexte (2026-09-26, plan B de publication).** La branche `release/mobile` publie le mobile seul : elle annule le commit desktop `657bf89e` (« wip: refonte homepage desktop (étape 1 validée) ») pour que le desktop reste identique à `main`. `src/lib/homeSongMedia.js` est gardé, car le mobile s'en sert.
+
+**À faire avant de reprendre le desktop.** Une fois `release/mobile` fusionnée dans `main`, **annuler le commit d'annulation** (`git revert <commit d'annulation>`) sur la branche desktop, avant tout autre travail. Sinon, à la fusion suivante, git considérera le travail desktop comme retiré, et il sera **perdu** (barre de navigation du haut, pied de page « Mais do projeto », `DesktopHero`, `HistoryDrawer`).
+
+## 17. Performance de `/karaoke` (O Palco) sous `main`
+
+**Constat (2026-09-26).** Lighthouse mobile, médiane de 3 : 58 sur HEAD contre 68 sur `main`. Le LCP est meilleur (6,3 s contre 8,7 s), mais le temps de blocage JavaScript est de **465 ms contre 68 ms** (O Palco : carrousel 3D, échantillonnage de couleur sur canvas, animations).
+
+**Pistes.** Différer l'échantillonnage de couleur (`requestIdleCallback`), ne calculer que la carte centrale, alléger le rendu initial du carrousel (cartes voisines après la première peinture), puis remesurer contre `main`.
