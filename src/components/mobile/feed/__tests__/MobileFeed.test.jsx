@@ -257,6 +257,25 @@ describe('MobileFeed — Short de la semaine (étape 3)', () => {
     expect(player.calls).toContain('playVideo');
   });
 
+  it('landscape BEFORE the player is ready: the block is kept and applied at ready — no playback (not even with a queued sound tap) behind « Gire o celular »', async () => {
+    await renderLoaded();
+    const player = players[0];
+    // Bascule reçue pendant la création du lecteur, puis tap « son » mis en attente.
+    act(() => { window.dispatchEvent(new CustomEvent('amds:orientation-block', { detail: { blocked: true } })); });
+    fireEvent.click(screen.getByRole('button', { name: /ouvir com som/i }));
+    player.calls.length = 0;
+    act(() => { player.ready(); });
+    expect(player.calls).not.toContain('playVideo'); // préparé, pas lancé
+    // Si YouTube démarre quand même (autoplay), la lecture est coupée aussitôt.
+    act(() => { player.play(); });
+    expect(player.calls).toContain('pauseVideo');
+    expect(player.getPlayerState()).toBe(2);
+    // Retour en portrait : la chanson démarre.
+    player.calls.length = 0;
+    act(() => { window.dispatchEvent(new CustomEvent('amds:orientation-block', { detail: { blocked: false } })); });
+    expect(player.calls).toContain('playVideo');
+  });
+
   it('Android app (not TV): starts with the sound, no play cue; web keeps the muted start', async () => {
     platformMock.value = 'android';
     try {
