@@ -145,6 +145,10 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 3. **Colonne d'icônes à droite, identique au feed** (`FeedRail.jsx`, partagé) : Letra (le `LyricsDialog` du feed), História (si description), Cantar (si karaokê publié), Compartilhar, **Clipe** (`/?musica=<slug>`). Le bas de l'écran ne garde que titre, barre de progression, pause et Outra.
 4. **Plus de bouton ⓘ** dans l'en-tête mobile, sur aucune page (l'onglet Menu le remplace). Desktop inchangé.
 
+### H.15 Catálogo — barre manipulable et titre sur sa ligne (test iPhone du 2026-09-26, précise H.4 bis.3)
+1. **Même barre de progression que le feed** (`Scrubber.jsx`, un seul composant) sur la page Catálogo et dans le calque Ouvir : glisser pour avancer ou reculer, trait qui s'épaissit pendant le geste, temps « m:ss / m:ss », zone tactile de 24 px, rôle `slider` (« Posição na música »), flèches gauche / droite = -5 s / +5 s quand elle a le focus.
+2. **Ordre du bas** : le titre sur sa propre ligne (deux lignes au plus, puis ellipse ; hauteur de deux lignes réservée), puis la barre, puis pause et « Outra ». Tout tient sans défilement à 375 × 667 barres de Safari comprises (la Caipivara réserve 240 px pour le bas).
+
 ### H.9 Feed — Som et Ouvir (2026-09-25, remplace H.3.2)
 1. **Som** sort de la colonne : petite icône haut-parleur en haut à droite de la vidéo, à l'emplacement de l'ancien bouton ⓘ, visible seulement une fois le son activé.
 2. **Colonne du feed**, de haut en bas : Ouvir (seulement si `youtube_url`), Letra, História, Cantar, Compartilhar. **Colonne du Catálogo** (page ou calque) : Letra, História, Cantar, Compartilhar, Clipe.

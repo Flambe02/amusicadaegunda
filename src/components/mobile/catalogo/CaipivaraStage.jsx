@@ -5,7 +5,8 @@ import FeedStorySheet from '@/components/mobile/feed/FeedStorySheet';
 import WeekRibbon from '@/components/mobile/feed/WeekRibbon';
 import { Rail, RailButton, RailLink } from '@/components/mobile/feed/FeedRail';
 import { useShareSong } from '@/components/mobile/feed/useShareSong';
-import { formatTime, getPublicSlug } from '@/components/mobile/feed/feedMedia';
+import { getPublicSlug } from '@/components/mobile/feed/feedMedia';
+import Scrubber from '@/components/mobile/feed/Scrubber';
 import {
   ClipFilled,
   LyricsSheetFilled,
@@ -20,7 +21,6 @@ import { ANIMATIONS, DANCE_CLIP, IDLE_CLIP, getSongAudioId, pickAnimation, pickS
 // Filet : si une animation ne se termine jamais (lecture refusée, réseau), on rend la
 // main à la boucle de repos ou de danse.
 const ANIMATION_TIMEOUT_MS = 7000;
-const PROGRESS_POLL_MS = 250;
 const CROSSFADE = 'transition-opacity duration-150 ease-out';
 // flip et samba ne finissent pas dans la pose de repos : fondu plus long pour adoucir le
 // raccord (décision du 2026-09-25).
@@ -66,43 +66,6 @@ function ClipSources({ clip }) {
       <source src={clip.webm} type="video/webm" />
       <source src={clip.mp4} type="video/mp4" />
     </>
-  );
-}
-
-/** Fine barre de progression (lecture seule), lue sur le lecteur. */
-function SongProgress({ player }) {
-  const [time, setTime] = useState({ current: 0, duration: 0 });
-  const { getCurrentTime, getDuration } = player;
-
-  useEffect(() => {
-    const read = () => {
-      const current = getCurrentTime();
-      const duration = getDuration();
-      setTime((previous) =>
-        previous.current === current && previous.duration === duration ? previous : { current, duration }
-      );
-    };
-    read();
-    const id = setInterval(read, PROGRESS_POLL_MS);
-    return () => clearInterval(id);
-  }, [getCurrentTime, getDuration]);
-
-  const ratio = time.duration > 0 ? Math.min(1, time.current / time.duration) : 0;
-  return (
-    <div
-      role="progressbar"
-      aria-label="Progresso da música"
-      aria-valuemin={0}
-      aria-valuemax={Math.round(time.duration)}
-      aria-valuenow={Math.round(time.current)}
-      aria-valuetext={`${formatTime(time.current)} de ${formatTime(time.duration)}`}
-      className="h-[3px] w-full overflow-hidden rounded-full bg-white/20"
-    >
-      <div
-        className="h-full w-full origin-left rounded-full bg-white"
-        style={{ transform: `scaleX(${ratio})` }}
-      />
-    </div>
   );
 }
 
@@ -323,7 +286,9 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
           className="relative aspect-[9/16] touch-manipulation select-none rounded-[40px] focus-visible:outline-offset-4"
           // 170 px : la colonne d'icônes (≈ 78 px avec sa marge) de chaque côté, plus un peu d'air — elle
           // ne doit jamais mordre sur la zone tactile de la Caipivara (vérifié à 360 px).
-          style={{ width: 'min(64cqw, 250px, calc(100cqw - 170px), calc((100cqh - 230px) * 0.5625))' }}
+          // 240 px : le bas de l’écran (titre sur deux lignes, barre, boutons ≈ 152 px), le haut
+          // de la scène et « Toque para ouvir » — tout tient sans défilement (vérifié à 375 × 667).
+          style={{ width: 'min(64cqw, 250px, calc(100cqw - 170px), calc((100cqh - 240px) * 0.5625))' }}
         >
           <div
             aria-hidden="true"
@@ -440,14 +405,23 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
         ) : null}
       </div>
 
-      {/* Bas de l'écran : titre, barre de progression, pause et « Outra » — rien d'autre. */}
-      <div className="flex min-h-[7rem] w-full flex-col items-center px-6 pb-6 pt-2 text-center">
+      {/* Bas de l'écran : titre (sa propre ligne, 2 lignes au plus), barre de progression
+          manipulable (la même que le feed), puis pause et « Outra » — rien d'autre. */}
+      <div className="flex w-full flex-col items-center px-6 pb-5 pt-2 text-center">
         {current ? (
           <div className="flex w-full max-w-[22rem] flex-col items-center">
-            <div className="flex w-full items-center gap-2">
-              <p aria-live="polite" className="min-w-0 flex-1 truncate text-left text-base font-bold leading-tight">
+            {/* Hauteur de deux lignes réservée : la Caipivara ne change pas de taille
+                d'un titre court à un titre long. */}
+            <div className="flex min-h-10 w-full items-end justify-center">
+              <p aria-live="polite" className="line-clamp-2 text-base font-bold leading-tight">
                 {current.title}
               </p>
+            </div>
+            {/* Zone de 24 px toujours réservée (la barre n'apparaît qu'une fois la lecture partie). */}
+            <div className="relative mt-2 h-6 w-full">
+              <Scrubber player={player} className="absolute inset-0" />
+            </div>
+            <div className="mt-2 flex items-center justify-center gap-3">
               <button
                 type="button"
                 onClick={togglePlayback}
@@ -468,14 +442,13 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
                 Outra
               </button>
             </div>
-            <div className="mt-3 w-full">
-              <SongProgress player={player} />
-            </div>
           </div>
         ) : (
-          <p className="max-w-[20rem] text-xl font-extrabold leading-snug">
-            Toque em mim e eu escolho uma música pra você.
-          </p>
+          <div className="flex min-h-[7.75rem] items-center">
+            <p className="max-w-[20rem] text-xl font-extrabold leading-snug">
+              Toque em mim e eu escolho uma música pra você.
+            </p>
+          </div>
         )}
       </div>
 

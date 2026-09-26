@@ -95,7 +95,7 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(songOfVideo(options.videoId)).toBeTruthy();
     expect(container.querySelector('[data-audio-player]')).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByText('Toque em mim e eu escolho uma música pra você.')).toBeInTheDocument();
-    expect(screen.queryByRole('progressbar')).toBeNull();
+    expect(screen.queryByRole('slider')).toBeNull();
   });
 
   it('first tap: restarts the prepared song and turns the sound on inside the gesture', () => {
@@ -123,8 +123,14 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
   it('bottom keeps only title, progress bar, play/pause and « Outra » (no month/year line)', () => {
     renderStage([SONGS[0]]);
     fireEvent.click(caipivara());
-    expect(screen.getByText(SONGS[0].title)).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: 'Progresso da música' })).toHaveAttribute('aria-valuetext', '0:30 de 2:00');
+    // Le titre a sa propre ligne (deux lignes au plus, puis ellipse), au-dessus de la barre.
+    const title = screen.getByText(SONGS[0].title);
+    expect(title.className).toContain('line-clamp-2');
+    expect(title.className).not.toContain('truncate');
+    const slider = screen.getByRole('slider', { name: 'Posição na música' });
+    expect(slider).toHaveAttribute('aria-valuetext', '0:30 de 2:00');
+    expect(title.compareDocumentPosition(slider) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(slider.compareDocumentPosition(screen.getByRole('button', { name: 'Outra música' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Tocar' })).toBeInTheDocument(); // son pas encore confirmé par le lecteur
     expect(screen.getByRole('button', { name: 'Outra música' })).toHaveTextContent('Outra');
     // Le mois n'apparaît plus que dans le ruban éphémère.
@@ -289,7 +295,7 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(caipivara()).toHaveAttribute('data-stage', 'animating');
     rerender(<MemoryRouter><CaipivaraStage songs={SONGS} /></MemoryRouter>);
     expect(player.unmute.mock.calls.length + player.loadNow.mock.calls.length).toBeGreaterThan(0);
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByRole('slider')).toBeInTheDocument();
   });
 
   it('under reduced motion: still image, no video, the music starts at once', () => {
@@ -299,7 +305,29 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(container.querySelector('img[src*="caipivara-idle-poster"]')).not.toBeNull();
     fireEvent.click(caipivara());
     expect(player.unmute).toHaveBeenCalled();
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByRole('slider')).toBeInTheDocument();
+  });
+
+  it('the progress bar is the feed one: dragging it moves playback, with the time shown; arrows ±5 s', () => {
+    renderStage([SONGS[0]]);
+    fireEvent.click(caipivara());
+    player.seekTo.mockClear();
+    const slider = screen.getByRole('slider', { name: 'Posição na música' });
+    expect(slider).toHaveAttribute('data-scrubber');
+    expect(slider.className).toContain('h-6'); // zone tactile de 24 px
+    slider.getBoundingClientRect = () => ({ left: 0, width: 400, top: 600, height: 24, right: 400, bottom: 624 });
+    fireEvent.pointerDown(slider, { pointerId: 3, clientX: 100, clientY: 612 });
+    fireEvent.pointerMove(slider, { pointerId: 3, clientX: 200, clientY: 612 });
+    expect(screen.getByText('1:00 / 2:00')).toBeInTheDocument(); // temps affiché pendant le geste
+    expect(player.seekTo).toHaveBeenLastCalledWith(60, false);
+    fireEvent.pointerUp(slider, { pointerId: 3, clientX: 200, clientY: 612 });
+    expect(player.seekTo).toHaveBeenLastCalledWith(60, true);
+    expect(screen.queryByText('1:00 / 2:00')).toBeNull();
+    // Clavier : flèches gauche / droite = -5 s / +5 s (le lecteur est à 0:30).
+    fireEvent.keyDown(slider, { key: 'ArrowRight' });
+    expect(player.seekTo).toHaveBeenLastCalledWith(35);
+    fireEvent.keyDown(slider, { key: 'ArrowLeft' });
+    expect(player.seekTo).toHaveBeenLastCalledWith(25);
   });
 
   it('fades flip and samba back over 400 ms (hat stays at 150 ms)', () => {
