@@ -79,7 +79,9 @@ Renseigner l'empreinte SHA-256 de la clé de signature Play dans `assetlinks.jso
 
 **Constat (nuit du 2026-09-26).** Pour un nouveau visiteur sur iPhone, `InstallAppBanner.jsx` (fixe, 88 px au-dessus du bas, `z-[120]`) recouvre le bas des écrans mobiles — la barre de progression et les boutons du Catálogo par exemple — jusqu'à ce qu'on la ferme. Le lecteur karaokê mobile (`z-[150]`) passe au-dessus. Son texte parle encore de `beforeinstallprompt`, jargon technique.
 
-**Chantier.** La repositionner au-dessus de la barre du bas (`--app-nav-h`) sans masquer les contrôles, ou ne l'afficher que sur l'Início ; réécrire son texte en portugais simple.
+**Corrigé (2026-09-26, décision 4 validée).** Sous 768 px, la bannière se pose juste au-dessus de la barre du bas (`--app-nav-h`). Elle est masquée tant qu'un écran à contrôles est affiché : feed et calque Ouvir, Catálogo, O Palco et son lecteur (règle `body:has(...)` dans `index.css`). Tablette et desktop sont inchangés.
+
+**Reste à faire.** Réécrire son texte en portugais simple (il parle encore de `beforeinstallprompt`).
 
 ## 14. Accueil mobile : performance Lighthouse et décalage (CLS)
 

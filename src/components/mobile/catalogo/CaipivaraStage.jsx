@@ -257,7 +257,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
   const { share, linkSheet } = useShareSong(current || {});
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center overflow-hidden bg-app-black text-white [container-type:size]">
+    <div data-catalogo-stage className="relative flex h-full w-full flex-col items-center overflow-hidden bg-app-black text-white [container-type:size]">
       {/* Dans le calque Ouvir, le h1 de la page reste le titre du feed. */}
       {external
         ? <h2 className="sr-only">Catálogo de músicas</h2>

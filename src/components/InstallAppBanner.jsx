@@ -26,7 +26,12 @@ export default function InstallAppBanner() {
   if (!shouldRender || dismissed) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[88px] z-[120] px-3 lg:bottom-6 lg:left-auto lg:right-6 lg:max-w-sm">
+    <div
+      data-install-banner
+      // Mobile (< 768 px) : juste au-dessus de la barre du bas (--app-nav-h), et masquée
+      // sur les écrans à contrôles (règle dans index.css). Tablette et desktop : inchangés.
+      className="pointer-events-none fixed inset-x-0 bottom-[88px] z-[120] px-3 max-md:bottom-[calc(var(--app-nav-h,0px)+0.5rem)] lg:bottom-6 lg:left-auto lg:right-6 lg:max-w-sm"
+    >
       <div className="pointer-events-auto rounded-[24px] border border-white/12 bg-black/78 p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/10">
