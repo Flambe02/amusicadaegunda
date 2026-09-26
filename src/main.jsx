@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { logBuildInfo } from '@/lib/buildInfo'
 import { isTV } from '@/tv/platform'
 import { AppUpdateProvider } from '@/hooks/useAppUpdate'
+import { initIosStandaloneHeight } from '@/lib/iosStandaloneHeight'
 
 const helmetContext = {}
 
@@ -30,6 +31,11 @@ try {
     document.documentElement.classList.add('tv-mode')
   }
 } catch { /* jamais bloquant pour le boot mobile/web */ }
+
+// App installée iPhone : #root à la hauteur réelle de l'écran (src/lib/iosStandaloneHeight.js).
+try {
+  initIosStandaloneHeight()
+} catch { /* jamais bloquant */ }
 
 // Handler pour logger les erreurs vers un service externe (future Sentry integration)
 const handleError = (error, errorInfo) => {
