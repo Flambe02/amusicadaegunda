@@ -4,6 +4,7 @@ import { getPublicSlug } from './feedMedia';
 import WeekRibbon from './WeekRibbon';
 import FeedStorySheet from './FeedStorySheet';
 import Scrubber from './Scrubber';
+import FeedKaraokeLine from './FeedKaraokeLine';
 import { Rail, RailButton, RailLink } from './FeedRail';
 import { useShareSong } from './useShareSong';
 import {
@@ -25,13 +26,16 @@ const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
  *
  * Seuls les contrôles réels captent les taps (colonne droite) ; tout le reste est en
  * `pointer-events-none`, pour qu'un tap sur la vidéo continue de couper/rétablir le son.
- * Un seul jaune par zone : ici, rien n'est jaune — le jaune de la vidéo est « Toque
- * para ouvir » (son coupé) puis, à l'étape 5, la ligne de karaokê (son actif).
+ * Un seul jaune par zone : son actif, c'est la ligne de karaokê (FeedKaraokeLine) ;
+ * son coupé, rien n'est jaune sur la vidéo.
+ * `karaokeMode` : ce que joue le lecteur pour cette chanson (`video` = le Short,
+ * `audio` = la chanson complète, autre = rien ou le calque Ouvir) — la ligne de
+ * karaokê n'est montrée que là où sa synchro est vérifiable.
  *
  * Aucun second mouvement ne concurrence la vidéo : pas d'avatar animé ni de bulle
  * (retirés après test sur iPhone, 2026-09-25).
  */
-export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics, onOuvir, onRequestSound }) {
+export default function FeedOverlay({ song, player, karaokeMode = 'video', isFirst = true, onShowLyrics, onOuvir, onRequestSound }) {
   const slug = getPublicSlug(song);
   const canSing = isKaraokePublished(song) && Boolean(slug);
   const TitleTag = isFirst ? 'h1' : 'h2';
@@ -127,6 +131,9 @@ export default function FeedOverlay({ song, player, isFirst = true, onShowLyrics
         ) : null}
         <RailButton label="Compartilhar" onClick={share} icon={ShareArrowFilled} ariaLabel={`Compartilhar ${song.title}`} />
       </Rail>
+
+      {/* Étape 5 : ligne de karaokê, au-dessus du titre compact, son actif seulement. */}
+      <FeedKaraokeLine song={song} player={player} mode={karaokeMode} />
 
       <Scrubber player={player} />
 

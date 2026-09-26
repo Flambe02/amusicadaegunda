@@ -149,6 +149,13 @@ Elles prévalent sur les sections ci-dessus et sur `spec-mobile-redesign.md` en 
 1. **Même barre de progression que le feed** (`Scrubber.jsx`, un seul composant) sur la page Catálogo et dans le calque Ouvir : glisser pour avancer ou reculer, trait qui s'épaissit pendant le geste, temps « m:ss / m:ss », zone tactile de 24 px, rôle `slider` (« Posição na música »), flèches gauche / droite = -5 s / +5 s quand elle a le focus.
 2. **Ordre du bas** : le titre sur sa propre ligne (deux lignes au plus, puis ellipse ; hauteur de deux lignes réservée), puis la barre, puis pause et « Outra ». Tout tient sans défilement à 375 × 667 barres de Safari comprises (la Caipivara réserve 240 px pour le bas).
 
+### H.16 Étape 5 — ligne de karaokê sur le feed (nuit du 2026-09-26, précise H.8.4)
+1. **Règle** : si la synchro d'une chanson ne peut pas être vérifiée, sa ligne n'est pas affichée.
+2. **Chanson sans Short** : le feed joue `youtube_url`, la vidéo même du lecteur karaokê, avec le même timing (`resolveSongTiming` : `timing_data` sinon `lrc_content`) → synchro identique par construction, la ligne s'affiche.
+3. **Short** : un extrait dont le décalage avec la chanson complète est inconnu → pas de ligne tant que le Short n'a pas été vérifié chanson par chanson sur téléphone. Pour l'activer : ajouter le slug à `FEED_KARAOKE_SHORT_VERIFIED_SLUGS` (`src/components/mobile/feed/feedKaraoke.js`).
+4. Calque Ouvir ouvert (le lecteur joue une autre chanson) : jamais de ligne.
+5. Affichage : au-dessus du titre compact, 20 px 900, deux lignes au plus, remplissage jaune de gauche à droite (seul jaune de la vidéo), ombre portée ; mouvement réduit : ligne entièrement jaune ; rien entre deux lignes.
+
 ### H.9 Feed — Som et Ouvir (2026-09-25, remplace H.3.2)
 1. **Som** sort de la colonne : petite icône haut-parleur en haut à droite de la vidéo, à l'emplacement de l'ancien bouton ⓘ, visible seulement une fois le son activé.
 2. **Colonne du feed**, de haut en bas : Ouvir (seulement si `youtube_url`), Letra, História, Cantar, Compartilhar. **Colonne du Catálogo** (page ou calque) : Letra, História, Cantar, Compartilhar, Clipe.

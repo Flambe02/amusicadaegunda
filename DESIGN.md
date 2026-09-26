@@ -285,6 +285,9 @@ The components are tactile and confident, with a pill for every action, glass fo
 - **Tablet sidebar:** a 260px glass panel with a 30px radius and a yellow radial glow at the top. The brand block at the top combines the Caipivara avatar with an eyebrow and the name. Nav items are 22px-radius rows with 40px icon wells and a status dot that turns yellow when active.
 - **Desktop top bar:** 72px tall at 80% black with `backdrop-blur-xl`. On the left is the logo (a 44px, 12px-radius square) with the name at 15px/700. The centred nav has 15px links, and a 40px circular search button sits on the right.
 
+### Feed karaoke line
+With the sound really playing, the current lyric line sits just above the compact title, bottom-left of the video (20px, 900, two lines at most, drop shadow like the icons): the sung part fills with Spotlight Yellow from left to right, the rest stays white — the video's only yellow. Nothing between two lines, nothing with the sound off. Shown only where the sync is known to match: songs without a Short (the full track, the karaoke player's own video) and Shorts verified one by one. Reduced motion: the line is fully yellow, no sweep.
+
 ### Catálogo stage — bottom
 Under the Caipivara, centred in a 22rem column: the song title on its own line (16px bold, two lines at most then an ellipsis; two lines of height are always reserved so the Caipivara keeps its size), then the feed's draggable progress bar (the same `Scrubber` component: 24px target, 3px white line on a 20% track that thickens to 6px while dragging, « m:ss / m:ss » bubble), then the 44px pause button and the « Outra » pill. No yellow in this zone.
 

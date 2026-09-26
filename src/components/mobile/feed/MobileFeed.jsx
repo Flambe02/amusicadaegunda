@@ -493,6 +493,7 @@ export default function MobileFeed({
           <FeedOverlay
             song={current}
             player={player}
+            karaokeMode={ouvirOpen ? 'none' : slideMode}
             isFirst={safeIndex === 0}
             onShowLyrics={() => onShowLyrics?.(current)}
             onRequestSound={requestSound}

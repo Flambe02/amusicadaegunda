@@ -720,3 +720,26 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Semana Dois' })).toBeInTheDocument();
   });
 });
+
+// ── Étape 5 : ligne de karaokê sur la vidéo ───────────────────────────────────────────
+describe('MobileFeed — ligne de karaokê (étape 5)', () => {
+  const LRC = '[00:02.00]Primeira linha\n[00:06.00]Segunda linha';
+  const K = { lrc_content: LRC, karaoke_published: true };
+
+  it('shows on a song without a Short (the full track, the karaoke player video); never on an unverified Short', async () => {
+    const { container } = await renderLoaded([song(3, 'Semana Tres', 'AAAAAAAAAAA', K), song(1, 'Semana Um', null, { ...K, release_date: '2026-09-07' })]);
+    const player = players[0];
+    act(() => { player.ready(); player.play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 50); });
+    act(() => { player.muted = false; player.time = 3; vi.advanceTimersByTime(300); });
+    act(() => { vi.advanceTimersByTime(100); });
+    // Short (extrait, décalage inconnu) : pas de ligne tant qu'il n'est pas vérifié.
+    expect(container.querySelector('[data-feed-karaoke]')).toBeNull();
+    swipe(container, -300);
+    act(() => { player.play(); player.time = 3; vi.advanceTimersByTime(REVEAL_DELAY_MS + 50); });
+    act(() => { vi.advanceTimersByTime(100); });
+    expect(container.querySelector('[data-feed-karaoke]')).toHaveTextContent('Primeira linha');
+    // Son coupé : la ligne disparaît (un seul jaune, et seulement son actif).
+    act(() => { player.muted = true; vi.advanceTimersByTime(300); });
+    expect(container.querySelector('[data-feed-karaoke]')).toBeNull();
+  });
+});
