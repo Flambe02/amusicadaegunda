@@ -8,7 +8,7 @@ import { CalendarDays, Disc3, ExternalLink, Headphones, MoreHorizontal, Pause, P
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { getYouTubeEmbedInfo, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
-import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
+import { BRAND_LOGO_SMALL, BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
 const CATEGORY_LABELS = {
   politica: 'Politica',
@@ -287,7 +287,10 @@ export default function Playlist() {
             <div className="flex items-center justify-center gap-4 mb-4">
               <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white/20 shadow-xl flex-shrink-0">
                 <img 
-                  src="/images/Musica da segunda.jpg" 
+                  src={BRAND_LOGO_SMALL}
+                  width={64}
+                  height={64}
+                  decoding="async"
                   alt="Logo A Música da Segunda - Paródias Musicais do Brasil"
                   className="w-full h-full object-cover"
                 />

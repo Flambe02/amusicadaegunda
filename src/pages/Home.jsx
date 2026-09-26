@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, memo, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, memo, useMemo, useRef, lazy, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { logger } from '@/lib/logger';
@@ -31,7 +31,6 @@ import HistoryDrawer from '../components/HistoryDrawer';
 import MobileFeed from '@/components/mobile/feed/MobileFeed';
 import { useShell } from '@/components/mobile/ShellContext';
 import YouTubeEmbed from '@/components/YouTubeEmbed';
-import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
 import { isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
 
@@ -45,6 +44,10 @@ import { useToast } from '@/components/ui/use-toast';
 import { extractYouTubeId } from '@/lib/utils';
 import { BRAND_LOGO_MEDIUM, BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 import { CURRENT_SONG_ARTWORK } from '@/generated/currentSongArtwork';
+
+// Chargé à la demande : le lecteur karaoké n'apparaît qu'à l'ouverture du mode karaoké.
+const KaraokePlayer = lazy(() => import('@/components/karaoke/KaraokePlayer'));
+
 // VideoObject JSON-LD removed from all pages (GSC: "Video isn't on a watch page")
 // No page in this app is a dedicated watch page for a single video.
 
@@ -1346,7 +1349,9 @@ export default function Home() {
 
       {/* Lecteur karaoké (desktop) — overlay plein écran via portal */}
       {isKaraokeOpen && displayedSong && isKaraokePublished(displayedSong) && (
-        <KaraokePlayer song={displayedSong} onClose={() => setIsKaraokeOpen(false)} />
+        <Suspense fallback={null}>
+          <KaraokePlayer song={displayedSong} onClose={() => setIsKaraokeOpen(false)} />
+        </Suspense>
       )}
 
       {/* ===== DIALOG PLATAFORMAS ===== */}

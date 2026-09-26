@@ -12,7 +12,8 @@ export const PHONE_LANDSCAPE_QUERY = '(pointer: coarse) and (orientation: landsc
 /** Événement diffusé à chaque bascule : les lecteurs se mettent en pause / reprennent. */
 export const ORIENTATION_BLOCK_EVENT = 'amds:orientation-block';
 
-function matchesPhoneLandscape() {
+/** Le téléphone est-il en paysage en ce moment ? (état initial des lecteurs) */
+export function matchesPhoneLandscape() {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     ? window.matchMedia(PHONE_LANDSCAPE_QUERY).matches
     : false;

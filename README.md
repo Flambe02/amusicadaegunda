@@ -149,8 +149,8 @@ npm run preview
 
 ### **2. Configurer les variables d'environnement**
 ```bash
-# Copiez env-example.txt vers .env
-cp env-example.txt .env
+# Copiez .env.example vers .env
+cp .env.example .env
 
 # Remplissez vos vraies clés Supabase
 VITE_SUPABASE_URL=https://votre-projet.supabase.co
