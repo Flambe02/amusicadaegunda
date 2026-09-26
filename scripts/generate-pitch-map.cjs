@@ -130,7 +130,7 @@ async function main() {
 
 async function writeToSupabase(slug, pitchMap) {
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY;
+  const key = process.env.SUPABASE_SERVICE_KEY;
   if (!url || !key) throw new Error('Faltam VITE_SUPABASE_URL / SUPABASE_SERVICE_KEY no .env.');
   const { createClient } = require('@supabase/supabase-js');
   const supabase = createClient(url, key);
