@@ -1,20 +1,47 @@
-# Script PowerShell pour créer le fichier .env
-# Exécutez ce script pour créer un fichier .env propre
+﻿# Script PowerShell pour créer un fichier .env minimal (URL + clé publishable Supabase).
+# Aucune clé n'est écrite dans ce fichier : les valeurs viennent de l'environnement
+# (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY) ou sont demandées à la saisie.
+#
+# Usage : .\create-env.ps1          (refuse d'écraser un .env existant)
+#         .\create-env.ps1 -Force   (remplace le .env existant)
 
-$envContent = @"
-VITE_SUPABASE_URL=https://efnzmpzkzeuktqkghwfa.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmbnptcHpremV1a3Rxa2dod2ZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMzE4MzcsImV4cCI6MjA3MTgwNzgzN30.iQiDuurPIkSNjHWP6TID0dATrOCJQ71-kblcsRsHiAk
-"@
+param(
+    [switch]$Force
+)
 
-# Supprimer l'ancien fichier .env s'il existe
-if (Test-Path ".env") {
-    Remove-Item ".env" -Force
-    Write-Host "Ancien fichier .env supprimé"
+$ErrorActionPreference = 'Stop'
+$defaultUrl = 'https://efnzmpzkzeuktqkghwfa.supabase.co'
+
+if ((Test-Path '.env') -and -not $Force) {
+    Write-Host 'Un fichier .env existe déjà (il peut contenir des secrets). Relancez avec -Force pour le remplacer.'
+    exit 1
 }
 
-# Créer le nouveau fichier .env
-$envContent | Out-File -FilePath ".env" -Encoding UTF8 -NoNewline
+$url = $env:VITE_SUPABASE_URL
+if (-not $url) {
+    $url = Read-Host "VITE_SUPABASE_URL [$defaultUrl]"
+    if (-not $url) { $url = $defaultUrl }
+}
 
-Write-Host "Fichier .env créé avec succès !"
-Write-Host "Contenu du fichier .env :"
-Get-Content ".env"
+$key = $env:VITE_SUPABASE_ANON_KEY
+if (-not $key) {
+    $key = Read-Host 'VITE_SUPABASE_ANON_KEY (clé sb_publishable_...)'
+}
+$key = $key.Trim()
+
+if (-not $key) {
+    Write-Host 'Clé vide : .env non créé.'
+    exit 1
+}
+if ($key.StartsWith('eyJ')) {
+    Write-Host 'Clé JWT legacy refusée : les clés legacy sont désactivées sur ce projet. Utilisez la clé sb_publishable_.'
+    exit 1
+}
+if (-not $key.StartsWith('sb_publishable_')) {
+    Write-Host 'Attention : la clé ne commence pas par sb_publishable_. Ne mettez jamais une clé sb_secret_ dans une variable VITE_ lue par le site.'
+}
+
+$content = "VITE_SUPABASE_URL=$url`nVITE_SUPABASE_ANON_KEY=$key`n"
+[System.IO.File]::WriteAllText((Join-Path (Get-Location) '.env'), $content, (New-Object System.Text.UTF8Encoding($false)))
+
+Write-Host 'Fichier .env créé (valeurs non affichées).'

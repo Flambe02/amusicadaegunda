@@ -1,9 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useSearchParams } from 'react-router-dom';
 import { Loader2, Music } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 import { useKaraokeCatalog } from '@/hooks/useKaraokeCatalog';
 import { trackEvent } from '@/lib/analytics';
+import { deriveSongSlug } from '@/lib/learnContent';
+import { useShell } from '@/components/mobile/ShellContext';
+import { getPublicSlug } from '@/components/mobile/feed/feedMedia';
 import KaraokePlayer from '@/components/karaoke/KaraokePlayer';
 import KaraokeHero from '@/components/karaoke/catalog/KaraokeHero';
 import KaraokeSearch from '@/components/karaoke/catalog/KaraokeSearch';
@@ -12,6 +16,7 @@ import KaraokeFilters from '@/components/karaoke/catalog/KaraokeFilters';
 import KaraokeSongCard from '@/components/karaoke/catalog/KaraokeSongCard';
 import KaraokeSurpriseResult from '@/components/karaoke/catalog/KaraokeSurpriseResult';
 import KaraokeEmptyState from '@/components/karaoke/catalog/KaraokeEmptyState';
+import KaraokePalco from '@/components/mobile/karaoke/KaraokePalco';
 import '@/styles/karaoke.css';
 import '@/styles/karaoke-catalog.css';
 
@@ -29,6 +34,7 @@ const HINT_KEY = 'karaoke-surprise-hint-dismissed-v1';
  */
 export default function KaraokePage() {
   const {
+    songs,
     results,
     totalEligible,
     isLoading,
@@ -106,7 +112,77 @@ export default function KaraokePage() {
     trackEvent('karaoke_sort_changed', { sort: value });
   }, [setSort]);
 
+  // Lien direct /karaoke?musica=<slug> (bouton « Cantar » du feed mobile) : ouvre le
+  // lecteur de cette chanson par le même chemin qu'une carte. Layout rend cette page
+  // deux fois et KaraokePlayer s'ouvre dans un portail : seule la copie qui correspond
+  // au viewport agit, sinon deux lecteurs s'ouvriraient. Le paramètre est retiré
+  // ensuite, pour que fermer le lecteur ramène à la liste. Chanson absente du
+  // catalogue karaokê (pas publiée) : la liste s'affiche, simplement.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const shell = useShell();
+  const requestedSlug = searchParams.get('musica');
+  useEffect(() => {
+    if (!requestedSlug || isLoading) return;
+    if (shell) {
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
+      if (shell !== (isMobile ? 'mobile' : 'desktop')) return;
+    }
+    const match = songs.find(
+      (song) => getPublicSlug(song) === requestedSlug || deriveSongSlug(song) === requestedSlug
+    );
+    if (match) sing(match);
+    setSearchParams(
+      (params) => {
+        params.delete('musica');
+        return params;
+      },
+      { replace: true }
+    );
+  }, [requestedSlug, isLoading, songs, shell, sing, setSearchParams]);
+
   const canSurprise = results.length > 0;
+
+  // Sous 768 px, la copie mobile de la page est « O Palco » (carrousel 3D, micro) ; la
+  // copie desktop garde le catalogue ci-dessous, inchangé.
+  const [isMobileViewport] = useState(() =>
+    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      ? window.matchMedia('(max-width: 767px)').matches
+      : false
+  );
+  const playerOverlay = current ? (
+    <KaraokePlayer
+      key={current.id}
+      song={current}
+      onEnded={() => setCurrent(null)}
+      onClose={() => setCurrent(null)}
+    />
+  ) : null;
+
+  if (shell === 'mobile' && isMobileViewport) {
+    // Étape 7 : sous O Palco, le lecteur laisse la barre du bas visible (onglet
+    // Karaokê actif) et prend le style mobile. La copie desktop garde le lecteur tel quel.
+    const mobilePlayerOverlay = current ? (
+      <KaraokePlayer
+        key={current.id}
+        song={current}
+        mobileShell
+        onEnded={() => setCurrent(null)}
+        onClose={() => setCurrent(null)}
+      />
+    ) : null;
+    return (
+      <>
+        <Helmet><html lang="pt-BR" /></Helmet>
+        <KaraokePalco
+          songs={songs}
+          isLoading={isLoading}
+          unavailable={Boolean(error) || (!isLoading && totalEligible === 0)}
+          onSing={sing}
+        />
+        {mobilePlayerOverlay}
+      </>
+    );
+  }
 
   return (
     <>
@@ -186,14 +262,7 @@ export default function KaraokePage() {
         />
       )}
 
-      {current && (
-        <KaraokePlayer
-          key={current.id}
-          song={current}
-          onEnded={() => setCurrent(null)}
-          onClose={() => setCurrent(null)}
-        />
-      )}
+      {playerOverlay}
     </>
   );
 }

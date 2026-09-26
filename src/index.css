@@ -267,3 +267,13 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
+
+/* Bannière d'installation (InstallAppBanner) sur mobile : jamais par-dessus des
+   contrôles. Elle disparaît tant qu'un écran à contrôles est affiché — feed et calque
+   Ouvir, Catálogo, O Palco et son lecteur karaokê — et reste ailleurs, posée au-dessus
+   de la barre du bas. */
+@media (max-width: 767px) {
+  body:has([data-feed-phase], [data-catalogo-stage], [data-palco], .karaoke-overlay.km-m) [data-install-banner] {
+    display: none;
+  }
+}

@@ -1,0 +1,3 @@
+# Les patchs doivent garder leurs fins de ligne telles quelles (LF) : avec core.autocrlf,
+# une extraction en CRLF les empêcherait de s appliquer (git apply).
+*.patch -text

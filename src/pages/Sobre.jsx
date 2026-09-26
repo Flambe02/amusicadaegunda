@@ -354,6 +354,17 @@ function MobileAboutExperience() {
           </span>
           <ExternalLink className="h-5 w-5 flex-shrink-0 text-app-yellow" aria-hidden="true" />
         </Link>
+
+        {/* Blog et Aprender ne sont plus dans le Menu mobile (étape 11) : ils restent
+            accessibles ici, discrètement. */}
+        <nav aria-label="Mais do projeto" className="flex items-center justify-center gap-6 pt-2">
+          <Link to="/blog" className="inline-flex min-h-[44px] items-center text-sm font-semibold text-white/60 active:text-white">
+            Blog
+          </Link>
+          <Link to="/apprendre" className="inline-flex min-h-[44px] items-center text-sm font-semibold text-white/60 active:text-white">
+            Aprender português
+          </Link>
+        </nav>
       </section>
     </div>
   );

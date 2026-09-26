@@ -14,7 +14,9 @@ import { lazy } from 'react';
 import Home from '../pages/Home';
 
 // Toutes les autres routes sont lazy-loaded
-const RodaDaSegunda = lazy(() => import('../pages/RodaDaSegunda'));
+// /roda et /search : pages desktop inchangées, redirigées vers /catalogo sous 768 px
+// (nav mobile à 4 onglets — addendum catálogo, étape 8).
+const RodaDaSegunda = lazy(() => import('../pages/mobileRoutes').then((m) => ({ default: m.RodaRoute })));
 const ProtectedAdmin = lazy(() => import('../components/ProtectedAdmin'));
 const Sobre = lazy(() => import('../pages/Sobre'));
 const ContentForAI = lazy(() => import('../pages/ContentForAI'));
@@ -25,7 +27,8 @@ const Song = lazy(() => import('../pages/Song'));
 const Youtube = lazy(() => import('../pages/Youtube'));
 const YoutubeTest = lazy(() => import('../pages/YoutubeTest'));
 const YoutubeSimple = lazy(() => import('../pages/YoutubeSimple'));
-const SearchPage = lazy(() => import('../pages/Search'));
+const SearchPage = lazy(() => import('../pages/mobileRoutes').then((m) => ({ default: m.SearchRoute })));
+const Catalogo = lazy(() => import('../pages/Catalogo'));
 const Karaoke = lazy(() => import('../pages/Karaoke'));
 const Categoria = lazy(() => import('../pages/Categoria'));
 const Guia = lazy(() => import('../pages/Guia'));
@@ -145,6 +148,12 @@ export const ROUTES = [
     component: SearchPage,
     name: 'Search',
     seo: null // noindex géré dans le composant
+  },
+  {
+    path: '/catalogo',
+    component: Catalogo,
+    name: 'Catalogo',
+    seo: null // noindex géré dans Catalogo.jsx ; pas de stub ni de sitemap (addendum §G.2)
   },
   {
     path: '/karaoke',

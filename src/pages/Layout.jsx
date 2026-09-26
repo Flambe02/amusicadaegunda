@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Suspense, lazy } from 'react';
 import { createPageUrl } from '@/utils';
@@ -9,19 +9,23 @@ import {
   Gift,
   Info,
   FileText,
+  Menu as MenuLines,
   Mic,
   Search,
-  Shuffle,
   Tv
 } from 'lucide-react';
 import { AppBottomNav } from '@/components/mobile';
-import CapivaraMicIcon from '@/components/icons/CapivaraMicIcon';
+import { HomeFilled, MenuFilled, MicFilled, SearchFilled } from '@/components/mobile/icons/FilledIcons';
+import { ShellContext } from '@/components/mobile/ShellContext';
+import RotateOverlay from '@/components/mobile/RotateOverlay';
 import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
-import { BRAND_SQUARE_MEDIUM, BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
 const TutorialManager = lazy(() => import('@/components/TutorialManager'));
 const StandaloneOnboarding = lazy(() => import('@/components/StandaloneOnboarding'));
+const SearchSheet = lazy(() => import('@/components/mobile/search/SearchSheet'));
+const MenuSheet = lazy(() => import('@/components/mobile/menu/MenuSheet'));
 
 function getNextMondayMs() {
   const now = new Date();
@@ -61,21 +65,36 @@ function SidebarCountdown() {
   );
 }
 
-function getMobileActiveTab(pathname) {
+// Onglets de la barre mobile (addendum catálogo §A, révisé le 2026-09-25) : inicio,
+// karaoke, catalogo (pastille centrale), buscar, menu. « Buscar » n'est jamais actif
+// (il ouvre un panneau, pas une page). Tout ce qui parcourt les musiques (le catalogue, les fiches /musica/…, les
+// catégories, l'arquivo) allume « Catálogo » ; les pages atteintes depuis la feuille
+// « Menu » allument « Menu ».
+function getMobileActiveTab(pathname, search = '') {
+  // Calque « Ouvir » du feed (/?ouvir=<slug>) : c'est le Catálogo qui est à l'écran.
+  if (pathname === '/') return new URLSearchParams(search).has('ouvir') ? 'catalogo' : 'inicio';
   if (pathname === '/karaoke') return 'karaoke';
-  if (pathname === '/roda') return 'roleta';
-  if (pathname === '/blog') return 'blog';
-  if (pathname === '/search') return 'pesquisa';
-  if (pathname === '/sobre') return 'sobre';
-  if (pathname === '/apprendre') return 'apprender';
   if (
+    pathname === '/catalogo' ||
+    pathname === '/search' ||
+    pathname === '/roda' ||
     pathname === '/musica' ||
     pathname.startsWith('/musica/') ||
     pathname === '/playlist' ||
     pathname.startsWith('/chansons') ||
-    pathname.startsWith('/categoria/')
+    pathname.startsWith('/categoria/') ||
+    pathname.startsWith('/arquivo/')
   ) {
     return 'catalogo';
+  }
+  if (
+    pathname === '/blog' ||
+    pathname === '/sobre' ||
+    pathname === '/tv' ||
+    pathname === '/festa' ||
+    pathname.startsWith('/apprendre')
+  ) {
+    return 'menu';
   }
   return 'inicio';
 }
@@ -83,6 +102,9 @@ function getMobileActiveTab(pathname) {
 export default function Layout({ children }) {
   const location = useLocation();
   const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchRequested, setSearchRequested] = useState(false);
+  const buscarButtonRef = useRef(null);
   const isHomePage = location.pathname === '/';
   const isImmersiveMobilePage = isHomePage || location.pathname === '/sobre';
 
@@ -120,26 +142,36 @@ export default function Layout({ children }) {
     return location.pathname === page.url;
   };
 
+  // Panneau de recherche mobile, ouvert par « Buscar » — sans focus sur le champ :
+  // le clavier ne s'ouvre que si l'utilisateur touche le champ (test iPhone).
+  const openSearch = () => {
+    setSearchRequested(true);
+    setSearchOpen(true);
+  };
+
   const mobileNavItems = [
-    { value: 'inicio', label: 'Início', href: '/', icon: Home },
-    { value: 'catalogo', label: 'Catálogo', href: '/musica', icon: Library },
-    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: CapivaraMicIcon, featured: true },
-    { value: 'roleta', label: 'Roleta', href: '/roda', icon: Shuffle },
+    { value: 'inicio', label: 'Início', href: '/', icon: Home, activeIcon: HomeFilled },
+    // Micro (décision du 2026-09-25, « O Palco ») : plein et blanc actif, contour sinon.
+    { value: 'karaoke', label: 'Karaokê', href: '/karaoke', icon: Mic, activeIcon: MicFilled },
+    // Au centre, la Caipivara dans sa pastille jaune : le seul jaune de la barre.
+    { value: 'catalogo', label: 'Catálogo', href: '/catalogo', variant: 'pill', image: '/images/caipivara-3d-head-128.webp' },
+    // Ouvre le panneau de recherche (étape 10) par-dessus l'écran courant, sans changer
+    // de page ; jamais affiché comme actif.
+    { value: 'buscar', label: 'Buscar', icon: Search, activeIcon: SearchFilled, onSelect: openSearch, buttonRef: buscarButtonRef },
     {
       value: 'menu',
       label: 'Menu',
-      icon: Info,
-      menuItems: [
-        { value: 'inicio', label: 'Início', href: '/', icon: Home },
-        { value: 'roleta', label: 'Roda', href: '/roda', icon: Gift },
-        { value: 'blog', label: 'Blog', href: '/blog', icon: FileText },
-        { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
-        { value: 'tv', label: 'App para TV', href: '/tv', icon: Tv },
-        { value: 'sobre', label: 'Sobre', href: '/sobre', icon: Info },
-        { value: 'apprender', label: 'Aprender Beta', href: '/apprendre', icon: GraduationCap },
-      ],
+      icon: MenuLines,
+      activeIcon: MenuFilled,
+      // Menu simplifié (étape 11) : Catálogo, Festa na TV, Sobre, plateformes.
+      sheet: MenuSheet,
     },
   ];
+
+  // Tout changement de page referme le panneau de recherche.
+  useEffect(() => {
+    setSearchOpen(false);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     let timeoutId = null;
@@ -163,17 +195,30 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <div className="md:hidden flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
+      <div className="md:hidden relative flex min-h-0 flex-col h-svh overflow-hidden bg-black text-white">
         <a href="#main-mobile" className="skip-link">Ir para o conteúdo</a>
 
-        <header className={`z-40 flex-shrink-0 border-b border-white/10 bg-black/92 text-white backdrop-blur-2xl${isImmersiveMobilePage ? ' hidden' : ''}`}>
+        {/* En-tête mobile. Início : transparent, posé PAR-DESSUS le contenu (le feed passe
+            dessous) ; la zone vide laisse passer les taps vers la vidéo, seul le logo
+            capte. Sobre : masqué. Ailleurs : verre opaque à 92 %. */}
+        <header
+          data-mobile-header={isHomePage ? 'overlay' : isImmersiveMobilePage ? 'hidden' : 'solid'}
+          className={
+            isHomePage
+              ? 'pointer-events-none absolute inset-x-0 top-0 z-40 text-white'
+              : `z-40 flex-shrink-0 border-b border-white/10 bg-black/90 text-white backdrop-blur-2xl${isImmersiveMobilePage ? ' hidden' : ''}`
+          }
+        >
           <div className="px-3 pb-2 pt-[max(env(safe-area-inset-top),0.35rem)]">
             <div className="flex min-h-[52px] items-center justify-between gap-2">
               {/* Left: Logo */}
-              <Link to="/" className="flex h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/8 shadow-sm">
+              {/* Caipivara 3D fixe (tête recadrée), pas l'ancien logo au micro. */}
+              <Link to="/" className="pointer-events-auto flex h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/10 shadow-sm">
                 <img
-                  src={BRAND_SQUARE_SMALL}
-                  alt="Logo A Musica da Segunda"
+                  src="/images/caipivara-3d-head-128.webp"
+                  srcSet="/images/caipivara-3d-head-128.webp 128w, /images/caipivara-3d-head-256.webp 256w"
+                  sizes="40px"
+                  alt="A Música da Segunda — página inicial"
                   className="w-full h-full object-cover"
                   loading="eager"
                   decoding="async"
@@ -182,31 +227,36 @@ export default function Layout({ children }) {
                 />
               </Link>
               {/* Center: Title */}
-              <span className="text-sm font-black tracking-tight text-white">
+              <span
+                className={`text-sm font-black tracking-tight text-white${
+                  isHomePage ? ' [text-shadow:0_1px_3px_rgba(0,0,0,0.6),0_0_12px_rgba(0,0,0,0.35)]' : ''
+                }`}
+              >
                 A Música da Segunda
               </span>
-              {/* Right: Info */}
-              <Link
-                to={createPageUrl('Sobre')}
-                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] touch-manipulation"
-                aria-label="Sobre o projeto"
-              >
-                <Info className="h-4 w-4 text-white/72" />
-              </Link>
+              {/* Pas de bouton « i » (Sobre) : il doublait l'onglet Menu, sur toutes les
+                  pages mobiles. Une cale de même taille garde le nom centré. */}
+              <span aria-hidden="true" className="h-11 w-11 flex-shrink-0" />
             </div>
           </div>
         </header>
 
         <main id="main-mobile" className="relative min-h-0 flex-1 overflow-hidden">
           <div id="mobile-scroll" className={`min-h-0 h-full overflow-y-auto overscroll-behavior-contain${isImmersiveMobilePage ? '' : ' pb-[env(safe-area-inset-bottom)]'}`}>
-            {children}
+            <ShellContext.Provider value="mobile">{children}</ShellContext.Provider>
           </div>
         </main>
 
         <AppBottomNav
           items={mobileNavItems}
-          activeValue={getMobileActiveTab(location.pathname)}
+          activeValue={getMobileActiveTab(location.pathname, location.search)}
         />
+
+        {searchRequested ? (
+          <Suspense fallback={null}>
+            <SearchSheet open={searchOpen} onOpenChange={setSearchOpen} returnFocusRef={buscarButtonRef} />
+          </Suspense>
+        ) : null}
       </div>
 
       <div className="hidden md:block min-h-screen text-white">
@@ -296,7 +346,7 @@ export default function Layout({ children }) {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(253,224,71,0.08),_transparent_18%),radial-gradient(circle_at_85%_10%,_rgba(255,255,255,0.06),_transparent_20%)]" />
 
           <main id="main-desktop" className="relative z-10 min-h-screen px-6 pb-32 pt-4 xl:px-8 2xl:px-10">
-            {children}
+            <ShellContext.Provider value="desktop">{children}</ShellContext.Provider>
           </main>
 
           <footer className="relative z-10 px-6 pb-6 xl:px-8 2xl:px-10">
@@ -316,6 +366,10 @@ export default function Layout({ children }) {
           </footer>
         </div>
       </div>
+
+      {/* Téléphone en paysage : « Gire o celular » par-dessus tout (hors des deux
+          coquilles : en paysage, un téléphone dépasse souvent 768 px de large). */}
+      <RotateOverlay />
 
       {deferredAuxUiReady ? (
         <Suspense fallback={null}>
