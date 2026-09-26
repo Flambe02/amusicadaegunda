@@ -24,6 +24,7 @@ import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 const TutorialManager = lazy(() => import('@/components/TutorialManager'));
 const StandaloneOnboarding = lazy(() => import('@/components/StandaloneOnboarding'));
 const SearchSheet = lazy(() => import('@/components/mobile/search/SearchSheet'));
+const MenuSheet = lazy(() => import('@/components/mobile/menu/MenuSheet'));
 
 function getNextMondayMs() {
   const now = new Date();
@@ -240,22 +241,8 @@ export default function Layout({ children }) {
       label: 'Menu',
       icon: MenuLines,
       activeIcon: MenuFilled,
-      menuItems: [
-        { value: 'inicio', label: 'Início', href: '/', icon: Home },
-        {
-          value: 'musicas',
-          label: 'Todas as músicas',
-          description: 'O arquivo completo, semana a semana',
-          href: '/musica',
-          icon: Library,
-        },
-        { value: 'roleta', label: 'Roda', href: '/roda', icon: Gift },
-        { value: 'blog', label: 'Blog', href: '/blog', icon: FileText },
-        { value: 'pesquisa', label: 'Pesquisa', href: '/search', icon: Search },
-        { value: 'tv', label: 'App para TV', href: '/tv', icon: Tv },
-        { value: 'sobre', label: 'Sobre', href: '/sobre', icon: Info },
-        { value: 'apprender', label: 'Aprender Beta', href: '/apprendre', icon: GraduationCap },
-      ],
+      // Menu simplifié (étape 11) : Festa na TV, Sobre, Newsletter, plateformes.
+      sheet: MenuSheet,
     },
   ];
 

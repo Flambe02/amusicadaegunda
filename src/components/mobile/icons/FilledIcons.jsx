@@ -108,6 +108,40 @@ export function ClipFilled(props) {
   );
 }
 
+/** Menu — Festa na TV : écran plein sur pied. */
+export function TvFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path d="M4.5 4h15A2.5 2.5 0 0 1 22 6.5v9a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 15.5v-9A2.5 2.5 0 0 1 4.5 4Z" />
+      <path d="M8 20.2a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2H9a1 1 0 0 1-1-1Z" />
+    </FilledIcon>
+  );
+}
+
+/** Menu — Sobre : disque plein, « i » évidé. */
+export function InfoFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path
+        fillRule="evenodd"
+        d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20Zm0 5.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Zm-1.1 4.4v5.6a1.1 1.1 0 0 0 2.2 0v-5.6a1.1 1.1 0 0 0-2.2 0Z"
+      />
+    </FilledIcon>
+  );
+}
+
+/** Menu — Newsletter : enveloppe pleine, rabat évidé. */
+export function MailFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path
+        fillRule="evenodd"
+        d="M4.5 4.5h15A2.5 2.5 0 0 1 22 7v10a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 17V7a2.5 2.5 0 0 1 2.5-2.5Zm.9 2.6a.9.9 0 0 0-.5 1.6l6.5 4.6c.4.3.9.3 1.2 0l6.5-4.6a.9.9 0 1 0-1-1.5L12 11.4 6.1 7.2a.9.9 0 0 0-.7-.1Z"
+      />
+    </FilledIcon>
+  );
+}
+
 /** Nav — Início actif : maison pleine, porte évidée. */
 export function HomeFilled(props) {
   return (

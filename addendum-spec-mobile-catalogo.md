@@ -69,8 +69,9 @@ Fichiers fournis par Florent, à placer puis à traiter comme à l'étape 1 (san
 ## D. Menu simplifié
 
 - En tête : avatar Caipivara, « A Música da Segunda », « Nova música toda segunda-feira ».
-- Lignes : Festa na TV, Aprender português, Sobre o projeto, Newsletter (Buttondown `amusicadasegunda`).
-- Plus de lignes Roda, Pesquisa, Blog ou « Todas as músicas » (désormais dans Catálogo). Le Blog reste accessible par son URL et depuis Sobre.
+- Lignes (*révisé le 2026-09-25*) : **Festa na TV** (`/festa`, remplace « App para TV »), **Sobre o projeto**, **Newsletter** (Buttondown `amusicadasegunda`, `ButtondownSignupForm` dans un petit panneau), puis les plateformes.
+- Plus de lignes Início, Todas as músicas, Roda, Pesquisa, Blog, Aprender Beta ni App para TV. **Blog et Aprender** restent accessibles par leur URL et depuis **Sobre** (deux liens discrets ajoutés en bas de la page Sobre mobile). « Todas as músicas » : depuis le panneau de recherche (« Ver todas as músicas »).
+- Même style que le reste de l'app : panneau qui monte du bas (#111217, coins 26 px, poignée, pas de voile), icônes pleines blanches façon TikTok, pas de jaune sauf l'action principale (le bouton d'inscription de la Newsletter).
 - Plateformes d'écoute en pastilles neutres (pas de couleur de marque hors de leur propre lien).
 - Aucun témoignage, chiffre d'audience ou presse.
 
