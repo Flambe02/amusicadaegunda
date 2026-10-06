@@ -18,6 +18,10 @@ function amdsBootPlugin(mode) {
   }
 }
 
+// zod + dompurify : validation et assainissement de l'admin et du login. Aucune des
+// deux n'importe React, et seuls des modules de `src` les importent.
+const LAZY_ONLY_LIBRARIES = /[\\/]node_modules[\\/](zod|dompurify)[\\/]/
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => ({
   // ✅ SEO: Base path correct pour GitHub Pages et URLs propres
@@ -51,6 +55,15 @@ export default defineConfig(({ command, mode }) => ({
         // Résultat: 620KB monolithique → ~5 chunks parallèles (le plus gros ~200KB)
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            // Bibliothèques SANS React, importées seulement par des écrans chargés à la
+            // demande (admin, login) : hors de vendor-app, Rollup les range avec ces
+            // écrans (vendor-app : 186 → 165 Ko gzip, téléchargé à chaque visite).
+            // Ne jamais ajouter ici une bibliothèque qui importe React (piège forwardRef
+            // ci-dessous), ni une dépendance d'une bibliothèque restée dans vendor-app :
+            // Rollup l'y ramène (norigin-core, lodash-es, qrcode-generator).
+            if (LAZY_ONLY_LIBRARIES.test(id)) {
+              return undefined;
+            }
             // Supabase client (~100KB, rarement mis à jour)
             if (id.includes('@supabase')) {
               return 'vendor-supabase';
