@@ -290,6 +290,20 @@ describe('MobileFeed — Short de la semaine (étape 3)', () => {
     }
   });
 
+  it('Android app on Save-Data: no player before a gesture, so the play cue is shown', async () => {
+    platformMock.value = 'android';
+    Object.defineProperty(window.navigator, 'connection', { value: { saveData: true }, configurable: true });
+    try {
+      const { container } = await renderLoaded();
+      expect(players).toHaveLength(0);
+      expect(stage(container)).toHaveAttribute('data-feed-phase', 'fallback');
+      expect(container.querySelector('[data-play-cue]')).not.toBeNull();
+    } finally {
+      platformMock.value = 'web';
+      Object.defineProperty(window.navigator, 'connection', { value: undefined, configurable: true });
+    }
+  });
+
   it('web: muted start and the play cue (no sound without a gesture)', async () => {
     const { container } = await renderLoaded();
     expect(container.querySelector('[data-play-cue]')).not.toBeNull();

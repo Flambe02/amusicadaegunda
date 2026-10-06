@@ -238,6 +238,12 @@ export default function MobileFeed({
     watchForRefusal();
   }, [startWithSound, phase]);
 
+  // App Android en économie de données ou en 2G : aucun lecteur n'est créé avant un
+  // geste, donc pas de son d'emblée — le repère de départ doit être là.
+  useEffect(() => {
+    if (startWithSound && phase === 'fallback') setPlayCue(true);
+  }, [startWithSound, phase]);
+
   // Premier écran en place : la vidéo joue, ou il n'y en a pas. C'est le signal que
   // l'accueil attend pour charger ce qui n'est pas à l'écran (descriptions, desktop).
   // Un repli (`fallback`) n'en est pas un : sur réseau lent, YouTube charge encore.

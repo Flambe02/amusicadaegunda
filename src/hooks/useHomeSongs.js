@@ -31,7 +31,9 @@ function takeBootCurrentSong() {
   const boot = freshBoot();
   if (!boot?.current) return null;
   // Une réponse qui tarde ne retient pas l'accueil : il refait alors la requête.
-  const tooLate = new Promise((resolve) => { setTimeout(() => resolve(null), BOOT_WAIT_MS); });
+  // (délai compté depuis le départ de la requête, pas depuis le montage de l'accueil)
+  const remaining = Math.max(0, BOOT_WAIT_MS - (Date.now() - boot.t));
+  const tooLate = new Promise((resolve) => { setTimeout(() => resolve(null), remaining); });
   return Promise.race([boot.current, tooLate])
     .then(asBootSong)
     .catch(() => null);

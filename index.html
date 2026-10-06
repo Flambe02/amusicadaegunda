@@ -29,6 +29,8 @@
           var add = function (tag, attributes) {
             var element = document.createElement(tag);
             for (var name in attributes) element.setAttribute(name, attributes[name]);
+            // Un chargement raté est retiré : l'app pourra le redemander elle-même.
+            element.onerror = function () { element.remove(); };
             document.head.appendChild(element);
           };
           var prepare = function (song) {

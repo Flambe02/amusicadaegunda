@@ -22,7 +22,15 @@ function matchesMobile() {
 // Accueil desktop : hors du JavaScript initial. Sur un écran desktop, son
 // téléchargement part dès l'évaluation de ce module, en parallèle des données.
 const loadHomeDesktop = () => import('./home/HomeDesktop');
-const HomeDesktop = lazy(loadHomeDesktop);
+// Sur un téléphone, cet arbre est invisible : si son téléchargement échoue (hors ligne,
+// déploiement entre-temps), il reste simplement absent. Sans cela, l'échec remontait au
+// garde-fou global, qui vide les caches et recharge la page en pleine lecture.
+const HomeDesktop = lazy(() =>
+  loadHomeDesktop().catch((error) => {
+    if (matchesMobile()) return { default: () => null };
+    throw error;
+  })
+);
 if (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && !matchesMobile()) {
   loadHomeDesktop().catch(() => {});
 }
