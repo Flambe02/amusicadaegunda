@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { FileText, Loader2, X } from 'lucide-react';
+import { AlertCircle, FileText, Loader2, RefreshCw, X } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import { ScrollArea } from './ui/scroll-area';
 import { resolveLyricsText } from '@/lib/lrc';
@@ -35,7 +35,7 @@ export default function LyricsDialog({
   useEffect(() => { setMode('letra'); }, [slug, open]);
 
   // L'accueil ne charge qu'un résumé des chansons : la letra arrive à l'ouverture.
-  const { song: fullSong, isLoading: lyricsLoading } = useFullSong(song, open);
+  const { song: fullSong, isLoading: lyricsLoading, error: loadError, retry } = useFullSong(song, open);
 
   if (!song) return null;
   const lyricsText = resolveLyricsText(fullSong);
@@ -101,7 +101,22 @@ export default function LyricsDialog({
 
         {/* Corps */}
         <div className="px-6 pb-6 pt-4">
-          {mode === 'aprender' ? (
+          {loadError && mode !== 'ficha' ? (
+            // Échec de chargement ≠ chanson sans letra : on le dit, et on peut réessayer.
+            <div className="flex flex-col items-center py-12 text-center" role="alert">
+              <AlertCircle className="mb-4 h-12 w-12 text-red-400/80" aria-hidden="true" />
+              <p className="font-semibold text-white/80">Não foi possível carregar a letra</p>
+              <p className="mt-1 text-sm text-white/45">Verifique a conexão e tente de novo.</p>
+              <button
+                type="button"
+                onClick={retry}
+                className="mt-5 inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                Tentar novamente
+              </button>
+            </div>
+          ) : mode === 'aprender' ? (
             <ScrollArea className="h-[55vh]">
               <div className="pr-4">
                 <Suspense

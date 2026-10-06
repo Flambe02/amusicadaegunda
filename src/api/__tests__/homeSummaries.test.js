@@ -127,11 +127,11 @@ describe('Accueil — résumés des chansons (jamais select *)', () => {
     expect(b).toBe(a);
   });
 
-  it('getFull gives the summary back when the full read fails, and retries next time', async () => {
+  it('getFull rejects when the full read fails (a failure is not « no lyrics »), and retries next time', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const summary = { id: 44, title: 'S', __summary: true };
     result = { data: null, error: { message: 'Failed to fetch' } };
-    expect(await Song.getFull(summary)).toBe(summary);
+    await expect(Song.getFull(summary)).rejects.toBeTruthy();
     result = { data: { id: 44, title: 'S', lyrics: 'ok' }, error: null };
     expect((await Song.getFull(summary)).lyrics).toBe('ok');
   });

@@ -188,7 +188,8 @@ export const Song = {
   /**
    * La chanson complète (letra, karaokê) d'un résumé, chargée une fois par session.
    * Une chanson déjà complète — ou issue du catalogue statique — est rendue telle
-   * quelle. En cas d'échec, le résumé est rendu et la prochaine demande réessaie.
+   * quelle. En cas d'échec, la promesse est REJETÉE (l'appelant affiche une erreur et
+   * propose de réessayer) et la prochaine demande refait la requête.
    */
   getFull: (song) => {
     if (!song?.__summary || song.id == null) return Promise.resolve(song || null);
@@ -203,11 +204,11 @@ export const Song = {
         .catch((error) => {
           fullSongs.delete(key);
           logger.error('Erro ao carregar a música completa:', error);
-          return null;
+          throw error;
         });
       fullSongs.set(key, request);
     }
-    return fullSongs.get(key).then((full) => full || song);
+    return fullSongs.get(key);
   },
 
   _listUncached: async (orderBy = '-release_date', limit = null) => {
