@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import FeedOverlay from '../FeedOverlay';
+import { WAIT_CUE_DELAY_MS, WAIT_CUE_FADE_OUT_MS } from '../FeedWaitCue';
 import { isReleasedThisWeek, getPublicSlug } from '../feedMedia';
 
 const dismiss = vi.fn();
@@ -21,6 +22,9 @@ const SONG = {
 
 const idlePlayer = { phase: 'playing', isPlaying: true, isMuted: true, isSoundOn: false, getCurrentTime: () => 0, getDuration: () => 60 };
 const soundPlayer = { ...idlePlayer, isMuted: false, isSoundOn: true };
+
+const waitLine = (container) => container.querySelector('[data-feed-wait="line"]');
+const waitEqualizer = (container) => container.querySelector('[data-feed-wait="equalizer"]');
 
 function renderOverlay(props = {}) {
   return render(
@@ -201,5 +205,74 @@ describe('FeedOverlay (étape 4)', () => {
   it('never writes a news headline line (no manchete source yet)', () => {
     renderOverlay({ song: { ...SONG, subtitle: 'O mês já virou o setembro mais chuvoso' } });
     expect(screen.queryByText(/setembro mais chuvoso/)).toBeNull();
+  });
+});
+
+describe('FeedOverlay — signaux d\u2019attente de la vidéo', () => {
+  const withPhase = (phase) => ({ ...idlePlayer, phase, isPlaying: phase === 'playing' });
+
+  it('while the player loads the video: a line where the progress bar will be, and a 3-bar equalizer by the title', () => {
+    const { container } = renderOverlay({ player: withPhase('loading') });
+    expect(waitLine(container)).toHaveAttribute('data-active', 'true');
+    expect(waitEqualizer(container)).toHaveAttribute('data-active', 'true');
+    expect(waitEqualizer(container).children).toHaveLength(3);
+    // Même place et même trait que la barre de progression (3 px, blanc à 20 %, collée en bas).
+    expect(waitLine(container).className).toMatch(/inset-x-0/);
+    expect(waitLine(container).className).toMatch(/bottom-0/);
+    expect(waitLine(container).className).toMatch(/h-\[3px\]/);
+    expect(waitLine(container).className).toMatch(/bg-white\/20/);
+    // Décoratifs : ni les lecteurs d'écran ni les taps ne les voient.
+    for (const cue of [waitLine(container), waitEqualizer(container)]) {
+      expect(cue).toHaveAttribute('aria-hidden', 'true');
+      expect(cue.className).toMatch(/pointer-events-none/);
+    }
+  });
+
+  it('they only appear after about 400 ms (a CSS delay — a fast start never flickers), and leave with the 500 ms video fade', () => {
+    expect(WAIT_CUE_DELAY_MS).toBe(400);
+    expect(WAIT_CUE_FADE_OUT_MS).toBe(500);
+    const { container, rerender } = renderOverlay({ player: withPhase('loading') });
+    for (const cue of [waitLine(container), waitEqualizer(container)]) {
+      expect(cue.className).toMatch(/opacity-100/);
+      expect(cue.className).toMatch(/\[transition-delay:400ms\]/);
+    }
+    rerender(
+      <MemoryRouter>
+        <FeedOverlay song={SONG} player={withPhase('playing')} onShowLyrics={vi.fn()} />
+      </MemoryRouter>
+    );
+    for (const cue of [waitLine(container), waitEqualizer(container)]) {
+      expect(cue).toHaveAttribute('data-active', 'false');
+      expect(cue.className).toMatch(/opacity-0/);
+      expect(cue.className).toMatch(/\[transition-duration:500ms\]/);
+      expect(cue.className).toMatch(/\[transition-delay:0ms\]/);
+      expect(cue.className).not.toMatch(/\[transition-delay:400ms\]/);
+    }
+    // La vraie barre de progression a pris le relais, au même endroit.
+    expect(container.querySelector('[data-scrubber]')).not.toBeNull();
+  });
+
+  it.each(['poster', 'fallback', 'none', 'playing'])('no wait cue in phase « %s » (the play button is enough on a fallback)', (phase) => {
+    const { container } = renderOverlay({ player: withPhase(phase) });
+    expect(waitLine(container)).toHaveAttribute('data-active', 'false');
+    expect(waitEqualizer(container)).toHaveAttribute('data-active', 'false');
+    expect(container.querySelector('[class*="animate-feed-wait"]')).toBeNull();
+  });
+
+  it('only transform and opacity move, and reduced motion gets a still version', () => {
+    const { container } = renderOverlay({ player: withPhase('loading') });
+    const moving = [...container.querySelectorAll('[class*="animate-feed-wait"]')];
+    expect(moving).toHaveLength(4); // le reflet de la ligne + trois barres
+    for (const element of moving) expect(element.className).toMatch(/motion-reduce:animate-none/);
+    // Montés en permanence et en position absolue : ils n'occupent aucune place (CLS nul).
+    expect(waitLine(container).className).toMatch(/absolute/);
+    expect(waitEqualizer(container).className).toMatch(/absolute/);
+  });
+
+  it('the equalizer never changes the title itself', () => {
+    const loading = renderOverlay({ player: withPhase('loading') });
+    const heading = loading.container.querySelector('h1');
+    expect(heading.textContent).toBe(SONG.title);
+    expect(heading.querySelector('[data-feed-wait]')).toBeNull();
   });
 });

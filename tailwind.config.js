@@ -102,11 +102,22 @@ module.exports = {
   				to: {
   					height: '0'
   				}
+  			},
+  			// Feed mobile, attente de la vidéo (FeedWaitCue) : transform seulement.
+  			'feed-wait-sweep': {
+  				from: { transform: 'translateX(-100%)' },
+  				to: { transform: 'translateX(300%)' }
+  			},
+  			'feed-wait-eq': {
+  				'0%, 100%': { transform: 'scaleY(0.35)' },
+  				'50%': { transform: 'scaleY(1)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'feed-wait-sweep': 'feed-wait-sweep 1.3s linear infinite',
+  			'feed-wait-eq': 'feed-wait-eq 0.9s ease-in-out infinite'
   		},
   		boxShadow: {
   			'app-soft': '0 16px 40px rgba(0, 0, 0, 0.28)',

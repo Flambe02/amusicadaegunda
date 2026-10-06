@@ -4,6 +4,7 @@ import { getPublicSlug } from './feedMedia';
 import WeekRibbon from './WeekRibbon';
 import FeedStorySheet from './FeedStorySheet';
 import Scrubber from './Scrubber';
+import { FeedWaitEqualizer, FeedWaitLine } from './FeedWaitCue';
 import FeedKaraokeLine from './FeedKaraokeLine';
 import { Rail, RailButton, RailLink } from './FeedRail';
 import { useShareSong } from './useShareSong';
@@ -48,6 +49,9 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
   const showMuted = player.phase !== 'none' && player.isMuted;
   // « História » : seulement si la chanson a une description — jamais de bouton vide.
   const hasStory = typeof song?.description === 'string' && song.description.trim().length > 0;
+  // Attente de la vidéo : seulement pendant que le lecteur la charge. En repli
+  // (`fallback`, économie de données, 2G), le bouton de lecture suffit.
+  const waiting = player.phase === 'loading';
   const [storyOpen, setStoryOpen] = useState(false);
   const storyButtonRef = useRef(null);
   useEffect(() => { setStoryOpen(false); }, [song?.id, song?.title]);
@@ -66,6 +70,7 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
           compact ? 'bottom-3' : 'bottom-6'
         }`}
       >
+        <FeedWaitEqualizer active={waiting} />
         <TitleTag
           data-compact={compact ? 'true' : 'false'}
           className={`font-black tracking-tight text-white transition-[font-size,line-height] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
@@ -135,6 +140,7 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
       {/* Étape 5 : ligne de karaokê, au-dessus du titre compact, son actif seulement. */}
       <FeedKaraokeLine song={song} player={player} mode={karaokeMode} />
 
+      <FeedWaitLine active={waiting} />
       <Scrubber player={player} />
 
       {hasStory ? (
