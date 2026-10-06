@@ -16,9 +16,10 @@
     <link rel="dns-prefetch" href="https://i.ytimg.com" />
 
     <!-- amds-boot : la chanson de la semaine est demandée ICI, pendant que le JavaScript de
-         l'app se télécharge (au lieu d'après). Sur téléphone, sa miniature est préchargée.
-         L'accueil reprend cette réponse (src/hooks/useHomeSongs.js) ; en cas d'échec, il
-         refait la requête lui-même. L'adresse est écrite au build par
+         l'app se télécharge (au lieu d'après). Sur téléphone, sa miniature est préchargée et
+         YouTube est préparé (connexions + IFrame API, jamais le lecteur) — sauf en économie
+         de données ou en 2G. L'accueil reprend cette réponse (src/hooks/useHomeSongs.js) ;
+         en cas d'échec, il refait la requête lui-même. L'adresse est écrite au build par
          vite.config.js (plugin amds-boot) : requête « simple », sans pré-vérification CORS. -->
     <script>
       (function () {
@@ -37,6 +38,12 @@
             if (short && window.location.search.indexOf('musica=') === -1) {
               add('link', { rel: 'preload', as: 'image', href: 'https://i.ytimg.com/vi/' + short[1] + '/oar2.jpg', fetchpriority: 'high' });
             }
+            var connection = window.navigator.connection || {};
+            var constrained = connection.saveData || connection.effectiveType === '2g' || connection.effectiveType === 'slow-2g';
+            if (constrained || !(short || song.youtube_url)) return;
+            add('link', { rel: 'preconnect', href: 'https://www.youtube.com' });
+            add('link', { rel: 'preconnect', href: 'https://www.youtube-nocookie.com' });
+            add('script', { src: 'https://www.youtube.com/iframe_api', async: '' });
           };
           boot.current = window
             .fetch('__AMDS_BOOT_CURRENT_SONG_URL__')

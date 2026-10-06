@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { ORIENTATION_BLOCK_EVENT, matchesPhoneLandscape } from '@/components/mobile/orientation';
+import { getNetworkProfile } from './playerBootstrap';
 
 /**
  * UN SEUL lecteur YouTube pour tout le feed mobile (spec mobile §4.1, étapes 3 et 4b).
@@ -22,8 +23,8 @@ import { ORIENTATION_BLOCK_EVENT, matchesPhoneLandscape } from '@/components/mob
  *              — juste le temps d'éviter l'image noire du démarrage —, son coupé ou non.
  *              L'interface de démarrage de YouTube (titre en haut, logo « Shorts » en bas
  *              à droite) reste alors visible ~3 s : accepté (décision du 2026-09-25).
- *   'fallback' PLAYING pas reçu en 3 s (économie d'énergie/données, YouTube lent ou
- *              bloqué) → la miniature reste, « Toque para ouvir » relance au tap
+ *   'fallback' PLAYING pas reçu en 3 s (économie d'énergie/données, 2G, YouTube lent
+ *              ou bloqué) → la miniature reste, « Toque para ouvir » relance au tap
  *   'none'     pas de Short pour cette chanson : le lecteur est arrêté et masqué
  */
 
@@ -44,11 +45,6 @@ function hideCaptions(player) {
   } catch {
     /* module absent */
   }
-}
-
-function prefersSaveData() {
-  if (typeof navigator === 'undefined') return false;
-  return Boolean(navigator.connection?.saveData);
 }
 
 /**
@@ -281,10 +277,11 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
   }, [videoId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Création du lecteur une fois la première miniature affichée. En économie de
-  // données, on n'en charge aucun tant que l'utilisateur ne l'a pas demandé.
+  // données ou en 2G, on n'en charge aucun tant que l'utilisateur ne l'a pas demandé
+  // (la miniature et le repère de lecture restent).
   useEffect(() => {
     if (!videoId || !canLoad || playerRef.current || creatingRef.current) return;
-    if (prefersSaveData()) {
+    if (getNetworkProfile() !== 'normal') {
       setPhase('fallback');
       return;
     }

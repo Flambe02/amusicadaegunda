@@ -3,6 +3,7 @@ import { ChevronUp, Play } from 'lucide-react';
 import FeedPoster from './FeedPoster';
 import FeedOverlay from './FeedOverlay';
 import { useShortPlayer } from './useShortPlayer';
+import { warmUpYouTube } from './playerBootstrap';
 import { CAIPIVARA_STAGE_IMAGE, getPublicSlug, getShortVideoId } from './feedMedia';
 import { deriveSongSlug } from '@/lib/learnContent';
 import { TEXT_SHADOW } from './feedStyles';
@@ -22,6 +23,15 @@ const HEADER_OFFSET = 'pt-[calc(max(env(safe-area-inset-top),0.35rem)+3.75rem)]'
 // chaîne en bas, jusqu'à ~85 px des bords) ; 1,22 la sortait du champ, au prix de
 // ~27 % de largeur et ~18 % de hauteur coupées. Accepté tel quel à 1,0.
 const SHORTS_UI_ZOOM = 1.0;
+
+// Short pas encore affiché : opacité 0 ET découpe à une bande de 2 px.
+// - L'opacité seule ne suffit pas : au chargement, YouTube passe sa zone vidéo de 16:9
+//   au vertical, et Chrome compte ce décalage (CLS 0,32, mesuré). Découpée, l'iframe ne
+//   pèse presque plus rien dans le calcul (CLS 0,001, mesuré le 2026-10-06).
+// - Surtout PAS `visibility: hidden` (l'ancien réglage) : Chrome bride alors l'iframe,
+//   et YouTube, vidéo déjà téléchargée, ne passait en lecture qu'après 3,5 à 8 s au lieu
+//   de ~2 s (mesuré le 2026-10-06, sans aucun ralentissement simulé).
+const VIDEO_HIDDEN = 'opacity-0 [clip-path:inset(0_0_calc(100%-2px)_0)]';
 
 // Glissement entre semaines (étape 4b).
 const SWIPE_DISTANCE = 0.2; // part de la hauteur à dépasser pour changer de chanson
@@ -154,6 +164,13 @@ export default function MobileFeed({
   // App Android (hors TV) : la WebView autorise le son sans geste (MainActivity) → la
   // chanson démarre avec le son, sans repère de départ. Site web et iOS : inchangés.
   const [startWithSound] = useState(canStartWithSound);
+  // Connexions YouTube et IFrame API préparées dès maintenant, pendant que la miniature
+  // charge (index.html l'a déjà fait au premier chargement de la page) ; le lecteur,
+  // lui, attend toujours la miniature.
+  const hasVideo = Boolean(videoId);
+  useEffect(() => {
+    if (hasVideo) warmUpYouTube();
+  }, [hasVideo]);
   const player = useShortPlayer({ videoId, canLoad: firstPosterSettled, mountRef, loop: !ouvirOpen, startWithSound });
   const { phase, isMuted, isPaused, toggleSound, togglePause } = player;
   // L'iframe n'est montrée que pour un Short : en mode audio, elle reste cachée.
@@ -417,9 +434,10 @@ export default function MobileFeed({
       onClickCapture={onClickCapture}
     >
       <div ref={trackRef} className="absolute inset-0 will-change-transform">
-        {/* Voisines : miniature et titre seulement (préchargement), hors champ. */}
-        {newer ? <NeighbourSlide song={newer} buildArtwork={buildArtwork} position="-100%" /> : null}
-        {older ? <NeighbourSlide song={older} buildArtwork={buildArtwork} position="100%" /> : null}
+        {/* Voisines : miniature et titre seulement (préchargement), hors champ — montées
+            après la première miniature, pour ne pas lui disputer le réseau. */}
+        {newer && firstPosterSettled ? <NeighbourSlide song={newer} buildArtwork={buildArtwork} position="-100%" /> : null}
+        {older && firstPosterSettled ? <NeighbourSlide song={older} buildArtwork={buildArtwork} position="100%" /> : null}
 
         {/* Diapositive courante — jamais démontée : l'iframe unique y vit. */}
         <div className="absolute inset-0">
@@ -440,15 +458,14 @@ export default function MobileFeed({
           {/* Vidéo : iframe 9:16 en « cover » (× SHORTS_UI_ZOOM, 1,0 aujourd'hui), pour
               l'interface YouTube du champ. Masquée sans transition au changement de
               chanson, fondu seulement à l'apparition. Avant le fondu, un Short est aussi
-              `visibility: hidden` : au chargement, YouTube passe sa zone vidéo de 16:9 au
-              vertical, et Chrome comptait ce décalage (CLS 0,32) même à opacité 0. Le mode
-              audio (chanson sans Short) garde l'opacité seule. */}
+              découpé (VIDEO_HIDDEN) ; le mode audio (chanson sans Short) garde l'opacité
+              seule. */}
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute inset-0 ${
               videoVisible
                 ? 'opacity-100 transition-opacity duration-500 ease-out motion-reduce:transition-none'
-                : slideMode === 'video' ? 'invisible opacity-0' : 'opacity-0'
+                : slideMode === 'video' ? VIDEO_HIDDEN : 'opacity-0'
             }`}
           >
             <div
