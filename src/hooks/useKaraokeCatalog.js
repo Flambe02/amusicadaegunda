@@ -56,19 +56,20 @@ export function useKaraokeCatalog() {
     setIsLoading(true);
     setError(null);
     try {
-      const rows = (await Song.list('-release_date')) || [];
+      // Chansons synchronisées seulement, sans timing par mot ni pitch (≈ 79 Ko au lieu
+      // de ≈ 235 Ko) : le lecteur demande la chanson complète à l'ouverture.
+      const { songs: rows = [], fromSupabase } = (await Song.listKaraokeCatalogue()) || {};
       const eligible = rows
         .filter((s) => isKaraokePublished(s))
         // pré-calcule l'index de recherche une seule fois par chanson
         .map((s) => ({ ...s, __searchIndex: buildSearchIndex(s) }));
 
-      // `Song.list` avale ses erreurs : en cas de panne il retombe sur le catalogue
+      // La lecture avale ses erreurs : en cas de panne elle retombe sur le catalogue
       // statique (`__staticFallback`, sans `lrc_content`) ou renvoie []. Dans les
       // deux cas on obtient 0 éligible. Sans ce test, une panne réseau s'afficherait
       // comme « Nenhuma música disponível para karaokê » — un mensonge, puisque les
       // karaokês existent. On remonte donc une erreur pour proposer « tentar de novo ».
-      const reachedSupabase = rows.some((s) => s && !s.__staticFallback);
-      if (eligible.length === 0 && !reachedSupabase) {
+      if (eligible.length === 0 && !fromSupabase) {
         throw new Error('Catálogo karaokê indisponível (falha ao carregar as músicas)');
       }
 

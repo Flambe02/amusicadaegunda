@@ -4,7 +4,7 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { averageColor, cardLayout, firstVerse, NEUTRAL_TINT, palcoLayout, CARD_MAX_H, CARD_MIN_H } from '../palco';
 
 const WEEK = { id: 'w', title: 'Chanson da Semana', slug: 'semana', release_date: '2026-09-21', youtube_music_url: 'https://www.youtube.com/shorts/WWWWWWWWWWW' };
-vi.mock('@/api/entities', () => ({ Song: { list: vi.fn(() => Promise.resolve([WEEK])) } }));
+vi.mock('@/api/entities', () => ({ Song: { getCurrentLite: vi.fn(() => Promise.resolve(WEEK)) } }));
 
 const { default: KaraokePalco } = await import('../KaraokePalco');
 

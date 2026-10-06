@@ -13,7 +13,7 @@ const SONGS = [
 ];
 
 vi.mock('@/api/entities', () => ({
-  Song: { list: vi.fn(() => Promise.resolve(SONGS)) },
+  Song: { listKaraokeCatalogue: vi.fn(() => Promise.resolve({ songs: SONGS, fromSupabase: true })) },
 }));
 
 describe('useKaraokeCatalog — difficulté', () => {

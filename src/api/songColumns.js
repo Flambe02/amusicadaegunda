@@ -38,6 +38,38 @@ export const SONG_SUMMARY_COLUMNS = [...SONG_INDEX_COLUMNS, 'description'];
 
 export const SONG_DESCRIPTION_COLUMNS = ['id', 'description'];
 
+/**
+ * Catalogue /karaoke : seulement les chansons synchronisées, avec ce que la liste lit
+ * (premier vers, difficulté estimée sur la letra, recherche) — sans `timing_data`,
+ * `pitch_map` ni la transcription brute, que seul le lecteur utilise (Song.getFull).
+ */
+export const SONG_KARAOKE_COLUMNS = [
+  ...SONG_SUMMARY_COLUMNS,
+  'difficulty',
+  'hashtags',
+  'lyrics',
+  'lyrics_karaoke',
+  'lrc_content',
+];
+
+/** Texte des paroles, pour la recherche : demandé quand l'utilisateur commence à taper. */
+export const SONG_LYRICS_COLUMNS = ['id', 'lyrics', 'lyrics_karaoke'];
+
+/**
+ * Catalogue en résumé enrichi de ses descriptions (lignes `{ id, description }`).
+ * Une chanson qui porte déjà la sienne (repli statique, lecture complète) est gardée
+ * telle quelle, objet compris.
+ */
+export function mergeSongDescriptions(songs, rows) {
+  const byId = rows instanceof Map ? rows : new Map((rows || []).map((row) => [row.id, row.description ?? null]));
+  if (byId.size === 0) return songs;
+  return songs.map((song) =>
+    song.description === undefined && byId.has(song.id)
+      ? { ...song, description: byId.get(song.id) }
+      : song
+  );
+}
+
 /** Nombre de chansons de l'accueil (feed mobile, catalogue mensuel desktop). */
 export const HOME_SONGS_LIMIT = 120;
 

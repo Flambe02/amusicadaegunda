@@ -15,12 +15,13 @@ import {
   themeOptions,
 } from './searchCatalog';
 
-// Une seule lecture du catalogue par visite : Song.list retombe sur content/songs.json
-// si Supabase est indisponible (addendum §B « Données »). Un échec n'est pas mémorisé.
+// Une seule lecture du catalogue par visite, en résumé (≈ 13 Ko au lieu de ≈ 235 Ko) :
+// repli sur content/songs.json si Supabase est indisponible (addendum §B « Données »).
+// Un échec n'est pas mémorisé.
 let catalogPromise = null;
 function loadCatalog() {
   if (!catalogPromise) {
-    catalogPromise = Song.list('-release_date')
+    catalogPromise = Song.listHomeFeed(null)
       .then((list) => (Array.isArray(list) ? list : []))
       .catch(() => []);
     catalogPromise.then((list) => {
@@ -28,6 +29,21 @@ function loadCatalog() {
     });
   }
   return catalogPromise;
+}
+
+// Les paroles ne servent qu'à la recherche tapée : demandées quand l'utilisateur touche
+// le champ (≈ 42 Ko), une fois par visite. Sans elles, la recherche porte sur les titres.
+let lyricsPromise = null;
+function loadLyrics() {
+  if (!lyricsPromise) {
+    lyricsPromise = Song.listLyricsText()
+      .then((rows) => new Map((Array.isArray(rows) ? rows : []).map((row) => [row.id, row])))
+      .catch(() => new Map());
+    lyricsPromise.then((byId) => {
+      if (!byId.size) lyricsPromise = null;
+    });
+  }
+  return lyricsPromise;
 }
 
 /**
@@ -172,9 +188,26 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
     return () => { alive = false; };
   }, [open]);
 
+  // Paroles : chargées au premier contact avec le champ (focus ou saisie).
+  const [lyrics, setLyrics] = useState(null);
+  const [wantsLyrics, setWantsLyrics] = useState(false);
+  useEffect(() => {
+    if (!open || !wantsLyrics || lyrics) return undefined;
+    let alive = true;
+    loadLyrics().then((byId) => {
+      if (alive && byId.size) setLyrics(byId);
+    });
+    return () => { alive = false; };
+  }, [open, wantsLyrics, lyrics]);
+
   const entries = useMemo(
-    () => publishedNewestFirst(songs).map((song) => ({ song, searchText: buildSearchText(song) })),
-    [songs]
+    () =>
+      publishedNewestFirst(songs).map((song) => ({
+        song,
+        // Un résumé n'a pas ses paroles : celles de la recherche les complètent.
+        searchText: buildSearchText(lyrics?.has(song.id) ? { ...song, ...lyrics.get(song.id) } : song),
+      })),
+    [songs, lyrics]
   );
   const catalog = useMemo(() => entries.map((entry) => entry.song), [entries]);
   const months = useMemo(() => monthOptions(catalog), [catalog]);
@@ -252,9 +285,9 @@ export default function SearchSheet({ open, onOpenChange, returnFocusRef }) {
                 autoCorrect="off"
                 spellCheck={false}
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) => { setWantsLyrics(true); setQuery(event.target.value); }}
                 onPointerDown={() => { pointerFocusRef.current = true; }}
-                onFocus={() => { setPointerFocus(pointerFocusRef.current); pointerFocusRef.current = false; }}
+                onFocus={() => { setWantsLyrics(true); setPointerFocus(pointerFocusRef.current); pointerFocusRef.current = false; }}
                 onBlur={() => setPointerFocus(false)}
                 data-pointer-focus={pointerFocus ? 'true' : undefined}
                 aria-label="Buscar por título ou letra"

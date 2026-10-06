@@ -1,5 +1,5 @@
 import { supabaseSongService } from './supabaseService';
-import { HOME_SONGS_LIMIT } from './songColumns';
+import { HOME_SONGS_LIMIT, mergeSongDescriptions } from './songColumns';
 import { checkConnection } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { localStorageService } from '@/lib/localStorage';
@@ -155,6 +155,32 @@ async function listHomeDescriptionRows(limit) {
   }
 }
 
+// Catalogue /karaoke. `fromSupabase` distingue « aucun karaokê publié » (Supabase a
+// répondu, liste vide) d'une panne (repli statique, sans LRC).
+async function listKaraokeCatalogueSongs() {
+  try {
+    const songs = await supabaseSongService.listKaraokeCatalogue();
+    return { songs: songs.map(asSummary), fromSupabase: true };
+  } catch (error) {
+    if (isMissingColumnError(error)) {
+      const songs = await Song._listUncached('-release_date', null);
+      return { songs, fromSupabase: songs.some((song) => song && !song.__staticFallback) };
+    }
+    logger.error('Erro ao carregar o catálogo de karaokê:', error);
+  }
+  return { songs: await staticSongs('-release_date', null), fromSupabase: false };
+}
+
+async function listLyricsTextRows() {
+  try {
+    return await supabaseSongService.listLyricsText();
+  } catch (error) {
+    // Sans paroles, la recherche porte encore sur les titres : jamais bloquant.
+    logger.error('Erro ao carregar as letras para a busca:', error);
+    return [];
+  }
+}
+
 // Chansons complètes déjà demandées dans la session (letra, karaokê), par id.
 const fullSongs = new Map();
 
@@ -184,6 +210,15 @@ export const Song = {
     shareInFlight(`homeFeed:${limit}`, () => listHomeFeedSongs(limit)),
   listHomeDescriptions: (limit = HOME_SONGS_LIMIT) =>
     shareInFlight(`homeDescriptions:${limit}`, () => listHomeDescriptionRows(limit)),
+
+  // Catalogue entier en résumé + descriptions (Catálogo) ; karaokê ; paroles (recherche).
+  listCatalogue: () =>
+    shareInFlight('catalogue', async () => {
+      const [songs, descriptions] = await Promise.all([listHomeFeedSongs(null), listHomeDescriptionRows(null)]);
+      return mergeSongDescriptions(songs, descriptions);
+    }),
+  listKaraokeCatalogue: () => shareInFlight('karaokeCatalogue', listKaraokeCatalogueSongs),
+  listLyricsText: () => shareInFlight('lyricsText', listLyricsTextRows),
 
   /**
    * La chanson complète (letra, karaokê) d'un résumé, chargée une fois par session.

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Loader2, Music } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 import { useKaraokeCatalog } from '@/hooks/useKaraokeCatalog';
+import { useFullSong } from '@/hooks/useFullSong';
 import { trackEvent } from '@/lib/analytics';
 import { deriveSongSlug } from '@/lib/learnContent';
 import { useShell } from '@/components/mobile/ShellContext';
@@ -158,10 +159,14 @@ export default function KaraokePage() {
     mediaQuery.addEventListener?.('change', updateViewport);
     return () => mediaQuery.removeEventListener?.('change', updateViewport);
   }, []);
-  const playerOverlay = current ? (
+  // Le catalogue n'a pas le timing par mot ni le pitch : le lecteur attend la chanson
+  // complète. Si elle n'arrive pas, il s'ouvre quand même avec le timing par ligne du
+  // catalogue (`lrc_content`) plutôt que de rester fermé.
+  const { song: playerSong, isLoading: playerLoading } = useFullSong(current, Boolean(current));
+  const playerOverlay = current && !playerLoading ? (
     <KaraokePlayer
       key={current.id}
-      song={current}
+      song={playerSong}
       onEnded={() => setCurrent(null)}
       onClose={() => setCurrent(null)}
     />
@@ -170,10 +175,10 @@ export default function KaraokePage() {
   if (shell === 'mobile' && isMobileViewport) {
     // Étape 7 : sous O Palco, le lecteur laisse la barre du bas visible (onglet
     // Karaokê actif) et prend le style mobile. La copie desktop garde le lecteur tel quel.
-    const mobilePlayerOverlay = current ? (
+    const mobilePlayerOverlay = current && !playerLoading ? (
       <KaraokePlayer
         key={current.id}
-        song={current}
+        song={playerSong}
         mobileShell
         onEnded={() => setCurrent(null)}
         onClose={() => setCurrent(null)}

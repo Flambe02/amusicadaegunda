@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   SONG_INDEX_COLUMNS,
+  SONG_KARAOKE_COLUMNS,
   SONG_SUMMARY_COLUMNS,
   buildCurrentSongBootUrl,
 } from '../songColumns';
@@ -19,6 +20,7 @@ vi.mock('@/lib/supabase', () => {
     const chain = {
       select: (columns) => { query.select = columns; return chain; },
       eq: (column, value) => { query.eq.push([column, value]); return chain; },
+      not: (column, operator, value) => { query.not.push([column, operator, value]); return chain; },
       order: (column, options) => { query.order = [column, options]; return chain; },
       limit: (count) => { query.limit = count; return chain; },
       single: () => answer(),
@@ -32,7 +34,7 @@ vi.mock('@/lib/supabase', () => {
     checkConnection: vi.fn(() => Promise.resolve(true)),
     supabase: {
       from: (table) => {
-        const query = { table, eq: [] };
+        const query = { table, eq: [], not: [] };
         queries.push(query);
         return builder(query);
       },
@@ -134,6 +136,44 @@ describe('Accueil — résumés des chansons (jamais select *)', () => {
     await expect(Song.getFull(summary)).rejects.toBeTruthy();
     result = { data: { id: 44, title: 'S', lyrics: 'ok' }, error: null };
     expect((await Song.getFull(summary)).lyrics).toBe('ok');
+  });
+
+  it('the karaoke catalogue asks for synced songs only, without word timing or pitch', async () => {
+    result = { data: [{ id: 5, title: 'K', lrc_content: '[00:01.00]la' }], error: null };
+    const { songs, fromSupabase } = await Song.listKaraokeCatalogue();
+    expect(queries[0].select).toBe(SONG_KARAOKE_COLUMNS.join(','));
+    for (const column of ['*', 'timing_data', 'pitch_map', 'karaoke_ai_raw_transcript']) {
+      expect(queries[0].select).not.toContain(column);
+    }
+    expect(queries[0].not).toContainEqual(['karaoke_synced_at', 'is', null]);
+    expect(queries[0].limit).toBeUndefined();
+    expect(fromSupabase).toBe(true);
+    expect(isKaraokePublished(songs[0])).toBe(true);
+  });
+
+  it('an empty karaoke answer from Supabase is « none published », a failure is « unavailable »', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    result = { data: [], error: null };
+    expect(await Song.listKaraokeCatalogue()).toEqual({ songs: [], fromSupabase: true });
+    result = { data: null, error: { message: 'Failed to fetch' } };
+    expect((await Song.listKaraokeCatalogue()).fromSupabase).toBe(false);
+  });
+
+  it('the whole catalogue comes as index + descriptions merged, never select *', async () => {
+    answers.push(
+      { data: [{ id: 2, title: 'B' }, { id: 1, title: 'A' }], error: null },
+      { data: [{ id: 1, description: 'História A' }], error: null }
+    );
+    const songs = await Song.listCatalogue();
+    expect(queries.map((query) => query.select).sort()).toEqual([SONG_INDEX_COLUMNS.join(','), 'id,description'].sort());
+    expect(queries.every((query) => query.limit === undefined)).toBe(true);
+    expect(songs.find((song) => song.id === 1)).toMatchObject({ description: 'História A', __summary: true });
+  });
+
+  it('the search lyrics are id + lyrics columns only', async () => {
+    result = { data: [{ id: 1, lyrics: 'la' }], error: null };
+    await Song.listLyricsText();
+    expect(queries[0].select).toBe('id,lyrics,lyrics_karaoke');
   });
 });
 

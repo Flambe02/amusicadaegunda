@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Song } from '@/api/entities';
+import { mergeSongDescriptions } from '@/api/songColumns';
 import { logger } from '@/lib/logger';
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { onFirstScreenSettled } from '@/lib/firstScreen';
@@ -141,14 +142,10 @@ export function useHomeSongs({ deferDescriptions = false } = {}) {
     };
   }, [needsDescriptions, descriptions, deferDescriptions]);
 
-  const allSongs = useMemo(() => {
-    if (!descriptions) return feedSongs;
-    return feedSongs.map((song) =>
-      song.description === undefined && descriptions.has(song.id)
-        ? { ...song, description: descriptions.get(song.id) }
-        : song
-    );
-  }, [feedSongs, descriptions]);
+  const allSongs = useMemo(
+    () => (descriptions ? mergeSongDescriptions(feedSongs, descriptions) : feedSongs),
+    [feedSongs, descriptions]
+  );
 
   const reload = useCallback(() => load(), [load]);
 

@@ -16,7 +16,10 @@ const SONGS = [
 ];
 
 vi.mock('@/api/entities', () => ({
-  Song: { list: vi.fn(() => Promise.resolve(SONGS)) },
+  Song: {
+    listKaraokeCatalogue: vi.fn(() => Promise.resolve({ songs: SONGS, fromSupabase: true })),
+    getFull: vi.fn((song) => Promise.resolve(song)),
+  },
 }));
 
 // Lecteur plein écran : stub léger (évite l'API YouTube).

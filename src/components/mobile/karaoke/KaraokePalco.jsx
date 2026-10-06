@@ -52,8 +52,8 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
   useEffect(() => {
     if (!degraded || weekSong) return undefined;
     let alive = true;
-    Song.list('-release_date', 1)
-      .then((list) => { if (alive && Array.isArray(list) && list[0]) setWeekSong(list[0]); })
+    Song.getCurrentLite()
+      .then((song) => { if (alive && song) setWeekSong(song); })
       .catch(() => {});
     return () => { alive = false; };
   }, [degraded, weekSong]);

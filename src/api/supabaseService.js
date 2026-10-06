@@ -5,6 +5,8 @@ import {
   HOME_SONGS_LIMIT,
   SONG_DESCRIPTION_COLUMNS,
   SONG_INDEX_COLUMNS,
+  SONG_KARAOKE_COLUMNS,
+  SONG_LYRICS_COLUMNS,
   SONG_SUMMARY_COLUMNS,
 } from './songColumns'
 
@@ -73,28 +75,41 @@ export const supabaseSongService = {
     return data?.[0] || null
   },
 
-  /** Catalogue publié de l'accueil, sans description ni paroles (≈ 6 Ko). */
-  async listHomeFeed(limit = HOME_SONGS_LIMIT) {
-    const { data, error } = await supabase
+  /**
+   * Chansons publiées, de la plus récente à la plus ancienne, avec les colonnes
+   * demandées. `limit` nul = tout le catalogue ; `syncedOnly` = karaokê synchronisé.
+   */
+  async listPublished(columns, { limit = null, syncedOnly = false } = {}) {
+    let query = supabase
       .from(TABLES.SONGS)
-      .select(SONG_INDEX_COLUMNS.join(','))
+      .select(columns.join(','))
       .eq('status', 'published')
-      .order('release_date', { ascending: false })
-      .limit(limit)
+    if (syncedOnly) query = query.not('karaoke_synced_at', 'is', null)
+    query = query.order('release_date', { ascending: false })
+    if (limit) query = query.limit(limit)
+    const { data, error } = await query
     if (error) throw error
     return data || []
   },
 
+  /** Catalogue publié en résumé, sans description ni paroles (≈ 13 Ko). */
+  listHomeFeed(limit = HOME_SONGS_LIMIT) {
+    return this.listPublished(SONG_INDEX_COLUMNS, { limit })
+  },
+
   /** Descriptions des mêmes chansons (« História »), chargées après le premier écran. */
-  async listHomeDescriptions(limit = HOME_SONGS_LIMIT) {
-    const { data, error } = await supabase
-      .from(TABLES.SONGS)
-      .select(SONG_DESCRIPTION_COLUMNS.join(','))
-      .eq('status', 'published')
-      .order('release_date', { ascending: false })
-      .limit(limit)
-    if (error) throw error
-    return data || []
+  listHomeDescriptions(limit = HOME_SONGS_LIMIT) {
+    return this.listPublished(SONG_DESCRIPTION_COLUMNS, { limit })
+  },
+
+  /** Catalogue /karaoke : chansons synchronisées, sans timing par mot ni pitch (≈ 79 Ko). */
+  listKaraokeCatalogue() {
+    return this.listPublished(SONG_KARAOKE_COLUMNS, { syncedOnly: true })
+  },
+
+  /** Paroles de tout le catalogue, pour la recherche (≈ 42 Ko). */
+  listLyricsText() {
+    return this.listPublished(SONG_LYRICS_COLUMNS)
   },
 
   // Récupérer une chanson par ID

@@ -23,11 +23,12 @@ export default function Catalogo() {
     robots: 'noindex, follow',
   });
 
-  // Toutes les chansons publiées ; Song.list retombe sur content/songs.json si
-  // Supabase est indisponible — la scène et le tirage fonctionnent quand même.
+  // Toutes les chansons publiées, en résumé (≈ 47 Ko au lieu de ≈ 235 Ko) : la letra se
+  // charge à l'ouverture (LyricsDialog). Repli sur content/songs.json si Supabase est
+  // indisponible — la scène et le tirage fonctionnent quand même.
   useEffect(() => {
     let alive = true;
-    Song.list('-release_date')
+    Song.listCatalogue()
       .then((list) => {
         if (alive) setSongs(Array.isArray(list) ? list : []);
       })

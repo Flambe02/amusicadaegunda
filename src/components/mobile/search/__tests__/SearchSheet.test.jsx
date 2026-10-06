@@ -3,13 +3,18 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 
 const SONGS = [
-  { id: 1, slug: 'chuva', title: 'Chuva', release_date: '2026-09-21', category: 'politica', status: 'published', lyrics: 'água no planalto', youtube_music_url: 'https://www.youtube.com/shorts/AAAAAAAAAAA' },
+  { id: 1, slug: 'chuva', title: 'Chuva', release_date: '2026-09-21', category: 'politica', status: 'published', youtube_music_url: 'https://www.youtube.com/shorts/AAAAAAAAAAA' },
   { id: 2, slug: 'pix', title: 'Pix', release_date: '2026-09-07', category: 'economia', status: 'published', subtitle: 'preço do café' },
   { id: 3, slug: 'fogos', title: 'Fogos', release_date: '2026-08-10', category: 'politica', status: 'published' },
   { id: 4, slug: 'rascunho', title: 'Rascunho', release_date: '2026-09-14', status: 'draft' },
 ];
 
-vi.mock('@/api/entities', () => ({ Song: { list: vi.fn(() => Promise.resolve(SONGS)) } }));
+// Le catalogue arrive en résumé (sans paroles) ; les paroles, à part, au premier contact
+// avec le champ.
+const api = vi.hoisted(() => ({ listHomeFeed: vi.fn(), listLyricsText: vi.fn() }));
+vi.mock('@/api/entities', () => ({ Song: api }));
+api.listHomeFeed.mockImplementation(() => Promise.resolve(SONGS));
+api.listLyricsText.mockImplementation(() => Promise.resolve([{ id: 1, lyrics: 'água no planalto', lyrics_karaoke: null }]));
 
 // vaul lit matchMedia et quelques API absentes de jsdom.
 beforeEach(() => {
@@ -43,6 +48,21 @@ const tiles = () => screen.getAllByRole('link').filter((a) => a.getAttribute('hr
 const tileTitles = () => tiles().map((a) => a.querySelector('.font-bold')?.textContent ?? a.textContent);
 
 describe('SearchSheet (étape 10)', () => {
+  it('loads the catalogue as a summary, and the lyrics only when the field is first used', async () => {
+    await renderOpen();
+    expect(api.listHomeFeed).toHaveBeenCalledWith(null);
+    expect(api.listLyricsText).not.toHaveBeenCalled();
+
+    const field = screen.getByRole('searchbox');
+    fireEvent.focus(field);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+    expect(api.listLyricsText).toHaveBeenCalledTimes(1);
+
+    // « planalto » n'existe que dans les paroles de Chuva.
+    fireEvent.change(field, { target: { value: 'planalto' } });
+    expect(tileTitles()).toEqual(['Chuva']);
+  });
+
   it('opens with the most recent month selected; only published songs; months with songs only', async () => {
     await renderOpen();
     const month = screen.getByRole('button', { name: 'Setembro' });
