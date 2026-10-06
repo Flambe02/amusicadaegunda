@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9.2.0';
+const CACHE_VERSION = 'v9.3.0';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
 const SHELL_MANIFEST_URL = '/sw-assets.json';
 
@@ -183,6 +183,28 @@ self.addEventListener('fetch', (event) => {
           const cache = await caches.open(CACHE_NAME);
           return cache.match(request) || new Response('', { status: 503 });
         })
+    );
+    return;
+  }
+
+  // Build files (/assets/, content-hashed names) never change: the cache is enough.
+  // GitHub Pages serves them with max-age=600 only, so revalidating them on every
+  // visit meant one conditional request per chunk, competing with the first screen.
+  if (pathname.startsWith('/assets/')) {
+    event.respondWith(
+      caches.match(request).then(async (cached) => {
+        if (cached) return cached;
+        try {
+          const response = await fetch(request);
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        } catch {
+          return new Response('', { status: 503 });
+        }
+      })
     );
     return;
   }

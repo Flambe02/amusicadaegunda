@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { onFirstScreenSettled } from '@/lib/firstScreen';
 
 const IOS_STANDALONE_KEY = 'ios-install-banner-dismissed';
 
@@ -50,25 +51,30 @@ export default function usePWAInstall() {
     // le catalogue statique (sans `lrc_content`) et /karaoke se vide.
     const hadController = Boolean(navigator.serviceWorker.controller);
 
-    navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-      updateViaCache: 'none',
-    }).then((reg) => {
-      setRegistration(reg);
+    // L'installation du Service Worker précharge une quarantaine de fichiers (icônes,
+    // catalogue statique, shell) : elle attend que le premier écran soit en place, pour
+    // ne pas disputer le réseau à la miniature ni au démarrage de la vidéo.
+    const cancelRegistration = onFirstScreenSettled(() => {
+      navigator.serviceWorker.register('/sw.js', {
+        scope: '/',
+        updateViaCache: 'none',
+      }).then((reg) => {
+        setRegistration(reg);
 
-      const onUpdateFound = () => {
-        const installing = reg.installing;
-        if (!installing) return;
+        const onUpdateFound = () => {
+          const installing = reg.installing;
+          if (!installing) return;
 
-        installing.addEventListener('statechange', () => {
-          if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-            setUpdateAvailable(true);
-          }
-        });
-      };
+          installing.addEventListener('statechange', () => {
+            if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+              setUpdateAvailable(true);
+            }
+          });
+        };
 
-      reg.addEventListener('updatefound', onUpdateFound);
-    }).catch(() => {});
+        reg.addEventListener('updatefound', onUpdateFound);
+      }).catch(() => {});
+    });
 
     const onControllerChange = () => {
       if (refreshing || !hadController) return;
@@ -79,6 +85,7 @@ export default function usePWAInstall() {
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
 
     return () => {
+      cancelRegistration();
       navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
     };
   }, []);
