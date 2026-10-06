@@ -4,6 +4,7 @@ import FeedPoster from './FeedPoster';
 import FeedOverlay from './FeedOverlay';
 import { useShortPlayer } from './useShortPlayer';
 import { warmUpYouTube } from './playerBootstrap';
+import { removeBootPoster, removeBootPosterAfterPaint } from '@/lib/bootPoster';
 import { CAIPIVARA_STAGE_IMAGE, getPublicSlug, getShortVideoId } from './feedMedia';
 import { deriveSongSlug } from '@/lib/learnContent';
 import { TEXT_SHADOW } from './feedStyles';
@@ -243,6 +244,13 @@ export default function MobileFeed({
   useEffect(() => {
     if (startWithSound && phase === 'fallback') setPlayCue(true);
   }, [startWithSound, phase]);
+
+  // La miniature peinte par index.html avant React (même image, même place) s'efface
+  // dès que celle du feed est chargée — ou que le feed disparaît.
+  useEffect(() => {
+    if (firstPosterSettled) removeBootPosterAfterPaint();
+  }, [firstPosterSettled]);
+  useEffect(() => removeBootPoster, []);
 
   // Premier écran en place : la vidéo joue, ou il n'y en a pas. C'est le signal que
   // l'accueil attend pour charger ce qui n'est pas à l'écran (descriptions, desktop).

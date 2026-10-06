@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom';
 import MobileFeed from '../MobileFeed';
 import { FALLBACK_DELAY_MS, REVEAL_DELAY_MS } from '../useShortPlayer';
 import { resetWarmUpForTests } from '../playerBootstrap';
+import { BOOT_POSTER_ID } from '@/lib/bootPoster';
+import rootIndexHtml from '../../../../../index.html?raw';
 
 vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }), toast: vi.fn(() => ({ dismiss: vi.fn() })) }));
 vi.mock('@/native', () => ({ getPlatform: () => 'web' }));
@@ -176,6 +178,37 @@ describe('MobileFeed — démarrage du lecteur YouTube', () => {
     act(() => { players[0].ready(); players[0].play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
     expect(onFirstScreenSettled).toHaveBeenCalled();
+  });
+
+  it('removes the poster painted by index.html once its own poster is in — not before', async () => {
+    const boot = document.createElement('img');
+    boot.id = BOOT_POSTER_ID;
+    document.body.appendChild(boot);
+
+    const { container, unmount } = renderFeed();
+    await flush();
+    expect(document.getElementById(BOOT_POSTER_ID)).not.toBeNull();
+
+    await settlePoster(container);
+    // Deux images d'animation plus tard : la miniature du feed est peinte.
+    await act(async () => { vi.advanceTimersByTime(100); });
+    expect(document.getElementById(BOOT_POSTER_ID)).toBeNull();
+    unmount();
+  });
+
+  it('leaving the feed before its poster loaded removes the index.html poster too', async () => {
+    const boot = document.createElement('img');
+    boot.id = BOOT_POSTER_ID;
+    document.body.appendChild(boot);
+    const { unmount } = renderFeed();
+    await flush();
+    unmount();
+    expect(document.getElementById(BOOT_POSTER_ID)).toBeNull();
+  });
+
+  it('index.html paints that poster with the id the feed removes, under the bottom bar', () => {
+    expect(rootIndexHtml).toContain(`poster.id = '${BOOT_POSTER_ID}'`);
+    expect(rootIndexHtml).toContain('100svh - 59px - env(safe-area-inset-bottom)');
   });
 
   it('a feed with no video at all is settled at once', async () => {

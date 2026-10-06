@@ -10,6 +10,7 @@ import { getDocumentTitle } from '@/lib/documentTitle';
 import { CURRENT_SONG_ARTWORK } from '@/generated/currentSongArtwork';
 import { useHomeSongs } from '@/hooks/useHomeSongs';
 import { isFirstScreenSettled, markFirstScreenSettled, onFirstScreenSettled } from '@/lib/firstScreen';
+import { removeBootPoster } from '@/lib/bootPoster';
 
 const MOBILE_QUERY = '(max-width: 767px)';
 
@@ -108,6 +109,13 @@ export default function Home() {
   }, []);
 
   useEffect(() => onFirstScreenSettled(() => setFirstScreenSettled(true)), []);
+
+  // Sans feed à l'écran (erreur de chargement, écran devenu large), la miniature peinte
+  // par index.html n'a plus de raison d'être.
+  const noFeed = !isMobileViewport || Boolean(error && !currentSong);
+  useEffect(() => {
+    if (noFeed) removeBootPoster();
+  }, [noFeed]);
 
   // « Ouvir » depuis Catálogo : /?musica=<slug> ouvre le feed sur cette chanson.
   const [searchParams, setSearchParams] = useSearchParams();

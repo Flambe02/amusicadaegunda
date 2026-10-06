@@ -16,7 +16,8 @@
     <link rel="dns-prefetch" href="https://i.ytimg.com" />
 
     <!-- amds-boot : la chanson de la semaine est demandée ICI, pendant que le JavaScript de
-         l'app se télécharge (au lieu d'après). Sur téléphone, sa miniature est préchargée et
+         l'app se télécharge (au lieu d'après). Sur téléphone, sa miniature est peinte tout
+         de suite, à la place exacte qu'elle aura dans le feed, et
          YouTube est préparé (connexions + IFrame API, jamais le lecteur) — sauf en économie
          de données ou en 2G. L'accueil reprend cette réponse (src/hooks/useHomeSongs.js) ;
          en cas d'échec, il refait la requête lui-même. L'adresse est écrite au build par
@@ -37,8 +38,34 @@
             var phone = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
             if (!song || !phone) return;
             var short = /\/shorts\/([\w-]{11})/.exec(song.youtube_music_url || '');
-            if (short && window.location.search.indexOf('musica=') === -1) {
-              add('link', { rel: 'preload', as: 'image', href: 'https://i.ytimg.com/vi/' + short[1] + '/oar2.jpg', fetchpriority: 'high' });
+            var search = window.location.search;
+            if (short && search.indexOf('musica=') === -1 && search.indexOf('ouvir=') === -1) {
+              // La miniature est PEINTE ici, avant React, exactement là où le feed
+              // peindra la sienne (même adresse : un seul téléchargement) : largeur de
+              // l'accueil mobile (max-w-md), hauteur de l'écran moins la barre du bas
+              // (59 px + zone de sécurité — AppBottomNav). Le feed la retire une fois sa
+              // propre miniature chargée (src/lib/bootPoster.js) ; rien ne bouge.
+              var poster = document.createElement('img');
+              poster.id = 'amds-boot-poster';
+              poster.alt = '';
+              poster.setAttribute('aria-hidden', 'true');
+              poster.setAttribute('fetchpriority', 'high');
+              poster.style.cssText =
+                'display:none;position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:5;' +
+                'width:min(100%,28rem);height:calc(100vh - 59px - env(safe-area-inset-bottom));' +
+                'height:calc(100svh - 59px - env(safe-area-inset-bottom));object-fit:cover;pointer-events:none';
+              var drop = function () { poster.remove(); };
+              // YouTube répond 200 avec une vignette grise de 120 px quand celle-ci
+              // n'existe pas : dans ce cas le feed choisira une autre image.
+              poster.onload = function () {
+                if (poster.naturalWidth < 200) drop();
+                else poster.style.display = 'block';
+              };
+              poster.onerror = drop;
+              poster.src = 'https://i.ytimg.com/vi/' + short[1] + '/oar2.jpg';
+              (document.body || document.documentElement).appendChild(poster);
+              // Filet : si l'app ne démarre pas, la miniature ne reste pas seule à l'écran.
+              window.setTimeout(drop, 12000);
             }
             var connection = window.navigator.connection || {};
             var constrained = connection.saveData || connection.effectiveType === '2g' || connection.effectiveType === 'slow-2g';
