@@ -90,6 +90,7 @@ export default function MobileFeed({
   onStartApplied,
   ouvirSlug = null,
   onOpenOuvir,
+  onFirstScreenSettled,
 }) {
   const [index, setIndex] = useState(0);
 
@@ -219,6 +220,13 @@ export default function MobileFeed({
     soundCheckedRef.current = true;
     watchForRefusal();
   }, [startWithSound, phase]);
+
+  // Premier écran en place : la vidéo joue, ou il n'y en a pas. C'est le signal que
+  // l'accueil attend pour charger ce qui n'est pas à l'écran (descriptions, desktop).
+  // Un repli (`fallback`) n'en est pas un : sur réseau lent, YouTube charge encore.
+  useEffect(() => {
+    if (phase === 'playing' || phase === 'none') onFirstScreenSettled?.();
+  }, [phase, onFirstScreenSettled]);
 
   // Sans Short, pas de miniature à attendre : le lecteur (audio) peut être créé.
   useEffect(() => {

@@ -3,6 +3,7 @@ import { activeLineIndex } from '@/lib/lrc';
 import { resolveSongTiming } from '@/lib/timingModel';
 import { canShowFeedKaraoke, lineProgress } from './feedKaraoke';
 import { ICON_SHADOW } from './feedStyles';
+import { useFullSong } from '@/hooks/useFullSong';
 
 function prefersReducedMotion() {
   return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -20,9 +21,12 @@ function prefersReducedMotion() {
  * Mouvement réduit : pas de balayage, la ligne en cours est entièrement jaune.
  */
 export default function FeedKaraokeLine({ song, player, mode }) {
+  // L'accueil ne charge qu'un résumé : le timing n'arrive que si la ligne peut s'afficher.
+  const canShow = canShowFeedKaraoke(song, mode);
+  const { song: timedSong, isLoading } = useFullSong(song, canShow);
   const parsed = useMemo(
-    () => (canShowFeedKaraoke(song, mode) ? resolveSongTiming(song).lines.filter((line) => line.text) : []),
-    [song, mode]
+    () => (canShow && !isLoading ? resolveSongTiming(timedSong).lines.filter((line) => line.text) : []),
+    [timedSong, canShow, isLoading]
   );
   const soundOn = player.phase === 'playing' && !player.isMuted;
   const [index, setIndex] = useState(-1);

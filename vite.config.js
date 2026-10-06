@@ -1,12 +1,28 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import { buildCurrentSongBootUrl } from './src/api/songColumns.js'
+import { resolveSupabasePublicConfig } from './src/lib/supabasePublicConfig.js'
+
+// index.html demande la chanson de la semaine AVANT le JavaScript de l'app (bloc
+// « amds-boot ») : l'adresse de cette requête est écrite ici, à partir des mêmes
+// colonnes et de la même configuration Supabase que le client.
+function amdsBootPlugin(mode) {
+  return {
+    name: 'amds-boot',
+    transformIndexHtml(html) {
+      const env = { ...process.env, ...loadEnv(mode, process.cwd(), 'VITE_') }
+      const { url, key } = resolveSupabasePublicConfig(env)
+      return html.replace('__AMDS_BOOT_CURRENT_SONG_URL__', buildCurrentSongBootUrl(url, key))
+    },
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => ({
   // ✅ SEO: Base path correct pour GitHub Pages et URLs propres
   base: command === 'build' ? '/' : '/',
-  plugins: [react()],
+  plugins: [react(), amdsBootPlugin(mode)],
   // ✅ SÉCURITÉ: Les variables d'environnement sont maintenant chargées depuis .env
   // Les clés Supabase ne sont plus exposées dans le code source
   resolve: {

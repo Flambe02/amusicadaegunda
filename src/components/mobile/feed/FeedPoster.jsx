@@ -18,9 +18,12 @@ export default function FeedPoster({ song, buildArtwork, priority = false, onSet
   const posters = useMemo(() => getPosterCandidates(song, buildArtwork), [song, buildArtwork]);
   const [index, setIndex] = useState(0);
 
+  // Par contenu, pas par identité : la chanson est remplacée par une copie enrichie
+  // (description) après le premier écran, sans que ses miniatures changent.
+  const postersKey = posters.join('|');
   useEffect(() => {
     setIndex(0);
-  }, [posters]);
+  }, [postersKey]);
 
   const next = () => {
     if (index + 1 < posters.length) setIndex(index + 1);

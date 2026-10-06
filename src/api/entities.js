@@ -1,4 +1,5 @@
 import { supabaseSongService } from './supabaseService';
+import { HOME_SONGS_LIMIT } from './songColumns';
 import { checkConnection } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { localStorageService } from '@/lib/localStorage';
@@ -96,10 +97,66 @@ const detectStorageMode = async () => {
   }
 };
 
-// Forcer la détection immédiate
-detectStorageMode().then(() => {
-        devLog(`🎯 Mode de stockage final: ${currentStorageMode === 'supabase' ? 'Supabase ☁️' : 'localStorage 💾'}`);
-});
+// Pas de détection au démarrage : `detectStorageMode()` force Supabase quel que soit
+// le résultat de `checkConnection()`, qui n'était donc qu'une requête de plus (et sa
+// pré-vérification CORS) en concurrence avec le premier écran. Une panne Supabase est
+// déjà gérée par chaque lecture (repli sur `content/songs.json`).
+
+// ── Résumés de l'accueil ────────────────────────────────────────────────────────────
+// `__summary` marque une chanson chargée sans ses colonnes lourdes : `Song.getFull` la
+// complète à la demande, `isKaraokePublished` lit alors `karaoke_synced_at`.
+const asSummary = (song) => (song ? { ...song, __summary: true } : song);
+
+// Colonne absente (schéma plus ancien que `songColumns.js`) : la lecture `*` marche
+// encore. Toute autre erreur (réseau, délai) va droit au catalogue statique — la
+// rejouer en `*` doublerait l'attente hors ligne.
+const isMissingColumnError = (error) =>
+  error?.code === '42703' || error?.code === 'PGRST204' || /column .* does not exist/i.test(error?.message || '');
+
+async function staticSongs(orderBy, limit) {
+  try {
+    const ordered = sortSongs(await loadStaticPublishedSongs(), orderBy);
+    return limit ? ordered.slice(0, limit) : ordered;
+  } catch (staticError) {
+    logger.error('❌ Fallback statique indisponible:', staticError);
+    return [];
+  }
+}
+
+async function getCurrentSongLite() {
+  try {
+    const song = await supabaseSongService.getCurrentLite();
+    if (song) return asSummary(song);
+  } catch (error) {
+    if (isMissingColumnError(error)) return Song._getCurrentUncached();
+    logger.error('Erro ao carregar música atual (resumo):', error);
+  }
+  return (await staticSongs('-release_date', 1))[0] || null;
+}
+
+async function listHomeFeedSongs(limit) {
+  try {
+    const songs = await supabaseSongService.listHomeFeed(limit);
+    if (songs.length > 0) return songs.map(asSummary);
+  } catch (error) {
+    if (isMissingColumnError(error)) return Song._listUncached('-release_date', limit);
+    logger.error('Erro ao carregar o catálogo (resumo):', error);
+  }
+  return staticSongs('-release_date', limit);
+}
+
+async function listHomeDescriptionRows(limit) {
+  try {
+    return await supabaseSongService.listHomeDescriptions(limit);
+  } catch (error) {
+    // Sans descriptions, seul le bouton « História » manque : jamais bloquant.
+    logger.error('Erro ao carregar as descrições:', error);
+    return [];
+  }
+}
+
+// Chansons complètes déjà demandées dans la session (letra, karaokê), par id.
+const fullSongs = new Map();
 
 // Requêtes identiques EN COURS partagées (aucun cache après la réponse, donc jamais
 // de données périmées) : Layout rend chaque page deux fois (coquilles mobile et
@@ -120,6 +177,38 @@ export const Song = {
     shareInFlight(`list:${orderBy}:${limit}`, () => listSongs(orderBy, limit)),
 
   getCurrent: () => shareInFlight('getCurrent', getCurrentSong),
+
+  // Accueil : résumés sans colonnes lourdes (voir songColumns.js).
+  getCurrentLite: () => shareInFlight('getCurrentLite', getCurrentSongLite),
+  listHomeFeed: (limit = HOME_SONGS_LIMIT) =>
+    shareInFlight(`homeFeed:${limit}`, () => listHomeFeedSongs(limit)),
+  listHomeDescriptions: (limit = HOME_SONGS_LIMIT) =>
+    shareInFlight(`homeDescriptions:${limit}`, () => listHomeDescriptionRows(limit)),
+
+  /**
+   * La chanson complète (letra, karaokê) d'un résumé, chargée une fois par session.
+   * Une chanson déjà complète — ou issue du catalogue statique — est rendue telle
+   * quelle. En cas d'échec, le résumé est rendu et la prochaine demande réessaie.
+   */
+  getFull: (song) => {
+    if (!song?.__summary || song.id == null) return Promise.resolve(song || null);
+    const key = String(song.id);
+    if (!fullSongs.has(key)) {
+      const request = supabaseSongService
+        .get(song.id)
+        .then((full) => {
+          if (!full) throw new Error('song-not-found');
+          return full;
+        })
+        .catch((error) => {
+          fullSongs.delete(key);
+          logger.error('Erro ao carregar a música completa:', error);
+          return null;
+        });
+      fullSongs.set(key, request);
+    }
+    return fullSongs.get(key).then((full) => full || song);
+  },
 
   _listUncached: async (orderBy = '-release_date', limit = null) => {
     const numericLimit = Number.isFinite(Number(limit)) && Number(limit) > 0 ? Number(limit) : null;

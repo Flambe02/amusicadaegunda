@@ -1,6 +1,12 @@
 import { supabase, TABLES, handleSupabaseError } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 import { extractYouTubeId as extractYouTubeIdFromUtils, titleToSlug } from '@/lib/utils'
+import {
+  HOME_SONGS_LIMIT,
+  SONG_DESCRIPTION_COLUMNS,
+  SONG_INDEX_COLUMNS,
+  SONG_SUMMARY_COLUMNS,
+} from './songColumns'
 
 // Utilitaire pour parser le paramètre orderBy (ex: '-release_date' ou 'title')
 const parseOrderBy = (orderBy) => {
@@ -49,6 +55,46 @@ export const supabaseSongService = {
       handleSupabaseError(error, 'Liste des chansons')
       return []
     }
+  },
+
+  // ── Accueil : résumés (colonnes explicites, jamais `*`) — voir songColumns.js ──────
+  // Ces trois lectures laissent remonter l'erreur Supabase telle quelle : l'appelant
+  // (entities.js) choisit le repli selon sa nature (colonne absente ≠ réseau coupé).
+
+  /** Chanson de la semaine, en résumé (≈ 1 Ko au lieu de ≈ 6 Ko). */
+  async getCurrentLite() {
+    const { data, error } = await supabase
+      .from(TABLES.SONGS)
+      .select(SONG_SUMMARY_COLUMNS.join(','))
+      .eq('status', 'published')
+      .order('release_date', { ascending: false })
+      .limit(1)
+    if (error) throw error
+    return data?.[0] || null
+  },
+
+  /** Catalogue publié de l'accueil, sans description ni paroles (≈ 6 Ko). */
+  async listHomeFeed(limit = HOME_SONGS_LIMIT) {
+    const { data, error } = await supabase
+      .from(TABLES.SONGS)
+      .select(SONG_INDEX_COLUMNS.join(','))
+      .eq('status', 'published')
+      .order('release_date', { ascending: false })
+      .limit(limit)
+    if (error) throw error
+    return data || []
+  },
+
+  /** Descriptions des mêmes chansons (« História »), chargées après le premier écran. */
+  async listHomeDescriptions(limit = HOME_SONGS_LIMIT) {
+    const { data, error } = await supabase
+      .from(TABLES.SONGS)
+      .select(SONG_DESCRIPTION_COLUMNS.join(','))
+      .eq('status', 'published')
+      .order('release_date', { ascending: false })
+      .limit(limit)
+    if (error) throw error
+    return data || []
   },
 
   // Récupérer une chanson par ID

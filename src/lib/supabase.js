@@ -1,21 +1,12 @@
 const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { createClient } from '@supabase/supabase-js'
+import { resolveSupabasePublicConfig } from './supabasePublicConfig'
 
-// Public, RLS-protected publishable key. Safe to ship — it is already in every
-// production bundle. Used as a fallback when CI builds with a rotated-out
-// legacy JWT (eyJ...) in VITE_SUPABASE_ANON_KEY so auth keeps working.
-const PUBLISHABLE_KEY_FALLBACK = 'sb_publishable_qQqLLFjAv4sk3z2eQW0-sA_59XCpAKF'
-const SUPABASE_URL_FALLBACK = 'https://efnzmpzkzeuktqkghwfa.supabase.co'
-
-const envUrl = import.meta.env?.VITE_SUPABASE_URL
-const envKey = import.meta.env?.VITE_SUPABASE_ANON_KEY
-
-const supabaseUrl = envUrl || SUPABASE_URL_FALLBACK
-// Legacy JWT anon keys (eyJ...) were disabled by Supabase. If the env key is
-// in that legacy shape, prefer the publishable fallback.
-const supabaseAnonKey = (envKey && !envKey.startsWith('eyJ'))
-  ? envKey
-  : PUBLISHABLE_KEY_FALLBACK
+// Adresse et clé publiques : même résolution que la requête de démarrage d'index.html.
+const { url: supabaseUrl, key: supabaseAnonKey } = resolveSupabasePublicConfig({
+  VITE_SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL,
+  VITE_SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY,
+})
 
 // ⏱️ Timeout réseau pour TOUTES les requêtes Supabase. Sans ça, quand l'hôte
 // Supabase est injoignable (réseau bloqué/VPN/DNS, extension de blocage, projet en

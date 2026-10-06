@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from './ui/dialog';
 import { ScrollArea } from './ui/scroll-area';
 import { resolveLyricsText } from '@/lib/lrc';
 import { deriveSongSlug, hasLearnContent } from '@/lib/learnContent';
+import { useFullSong } from '@/hooks/useFullSong';
 
 // Modo Aprender — chargé à la demande, et seulement pour les chansons qui ont une
 // fiche. Aucune des 55 autres chansons ne télécharge ce code (§9 de la spec).
@@ -33,8 +34,11 @@ export default function LyricsDialog({
   // besoin d'être mémorisé entre les sessions en bêta (§6.1).
   useEffect(() => { setMode('letra'); }, [slug, open]);
 
+  // L'accueil ne charge qu'un résumé des chansons : la letra arrive à l'ouverture.
+  const { song: fullSong, isLoading: lyricsLoading } = useFullSong(song, open);
+
   if (!song) return null;
-  const lyricsText = resolveLyricsText(song);
+  const lyricsText = resolveLyricsText(fullSong);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,7 +112,7 @@ export default function LyricsDialog({
                     </div>
                   )}
                 >
-                  <LearnPanel song={song} slug={slug} />
+                  <LearnPanel song={fullSong} slug={slug} />
                 </Suspense>
               </div>
             </ScrollArea>
@@ -135,6 +139,11 @@ export default function LyricsDialog({
                 </pre>
               </div>
             </ScrollArea>
+          ) : lyricsLoading ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-white/50" role="status">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Carregando a letra…
+            </div>
           ) : (
             <div className="flex flex-col items-center py-12 text-center">
               <FileText className="mb-4 h-12 w-12 text-white/20" />

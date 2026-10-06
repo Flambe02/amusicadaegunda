@@ -15,6 +15,43 @@
     <link rel="preconnect" href="https://i.ytimg.com" />
     <link rel="dns-prefetch" href="https://i.ytimg.com" />
 
+    <!-- amds-boot : la chanson de la semaine est demandée ICI, pendant que le JavaScript de
+         l'app se télécharge (au lieu d'après). Sur téléphone, sa miniature est préchargée.
+         L'accueil reprend cette réponse (src/hooks/useHomeSongs.js) ; en cas d'échec, il
+         refait la requête lui-même. L'adresse est écrite au build par
+         vite.config.js (plugin amds-boot) : requête « simple », sans pré-vérification CORS. -->
+    <script>
+      (function () {
+        try {
+          if (window.location.pathname !== '/' || typeof window.fetch !== 'function') return;
+          var boot = (window.__AMDS_BOOT__ = { t: Date.now(), song: null });
+          var add = function (tag, attributes) {
+            var element = document.createElement(tag);
+            for (var name in attributes) element.setAttribute(name, attributes[name]);
+            document.head.appendChild(element);
+          };
+          var prepare = function (song) {
+            var phone = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+            if (!song || !phone) return;
+            var short = /\/shorts\/([\w-]{11})/.exec(song.youtube_music_url || '');
+            if (short && window.location.search.indexOf('musica=') === -1) {
+              add('link', { rel: 'preload', as: 'image', href: 'https://i.ytimg.com/vi/' + short[1] + '/oar2.jpg', fetchpriority: 'high' });
+            }
+          };
+          boot.current = window
+            .fetch('__AMDS_BOOT_CURRENT_SONG_URL__')
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (rows) {
+              var song = rows && rows[0] ? rows[0] : null;
+              boot.song = song;
+              try { prepare(song); } catch (error) { /* la préparation n'est qu'un bonus */ }
+              return song;
+            })
+            .catch(function () { return null; });
+        } catch (error) { /* jamais bloquant */ }
+      })();
+    </script>
+
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple/apple-touch-icon-180x180.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple/apple-touch-icon-152x152.png" />
     <link rel="apple-touch-icon" sizes="144x144" href="/icons/apple/apple-touch-icon-144x144.png" />

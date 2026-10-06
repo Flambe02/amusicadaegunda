@@ -168,10 +168,17 @@ export function hasLrcContent(lrc) {
  * karaokê » no admin). `karaoke_published` ausente/null = publicado (comportamento
  * histórico antes deste alternador existir — nunca esconde karaokê já existente
  * sem ação explícita do administrador).
- * @param {{ lrc_content?: string|null, karaoke_published?: boolean|null }} song
+ *
+ * Résumé de l'accueil (`__summary`, voir src/api/songColumns.js) : `lrc_content` n'est
+ * pas chargé. `karaoke_synced_at`, écrit par l'éditeur avec chaque synchronisation,
+ * dit alors qu'elle existe.
+ * @param {{ lrc_content?: string|null, karaoke_published?: boolean|null,
+ *           karaoke_synced_at?: string|null, __summary?: boolean }} song
  */
 export function isKaraokePublished(song) {
-  return hasLrcContent(song?.lrc_content) && song?.karaoke_published !== false;
+  if (song?.karaoke_published === false) return false;
+  if (song?.__summary && song.lrc_content === undefined) return Boolean(song.karaoke_synced_at);
+  return hasLrcContent(song?.lrc_content);
 }
 
 /**
