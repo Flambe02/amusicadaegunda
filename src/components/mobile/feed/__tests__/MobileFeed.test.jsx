@@ -107,6 +107,8 @@ function swipe(container, dy, { height = 800, dx = 0, durationMs = 0 } = {}) {
   if (durationMs) act(() => { vi.advanceTimersByTime(durationMs); });
   fireEvent.pointerUp(el, { pointerId: 7, clientX: 200 + dx, clientY: 400 + dy });
   act(() => { vi.advanceTimersByTime(500); }); // fin de l'animation de glissement
+  // La nouvelle vidéo n'est demandée qu'une fois le masquage de l'iframe peint.
+  act(() => { vi.advanceTimersByTime(300); });
 }
 
 beforeEach(() => {
@@ -342,6 +344,28 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     const { container } = await renderLoaded();
     swipe(container, -60, { durationMs: 600 }); // < 20 % de 800 px, 0,1 px/ms
     expect(currentIndex(container)).toBe(0);
+  });
+
+  it('a song change hides the iframe first and asks for the new video only once that is painted (no layout shift)', async () => {
+    const { container } = await renderLoaded();
+    act(() => { players[0].ready(); players[0].play(); vi.advanceTimersByTime(REVEAL_DELAY_MS + 10); });
+    const loads = () => players[0].calls.filter((call) => call.startsWith('loadVideoById'));
+    const videoWrap = () => stage(container).querySelector('iframe').parentElement.parentElement;
+    const el = stage(container);
+    Object.defineProperty(el, 'clientHeight', { value: 800, configurable: true });
+    el.setPointerCapture = () => {};
+    fireEvent.pointerDown(el, { pointerId: 7, clientX: 200, clientY: 400 });
+    fireEvent.pointerMove(el, { pointerId: 7, clientX: 200, clientY: 250 });
+    fireEvent.pointerMove(el, { pointerId: 7, clientX: 200, clientY: 100 });
+    fireEvent.pointerUp(el, { pointerId: 7, clientX: 200, clientY: 100 });
+    act(() => { vi.advanceTimersByTime(385); }); // fin du glissement : la chanson change
+    expect(currentIndex(container)).toBe(1);
+    // Masquée (opacité + découpe), et la nouvelle vidéo pas encore demandée.
+    expect(stage(container)).toHaveAttribute('data-feed-phase', 'loading');
+    expect(videoWrap().className).toContain('clip-path');
+    expect(loads()).toEqual([]);
+    act(() => { vi.advanceTimersByTime(300); });
+    expect(loads()).toEqual(['loadVideoById:BBBBBBBBBBB']);
   });
 
   it('keeps ONE player and reuses it (loadVideoById) when the song changes', async () => {
@@ -742,6 +766,7 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
       await flush();
       expect(container.querySelector('[data-ouvir]')).toBeNull();
       expect(stage(container)).not.toHaveAttribute('inert');
+      act(() => { vi.advanceTimersByTime(300); }); // le Short est rechargé une fois l'iframe masquée
       expect(player.calls[player.calls.length - 1]).toBe('loadVideoById:AAAAAAAAAAA');
     });
   });

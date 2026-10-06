@@ -56,6 +56,32 @@ function hideCaptions(player) {
 const LOOP_LEAD_S = 0.4; // > intervalle de sondage (250 ms) : la fin n'est jamais atteinte
 
 /**
+ * Changement de chanson : la nouvelle vidéo n'est demandée qu'une fois le masquage de
+ * l'iframe réellement à l'écran. À `loadVideoById`, YouTube ramène aussitôt sa zone
+ * vidéo du vertical à une boîte 16:9 ; si l'iframe était encore comptée comme visible
+ * (le masquage venait d'être posé, pas encore peint), Chrome comptait ce mouvement
+ * comme un décalage de mise en page de 0,32 (mesuré le 2026-10-06 : 6 passes sur 8 sur
+ * un appareil lent, 20 à 55 ms après le changement de phase). Deux images d'animation
+ * suffisent ; le minuteur couvre un onglet où elles ne viennent pas.
+ */
+const LOAD_AFTER_HIDE_MAX_MS = 250;
+function afterHidePainted(callback) {
+  let done = false;
+  const run = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(timer);
+    callback();
+  };
+  const timer = setTimeout(run, LOAD_AFTER_HIDE_MAX_MS);
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => requestAnimationFrame(run));
+  return () => {
+    done = true;
+    clearTimeout(timer);
+  };
+}
+
+/**
  * Options :
  *   loop (défaut true) — le feed boucle sur le Short. Le Catálogo passe `false` : la
  *   chanson s'arrête à la fin (`isEnded`), la Caipivara en enchaîne une autre.
@@ -89,6 +115,12 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
   const revealTimerRef = useRef(null);
   const videoIdRef = useRef(videoId);
   const loadedIdRef = useRef(null);
+  // Chargement en attente du masquage (voir afterHidePainted) : sa fonction d'annulation.
+  const cancelPendingLoadRef = useRef(null);
+  const cancelPendingLoad = () => {
+    cancelPendingLoadRef.current?.();
+    cancelPendingLoadRef.current = null;
+  };
 
   const clearRevealTimer = () => {
     if (revealTimerRef.current) {
@@ -255,6 +287,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
     setIsPaused(false); // une nouvelle chanson démarre toujours en lecture
     setIsEnded(false);
 
+    cancelPendingLoad();
     const player = playerRef.current;
     if (!videoId) {
       if (player && readyRef.current) player.stopVideo?.();
@@ -268,7 +301,11 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
         loadedIdRef.current = videoId;
         setPhase('loading');
         armFallbackTimer();
-        player.loadVideoById(videoId);
+        // D'abord le masquage à l'écran, ensuite la vidéo (pas de décalage compté).
+        cancelPendingLoadRef.current = afterHidePainted(() => {
+          cancelPendingLoadRef.current = null;
+          if (playerRef.current === player && loadedIdRef.current === videoId) player.loadVideoById(videoId);
+        });
       }
       return;
     }
@@ -292,6 +329,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
   useEffect(() => () => {
     clearFallbackTimer();
     clearRevealTimer();
+    cancelPendingLoad();
     try {
       playerRef.current?.destroy?.();
     } catch {
@@ -395,6 +433,7 @@ export function useShortPlayer({ videoId, canLoad, mountRef, loop = true, startW
   const loadNow = useCallback((id) => {
     if (!id || !ready()) return false;
     const player = playerRef.current;
+    cancelPendingLoad();
     loadedIdRef.current = id;
     player.loadVideoById(id);
     player.unMute();
