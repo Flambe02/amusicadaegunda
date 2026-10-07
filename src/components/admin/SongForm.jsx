@@ -28,6 +28,7 @@ const EMPTY_FORM = {
   status: 'draft',
   description: '',
   context_short: '',
+  mascot_costume: '',
   lyrics: '',
   category: '',
   difficulty: null,
@@ -73,6 +74,7 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
     cover_image: initial?.cover_image ?? '',
     description: initial?.description ?? '',
     context_short: initial?.context_short ?? '',
+    mascot_costume: initial?.mascot_costume ?? '',
     lyrics: initial?.lyrics ?? '',
     publish_at: initial?.publish_at ?? '',
     release_date: initial?.release_date || nextMonday(),
@@ -138,6 +140,8 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
       description: sanitizeInput(form.description),
       // Vide = NULL : la tela grande mostra então o início da descrição.
       context_short: sanitizeInput(form.context_short).trim() || null,
+      // Identifiant d'un costume du catalogue (public/mascot/catalog.json) ; vide = NULL.
+      mascot_costume: form.mascot_costume.trim().toLowerCase().replace(/[^a-z0-9-]/g, '') || null,
       lyrics,
       ...resolveDifficultyFields({ choice: difficultyChoice, lyrics }),
       youtube_music_url: sanitizeURL(form.youtube_music_url) || null,
@@ -279,6 +283,19 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
           className="mt-1"
         />
         <p className="text-xs mt-1 text-gray-500">{form.context_short.length}/{CONTEXT_SHORT_MAX_LEN} — cabe em duas linhas na TV até cerca de 150 caracteres.</p>
+      </div>
+
+      {/* Costume da mascote — la Caipivara dans ce costume quand cette chanson joue (mobile) */}
+      <div>
+        <Label htmlFor="mascot_costume">Costume da mascote <span className="text-gray-500 font-normal">— opcional</span></Label>
+        <Input
+          id="mascot_costume"
+          value={form.mascot_costume}
+          onChange={(e) => set('mascot_costume', e.target.value)}
+          placeholder="Ex: bets-bets-bets"
+          className="mt-1"
+        />
+        <p className="text-xs mt-1 text-gray-500">Identificador de um costume do catálogo de animações. Vazio: a Caipivara dança.</p>
       </div>
 
       {/* Lyrics toggle */}
