@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { FocusContext, useFocusable, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { Search, Delete } from 'lucide-react';
+import { isPointerMode } from '../lib/pointerMode';
 
 // Clavier alphabétique (plus simple à balayer au D-pad qu'un AZERTY/QWERTY sur TV).
 const KEY_ROWS = [
@@ -44,10 +45,14 @@ export default function TvSearchOverlay({ query, resultCount, onQueryChange, onC
     focusKey: 'CAT_SEARCH', trackChildren: true, saveLastFocusedChild: true,
   });
 
+  // Ordinateur : un vrai champ de saisie, focalisé à l'ouverture (le clavier à l'écran
+  // reste disponible à la souris). Box TV : le clavier à l'écran, comme avant.
+  const typed = isPointerMode();
   useEffect(() => {
+    if (typed) return undefined;
     const t = setTimeout(() => { try { SpatialNavigation.setFocus('CAT_SEARCH_KEY_A'); } catch { /* ignore */ } }, 0);
     return () => clearTimeout(t);
-  }, []);
+  }, [typed]);
 
   // Back ferme l'overlay (TvApp appelle cet intercepteur avant son pop/exit).
   useEffect(() => {
@@ -66,10 +71,33 @@ export default function TvSearchOverlay({ query, resultCount, onQueryChange, onC
         <div ref={ref} className="tvc-search-box">
           <div className="tvc-search-field">
             <Search size={22} />
-            <span className="tvc-search-query">
-              {query || <span className="tvc-search-ph">Buscar por música, tema, personagem, letra…</span>}
-              <span className="tvc-search-caret" aria-hidden="true" />
-            </span>
+            {typed ? (
+              <input
+                type="search"
+                className="tvc-search-input"
+                value={query}
+                autoFocus
+                aria-label="Buscar"
+                placeholder="Buscar por música, tema, personagem, letra…"
+                onChange={(event) => onQueryChange(event.target.value)}
+                // Pendant la saisie, les flèches et Entrée appartiennent au champ.
+                onFocus={() => SpatialNavigation.pause()}
+                onBlur={() => SpatialNavigation.resume()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === 'Escape') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    SpatialNavigation.resume();
+                    onClose();
+                  }
+                }}
+              />
+            ) : (
+              <span className="tvc-search-query">
+                {query || <span className="tvc-search-ph">Buscar por música, tema, personagem, letra…</span>}
+                <span className="tvc-search-caret" aria-hidden="true" />
+              </span>
+            )}
           </div>
 
           <div className="tvc-keyboard">

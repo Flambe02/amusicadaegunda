@@ -301,3 +301,11 @@
    la mise en page est TOUJOURS 1920×1080 — 720p/4K/fenêtre PC sont gérés par le
    transform scale du stage, jamais par des breakpoints (qui se déclencheraient à
    tort selon la taille de la FENÊTRE alors que le canvas, lui, ne change pas). */
+
+/* Champ de recherche réel (ordinateur) — même gabarit que la requête affichée sur TV. */
+.tvc-search-input {
+  flex: 1 1 auto; min-width: 0; background: transparent; border: 0; outline: 0;
+  color: #fff; font-size: clamp(1.3rem, 34.6px, 2.1rem); font-weight: 800; font-family: inherit;
+}
+.tvc-search-input::placeholder { color: rgba(255, 255, 255, 0.42); font-weight: 600; }
+.tvc-search-input::-webkit-search-cancel-button { display: none; }

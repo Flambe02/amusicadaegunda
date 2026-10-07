@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense, Fragment } from 'react';
+import { isPointerMode } from '@/tv/lib/pointerMode';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
@@ -1026,6 +1027,9 @@ export default function KaraokePlayer({
       // comprise) ; les panneaux Buscar et Menu (z-200) s'ouvrent par-dessus.
       style={mShell ? { bottom: 'var(--app-nav-h, 0px)' } : undefined}
       data-karaoke-shell={mShell ? 'mobile' : undefined}
+      // Interface grand écran sur ordinateur : la souris révèle la barre de contrôle,
+      // comme les flèches de la télécommande. Jamais sur la box TV (pas de mode pointeur).
+      onMouseMove={tvMode && isPointerMode() && !controlsVisible ? revealControls : undefined}
     >
       {/* Player YT invisible — toujours monté */}
       <div className="pointer-events-none absolute left-0 top-0 h-px w-px overflow-hidden opacity-0">
