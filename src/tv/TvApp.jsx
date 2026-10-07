@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { init, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { ArrowLeft, Loader2, Maximize, Minimize } from 'lucide-react';
 import { Song } from '@/api/entities';
+import { mergeSongDescriptions } from '@/api/songColumns';
 import { isKaraokePublished } from '@/lib/lrc';
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
 import { onBackPress, exitApp } from './adapters/backButton';
@@ -18,11 +19,10 @@ import TvHomePage from './TvHomePage';
 import TvCatalogPage from './TvCatalogPage';
 import TvGrid from './TvGrid';
 import TvSongDetailPage from './TvSongDetailPage';
-import TvKaraokeScreen from './TvKaraokeScreen';
+import TvKaraokeScreen, { preloadKaraokePlayer } from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
 import TvClipsLanding from './TvClipsLanding';
 import TvKaraokeModeLanding from './TvKaraokeModeLanding';
-import TvFestaInvite from './components/TvFestaInvite';
 import TvSettingsPanel from './components/TvSettingsPanel';
 import TvStage from './components/TvStage';
 import { BRAND_SQUARE_LARGE } from '@/lib/imageAssets';
@@ -38,6 +38,12 @@ import '@/styles/tv-catalog.css';
 import '@/styles/tv-karaoke-landing.css';
 import '@/styles/tv-clips-landing.css';
 import '@/styles/tv-karaoke-mode-landing.css';
+
+// Fonctions secondaires chargées à la demande — elles ne servent pas au premier écran :
+// l'invitation de la festa (avec la bibliothèque de QR code) et le lecteur karaokê
+// (TvKaraokeScreen). Les deux sont demandés d'avance, une fois l'accueil affiché.
+const loadFestaInvite = () => import('./components/TvFestaInvite');
+const TvFestaInvite = lazy(loadFestaInvite);
 
 // Initialise la navigation spatiale une seule fois (au chargement du bundle TV).
 init({ debug: false, visualDebug: false });
@@ -155,16 +161,27 @@ export default function TvApp({ web = null }) {
     setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
   }, []);
 
-  // Chargement des chansons (Song.list bascule déjà tout seul sur content/songs.json
-  // si Supabase échoue — cf. src/api/entities.js). `loadError` = liste vide au final
-  // (les deux sources ont échoué) → l'état d'erreur du catálogo propose de réessayer.
+  // Web : slug de l'ouverture directe sur /musica/<slug>/ (consommé plus bas).
+  const initialSlugRef = useRef(web?.initialSlug || null);
+
+  // Chargement des chansons en RÉSUMÉ (Song.listBigScreen : ≈ 59 Ko au lieu des ≈ 235 Ko
+  // de `*`, et repli tout seul sur content/songs.json si Supabase échoue — cf.
+  // src/api/entities.js). `loadError` = liste vide au final (les deux sources ont
+  // échoué) → l'état d'erreur du catálogo propose de réessayer.
+  // Les descriptions (contexto de la fiche, recherche) partent en même temps, à part :
+  // le premier écran ne les attend pas — sauf ouverture directe sur une fiche (web),
+  // qui les affiche tout de suite. La chanson complète (LRC, timing par mot) n'est
+  // demandée que par le karaokê (TvKaraokeScreen → Song.getFull).
   const loadSongs = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
+    const descriptions = Song.listHomeDescriptions(null).catch(() => []);
     try {
-      const all = await Song.list('-release_date');
-      setSongs(all || []);
-      setLoadError(!all || all.length === 0);
+      let all = (await Song.listBigScreen()) || [];
+      if (initialSlugRef.current) all = mergeSongDescriptions(all, await descriptions);
+      setSongs(all);
+      setLoadError(all.length === 0);
+      descriptions.then((rows) => setSongs((current) => mergeSongDescriptions(current, rows)));
     } catch {
       setSongs([]);
       setLoadError(true);
@@ -175,6 +192,17 @@ export default function TvApp({ web = null }) {
 
   useEffect(() => { applyTvFlag(true); return () => applyTvFlag(false); }, []);
   useEffect(() => { loadSongs(); }, [loadSongs]);
+  // Accueil affiché : on demande d'avance les fonctions secondaires, pour qu'un appui
+  // sur « Cantar » ou « Festa » n'attende pas leur chargement. Un échec est sans effet
+  // (elles seront redemandées à l'ouverture).
+  useEffect(() => {
+    if (loading) return undefined;
+    const id = setTimeout(() => {
+      preloadKaraokePlayer().catch(() => {});
+      loadFestaInvite().catch(() => {});
+    }, 2500);
+    return () => clearTimeout(id);
+  }, [loading]);
 
   // ── Web : souris ─────────────────────────────────────────────────────────────
   const rootRef = useRef(null);
@@ -219,7 +247,6 @@ export default function TvApp({ web = null }) {
   }, []);
 
   // ── Web : ouverture directe sur /musica/<slug>/ → accueil puis fiche dans la pile.
-  const initialSlugRef = useRef(web?.initialSlug || null);
   useEffect(() => {
     if (!isWeb || loading || !initialSlugRef.current) return;
     const slug = initialSlugRef.current;
@@ -620,10 +647,12 @@ export default function TvApp({ web = null }) {
       );
     }
     if (top.name === 'detail') {
+      // La chanson À JOUR de la liste (sa description peut arriver après l'ouverture).
+      const detailSong = songs.find((item) => item.id === top.song.id) || top.song;
       return (
         <TvSongDetailPage
           key={top.song.id}
-          song={top.song}
+          song={detailSong}
           source={top.source || 'catalog'}
           songs={songs}
           web={isWeb}
@@ -729,6 +758,7 @@ export default function TvApp({ web = null }) {
           onClose={pop}
           backInterceptorRef={backInterceptorRef}
           queueInfo={qInfo}
+          nextSong={top.queue[top.index + 1] || null}
           onNext={qInfo ? advanceFesta : undefined}
           onEnded={qInfo ? advanceFesta : undefined}
           handoff={top.handoff}
@@ -772,9 +802,10 @@ export default function TvApp({ web = null }) {
   if (loading) {
     return (
       <TvStage>
-        <div className="tv-root tv-boot">
+        {/* Rien pendant 400 ms (tv-wait) : un chargement rapide ne fait pas clignoter l'attente. */}
+        <div className="tv-root tv-boot tv-wait">
           <img src={BRAND_SQUARE_LARGE} alt="" className="tv-boot-mascot" />
-          <Loader2 className="tv-spin" size={44} />
+          <span><Loader2 className="tv-spin" size={44} /></span>
           <p>A preparar o palco…</p>
         </div>
       </TvStage>
@@ -784,7 +815,17 @@ export default function TvApp({ web = null }) {
   return (
     <TvStage>
       <div className="tv-root" ref={rootRef} data-input={isWeb ? 'pointer' : undefined}>
-        {content}
+        {/* Écran chargé à la demande pas encore arrivé : rien pendant 400 ms (tv-wait). */}
+        <Suspense
+          fallback={(
+            <div className="tv-karaoke-wait tv-wait" role="status" aria-label="A preparar o palco…">
+              <span><Loader2 className="tv-spin" size={44} /></span>
+              <p>A preparar o palco…</p>
+            </div>
+          )}
+        >
+          {content}
+        </Suspense>
         {/* Web : retour à la souris (Échap et le bouton Retour du navigateur font pareil). */}
         {canFullscreen && (
           <button

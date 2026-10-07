@@ -171,6 +171,29 @@ async function listKaraokeCatalogueSongs() {
   return { songs: await staticSongs('-release_date', null), fromSupabase: false };
 }
 
+// Interface grand écran : résumés de tout le catalogue. `__duet` remplace la lecture du
+// LRC (absent du résumé) pour savoir si une chanson se chante à deux voix.
+async function listBigScreenSongs() {
+  try {
+    const [songs, duetIds] = await Promise.all([
+      supabaseSongService.listBigScreen(),
+      // Sans cette réponse, les chansons sont proposées en solo : jamais bloquant.
+      supabaseSongService.listDuetIds().catch((error) => {
+        logger.error('Erro ao carregar as músicas em dueto:', error);
+        return [];
+      }),
+    ]);
+    if (songs.length > 0) {
+      const duets = new Set(duetIds);
+      return songs.map((song) => ({ ...song, __summary: true, __duet: duets.has(song.id) }));
+    }
+  } catch (error) {
+    if (isMissingColumnError(error)) return Song._listUncached('-release_date', null);
+    logger.error('Erro ao carregar o catálogo (tela grande):', error);
+  }
+  return staticSongs('-release_date', null);
+}
+
 async function listLyricsTextRows() {
   try {
     return await supabaseSongService.listLyricsText();
@@ -218,6 +241,8 @@ export const Song = {
       return mergeSongDescriptions(songs, descriptions);
     }),
   listKaraokeCatalogue: () => shareInFlight('karaokeCatalogue', listKaraokeCatalogueSongs),
+  // Interface grand écran (TV + ordinateur) : tout le catalogue en résumé.
+  listBigScreen: () => shareInFlight('bigScreen', listBigScreenSongs),
   listLyricsText: () => shareInFlight('lyricsText', listLyricsTextRows),
 
   /**

@@ -52,6 +52,32 @@ export const SONG_KARAOKE_COLUMNS = [
   'lrc_content',
 ];
 
+/**
+ * Interface grand écran (TV + ordinateur) : tout le catalogue au démarrage, avec ce que
+ * ses cartes affichent. La difficulté (« Fácil / Médio / Difícil ») se calcule sur le
+ * nombre de mots de la letra quand la colonne `difficulty` est vide — d'où `lyrics` ici
+ * (≈ 59 Ko compressés contre ≈ 235 Ko pour `*`, mesuré le 2026-10-06, 69 chansons).
+ * Le jour où `difficulty` est renseignée pour toutes les chansons, `lyrics` et
+ * `lyrics_karaoke` peuvent sortir de cette liste (≈ 14 Ko).
+ *
+ * Sans `lrc_content`, `timing_data` ni `pitch_map` : le karaokê charge la chanson
+ * complète (Song.getFull). Sans `description` : elle arrive à part, en parallèle.
+ */
+export const SONG_BIGSCREEN_COLUMNS = [
+  ...SONG_INDEX_COLUMNS,
+  'difficulty',
+  'hashtags',
+  'lyrics',
+  'lyrics_karaoke',
+];
+
+/**
+ * Filtre PostgREST des chansons dont le LRC porte des marqueurs de 2ᵉ voix (`{A}` /
+ * `{B}` en début de ligne, voir SINGER_TAG_RE dans src/lib/lrc.js) : la réponse ne
+ * contient que des ids, au lieu de télécharger tous les LRC pour le savoir.
+ */
+export const DUET_LRC_FILTER = String.raw`\]\s*\{(A|B)\}`;
+
 /** Texte des paroles, pour la recherche : demandé quand l'utilisateur commence à taper. */
 export const SONG_LYRICS_COLUMNS = ['id', 'lyrics', 'lyrics_karaoke'];
 

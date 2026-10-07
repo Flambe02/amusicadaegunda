@@ -68,6 +68,30 @@ html.tv-mode, html.tv-mode body, html.tv-mode #root {
   gap: 1rem; color: rgba(255, 255, 255, 0.6);
 }
 .tv-boot p { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.04em; }
+
+/* Indice d'attente du grand écran, même principe que le mobile : RIEN pendant 400 ms
+   (un chargement rapide ne fait rien clignoter), puis les enfants apparaissent en
+   fondu. CSS seulement, aucun minuteur JavaScript. Les enfants ne doivent pas porter
+   d'autre animation (envelopper un `.tv-spin` dans un <span>). */
+.tv-wait > * { animation: tv-wait-in 240ms ease-out 400ms both; }
+@keyframes tv-wait-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tv-wait > * { animation-duration: 1ms; } }
+
+/* Karaokê : la chanson complète (LRC, timing) se charge avant de monter le lecteur. */
+.tv-karaoke-wait {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; background: var(--tv-bg); color: rgba(255, 255, 255, 0.6);
+  font-size: 1.4rem; font-weight: 700; letter-spacing: 0.04em; text-align: center;
+}
+.tv-karaoke-wait p { margin: 0; }
+.tv-karaoke-wait-title { color: #fff; font-size: 1.8rem; }
+.tv-karaoke-wait-retry {
+  margin-top: 1rem; height: 64px; padding: 0 36px; border-radius: 999px; cursor: pointer;
+  border: 3px solid var(--tvh-yellow, #fde047); background: rgba(253, 224, 71, 0.14);
+  color: var(--tvh-yellow, #fde047); font-size: 1.4rem; font-weight: 800;
+}
+.tv-karaoke-wait-retry:focus { outline: none; box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.4); }
 .tv-boot-mascot {
   width: 140px; height: 140px; border-radius: 9999px; object-fit: cover;
   border: 3px solid rgba(253, 224, 71, 0.4);

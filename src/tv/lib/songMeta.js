@@ -100,6 +100,10 @@ export function getEnergyMeta(song) {
  */
 export function getMode(song) {
   if (song?.recommended_mode) return song.recommended_mode; // DB-ready
+  // Résumé du grand écran : le LRC n'est pas chargé, `__duet` vient d'une requête à part.
+  if (song?.lrc_content === undefined && typeof song?.__duet === 'boolean') {
+    return song.__duet ? MODE.DUET : MODE.SOLO;
+  }
   return hasDuetTags(song?.lrc_content) ? MODE.DUET : MODE.SOLO;
 }
 

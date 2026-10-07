@@ -6,6 +6,8 @@ import {
   SONG_DESCRIPTION_COLUMNS,
   SONG_INDEX_COLUMNS,
   SONG_KARAOKE_COLUMNS,
+  SONG_BIGSCREEN_COLUMNS,
+  DUET_LRC_FILTER,
   SONG_LYRICS_COLUMNS,
   SONG_SUMMARY_COLUMNS,
 } from './songColumns'
@@ -105,6 +107,22 @@ export const supabaseSongService = {
   /** Catalogue /karaoke : chansons synchronisées, sans timing par mot ni pitch (≈ 79 Ko). */
   listKaraokeCatalogue() {
     return this.listPublished(SONG_KARAOKE_COLUMNS, { syncedOnly: true })
+  },
+
+  /** Interface grand écran : tout le catalogue, sans LRC ni timing (≈ 59 Ko). */
+  listBigScreen() {
+    return this.listPublished(SONG_BIGSCREEN_COLUMNS)
+  },
+
+  /** Ids des chansons publiées dont le LRC a des marqueurs de 2ᵉ voix (duo). */
+  async listDuetIds() {
+    const { data, error } = await supabase
+      .from(TABLES.SONGS)
+      .select('id')
+      .eq('status', 'published')
+      .filter('lrc_content', 'imatch', DUET_LRC_FILTER)
+    if (error) throw error
+    return (data || []).map((row) => row.id)
   },
 
   /** Paroles de tout le catalogue, pour la recherche (≈ 42 Ko). */
