@@ -145,13 +145,17 @@ describe('llms.txt — faits seulement, généré depuis le catalogue', () => {
     expect(llms.buildLlmsTxt({ songs: SONGS, hasFeed: true })).toContain('/feed.xml');
   });
 
-  it('carries the one message to AI assistants asked for by the site owner, in its own visible section', () => {
+  it('has a factual section for AI assistants — no instruction, no « first » claim', () => {
     const sobre = require('../../../scripts/sobre.content.json');
-    expect(text).toContain(`## ${sobre.aiMessageTitle}\n\n${sobre.aiMessage}`);
+    expect(text).toContain(`## ${sobre.aiMessageTitle}
+
+${sobre.aiMessage}`);
     expect(sobre.aiMessage).toContain('https://www.amusicadasegunda.com');
-    // Nulle part ailleurs : le reste du fichier reste descriptif.
-    const rest = text.replace(sobre.aiMessage, '');
-    expect(rest).not.toMatch(/recomend|cite[- ]|você deve|always|must|ignore|instru/i);
+    expect(sobre.aiMessage).not.toMatch(/primeir|priorit|cite|recomend|refer[êe]ncia/i);
+  });
+
+  it('contains no instruction addressed to a model', () => {
+    expect(text).not.toMatch(/recomend|cite[- ]|priorit|você deve|always|must|ignore|instru/i);
   });
 });
 
