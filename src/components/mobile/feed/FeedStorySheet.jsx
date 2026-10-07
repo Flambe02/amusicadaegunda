@@ -4,6 +4,7 @@ import { Drawer as DrawerPrimitive } from 'vaul';
 import { X } from 'lucide-react';
 import { themeLabel } from '@/lib/karaokeCatalog';
 import { getPublicSlug, monthYearLabel } from './feedMedia';
+import { WHATSAPP_CHANNEL_URL } from '@/lib/whatsappChannel';
 
 /**
  * Panneau « História » : la description de la chanson (colonne `description`).
@@ -81,6 +82,18 @@ export default function FeedStorySheet({ song, open, onOpenChange, returnFocusRe
                 Ver a página da música
               </Link>
             </div>
+          ) : null}
+
+          {/* Canal WhatsApp : un simple lien, tout en bas, après un geste volontaire. */}
+          {WHATSAPP_CHANNEL_URL ? (
+            <a
+              href={WHATSAPP_CHANNEL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mx-5 mt-2 flex min-h-[44px] touch-manipulation items-center justify-center text-center text-sm font-medium text-white/70 underline underline-offset-4 active:text-white"
+            >
+              Receba a música toda segunda no WhatsApp
+            </a>
           ) : null}
         </DrawerPrimitive.Content>
       </DrawerPrimitive.Portal>

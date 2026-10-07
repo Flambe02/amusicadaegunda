@@ -93,6 +93,16 @@ describe('Colonne droite — Som et História', () => {
     expect(within(dialog).getByRole('link', { name: 'Ver a página da música' })).toHaveAttribute('href', '/musica/ta-chovendo-de-novo/');
   });
 
+  it('ends with one plain link to the WhatsApp channel, opened in a new tab', async () => {
+    renderOverlay();
+    fireEvent.click(screen.getByRole('button', { name: /ler a história/i }));
+    const dialog = await screen.findByRole('dialog');
+    const link = within(dialog).getByRole('link', { name: 'Receba a música toda segunda no WhatsApp' });
+    expect(link).toHaveAttribute('href', 'https://whatsapp.com/channel/0029Vb8ioY53bbV6QyxYop0Q');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect([...dialog.querySelectorAll('a')].at(-1)).toBe(link);
+  });
+
   // jsdom : vaul garde le panneau monté jusqu'à la fin de son animation de sortie (jamais
   // déclenchée ici) → on vérifie l'état « closed ». Le piège du focus et le retour du
   // focus au bouton sont vérifiés dans un vrai navigateur (Playwright).

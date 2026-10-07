@@ -5,6 +5,7 @@ import OptimizedImage from '../components/OptimizedImage';
 import { useSEO } from '../hooks/useSEO';
 import { ENTITY_ID, injectJsonLd } from '@/lib/seo-jsonld';
 import sobreContent from '../../scripts/sobre.content.json';
+import { WHATSAPP_CHANNEL_LABEL, WHATSAPP_CHANNEL_URL } from '@/lib/whatsappChannel';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { BRAND_LOGO_MEDIUM } from '@/lib/imageAssets';
@@ -334,6 +335,16 @@ function MobileAboutExperience() {
               </a>
             ))}
           </div>
+          {WHATSAPP_CHANNEL_URL && (
+            <a
+              href={WHATSAPP_CHANNEL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex min-h-[44px] items-center px-3 text-sm font-semibold text-white/70 underline underline-offset-4 active:text-white"
+            >
+              {WHATSAPP_CHANNEL_LABEL}
+            </a>
+          )}
         </div>
       </section>
 
@@ -837,6 +848,13 @@ export default function Sobre() {
                 <Music className="w-6 h-6" />
               </a>
             </div>
+            {WHATSAPP_CHANNEL_URL && (
+              <p className="mt-5 text-center">
+                <a href={WHATSAPP_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-white/70 underline underline-offset-4 hover:text-white">
+                  {WHATSAPP_CHANNEL_LABEL}
+                </a>
+              </p>
+            )}
           </div>
 
           {/* Contact */}
