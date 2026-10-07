@@ -66,16 +66,13 @@ describe('Home — une coquille ne monte que ce qu\'elle montre', () => {
     expect(screen.queryByTestId('home-desktop')).toBeNull();
   });
 
-  it('phone, desktop shell (hidden): no feed, and the desktop tree only once the first screen is settled', async () => {
+  it('a desktop shell on a phone-sized window (mid-resize) mounts neither tree', async () => {
     setViewport(true);
     renderHome('desktop');
     await waitFor(() => expect(api.listHomeFeed).toHaveBeenCalled());
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => { markFirstScreenSettled(); });
     expect(screen.queryByTestId('mobile-feed')).toBeNull();
     expect(screen.queryByTestId('home-desktop')).toBeNull();
-
-    await act(async () => { markFirstScreenSettled(); });
-    expect(await screen.findByTestId('home-desktop')).toHaveTextContent('Semana Tres');
   });
 
   it('desktop: the desktop tree at once in its shell, nothing in the mobile shell', async () => {

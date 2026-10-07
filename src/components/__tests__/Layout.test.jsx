@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within, waitFor, act } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
@@ -19,8 +20,14 @@ vi.mock('@/lib/supabase', () => ({
 // Catalogue lu par le panneau de recherche (onglet Buscar).
 vi.mock('@/api/entities', () => ({ Song: { list: vi.fn(() => Promise.resolve([])) } }));
 
+// Largeur simulée : Layout ne monte qu'UNE coquille, celle de l'interface (mobile sous
+// 768 px, desktop au-delà). Desktop par défaut ; les tests du shell mobile passent en mobile.
+let mobileViewport = false;
+const setViewport = (mobile) => { mobileViewport = mobile; };
+
 // Mock window.matchMedia pour les tests
 beforeEach(() => {
+  mobileViewport = false;
   // Mock environment variables
   import.meta.env.VITE_SUPABASE_URL = 'https://test.supabase.co';
   import.meta.env.VITE_SUPABASE_ANON_KEY = 'test-anon-key';
@@ -28,7 +35,7 @@ beforeEach(() => {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: vi.fn().mockImplementation(query => ({
-      matches: false,
+      matches: query.includes('max-width: 767px') ? mobileViewport : false,
       media: query,
       onchange: null,
       addListener: vi.fn(),
@@ -65,17 +72,15 @@ describe('Layout', () => {
       </BrowserRouter>
     );
 
-    // Le Layout rend le contenu deux fois (mobile et desktop), même si l'un est caché
-    // Utiliser getAllByText pour accepter les deux instances
-    const contentElements = screen.getAllByText('Test Content');
-    expect(contentElements.length).toBeGreaterThan(0);
-    expect(contentElements[0]).toBeInTheDocument();
+    // Une seule coquille est montée : le contenu n'existe qu'une fois.
+    expect(screen.getAllByText('Test Content')).toHaveLength(1);
   });
 
   // Le redesign du catalogue karaokê (Karaoke.jsx) ne touche ni Layout.jsx ni la nav —
   // ce test verrouille que « Karaokê » reste bien marqué actif sur /karaoke, mobile
   // (AppBottomNav) et desktop (sidebar), sans rien changer ici.
-  it('marks Karaokê active in both navs on /karaoke', () => {
+  it.each([['desktop (sidebar)', false], ['mobile (AppBottomNav)', true]])('marks Karaokê active on /karaoke — %s', (_label, mobile) => {
+    setViewport(mobile);
     render(
       <MemoryRouter initialEntries={['/karaoke']}>
         <Layout>
@@ -93,8 +98,10 @@ describe('Layout', () => {
 
 
 // ── Shell mobile (< 768 px) — refonte étape 2 ─────────────────────────────────────────
-// Le Layout rend mobile ET desktop ; on cible l'arbre mobile via #main-mobile.
+// Sous 768 px, Layout monte la coquille mobile seule ; on la cible via #main-mobile.
 describe('Layout — shell mobile', () => {
+  beforeEach(() => setViewport(true));
+
   const renderAt = (path) =>
     render(
       <MemoryRouter initialEntries={[path]}>
@@ -260,24 +267,48 @@ describe('Layout — shell mobile', () => {
   });
 });
 
-// Layout rend ses enfants deux fois ; chaque copie doit savoir où elle vit, pour que
-// ce qui coûte (iframe YouTube du feed) ne soit monté que dans la coquille mobile.
+// Layout monte UNE coquille (celle de l'interface) et dit à la page laquelle.
 describe('Layout — ShellContext', () => {
   function WhereAmI() {
     return <span data-testid="shell">{useShell()}</span>;
   }
+  const renderShell = () => render(
+    <MemoryRouter initialEntries={['/']}>
+      <Layout>
+        <WhereAmI />
+      </Layout>
+    </MemoryRouter>
+  );
 
-  it('tells each copy of the page which shell it is in', () => {
+  it('phone: only the mobile shell is mounted, and the page is told so', () => {
+    setViewport(true);
+    renderShell();
+    expect(screen.getAllByTestId('shell').map((el) => el.textContent)).toEqual(['mobile']);
+    expect(document.querySelector('#main-mobile [data-testid="shell"]')).not.toBeNull();
+    expect(document.querySelector('#main-desktop')).toBeNull();
+  });
+
+  it('from 768 px: only the desktop shell is mounted', () => {
+    setViewport(false);
+    renderShell();
+    expect(screen.getAllByTestId('shell').map((el) => el.textContent)).toEqual(['desktop']);
+    expect(document.querySelector('#main-desktop [data-testid="shell"]')).not.toBeNull();
+    expect(document.querySelector('#main-mobile')).toBeNull();
+  });
+
+  it('the page is mounted once: its effects run a single time', () => {
+    let mounts = 0;
+    function Counted() {
+      useEffect(() => { mounts += 1; }, []);
+      return null;
+    }
     render(
       <MemoryRouter initialEntries={['/']}>
         <Layout>
-          <WhereAmI />
+          <Counted />
         </Layout>
       </MemoryRouter>
     );
-    const shells = screen.getAllByTestId('shell').map((el) => el.textContent).sort();
-    expect(shells).toEqual(['desktop', 'mobile']);
-    expect(document.querySelector('#main-mobile [data-testid="shell"]').textContent).toBe('mobile');
-    expect(document.querySelector('#main-desktop [data-testid="shell"]').textContent).toBe('desktop');
+    expect(mounts).toBe(1);
   });
 });

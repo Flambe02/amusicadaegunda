@@ -9,7 +9,7 @@ import { Helmet } from 'react-helmet-async';
 import { getDocumentTitle } from '@/lib/documentTitle';
 import { CURRENT_SONG_ARTWORK } from '@/generated/currentSongArtwork';
 import { useHomeSongs } from '@/hooks/useHomeSongs';
-import { isFirstScreenSettled, markFirstScreenSettled, onFirstScreenSettled } from '@/lib/firstScreen';
+import { markFirstScreenSettled } from '@/lib/firstScreen';
 import { removeBootPoster } from '@/lib/bootPoster';
 import { getInterface } from '@/lib/interface';
 
@@ -23,15 +23,7 @@ function matchesMobile() {
 // Accueil desktop : hors du JavaScript initial. Sur un écran desktop, son
 // téléchargement part dès l'évaluation de ce module, en parallèle des données.
 const loadHomeDesktop = () => import('./home/HomeDesktop');
-// Sur un téléphone, cet arbre est invisible : si son téléchargement échoue (hors ligne,
-// déploiement entre-temps), il reste simplement absent. Sans cela, l'échec remontait au
-// garde-fou global, qui vide les caches et recharge la page en pleine lecture.
-const HomeDesktop = lazy(() =>
-  loadHomeDesktop().catch((error) => {
-    if (matchesMobile()) return { default: () => null };
-    throw error;
-  })
-);
+const HomeDesktop = lazy(loadHomeDesktop);
 if (typeof window !== 'undefined' && typeof window.matchMedia === 'function' && !matchesMobile()) {
   loadHomeDesktop().catch(() => {});
 }
@@ -78,21 +70,16 @@ function DesktopSkeleton() {
 }
 
 /**
- * Accueil. Layout rend cette page DEUX fois (coquille mobile + coquille desktop, l'une
- * masquée en CSS) ; chaque copie ne monte que ce que sa coquille montre :
+ * Accueil. Layout monte une seule coquille (celle de l'interface de l'appareil) et la
+ * page y rend son arbre :
  *
- *   coquille mobile  → le feed (MobileFeed), jamais l'arbre desktop ;
- *   coquille desktop → l'arbre desktop (HomeDesktop, chargé à part). Sur un téléphone,
- *                      où il est invisible, il n'est monté qu'une fois le premier écran
- *                      en place : il reste dans le DOM, sans disputer le démarrage ;
+ *   coquille mobile  → le feed (MobileFeed) ;
+ *   coquille desktop → l'arbre desktop (HomeDesktop, chargé à part) ;
  *   hors Layout (tests) → les deux, comme avant.
  */
 export default function Home() {
-  // Layout rend cette page deux fois (coquille mobile + coquille desktop masquée) : le
-  // feed, qui crée une iframe YouTube, ne doit exister que dans la copie mobile.
   const shell = useShell();
   const [isMobileViewport, setIsMobileViewport] = useState(matchesMobile);
-  const [firstScreenSettled, setFirstScreenSettled] = useState(isFirstScreenSettled);
   const [lyricsSong, setLyricsSong] = useState(null);
   const [showLyricsDialog, setShowLyricsDialog] = useState(false);
 
@@ -107,8 +94,6 @@ export default function Home() {
     mediaQuery.addEventListener?.('change', updateViewport);
     return () => mediaQuery.removeEventListener?.('change', updateViewport);
   }, []);
-
-  useEffect(() => onFirstScreenSettled(() => setFirstScreenSettled(true)), []);
 
   // Sans feed à l'écran (erreur de chargement, écran devenu large), la miniature peinte
   // par index.html n'a plus de raison d'être.
@@ -130,7 +115,7 @@ export default function Home() {
   }, [currentSong, allSongs]);
 
   const showMobile = isMobileViewport && shell !== 'desktop';
-  const showDesktop = shell == null || (shell === 'desktop' && (!isMobileViewport || firstScreenSettled));
+  const showDesktop = shell == null || (shell === 'desktop' && !isMobileViewport);
 
   useSEO({
     title: 'A Musica da Segunda | Parodias Musicais e Humor Inteligente',
