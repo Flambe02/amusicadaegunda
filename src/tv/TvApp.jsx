@@ -47,6 +47,7 @@ import '@/styles/bs-base.css';
 // (TvKaraokeScreen). Les deux sont demandés d'avance, une fois l'accueil affiché.
 const loadFestaInvite = () => import('./components/TvFestaInvite');
 const TvFestaInvite = lazy(loadFestaInvite);
+const BsQrPanel = lazy(() => import('./components/BsQrPanel'));
 
 // Polices de la refonte (auto-hébergées, voir bs-base.css) : demandées dès le chargement
 // du module, sans attendre qu'un texte les utilise.
@@ -73,7 +74,7 @@ if (typeof document !== 'undefined' && !document.querySelector('link[rel="precon
 }
 
 // Écrans qui portent la barre du haut (le bouton « Voltar » de l'ordinateur s'y range dessous).
-const NAV_SCREENS = new Set(['home', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing']);
+const NAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing']);
 
 // Initialise la navigation spatiale une seule fois (au chargement du bundle TV).
 init({ debug: false, visualDebug: false });
@@ -340,6 +341,17 @@ export default function TvApp({ web = null }) {
     setTimeout(() => { try { SpatialNavigation.setFocus('TOPNAV_SETTINGS'); } catch { /* ignore */ } }, 0);
   }, []);
 
+  // Pages du site hors de l'interface grand écran (Sobre, Blog), depuis les réglages :
+  // sur ordinateur on y va ; sur la box, un QR code à ouvrir au téléphone.
+  const [sitePageQr, setSitePageQr] = useState(null); // { title, url }
+  const sitePageQrRef = useRef(null);
+  sitePageQrRef.current = sitePageQr;
+  const openSitePage = useCallback((title, path) => {
+    if (isWeb) { window.location.assign(path); return; }
+    setTvSettingsOpen(false);
+    setSitePageQr({ title, url: `https://www.amusicadasegunda.com${path}` });
+  }, [isWeb]);
+
   // Un écran peut « intercepter » le Back (ex. fiche en lecture vidéo → couper la vidéo
   // au lieu de quitter l'écran). L'intercepteur retourne true s'il a consommé le Back.
   const backInterceptorRef = useRef(null);
@@ -352,6 +364,7 @@ export default function TvApp({ web = null }) {
     // La recommandation de mise à jour est prioritaire sur tout (jamais de piège
     // au Back — équivalent de « Mais tarde »), suivie du panneau de réglages.
     if (updateDialogOpenRef.current) { dismissRecommendedUpdate(); return true; }
+    if (sitePageQrRef.current) { setSitePageQr(null); return true; }
     if (tvSettingsOpenRef.current) { closeTvSettings(); return true; }
     return Boolean(backInterceptorRef.current?.()); // l'écran courant a géré le Back
   }, [closeTvSettings, dismissRecommendedUpdate]);
@@ -715,6 +728,10 @@ export default function TvApp({ web = null }) {
           songs={songs}
           web={isWeb}
           playClip={Boolean(top.playClip)}
+          onGoHome={goHome}
+          onOpenCatalog={openCatalog}
+          onOpenFesta={onChooseFesta}
+          onOpenSettings={openTvSettings}
           onOpenRelated={(related) => push({ name: 'detail', song: related, source: top.source || 'catalog' })}
           getThumb={getThumb}
           festaPeople={festaSession ? festaPeopleNames.length : null}
@@ -892,7 +909,12 @@ export default function TvApp({ web = null }) {
           </button>
         )}
         {tvSettingsOpen && (
-          <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} />
+          <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} onOpenSitePage={openSitePage} />
+        )}
+        {sitePageQr && (
+          <Suspense fallback={null}>
+            <BsQrPanel title={sitePageQr.title} url={sitePageQr.url} onClose={() => setSitePageQr(null)} />
+          </Suspense>
         )}
         {updateDialogOpen && <TvRecommendedUpdateDialog />}
       </div>

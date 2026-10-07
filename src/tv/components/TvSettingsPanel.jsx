@@ -29,7 +29,17 @@ function ExitLine({ onPress }) {
  * (contrairement au karaokê) — inutile de la réactiver ici. La fermeture (Retour)
  * et la restauration du focus sur l'avatar sont gérées par TvHome.
  */
-export default function TvSettingsPanel({ opts, setOpts, onExitApp }) {
+/** Lien discret vers une page du site (Sobre, Blog). */
+function SiteLink({ focusKey, label, onPress }) {
+  const { ref, focused } = useFocusable({ focusKey, onEnterPress: onPress });
+  return (
+    <button ref={ref} type="button" onClick={onPress} className={`tv2-settings-link ${focused ? 'is-focused' : ''}`}>
+      {label}
+    </button>
+  );
+}
+
+export default function TvSettingsPanel({ opts, setOpts, onExitApp, onOpenSitePage }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'HOME_SETTINGS_PANEL', isFocusBoundary: true, trackChildren: true, saveLastFocusedChild: true,
   });
@@ -64,6 +74,12 @@ export default function TvSettingsPanel({ opts, setOpts, onExitApp }) {
 
           <div className="tv2-settings-footer">
             <h2 className="tv2-settings-h tv2-settings-h-app">Aplicativo</h2>
+            {onOpenSitePage && (
+              <div className="tv2-settings-links">
+                <SiteLink focusKey="HSET_SOBRE" label="Sobre o projeto" onPress={() => onOpenSitePage('Sobre o projeto', '/sobre/')} />
+                <SiteLink focusKey="HSET_BLOG" label="Blog" onPress={() => onOpenSitePage('Blog', '/blog/')} />
+              </div>
+            )}
             <ExitLine onPress={onExitApp} />
             <p className="tv2-settings-hint">Voltar para fechar</p>
           </div>

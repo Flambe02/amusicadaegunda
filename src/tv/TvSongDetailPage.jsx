@@ -4,12 +4,12 @@ import { AlignLeft, Mic, Play, Share2 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId } from '@/lib/utils';
 import { resolveLyricsText } from '@/lib/lrc';
-import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import { toTvSong } from './lib/tvSongRepository';
 import { trackTv } from './lib/tvAnalytics';
 import { fitTitle, formatLongDate, formatShortDate, getBackdropUrl, getRefrain, getShortContext } from './lib/bsSong';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import TvSongVisualPanel from './components/TvSongVisualPanel';
+import TvTopNavigation from './components/TvTopNavigation';
 import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
 import { Song } from '@/api/entities';
@@ -98,6 +98,7 @@ export default function TvSongDetailPage({
   songs = [], web = false, onOpenRelated, playClip = false,
   festaPeople = null,
   onStartKaraoke, onAddToQueue,
+  onGoHome, onOpenCatalog, onOpenFesta, onOpenSettings,
   backInterceptorRef,
 }) {
   // La letra de la liste arrive juste après le premier écran. Une fiche ouverte avant
@@ -388,7 +389,14 @@ export default function TvSongDetailPage({
       {/* Fond : la miniature de l'affiche en 32×18, étirée (aucun filter: blur()). */}
       <BsBackdrop src={getBackdropUrl(song)} className="bs-song-backdrop" />
       <span className="bs-song-veil" aria-hidden="true" />
-      <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="bs-song-logo" />
+      {/* Barre de menu : la fiche se quitte aussi par Início, Catálogo, Buscar, Festa. */}
+      <TvTopNavigation
+        active={source === 'home' ? 'inicio' : 'catalogo'}
+        onInicio={onGoHome}
+        onCatalogo={onOpenCatalog}
+        onFesta={onOpenFesta}
+        onOpenSettings={onOpenSettings}
+      />
 
       <div className="bs-scroll bs-song-scroll">
         <div className="bs-song-top">

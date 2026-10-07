@@ -151,4 +151,20 @@
 }
 .tv-web-back:hover, .tv-web-back:focus-visible { border-color: #fff; outline: none; }
 /* Sur un écran qui a la barre du haut, « Voltar » se range sous elle, à gauche. */
-.tv-root[data-nav='1'] .tv-web-back { top: 104px; height: 44px; font-size: 18px; padding: 0 18px; }
+.tv-root[data-nav='1'] .tv-web-back { top: 118px; height: 36px; font-size: 16px; padding: 0 14px; gap: 8px; }
+
+/* Réglages : liens discrets vers les pages du site (Sobre, Blog). */
+.tv2-settings-links { display: flex; gap: 12px; margin: 0 0 12px; }
+.tv2-settings-link {
+  border: 1.5px solid transparent; background: transparent; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  color: var(--bs-text-2); font-family: var(--bs-font); font-size: 18px; font-weight: 600;
+}
+.tv2-settings-link.is-focused, .tv2-settings-link:hover { color: var(--bs-text); border-color: #fff; }
+
+/* Karaokê grand écran : « Voltar » et pausa toujours visibles en haut. */
+.tv-kbar-btn {
+  display: inline-flex; align-items: center; gap: 8px; flex: none; height: 44px; padding: 0 18px; border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18); background: rgba(255, 255, 255, 0.06); cursor: pointer;
+  color: rgba(255, 255, 255, 0.86); font-family: var(--bs-font); font-size: 16px; font-weight: 700;
+}
+.tv-kbar-btn:hover, .tv-kbar-btn:focus-visible { border-color: #fff; background: rgba(255, 255, 255, 0.14); outline: none; }

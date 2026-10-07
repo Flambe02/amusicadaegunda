@@ -9,9 +9,11 @@
     radial-gradient(90% 80% at 50% 40%, rgba(15, 13, 9, 0.5), rgba(15, 13, 9, 0.9)),
     linear-gradient(180deg, rgba(15, 13, 9, 0.75), rgba(15, 13, 9, 0.55) 40%, rgba(15, 13, 9, 0.92));
 }
-.bs-song-logo { position: absolute; right: var(--bs-pad-x); top: 52px; width: 48px; height: 48px; border-radius: 12px; z-index: 1; }
 /* Deux classes : cette règle doit l'emporter sur `.bs-scroll` (bs-base.css, chargé après). */
-.bs-scroll.bs-song-scroll { position: relative; padding-top: 132px; }
+/* 40 px sous la barre de menu : la place du bouton « Voltar » de l'ordinateur. */
+.bs-scroll.bs-song-scroll { position: relative; padding-top: 40px; }
+/* La barre de menu passe au-dessus du fond flouté. */
+.bs-song > .bs-nav { position: relative; z-index: 1; }
 
 .bs-song-top { display: flex; align-items: flex-start; gap: 64px; }
 .bs-song-main { flex: 1 1 auto; min-width: 0; }
