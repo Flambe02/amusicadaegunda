@@ -10,6 +10,7 @@
 // ==========================================================================
 
 import { hasDuetTags, isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
+import { estimateDifficultyKey } from '@/lib/songDifficulty';
 import { MONTHS_PT } from '../tvMonths';
 
 export const DIFFICULTY = { EASY: 'Fácil', MEDIUM: 'Médio', HARD: 'Difícil' };
@@ -52,11 +53,6 @@ function plainText(html) {
   return (html || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
 
-function wordCount(text) {
-  const t = plainText(text);
-  return t ? t.split(/\s+/).length : 0;
-}
-
 /** Thème lisible (= catégorie éditoriale). Une seule valeur, jamais combinée. */
 export function getTheme(song) {
   if (!song?.category) return '';
@@ -74,11 +70,8 @@ export function getDifficulty(song) {
   // ou label portugais accepté tel quel (tolérance). NULL/absent → estimation ci-dessous.
   const explicit = song?.difficulty;
   if (explicit) return DIFFICULTY_BY_KEY[String(explicit).toLowerCase()] || explicit;
-  const n = wordCount(song?.lyrics);
-  if (!n) return DIFFICULTY.MEDIUM;
-  if (n < 165) return DIFFICULTY.EASY;
-  if (n < 280) return DIFFICULTY.MEDIUM;
-  return DIFFICULTY.HARD;
+  // Même règle que celle écrite en base par l'admin (src/lib/songDifficulty.js).
+  return DIFFICULTY_BY_KEY[estimateDifficultyKey(song?.lyrics)] || DIFFICULTY.MEDIUM;
 }
 
 /** Énergie de la performance, déduite de la catégorie éditoriale. */
