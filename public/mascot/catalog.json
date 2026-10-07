@@ -1,0 +1,16 @@
+{
+  "//": "Animations de la mascotte téléchargées à la demande (jamais dans l'APK). Ajouter une animation : déposer le MP4 (540x960, sans son) et son poster ici, ajouter une entrée, déployer le site. type : dance | sing | idle. costume : identifiant rapproché de songs.mascot_costume. song : slug de la chanson (repli si la colonne est vide).",
+  "animations": [
+    {
+      "id": "bets-sing",
+      "type": "sing",
+      "costume": "bets-bets-bets",
+      "song": "bets-bets-bets",
+      "category": null,
+      "tier": "remote",
+      "loop": true,
+      "video": "caipivara-bets-sing.mp4",
+      "poster": "caipivara-bets-sing-poster.webp"
+    }
+  ]
+}
