@@ -32,7 +32,6 @@ import TileImage from '@/components/mobile/search/TileImage';
 import TvKaraokeLyricsWindow from '@/tv/components/TvKaraokeLyricsWindow';
 import TvDuetLyricsView from '@/tv/components/TvDuetLyricsView';
 import { formatTvTime } from '@/tv/lib/tvLyricsWindow';
-import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import { SING_THRESHOLD, LOUDNESS_TARGET, gradeFor } from '@/lib/energyGrade';
 import '@/styles/karaoke.css';
 
@@ -1049,8 +1048,11 @@ export default function KaraokePlayer({
       {/* Barre supérieure — padding haut = safe-area (sinon passe sous l'encoche/barre d'état) */}
       <header className="relative z-30 flex items-center gap-3 px-4 pb-3 pt-[max(env(safe-area-inset-top),0.75rem)] md:px-6 md:pb-4 md:pt-[max(env(safe-area-inset-top),1rem)]">
         {tvMode ? (
-          /* TV : chrome minimal — avatar mascotte + titre, pas de bouton Voltar (Retour télécommande). */
-          <img src={BRAND_SQUARE_SMALL} alt="" className="h-9 w-9 shrink-0 rounded-full border border-white/15 object-cover" />
+          /* Grand écran : « Voltar » toujours visible (souris sur ordinateur, repère sur la
+             box — la télécommande garde sa touche Retour). */
+          <button type="button" className="tv-kbar-btn" onClick={handleClose} aria-label="Voltar">
+            <ArrowLeft className="h-5 w-5" /> Voltar
+          </button>
         ) : (
           <button type="button" onClick={handleClose}
             className="karaoke-focusable flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-sm font-semibold text-white/85 transition hover:bg-white/10"
@@ -1072,6 +1074,13 @@ export default function KaraokePlayer({
           <span className="flex shrink-0 items-center gap-1 rounded-full border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-bold text-white/70">
             {LEVEL_META[learningLevel]?.emoji} <span className="hidden sm:inline">{LEVEL_META[learningLevel]?.label}</span>
           </span>
+        )}
+        {tvMode && phase === 'live' && !showOpts && (
+          <button type="button" className="tv-kbar-btn" onClick={() => { togglePlay(); revealControls(); }}
+            aria-label={isPlaying ? 'Pausar a música' : 'Continuar a música'}>
+            {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
+            {isPlaying ? 'Pausar' : 'Continuar'}
+          </button>
         )}
         {tvMode && phase === 'live' && !showOpts && (
           <button type="button"
