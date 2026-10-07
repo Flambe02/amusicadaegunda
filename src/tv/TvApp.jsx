@@ -190,14 +190,26 @@ export default function TvApp({ web = null }) {
 
   // ── Web : « Tela cheia » (Fullscreen API). Le navigateur en sort avec Échap ; la
   // navigation au clavier façon D-pad est la même qu'en fenêtre. Jamais sur la box.
+  // Cet Échap-là ne doit QUE quitter le plein écran, pas revenir en plus d'un écran :
+  // on l'ignore tant que le plein écran est actif, et juste après sa sortie (selon le
+  // navigateur, la touche arrive avant ou après le changement d'état).
+  const fullscreenExitAtRef = useRef(0);
+  const isFullscreenEscape = useCallback((event) => {
+    if (event.key !== 'Escape') return false;
+    return Boolean(document.fullscreenElement) || Date.now() - fullscreenExitAtRef.current < 400;
+  }, []);
   const [fullscreen, setFullscreen] = useState(false);
   const canFullscreen = isWeb && typeof document !== 'undefined' && Boolean(document.documentElement.requestFullscreen);
   useEffect(() => {
     if (!canFullscreen) return undefined;
-    const sync = () => setFullscreen(Boolean(document.fullscreenElement));
-    sync();
-    document.addEventListener('fullscreenchange', sync);
-    return () => document.removeEventListener('fullscreenchange', sync);
+    const onChange = () => {
+      const on = Boolean(document.fullscreenElement);
+      if (!on) fullscreenExitAtRef.current = Date.now();
+      setFullscreen(on);
+    };
+    setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
   }, [canFullscreen]);
   const toggleFullscreen = useCallback(() => {
     const request = document.fullscreenElement
@@ -273,7 +285,10 @@ export default function TvApp({ web = null }) {
     else exitApp();
   }, [consumeBack, pop]);
   // Dans un navigateur, seul Échap revient en arrière (pas Backspace).
-  useEffect(() => onBackPress(handleBack, { backspace: !isWeb }), [handleBack, isWeb]);
+  useEffect(
+    () => onBackPress(handleBack, { backspace: !isWeb, ignoreKey: isWeb ? isFullscreenEscape : null }),
+    [handleBack, isWeb, isFullscreenEscape]
+  );
 
   // ── Web : la pile d'écrans suit l'historique du navigateur ───────────────────
   // Chaque écran empilé est une entrée d'historique (`amdsTv` = profondeur) ; seule la

@@ -9,11 +9,13 @@ import { Capacitor } from '@capacitor/core';
  * portage Tizen/webOS remplacera ce seul module sans toucher au reste du code TV.
  *
  * @param {() => void} handler appelé à chaque appui « Retour ».
- * @param {{ backspace?: boolean }} [options] `backspace: false` dans un navigateur
- *   d'ordinateur : seul Échap revient en arrière (Backspace y est une touche d'édition).
+ * @param {{ backspace?: boolean, ignoreKey?: (event: KeyboardEvent) => boolean }} [options]
+ *   `backspace: false` dans un navigateur d'ordinateur : seul Échap revient en arrière
+ *   (Backspace y est une touche d'édition). `ignoreKey` : une touche Retour que
+ *   l'appelant ne veut pas traiter (Échap qui quitte le plein écran du navigateur).
  * @returns {() => void} fonction de désinscription.
  */
-export function onBackPress(handler, { backspace = true } = {}) {
+export function onBackPress(handler, { backspace = true, ignoreKey = null } = {}) {
   const cleanups = [];
 
   // 1) Retour matériel Android via Capacitor.
@@ -32,6 +34,7 @@ export function onBackPress(handler, { backspace = true } = {}) {
       || e.key === 'GoBack' || e.key === 'BrowserBack'
       || e.keyCode === 10009 /* Tizen return */ || e.keyCode === 461 /* webOS back */;
     if (!isBack) return;
+    if (ignoreKey?.(e)) return;
     const tag = e.target?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA') return; // ne pas voler le Backspace d'un champ
     e.preventDefault();
