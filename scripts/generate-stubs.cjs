@@ -391,12 +391,11 @@ ${songListHtml}
 </div>`;
 
   // ✅ AEO #11: Pillar page — "Paródia Musical no Brasil" — crawlable guide for AI citation
-  const guiaLastUpdated = new Date().toISOString().slice(0, 10);
   const guiaBody = `
 <div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: Georgia, serif; line-height: 1.8; color: #222;">
   <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #888; margin-bottom: 0.5rem; font-family: sans-serif;">Guia</p>
   <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111; font-family: sans-serif;">Paródia Musical no Brasil: Tradição, Humor e Sátira</h1>
-  <p style="font-size: 0.85rem; color: #888; margin-bottom: 2rem; font-family: sans-serif;">Por A Música da Segunda · <time datetime="${guiaLastUpdated}">Atualizado em ${formatDatePtBR(guiaLastUpdated)}</time></p>
+  <p style="font-size: 0.85rem; color: #888; margin-bottom: 2rem; font-family: sans-serif;">Por A Música da Segunda</p>
 
   <p style="margin-bottom: 1.25rem;"><strong>Paródia musical</strong> é a arte de adaptar uma melodia conhecida com uma nova letra — geralmente satírica, cômica ou crítica de um tema atual. No Brasil, essa tradição é profunda e está entrelaçada com a história política e cultural do país. Das marchinhas de carnaval do século XX ao YouTube Shorts de hoje, a paródia musical nunca deixou de ser um dos formatos mais eficazes de comentário sobre a realidade brasileira.</p>
 
@@ -494,8 +493,8 @@ ${songListHtml}
     "headline": "Paródia Musical no Brasil: Tradição, Humor e Sátira",
     "description": "Guia completo sobre a história da paródia musical no Brasil — do carnaval ao YouTube.",
     "url": `${siteUrl}/guia/`,
-    "datePublished": `${launchYear}-01-01`,
-    "dateModified": guiaLastUpdated,
+    // Pas de datePublished ni de dateModified : la vraie date de publication n'est pas
+    // connue, et la date du build n'est pas une date de mise à jour.
     "inLanguage": "pt-BR",
     // La même entité que sur les autres pages (seo-entity.cjs).
     "author": { "@id": ENTITY_ID },

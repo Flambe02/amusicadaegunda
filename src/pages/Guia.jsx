@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
-const LAST_UPDATED = '1 de julho de 2026';
 
 export default function Guia() {
   useSEO({
@@ -27,7 +26,7 @@ export default function Guia() {
           Paródia Musical no Brasil: Tradição, Humor e Sátira
         </h1>
         <p className="text-sm text-white/55">
-          Por A Música da Segunda · Atualizado em {LAST_UPDATED}
+          Por A Música da Segunda
         </p>
       </header>
 
