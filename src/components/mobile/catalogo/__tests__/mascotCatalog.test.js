@@ -7,7 +7,7 @@ import catalogFile from '../../../../../public/mascot/catalog.json';
 
 const RAW = {
   animations: [
-    { id: 'bets-sing', type: 'sing', costume: 'bets-bets-bets', song: 'bets-bets-bets', video: 'caipivara-bets-sing.mp4', poster: 'caipivara-bets-sing-poster.webp' },
+    { id: 'bets-dance', type: 'dance', costume: 'bets', song: 'bets-bets-bets', video: 'caipivara-bets-dance.mp4', poster: 'caipivara-bets-dance-poster.webp' },
     { id: 'frevo', type: 'dance', video: 'caipivara-frevo.mp4', poster: 'caipivara-frevo-poster.webp', loop: false },
     { id: 'frevo', type: 'dance', video: 'dup.mp4', poster: 'dup.webp' },
     { id: 'bad type', type: 'dance', video: 'x.mp4', poster: 'x.webp' },
@@ -22,8 +22,8 @@ beforeEach(() => { resetMascotCatalogForTests(); });
 describe('mascotCatalog — animations à la demande', () => {
   it('keeps the valid entries only, with full addresses, and ignores the rest', () => {
     const catalog = normalizeCatalog(RAW, '/mascot/');
-    expect(catalog.map((entry) => entry.id)).toEqual(['bets-sing', 'frevo']);
-    expect(catalog[0]).toMatchObject({ key: 'remote:bets-sing', remote: true, loop: true, mp4: '/mascot/caipivara-bets-sing.mp4', poster: '/mascot/caipivara-bets-sing-poster.webp' });
+    expect(catalog.map((entry) => entry.id)).toEqual(['bets-dance', 'frevo']);
+    expect(catalog[0]).toMatchObject({ key: 'remote:bets-dance', remote: true, loop: true, mp4: '/mascot/caipivara-bets-dance.mp4', poster: '/mascot/caipivara-bets-dance-poster.webp' });
     expect(catalog[1].loop).toBe(false);
     expect(normalizeCatalog(null)).toEqual([]);
     expect(normalizeCatalog('<html>404</html>')).toEqual([]);
@@ -32,13 +32,13 @@ describe('mascotCatalog — animations à la demande', () => {
   it('the catalogue shipped on the site is valid and every entry has its files named', () => {
     const catalog = normalizeCatalog(catalogFile, '/mascot/');
     expect(catalog.length).toBe(catalogFile.animations.length);
-    expect(catalog.find((entry) => entry.costume === 'bets-bets-bets')).toBeTruthy();
+    expect(catalog.find((entry) => entry.costume === 'bets' && entry.song === 'bets-bets-bets' && entry.type === 'dance')).toBeTruthy();
   });
 
   it('a song gets its costume from the mascot_costume column first, then from the catalogue', () => {
     const catalog = normalizeCatalog(RAW, '/mascot/');
-    expect(findCostumeClip(catalog, { slug: 'outra', mascot_costume: 'bets-bets-bets' })?.id).toBe('bets-sing');
-    expect(findCostumeClip(catalog, { slug: 'bets-bets-bets' })?.id).toBe('bets-sing');
+    expect(findCostumeClip(catalog, { slug: 'outra', mascot_costume: 'bets' })?.id).toBe('bets-dance');
+    expect(findCostumeClip(catalog, { slug: 'bets-bets-bets' })?.id).toBe('bets-dance');
     expect(findCostumeClip(catalog, { slug: 'querido-tse' })).toBeNull();
     expect(findCostumeClip(catalog, { slug: 'querido-tse', mascot_costume: 'desconhecido' })).toBeNull();
     expect(findCostumeClip([], { slug: 'bets-bets-bets' })).toBeNull();
@@ -66,7 +66,7 @@ describe('mascotCatalog — animations à la demande', () => {
     expect(await loadMascotCatalog(vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }))).toEqual([]);
     resetMascotCatalogForTests();
     const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => RAW });
-    expect((await loadMascotCatalog(fetchImpl)).map((entry) => entry.id)).toEqual(['bets-sing', 'frevo']);
+    expect((await loadMascotCatalog(fetchImpl)).map((entry) => entry.id)).toEqual(['bets-dance', 'frevo']);
     expect(fetchImpl.mock.calls[0][0]).toBe('/mascot/catalog.json');
   });
 

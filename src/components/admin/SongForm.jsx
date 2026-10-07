@@ -292,7 +292,7 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
           id="mascot_costume"
           value={form.mascot_costume}
           onChange={(e) => set('mascot_costume', e.target.value)}
-          placeholder="Ex: bets-bets-bets"
+          placeholder="Ex: bets"
           className="mt-1"
         />
         <p className="text-xs mt-1 text-gray-500">Identificador de um costume do catálogo de animações. Vazio: a Caipivara dança.</p>

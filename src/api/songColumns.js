@@ -31,6 +31,8 @@ export const SONG_INDEX_COLUMNS = [
   'apple_music_url',
   'karaoke_published',
   'karaoke_synced_at',
+  // Costume de la mascotte (mobile) : quelques octets, lu par la scène de la Caipivara.
+  'mascot_costume',
 ];
 
 /** Résumé d'UNE chanson (celle de la semaine) : l'index + sa description (« História »). */
