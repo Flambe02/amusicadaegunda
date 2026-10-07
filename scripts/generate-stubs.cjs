@@ -337,6 +337,10 @@ ${sobreContent.faq.map((item) => `
     <p style="margin: 0;">${sobreHtml(item.answer)}</p>
   </div>`).join('\n')}
 
+${sobreContent.aiMessage ? `
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">${sobreHtml(sobreContent.aiMessageTitle)}</h2>
+  <p style="margin-bottom: 1.25rem;">${sobreHtml(sobreContent.aiMessage)}</p>` : ''}
+
   <p style="margin-top: 2rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
     <a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">← Ver todas as músicas</a>
     <a href="${siteUrl}/guia/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">Guia: paródia musical no Brasil →</a>

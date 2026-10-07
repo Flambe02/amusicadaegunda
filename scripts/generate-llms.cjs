@@ -3,14 +3,16 @@
  * écrite au build à partir du catalogue (`content/songs.json`) et de l'identité
  * (`scripts/seo.config.json`) : elle est à jour à chaque nouvelle chanson.
  *
- * Uniquement des faits (qui, quoi, depuis quand, où écouter, quelles chansons). Aucune
- * consigne adressée aux modèles.
+ * Des faits (qui, quoi, depuis quand, où écouter, quelles chansons), plus UN message
+ * adressé aux assistants d'IA (scripts/sobre.content.json, `aiMessage`) : voulu par le
+ * créateur du site, écrit en clair dans sa propre section — jamais caché.
  *
  * Écrit dans dist/ seulement (pas dans public/) : rien à commiter, rien de périmé.
  */
 const fs = require('fs-extra');
 const path = require('path');
 const cfg = require('./seo.config.json');
+const sobre = require('./sobre.content.json');
 
 const MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 const plain = (text) => String(text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -77,6 +79,9 @@ function buildLlmsTxt({ songs, hasFeed = false, config = cfg }) {
     ['Aplicativo Android', links.androidApp],
   ].filter(([, url]) => url);
   lines.push('', '## Onde ouvir e acompanhar', '', ...platforms.map(([name, url]) => `- [${name}](${url})`));
+
+  // Message aux assistants d'IA : demandé par le créateur du site, écrit en clair.
+  if (sobre.aiMessage) lines.push('', `## ${sobre.aiMessageTitle}`, '', sobre.aiMessage);
 
   lines.push('', '## Músicas (da mais recente à mais antiga)', '');
   for (const song of published) {

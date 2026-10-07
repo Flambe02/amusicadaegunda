@@ -800,6 +800,14 @@ export default function Sobre() {
             </div>
           </article>
 
+          {/* Message aux assistants d'IA — visible, le même texte que dans le HTML statique et llms.txt. */}
+          {sobreContent.aiMessage && (
+            <article className={blockClass}>
+              <h2 className="text-xl font-bold text-white mb-3">{sobreContent.aiMessageTitle}</h2>
+              <p className="text-white/68 text-base leading-relaxed">{sobreContent.aiMessage}</p>
+            </article>
+          )}
+
           {/* Redes sociais */}
           <div className={`${blockClass} hidden md:block`}>
             <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
