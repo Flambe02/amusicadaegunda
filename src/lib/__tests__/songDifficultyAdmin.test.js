@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DIFFICULTY_AUTO, difficultyChoiceOf, resolveDifficultyFields } from '../songDifficulty';
+import { DIFFICULTY_AUTO, difficultyChoiceOf, difficultyPatchOnPublish, resolveDifficultyFields } from '../songDifficulty';
 
 const words = (count) => Array.from({ length: count }, (_, index) => `palavra${index}`).join(' ');
 
@@ -32,5 +32,22 @@ describe('Dificuldade no admin — « Automática » ou escolhida à mão', () =
 
   it('a manual choice is written as is, whatever the lyrics', () => {
     expect(resolveDifficultyFields({ choice: 'medium', lyrics: words(600) })).toEqual({ difficulty: 'medium', difficulty_manual: true });
+  });
+});
+
+describe('Publication directe — jamais publiée sans difficulté', () => {
+  it('empty and « Automática »: the difficulty is computed with the publication', () => {
+    expect(difficultyPatchOnPublish({ difficulty: null, difficulty_manual: false, lyrics: words(300) })).toEqual({ difficulty: 'hard' });
+    expect(difficultyPatchOnPublish({ lyrics: words(100) })).toEqual({ difficulty: 'easy' });
+  });
+
+  it('a value already there — computed or chosen by hand — is never touched', () => {
+    expect(difficultyPatchOnPublish({ difficulty: 'easy', difficulty_manual: false, lyrics: words(300) })).toEqual({});
+    expect(difficultyPatchOnPublish({ difficulty: 'medium', difficulty_manual: true, lyrics: words(300) })).toEqual({});
+  });
+
+  it('no lyrics: nothing to compute, nothing written', () => {
+    expect(difficultyPatchOnPublish({ difficulty: null, difficulty_manual: false, lyrics: '' })).toEqual({});
+    expect(difficultyPatchOnPublish(null)).toEqual({});
   });
 });

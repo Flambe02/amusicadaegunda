@@ -1,6 +1,7 @@
 // Shared admin data + UI-overlay state for every admin page (catalog, links,
 // biblioteca, settings). One normalized source of songs and one set of global
 // overlays (details drawer, song form, karaoke tool, delete dialog).
+import { difficultyPatchOnPublish } from '@/lib/songDifficulty';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
@@ -65,7 +66,7 @@ export function AdminDataProvider({ children }) {
     const now = new Date().toISOString();
     const due = songs.filter((s) => s.status === 'draft' && s.publish_at && s.publish_at <= now);
     for (const song of due) {
-      const { data, error: err } = await supabase.from('songs').update({ status: 'published', publish_at: null }).eq('id', song.id).select();
+      const { data, error: err } = await supabase.from('songs').update({ status: 'published', publish_at: null, ...difficultyPatchOnPublish(song) }).eq('id', song.id).select();
       if (!err && data && data.length > 0) {
         toast({ title: `✅ "${song.title}" publicada automaticamente!` });
         try { await notifyAllSubscribers({ title: '🎵 Nova Música da Segunda!', body: song.title, url: song.slug ? `/musica/${song.slug}` : '/' }); } catch { /* silent */ }
@@ -145,7 +146,7 @@ export function AdminDataProvider({ children }) {
   const publishSong = useCallback(async (song) => {
     try {
       await ensureWritableSession();
-      const { data, error: err } = await supabase.from('songs').update({ status: 'published', publish_at: null }).eq('id', song.id).select();
+      const { data, error: err } = await supabase.from('songs').update({ status: 'published', publish_at: null, ...difficultyPatchOnPublish(song) }).eq('id', song.id).select();
       if (err) throw new Error(describeWriteError(err));
       if (!data || data.length === 0) throw new Error('Publicação não registada (0 linhas). Sessão expirada ou direitos RLS.');
       try { await notifyAllSubscribers({ title: '🎵 Nova Música da Segunda!', body: song.title, url: song.slug ? `/musica/${song.slug}` : '/' }); } catch { /* silent */ }

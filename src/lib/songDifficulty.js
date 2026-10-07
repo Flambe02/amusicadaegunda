@@ -65,3 +65,16 @@ export function resolveDifficultyFields({ choice, lyrics }) {
   if (DIFFICULTY_KEYS.includes(choice)) return { difficulty: choice, difficulty_manual: true };
   return { difficulty: estimateDifficultyKey(lyrics), difficulty_manual: false };
 }
+
+/**
+ * Publication directe (bouton « Publicar », publication programmée) : ce qu'il faut
+ * écrire en plus du statut pour qu'aucune chanson n'arrive publiée sans difficulté.
+ * Seulement quand la colonne est vide ET en « Automática » ; une valeur déjà présente
+ * (calculée ou choisie à la main) n'est jamais touchée. Sans letra, rien à écrire.
+ * @returns {{ difficulty?: 'easy'|'medium'|'hard' }}
+ */
+export function difficultyPatchOnPublish(song) {
+  if (!song || song.difficulty || song.difficulty_manual === true) return {};
+  const difficulty = estimateDifficultyKey(song.lyrics);
+  return difficulty ? { difficulty } : {};
+}
