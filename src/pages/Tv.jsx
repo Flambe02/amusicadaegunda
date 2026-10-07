@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 import { Tv as TvIcon, Download, Mic, Users, PartyPopper, CheckCircle2, Clock } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 import { getPlayStoreUrl } from '@/lib/playStore';
@@ -59,8 +60,7 @@ function DownloadButton({ className = '' }) {
 
 export default function Tv() {
   useSEO({
-    title: 'A Música da Segunda na sua TV — Karaokê para Google TV e Android TV',
-    description: 'Baixe o app A Música da Segunda para Google TV / Android TV e cante karaokê na tela grande: letras sincronizadas, Modo Dueto e Modo Festa. Em breve também na Samsung TV.',
+    ...pageSeo('/tv'),
     keywords: 'app android tv, google tv, karaokê tv, samsung tv, baixar app música da segunda',
     url: '/tv',
     type: 'website',

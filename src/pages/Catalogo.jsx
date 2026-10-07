@@ -18,6 +18,7 @@ export default function Catalogo() {
 
   useSEO({
     title: 'Catálogo — A Música da Segunda',
+    exactTitle: true,
     description: 'Toque na Caipivara e ela escolhe uma paródia de A Música da Segunda pra você.',
     url: '/catalogo',
     robots: 'noindex, follow',

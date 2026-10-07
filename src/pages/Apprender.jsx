@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
@@ -23,8 +24,7 @@ export default function Apprender() {
   const [lessons, setLessons] = useState([]); // [{ slug, title, momentsCount }]
 
   useSEO({
-    title: 'Aprender português — Aprenda português brasileiro com as músicas | A Música da Segunda',
-    description: 'Escute, entenda e descubra expressões reais do português brasileiro cantando as paródias de A Música da Segunda.',
+    ...pageSeo('/apprendre'),
     url: '/apprendre',
     type: 'website',
     robots: 'index, follow',

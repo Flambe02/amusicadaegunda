@@ -28,7 +28,7 @@ const normalizeStaticSong = (song, index) => ({
   id: song.id ?? `static-${index + 1}`,
   slug: song.slug || null,
   title: song.name || song.title || 'Sans titre',
-  artist: song.byArtist?.name || song.artist || 'A Musica da Segunda',
+  artist: song.byArtist?.name || song.artist || 'A Música da Segunda',
   description: song.description || '',
   lyrics: song.lyrics || '',
   release_date: song.datePublished || song.release_date || null,

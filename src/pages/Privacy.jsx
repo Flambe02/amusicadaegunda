@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 import { useSEO } from '../hooks/useSEO';
 
 const CONTACT_EMAIL = 'contact@musicadasegunda.com';
@@ -5,8 +6,7 @@ const LAST_UPDATE = '7 de maio de 2026';
 
 export default function Privacy() {
   useSEO({
-    title: 'Política de Privacidade — A Música da Segunda',
-    description: 'Política de privacidade do A Música da Segunda: quais dados são coletados, como são protegidos e como solicitar a exclusão.',
+    ...pageSeo('/privacy'),
     keywords: 'política de privacidade, privacidade, lgpd, a música da segunda',
     url: '/privacy',
     type: 'website',

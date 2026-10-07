@@ -472,7 +472,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
           open={lyricsOpen}
           onOpenChange={setLyricsOpen}
           song={current}
-          title="Letras da Musica"
+          title="Letras da Música"
           maxHeight="h-96"
           showIcon={false}
         />

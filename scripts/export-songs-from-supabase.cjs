@@ -96,6 +96,10 @@ async function exportSongs() {
           // un trigger qui ignore les mises à jour techniques. Absente → date de sortie.
           content_updated_at: song.content_updated_at || null,
           description: song.description || null,
+          // Phrase courte de contexte (meta description, tela grande) ; NULL tant qu'elle n'est pas remplie.
+          context_short: song.context_short || null,
+          // Karaokê public ? Même règle que isKaraokePublished (src/lib/lrc.js).
+          karaoke: song.karaoke_published !== false && Boolean(String(song.lrc_content || '').trim()),
           lyrics: song.lyrics || null,
           subtitle: song.subtitle || null,
           category: song.category || null

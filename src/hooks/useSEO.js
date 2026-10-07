@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { buildFullTitle, getDocumentTitle } from '../lib/documentTitle';
+import { buildFullTitle, getDocumentTitle, isStandalonePwa, stripAppNameFromTitle } from '../lib/documentTitle';
 
 /**
  * Hook SEO simple pour mettre à jour les meta tags dynamiquement
@@ -15,6 +15,7 @@ export function useSEO({
   robots = 'index, follow', // ✅ SEO: Support robots directives (e.g., 'max-video-preview:0')
   publishedTime = null, // ISO date string — for article:published_time OG tag
   articleSection = null, // category string — for article:section OG tag
+  exactTitle = false, // le titre est déjà complet (≤ 60 c.) : aucun suffixe ajouté
   enabled = true
 }) {
   const siteName = 'A Música da Segunda';
@@ -24,8 +25,12 @@ export function useSEO({
   const defaultImage = `${siteUrl}/images/og-caipivara-1200x630.jpg`;
 
   // ✅ SEO: Si le title contient déjà un pipe, ne pas ajouter le siteName (évite répétition)
-  const fullTitle = buildFullTitle(title, siteName);
-  const documentTitle = getDocumentTitle(title, siteName);
+  // `exactTitle` : le même titre que le HTML statique, à la lettre (src/lib/seoText.js,
+  // scripts/seo.pages.json). L'app installée garde son titre court, sans le nom du site.
+  const fullTitle = exactTitle ? String(title || siteName) : buildFullTitle(title, siteName);
+  const documentTitle = exactTitle
+    ? (isStandalonePwa() ? stripAppNameFromTitle(fullTitle) : fullTitle)
+    : getDocumentTitle(title, siteName);
   const fullDescription = description || 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.';
   const fullKeywords = keywords || 'música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music';
   const fullImage = image || defaultImage;

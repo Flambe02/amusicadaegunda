@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
@@ -58,9 +59,7 @@ export default function KaraokePage() {
   const surpriseBtnRef = useRef(null);
 
   useSEO({
-    title: 'Karaokê — Cante as Paródias | A Música da Segunda',
-    description:
-      'Modo karaokê oficial de A Música da Segunda: cante as paródias musicais da semana com letra sincronizada na tela. No celular, no computador ou na TV.',
+    ...pageSeo('/karaoke'),
     url: '/karaoke',
   });
 

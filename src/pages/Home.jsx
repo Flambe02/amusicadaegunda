@@ -5,8 +5,6 @@ import MobileFeed from '@/components/mobile/feed/MobileFeed';
 import LyricsDialog from '../components/LyricsDialog';
 import { useShell } from '@/components/mobile/ShellContext';
 import { useSEO } from '../hooks/useSEO';
-import { Helmet } from 'react-helmet-async';
-import { getDocumentTitle } from '@/lib/documentTitle';
 import { CURRENT_SONG_ARTWORK } from '@/generated/currentSongArtwork';
 import { useHomeSongs } from '@/hooks/useHomeSongs';
 import { markFirstScreenSettled } from '@/lib/firstScreen';
@@ -128,13 +126,10 @@ export default function Home() {
   if (isLoading) {
     return (
       <>
-        <Helmet>
-          <title>{getDocumentTitle('A Musica da Segunda: Parodias das Noticias do Brasil')}</title>
-          <meta name="description" content="A Musica da Segunda: As Noticias do Brasil em Forma de Parodia. Site oficial de parodias musicais inteligentes e divertidas." />
-        </Helmet>
-
-        {/* Mobile skeleton */}
-        <div className="md:hidden flex items-center justify-center py-32">
+        {/* Mobile skeleton. `key` : React ne doit pas réutiliser ce bloc (128 px de marge)
+            pour le feed qui le remplace — sinon le feed se pose une image dans la marge
+            puis saute en plein écran (CLS 0,14 mesuré). */}
+        <div key="home-skeleton-mobile" className="md:hidden flex items-center justify-center py-32">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-white/60" />
         </div>
 
@@ -147,10 +142,6 @@ export default function Home() {
   if (error && !currentSong) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center p-6">
-        <Helmet>
-          <title>{getDocumentTitle('A Musica da Segunda: Parodias das Noticias do Brasil')}</title>
-          <meta name="description" content="A Musica da Segunda: As Noticias do Brasil em Forma de Parodia. Site oficial de parodias musicais inteligentes e divertidas." />
-        </Helmet>
         <div className="glass-panel rounded-[30px] p-8 text-center max-w-sm">
           <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-400" />
           <h3 className="text-lg font-bold text-white mb-2">Erro ao carregar</h3>
@@ -215,7 +206,7 @@ export default function Home() {
         open={showLyricsDialog}
         onOpenChange={setShowLyricsDialog}
         song={lyricsSong}
-        title="Letras da Musica"
+        title="Letras da Música"
         maxHeight="h-96"
         showIcon={false}
       />

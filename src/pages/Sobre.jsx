@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown, Facebook, Bell, Smile, Headphones, ExternalLink, Search as SearchIcon, X, Play, Pause } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -399,8 +400,7 @@ export default function Sobre() {
   };
 
   useSEO({
-    title: 'Sobre a Música da Segunda',
-    description: 'A Música da Segunda é um projeto autoral brasileiro que publica paródias musicais inteligentes sobre a atualidade do Brasil, sempre com novos lançamentos às segundas-feiras.',
+    ...pageSeo('/sobre'),
     keywords: 'música da segunda, paródias musicais, música brasileira, humor musical, atualidades do Brasil, música semanal, sátira musical',
     url: '/sobre',
     type: 'website'
@@ -421,9 +421,9 @@ export default function Sobre() {
     injectJsonLd({
       '@context': 'https://schema.org',
       '@type': 'AboutPage',
-      name: 'Sobre A Música da Segunda',
+      name: pageSeo('/sobre').title,
       url: 'https://www.amusicadasegunda.com/sobre/',
-      description: sobreContent.intro[0],
+      description: pageSeo('/sobre').description,
       mainEntity: { '@id': ENTITY_ID },
     }, 'sobre-about-schema');
     return () => {

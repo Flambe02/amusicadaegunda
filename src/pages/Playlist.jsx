@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 import { useState, useEffect, useRef } from 'react';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
@@ -6,7 +7,8 @@ import { musicPlaylistJsonLd, injectJsonLd, removeJsonLd } from '../lib/seo-json
 import DesktopPageShell, { DesktopMetric, DesktopSurface } from '@/components/DesktopPageShell';
 import { CalendarDays, Disc3, ExternalLink, Headphones, MoreHorizontal, Pause, Play, Share2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { archiveSeoDescription, archiveSeoTitle } from '@/lib/seoText';
 import { getYouTubeEmbedInfo, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
 import { BRAND_LOGO_SMALL, BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 
@@ -84,6 +86,7 @@ function getSongPath(song) {
 }
 
 export default function Playlist() {
+  const { year } = useParams(); // défini sur /arquivo/:year seulement
   const [songs, setSongs] = useState([]);
   const [playingSongKey, setPlayingSongKey] = useState(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -179,13 +182,17 @@ export default function Playlist() {
   }, [songs]);
 
   // SEO pour la playlist
+  // /arquivo/:year garde le titre, la description et l'adresse de son HTML statique.
+  const yearCount = year ? songs.filter((song) => String(song.release_date || '').startsWith(year)).length : 0;
   useSEO({
-    title: 'Playlist Completa - Todas as Descobertas Musicais',
-    description: 'Playlist completa com todas as descobertas musicais do Música da Segunda. Ouça no Spotify, Apple Music e YouTube Music.',
-    keywords: 'playlist música da segunda, descobertas musicais, spotify playlist, apple music, youtube music, todas as músicas',
-    url: '/musica',
-    type: 'website'
+    ...(year
+      ? { title: archiveSeoTitle(year), description: archiveSeoDescription(year, yearCount), exactTitle: true }
+      : pageSeo('/musica')),
+    url: year ? `/arquivo/${year}/` : '/musica',
+    type: 'website',
+    enabled: !year || yearCount > 0,
   });
+
 
   return (
     <>

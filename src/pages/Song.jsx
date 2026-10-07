@@ -248,7 +248,7 @@ export default function SongPage() {
   const shareUrl = typeof window !== 'undefined'
     ? window.location.href
     : `https://www.amusicadasegunda.com${normalizedUrl}`;
-  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${song?.title || 'A Musica da Segunda'} - ${shareUrl}`)}`;
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${song?.title || 'A Música da Segunda'} - ${shareUrl}`)}`;
   const mobilePanels = [
     {
       key: 'contexto',
@@ -553,7 +553,7 @@ export default function SongPage() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/56">
                   <span className="inline-flex items-center gap-1.5">
                     <Disc3 className="h-3.5 w-3.5 text-[#FDE047]" />
-                    {song.artist || 'A Musica da Segunda'}
+                    {song.artist || 'A Música da Segunda'}
                   </span>
                   {formattedReleaseDate ? (
                     <span className="inline-flex items-center gap-1.5">

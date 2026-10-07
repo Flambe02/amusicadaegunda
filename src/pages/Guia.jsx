@@ -1,11 +1,12 @@
+import { pageSeo } from '@/lib/pageSeo';
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
+import guiaExamples from '../../scripts/guia.examples.json';
 
 
 export default function Guia() {
   useSEO({
-    title: 'Paródia Musical no Brasil: Tradição, Humor e Sátira | A Música da Segunda',
-    description: 'Guia completo sobre a história da paródia musical no Brasil — do carnaval ao YouTube. Como o formato funciona, por que fascina brasileiros há décadas.',
+    ...pageSeo('/guia'),
     keywords: 'paródia musical brasil, história paródia musical, sátira musical brasileira, música da segunda',
     url: '/guia',
     type: 'website',
@@ -23,7 +24,7 @@ export default function Guia() {
           Guia
         </p>
         <h1 className="mb-2 text-3xl font-black tracking-tight text-white lg:text-4xl">
-          Paródia Musical no Brasil: Tradição, Humor e Sátira
+          O que é paródia musical? Exemplos e história no Brasil
         </h1>
         <p className="text-sm text-white/55">
           Por A Música da Segunda
@@ -82,6 +83,16 @@ export default function Guia() {
         <li><strong>Ancoragem cultural:</strong> no Brasil, música e identidade cultural são inseparáveis. A paródia de uma canção conhecida ativa associações profundas, criando um contexto emocional imediato.</li>
         <li><strong>Humor como crítica:</strong> o riso cria distância. Transformar um escândalo político em paródia permite processar e criticar um evento sem o peso discursivo do texto argumentativo puro.</li>
         <li><strong>Viralidade natural:</strong> o formato musical é compartilhável por natureza. Uma paródia com melodia reconhecível e letra precisa sobre o momento tem alta probabilidade de se propagar rapidamente.</li>
+      </ul>
+
+      <h2 className={h2Class}>{guiaExamples.title}</h2>
+      <p className={pClass}>{guiaExamples.intro}</p>
+      <ul className="mb-4 list-disc space-y-2 pl-6 text-[15px] leading-7 text-white/82">
+        {guiaExamples.items.map((item) => (
+          <li key={item.slug}>
+            <Link to={`/musica/${item.slug}/`} className={linkClass}>{item.title}</Link>: {item.text}
+          </li>
+        ))}
       </ul>
 
       <h2 className={h2Class}>A Música da Segunda: sátira musical semanal</h2>

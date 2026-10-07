@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from 'react';
 import { Song } from '@/api/entities';
@@ -187,8 +188,7 @@ export default function Blog() {
 
   // SEO optimization - DOIT être avant tous les return
   useSEO({
-    title: 'Blog Musical',
-    description: 'Histórias por trás de cada música publicada na A Música da Segunda. Descrições detalhadas e significado de cada canção.',
+    ...pageSeo('/blog'),
     keywords: 'blog musical, histórias de músicas, música da segunda, paródias musicais, descrições de canções',
     url: '/blog',
     type: 'website',

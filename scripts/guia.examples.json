@@ -1,0 +1,32 @@
+{
+  "//": "Exemplos do guia (/guia) : la même liste dans le HTML statique et la page affichée. Chaque slug doit avoir sa page /musica/<slug>/ (test).",
+  "title": "Exemplos de paródia política",
+  "intro": "Cinco paródias do catálogo de A Música da Segunda mostram como uma notícia de política vira música:",
+  "items": [
+    {
+      "slug": "6x1",
+      "title": "6x1",
+      "text": "o debate sobre o fim da escala de seis dias de trabalho por um de descanso, visto por um patrão em pânico."
+    },
+    {
+      "slug": "datafolha-quaest",
+      "title": "Datafolha Quaest",
+      "text": "a guerra de pesquisas eleitorais, em que cada número vira argumento definitivo até sair o próximo."
+    },
+    {
+      "slug": "biografia-de-uma-tornozeleira",
+      "title": "Biografia de uma tornozeleira",
+      "text": "a tornozeleira eletrônica de Jair Bolsonaro conta a própria história, em primeira pessoa."
+    },
+    {
+      "slug": "50-por-cento",
+      "title": "50 por cento",
+      "text": "a tarifa de 50% anunciada por Donald Trump sobre os produtos brasileiros, em julho de 2025."
+    },
+    {
+      "slug": "prisao-domiciliar",
+      "title": "Prisão domiciliar",
+      "text": "a condenação de Jair Bolsonaro pelo STF e a pena cumprida em casa."
+    }
+  ]
+}

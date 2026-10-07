@@ -216,7 +216,7 @@ class PWAInstaller {
 
   showSuccessNotification() {
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Musica da Segunda', {
+      new Notification('A Música da Segunda', {
         body: 'App instalada com sucesso!',
         icon: '/icons/pwa/icon-192x192.png',
         badge: '/icons/pwa/icon-72x72.png'

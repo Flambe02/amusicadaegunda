@@ -16,6 +16,8 @@ const {
 } = require('./seo-templates.cjs');
 
 const cfg = require('./seo.config.json');
+const seoPages = require('./seo.pages.json');
+const guiaExamples = require('./guia.examples.json');
 const whatsappChannel = cfg.brand.links.whatsappChannel || '';
 const songsPath = path.resolve('content', 'songs.json');
 const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, 'utf8')) : [];
@@ -68,31 +70,6 @@ const CATEGORY_LABELS = {
   gastronomia: 'Gastronomia',
   economia: 'Economia',
 };
-
-const CATEGORY_DESCRIPTIONS = {
-  internacional: 'Paródias sobre geopolítica, diplomacia e eventos fora do Brasil.',
-  midia: 'Sátiras sobre jornalismo, redes sociais e comunicação.',
-  energia: 'Músicas sobre crises energéticas, apagões e infraestrutura elétrica.',
-  esporte: 'Paródias do universo do esporte brasileiro e internacional.',
-  cultura: 'Sátiras sobre carnaval, entretenimento e vida cultural brasileira.',
-  outros: 'Músicas sobre temas variados do cotidiano.',
-  saude: 'Paródias sobre saúde pública, medicina e bem-estar.',
-  policia: 'Sátiras sobre segurança pública e casos policiais.',
-  politica: 'Músicas sobre política brasileira, eleições e mandatos.',
-  seguranca: 'Paródias sobre violência urbana e segurança pública.',
-  tecnologia: 'Sátiras sobre startups, inteligência artificial e inovação.',
-  gastronomia: 'Músicas sobre gastronomia, culinária e cultura alimentar.',
-  economia: 'Paródias sobre economia, inflação, preços, mercado e finanças do Brasil.',
-};
-
-// ✅ SEO: titre court et keyword-friendly (≤ ~60 c.) pour <title> et og:title.
-// Le sous-titre long (phrase descriptive) reste dans le <h1> et la description.
-function shortSongTitle(name, category) {
-  const cat = CATEGORY_LABELS[category];
-  return cat
-    ? `${name} — Paródia ${cat} | A Música da Segunda`
-    : `${name} — Paródia Musical | A Música da Segunda`;
-}
 
 // Format a YYYY-MM-DD date in Brazilian Portuguese ("3 de julho de 2025")
 function formatDatePtBR(dateStr) {
@@ -159,6 +136,8 @@ function extractScriptsFromIndex() {
 }
 
 (async () => {
+  // La règle des titres et descriptions, partagée avec les pages React (module ESM).
+  const { songSeoTitle, songSeoDescription, categorySeoTitle, archiveSeoTitle, archiveSeoDescription, CATEGORY_DESCRIPTIONS } = await import(require('node:url').pathToFileURL(path.join(__dirname, '..', 'src', 'lib', 'seoText.js')).href);
   await fs.ensureDir(OUT);
   
   const scripts = extractScriptsFromIndex();
@@ -177,8 +156,8 @@ function extractScriptsFromIndex() {
   await fs.ensureDir(playlistDir);
   
   const playlistUrl = `${siteUrl}/musica/`;
-  const playlistTitle = 'Playlist Completa - Todas as Músicas | A Música da Segunda';
-  const playlistDesc = 'Playlist completa com todas as paródias musicais inteligentes sobre as notícias do Brasil. Ouça no Spotify, Apple Music e YouTube Music.';
+  const playlistTitle = seoPages['/musica'].title;
+  const playlistDesc = seoPages['/musica'].description;
   
   // ✅ SEO: Contenu statique visible pour les crawlers sans JavaScript
   const songListHtml = songs.map(s =>
@@ -353,7 +332,7 @@ ${sobreContent.aiMessage ? `
   const guiaBody = `
 <div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: Georgia, serif; line-height: 1.8; color: #222;">
   <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; color: #888; margin-bottom: 0.5rem; font-family: sans-serif;">Guia</p>
-  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111; font-family: sans-serif;">Paródia Musical no Brasil: Tradição, Humor e Sátira</h1>
+  <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.5rem; color: #111; font-family: sans-serif;">O que é paródia musical? Exemplos e história no Brasil</h1>
   <p style="font-size: 0.85rem; color: #888; margin-bottom: 2rem; font-family: sans-serif;">Por A Música da Segunda</p>
 
   <p style="margin-bottom: 1.25rem;"><strong>Paródia musical</strong> é a arte de adaptar uma melodia conhecida com uma nova letra — geralmente satírica, cômica ou crítica de um tema atual. No Brasil, essa tradição é profunda e está entrelaçada com a história política e cultural do país. Das marchinhas de carnaval do século XX ao YouTube Shorts de hoje, a paródia musical nunca deixou de ser um dos formatos mais eficazes de comentário sobre a realidade brasileira.</p>
@@ -385,6 +364,12 @@ ${sobreContent.aiMessage ? `
     <li style="margin-bottom: 0.75rem;"><strong>Ancoragem cultural:</strong> no Brasil, música e identidade cultural são inseparáveis. A paródia de uma canção conhecida ativa associações profundas, criando um contexto emocional imediato para a mensagem.</li>
     <li style="margin-bottom: 0.75rem;"><strong>Humor como crítica:</strong> o riso cria distância. Transformar um escândalo político em paródia musical permite processar e criticar um evento sem o peso discursivo do texto argumentativo puro.</li>
     <li style="margin-bottom: 0.75rem;"><strong>Viralidade natural:</strong> o formato musical é compartilhável por natureza. Uma paródia com melodia reconhecível e letra precisa sobre o momento tem alta probabilidade de se propagar rapidamente.</li>
+  </ul>
+
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">${guiaExamples.title}</h2>
+  <p style="margin-bottom: 1.25rem;">${guiaExamples.intro}</p>
+  <ul style="margin: 0 0 1.25rem 1.5rem;">
+${guiaExamples.items.map((item) => `    <li style="margin-bottom: 0.5rem;"><a href="${siteUrl}/musica/${item.slug}/" style="color: #2563eb; text-decoration: underline;">${item.title}</a>: ${item.text}</li>`).join('\n')}
   </ul>
 
   <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">A Música da Segunda: sátira musical semanal</h2>
@@ -450,8 +435,8 @@ ${sobreContent.aiMessage ? `
   const guiaArticleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "Paródia Musical no Brasil: Tradição, Humor e Sátira",
-    "description": "Guia completo sobre a história da paródia musical no Brasil — do carnaval ao YouTube.",
+    "headline": seoPages['/guia'].title,
+    "description": seoPages['/guia'].description,
     "url": `${siteUrl}/guia/`,
     // Pas de datePublished ni de dateModified : la vraie date de publication n'est pas
     // connue, et la date du build n'est pas une date de mise à jour.
@@ -466,6 +451,9 @@ ${sobreContent.aiMessage ? `
     },
     "keywords": ["paródia musical", "paródia musical brasil", "sátira musical", "música da segunda", "história paródia musical"]
   };
+
+  // Titre et description : la même source que les pages React (seo.pages.json).
+  for (const page of staticPages) Object.assign(page, seoPages[page.path] || {});
 
   for (const page of staticPages) {
     const slug = page.path.replace(/^\//, '');
@@ -662,10 +650,11 @@ ${scripts.js}
     // metaDesc (≤155 chars) → <meta name="description"> and <title>
     // fullDesc (complete)   → JSON-LD description + static body
     const fullDesc = s.description || `Letra, áudio e história de "${s.name}" — paródia musical da segunda.`;
-    const metaDesc = fullDesc.length > 155 ? fullDesc.slice(0, 152).trimEnd() + '...' : fullDesc;
+    // La même règle que la page React (src/lib/seoText.js) : jamais de phrase coupée.
+    const metaDesc = songSeoDescription({ title: s.name, description: s.description, context_short: s.context_short, karaoke: Boolean(s.karaoke) });
 
     // ✅ SEO: titre court (≤ ~60 c.). Le sous-titre long reste dans le <h1>/contexte.
-    const pageTitle = shortSongTitle(s.name, s.category);
+    const pageTitle = songSeoTitle({ title: s.name, category: s.category });
 
     // ✅ SEO: Subtitle block under H1
     const subtitleHtml = s.subtitle
@@ -847,7 +836,7 @@ ${scripts.js}
     const catDesc = CATEGORY_DESCRIPTIONS[catSlug] || `Paródias musicais da categoria ${catLabel} — A Música da Segunda.`;
     const catSongs = songs.filter(s => s.category === catSlug);
     const catUrl = `${siteUrl}/categoria/${catSlug}/`;
-    const catTitle = `${catLabel} — Paródias Musicais | A Música da Segunda`;
+    const catTitle = categorySeoTitle(catSlug, catLabel);
 
     const catSongListHtml = catSongs.map((s, i) =>
       `    <li style="margin-bottom: 0.5rem;"><a href="${siteUrl}/musica/${s.slug}/" style="color: #2563eb; text-decoration: none;">${s.name}</a>${s.subtitle ? ` — <em style="color:#555;">${s.subtitle}</em>` : ''}</li>`
@@ -915,8 +904,8 @@ ${catSongListHtml}
   for (const [year, yearSongs] of Object.entries(songsByYear).sort()) {
     const yearSorted = [...yearSongs].sort((a, b) => new Date(b.datePublished) - new Date(a.datePublished));
     const yearUrl = `${siteUrl}/arquivo/${year}/`;
-    const yearTitle = `Paródias de ${year} — A Música da Segunda`;
-    const yearDesc = `Arquivo completo: ${yearSongs.length} paródias musicais publicadas por A Música da Segunda em ${year}, sobre política, economia, cultura e muito mais.`;
+    const yearTitle = archiveSeoTitle(year);
+    const yearDesc = archiveSeoDescription(year, yearSongs.length);
 
     const yearSongListHtml = yearSorted.map(s => {
       const formDate = s.datePublished ? formatDatePtBR(s.datePublished) : '';

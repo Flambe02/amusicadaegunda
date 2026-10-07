@@ -8,6 +8,7 @@
  */
 
 import { lazy } from 'react';
+import { pageSeo } from '@/lib/pageSeo';
 
 // ✅ QUICK WIN 1: Lazy loading de TOUTES les routes
 // Home est chargé normalement car c'est la page d'accueil (toujours nécessaire)
@@ -53,21 +54,13 @@ export const ROUTES = [
     path: '/roda',
     component: RodaDaSegunda,
     name: 'Roda',
-    seo: {
-      title: 'A Roda de Segunda - Descubra uma Música',
-      description: 'Gire a roda e descubra qual música da Música da Segunda ouvir hoje!',
-      keywords: 'roda da sorte, música aleatória, sorteio musical, música da segunda'
-    }
+    seo: pageSeo('/roda')
   },
   {
     path: '/sobre',
     component: Sobre,
     name: 'Sobre',
-    seo: {
-      title: 'Sobre - A Música da Segunda',
-      description: 'Conheça a história do projeto A Música da Segunda e descubra como nasceu essa paixão pela música.',
-      keywords: 'sobre, história, projeto, música brasileira'
-    }
+    seo: null // titre et description : useSEO de la page (scripts/seo.pages.json)
   },
   {
     path: '/api/content-for-ai.json',
@@ -79,11 +72,7 @@ export const ROUTES = [
     path: '/blog',
     component: Blog,
     name: 'Blog',
-    seo: {
-      title: 'Blog - A Música da Segunda',
-      description: 'Artigos e notícias sobre música, cultura e atualidades.',
-      keywords: 'blog, artigos, notícias, cultura musical'
-    }
+    seo: null // titre et description : useSEO de la page (scripts/seo.pages.json)
   },
   {
     path: '/admin',
@@ -101,21 +90,13 @@ export const ROUTES = [
     path: '/playlist',
     component: Playlist,
     name: 'Playlist',
-    seo: {
-      title: 'Playlist - Todas as Músicas',
-      description: 'Lista completa de todas as músicas publicadas no projeto A Música da Segunda.',
-      keywords: 'playlist, todas as músicas, lista completa'
-    }
+    seo: null // même page que /musica
   },
   {
     path: '/musica',
     component: Playlist,
     name: 'Playlist',
-    seo: {
-      title: 'Canções - Todas as Músicas',
-      description: 'Lista completa de todas as canções publicadas no projeto A Música da Segunda.',
-      keywords: 'canções, todas as músicas, lista completa'
-    }
+    seo: null // titre et description : useSEO de la page (scripts/seo.pages.json)
   },
   {
     path: '/musica/:slug',
@@ -171,11 +152,7 @@ export const ROUTES = [
     path: '/guia',
     component: Guia,
     name: 'Guia',
-    seo: {
-      title: 'Paródia Musical no Brasil: Tradição, Humor e Sátira | A Música da Segunda',
-      description: 'Guia completo sobre a história da paródia musical no Brasil — do carnaval ao YouTube.',
-      keywords: 'paródia musical brasil, história paródia musical, sátira musical brasileira'
-    }
+    seo: null // titre et description : useSEO de la page (scripts/seo.pages.json)
   },
   {
     path: '/arquivo/:year',
@@ -187,11 +164,7 @@ export const ROUTES = [
     path: '/privacy',
     component: Privacy,
     name: 'Privacy',
-    seo: {
-      title: 'Política de Privacidade — A Música da Segunda',
-      description: 'Política de privacidade do A Música da Segunda: quais dados são coletados, como são protegidos e como solicitar a exclusão.',
-      keywords: 'política de privacidade, privacidade, lgpd, a música da segunda'
-    }
+    seo: null // titre et description : useSEO de la page (scripts/seo.pages.json)
   },
   {
     path: '/tv',

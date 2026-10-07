@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 import { useState, useEffect, useCallback } from 'react';
 import { Song } from '@/api/entities';
@@ -177,8 +178,7 @@ export default function Calendar() {
   
   // SEO optimization - canonical sans query string pour stabilité
   useSEO({
-    title: `Calendário Musical ${monthYear}`,
-    description: `Explore ${songsCount} descobertas musicais de ${monthYear}. Calendário completo das músicas da segunda no Música da Segunda.`,
+    ...pageSeo('/calendar'),
     keywords: `calendário musical, ${monthYear}, descobertas musicais, ${songsCount} músicas, música da segunda, playlist mensal`,
     url: '/calendar', // Canonical stable sans query string
     type: 'website'

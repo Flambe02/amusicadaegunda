@@ -1,3 +1,4 @@
+import { pageSeo } from '@/lib/pageSeo';
 
 import { useState, useEffect } from 'react';
 import { AdventSong } from '@/api/entities';
@@ -190,8 +191,7 @@ export default function AdventCalendar() {
 
   // SEO optimization
   useSEO({
-    title: 'Calendário do Advento Musical',
-    description: 'Calendário do Advento Musical 2025 - Uma surpresa musical a cada dia de dezembro. Descubra novas músicas e paródias inteligentes.',
+    ...pageSeo('/adventcalendar'),
     keywords: 'calendário do advento, advento musical, dezembro 2025, música da segunda, surpresas musicais, calendário musical',
     url: '/adventcalendar',
     type: 'website'

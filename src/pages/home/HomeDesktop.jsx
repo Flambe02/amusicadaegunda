@@ -431,7 +431,7 @@ export default function HomeDesktop({ currentSong, allSongs, isMobileViewport = 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
                     <h1 className="max-w-[14ch] text-4xl xl:text-5xl font-black leading-[0.95] tracking-tight text-white 2xl:text-6xl">
-                      {displayedSong?.title || 'A Musica da Segunda'}
+                      {displayedSong?.title || 'A Música da Segunda'}
                     </h1>
                     {displayedSong && (
                       <button
@@ -929,7 +929,7 @@ export default function HomeDesktop({ currentSong, allSongs, isMobileViewport = 
           {/* Legacy desktop layout retained only for reference. */}
       <div className="hidden text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-white drop-shadow-lg mb-2">
-          A Musica da Segunda
+          A Música da Segunda
         </h1>
         <p className="text-white/80 font-medium text-lg md:text-xl drop-shadow-md">
           Descubra musica nova toda segunda-feira
@@ -1204,7 +1204,7 @@ export default function HomeDesktop({ currentSong, allSongs, isMobileViewport = 
         open={showLyricsDialog}
         onOpenChange={setShowLyricsDialog}
         song={selectedSongForDialog}
-        title="Letras da Musica"
+        title="Letras da Música"
         maxHeight="h-96"
         showIcon={false}
       />

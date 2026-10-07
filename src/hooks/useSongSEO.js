@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useSEO } from './useSEO';
 import { musicRecordingJsonLd, breadcrumbsJsonLd, injectJsonLd } from '@/lib/seo-jsonld';
+import { songSeoDescription, songSeoTitle } from '@/lib/seoText';
+import { isKaraokePublished } from '@/lib/lrc';
 
 export const SONG_CATEGORY_LABELS = {
   internacional: 'Internacional',
@@ -30,19 +32,16 @@ export const SONG_CATEGORY_LABELS = {
 export function useSongSEO({ song, slug, noindex = false, enabled = true }) {
   const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}/` : '/musica/';
 
-  // ✅ SEO: titre court et keyword-friendly, aligné sur les stubs (generate-stubs.cjs).
-  // Le sous-titre long (phrase) reste affiché dans le <h1>/contexte, pas dans le <title>.
-  const seoTitle = song
-    ? (SONG_CATEGORY_LABELS[song.category]
-        ? `${song.title} — Paródia ${SONG_CATEGORY_LABELS[song.category]} | A Música da Segunda`
-        : `${song.title} — Paródia Musical | A Música da Segunda`)
-    : slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda';
-  const seoDescription = song?.description
-    ? (song.description.length > 155 ? song.description.slice(0, 152).trimEnd() + '...' : song.description)
+  // Titre et description : la même règle que le HTML statique (src/lib/seoText.js, lu
+  // aussi par scripts/generate-stubs.cjs).
+  const seoTitle = song ? songSeoTitle(song) : slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda';
+  const seoDescription = song
+    ? songSeoDescription({ ...song, karaoke: isKaraokePublished(song) })
     : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.';
 
   useSEO({
     title: seoTitle,
+    exactTitle: Boolean(song),
     description: seoDescription,
     image: song?.cover_image,
     url: normalizedUrl,

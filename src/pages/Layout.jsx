@@ -281,7 +281,7 @@ export default function Layout({ children }) {
                 >
                   <img
                     src={BRAND_SQUARE_MEDIUM}
-                    alt="Capybara A Musica da Segunda"
+                    alt="Capivara A Música da Segunda"
                     className="h-full w-full object-cover"
                     loading="eager"
                     decoding="async"
@@ -292,7 +292,7 @@ export default function Layout({ children }) {
 
                 <div className="min-w-0">
                   <p className="text-[11px] uppercase tracking-[0.28em] text-white/45">
-                    A Musica da Segunda
+                    A Música da Segunda
                   </p>
                   <p className="mt-2 text-base font-semibold leading-tight text-white">
                     Descubra música nova toda segunda
@@ -358,7 +358,7 @@ export default function Layout({ children }) {
             <footer className="relative z-10 px-6 pb-6 xl:px-8 2xl:px-10">
               <div className="glass-panel rounded-[28px] px-6 py-4">
                 <p className="text-center text-[11px] uppercase tracking-[0.24em] text-white/38">
-                  (c) 2026 A Musica da Segunda. The Pimentao Rouge Project.
+                  © 2026 A Música da Segunda. The Pimentao Rouge Project.
                 </p>
                 <p className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-center text-[11px] uppercase tracking-[0.24em]">
                   <Link to="/guia" className="text-white/38 transition-colors hover:text-white/70">

@@ -1,3 +1,4 @@
+import { CATEGORY_DESCRIPTIONS, categorySeoTitle } from '@/lib/seoText';
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Song } from '@/api/entities';
@@ -36,21 +37,6 @@ const RELATED_CATEGORIES = {
   outros: ['cultura', 'politica'],
 };
 
-const CATEGORY_DESCRIPTIONS = {
-  internacional: 'Paródias sobre geopolítica, diplomacia e eventos fora do Brasil.',
-  midia: 'Sátiras sobre jornalismo, redes sociais e comunicação.',
-  energia: 'Músicas sobre crises energéticas, apagões e infraestrutura elétrica.',
-  esporte: 'Paródias do universo do esporte brasileiro e internacional.',
-  cultura: 'Sátiras sobre carnaval, entretenimento e vida cultural brasileira.',
-  outros: 'Músicas sobre temas variados do cotidiano.',
-  saude: 'Paródias sobre saúde pública, medicina e bem-estar.',
-  policia: 'Sátiras sobre segurança pública e casos policiais.',
-  politica: 'Músicas sobre política brasileira, eleições e mandatos.',
-  seguranca: 'Paródias sobre violência urbana e segurança pública.',
-  tecnologia: 'Sátiras sobre startups, inteligência artificial e inovação.',
-  gastronomia: 'Músicas sobre gastronomia, culinária e cultura alimentar.',
-};
-
 export default function Categoria() {
   const { slug } = useParams();
   const [songs, setSongs] = useState([]);
@@ -60,7 +46,8 @@ export default function Categoria() {
   const description = CATEGORY_DESCRIPTIONS[slug] || `Paródias musicais da categoria ${label} — A Música da Segunda.`;
 
   useSEO({
-    title: `${label} — Paródias Musicais | A Música da Segunda`,
+    title: categorySeoTitle(slug, label),
+    exactTitle: true,
     description,
     keywords: `música, paródia, ${label.toLowerCase()}, brasil, sátira musical`,
     url: `/categoria/${slug}`,

@@ -1,0 +1,51 @@
+{
+  "//": "Titre (60 caractères au plus) et description (160 au plus) des pages fixes. UNE source pour le HTML statique (scripts/generate-stubs.cjs, index.html vérifié par un test) et pour les pages React (src/lib/pageSeo.js) : les deux couches, og: et JSON-LD écrivent ce texte. Le titre est écrit tel quel, sans suffixe ajouté.",
+  "/": {
+    "title": "A Música da Segunda — paródias das notícias do Brasil",
+    "description": "Toda segunda-feira, uma paródia musical nova sobre a notícia da semana no Brasil: política, economia, futebol. Ouça, leia a letra e cante no karaokê."
+  },
+  "/musica": {
+    "title": "Todas as paródias — catálogo | A Música da Segunda",
+    "description": "O catálogo completo de A Música da Segunda: todas as paródias sobre as notícias do Brasil, da mais recente à primeira, com letra, contexto e karaokê."
+  },
+  "/sobre": {
+    "title": "Sobre A Música da Segunda — quem faz e como funciona",
+    "description": "Quem faz A Música da Segunda, desde quando e como: paródias originais sobre as notícias do Brasil, criadas por Florent Lambert com ferramentas de IA."
+  },
+  "/guia": {
+    "title": "O que é paródia musical? Exemplos e história no Brasil",
+    "description": "O que é paródia musical, de onde vem e por que funciona: do carnaval à televisão e ao YouTube, com exemplos de paródias sobre a política brasileira."
+  },
+  "/karaoke": {
+    "title": "Karaokê das paródias, com letra sincronizada",
+    "description": "Cante as paródias de A Música da Segunda com a letra sincronizada na tela, no celular, no computador ou na TV. Escolha uma música e solte a voz."
+  },
+  "/tv": {
+    "title": "A Música da Segunda na TV — karaokê para Android TV",
+    "description": "Baixe o app A Música da Segunda para Google TV e Android TV e cante karaokê na tela grande: letras sincronizadas, Modo Dueto e Modo Festa."
+  },
+  "/apprendre": {
+    "title": "Aprender português com paródias | A Música da Segunda",
+    "description": "Beta: aprenda expressões reais do português brasileiro a partir das paródias de A Música da Segunda. Tradução linha a linha, karaokê e caderno de vocabulário."
+  },
+  "/calendar": {
+    "title": "Calendário musical | A Música da Segunda",
+    "description": "Calendário completo com as músicas publicadas por mês."
+  },
+  "/roda": {
+    "title": "A Roda de Segunda — descubra uma música",
+    "description": "Gire a roda e descubra uma música aleatória do projeto."
+  },
+  "/adventcalendar": {
+    "title": "Calendário do Advento | A Música da Segunda",
+    "description": "Uma surpresa musical por dia no calendário do advento."
+  },
+  "/blog": {
+    "title": "Blog | A Música da Segunda",
+    "description": "Artigos e notícias sobre música, cultura e atualidades."
+  },
+  "/privacy": {
+    "title": "Política de Privacidade | A Música da Segunda",
+    "description": "Política de privacidade do A Música da Segunda: quais dados são coletados, como são protegidos e como solicitar a exclusão. Conformidade LGPD."
+  }
+}

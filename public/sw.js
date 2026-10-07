@@ -247,7 +247,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  const defaultTitle = 'A Musica da Segunda';
+  const defaultTitle = 'A Música da Segunda';
   const defaultBody = 'Nova musica disponivel. Toque para ouvir.';
   const defaultUrl = '/';
 
