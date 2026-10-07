@@ -1,41 +1,30 @@
 /**
- * Unified Sitemap Generator
- * 
- * Generates clean, deduplicated sitemaps for SEO:
- * - sitemap-index.xml (references sitemap-pages.xml and sitemap-songs.xml)
- * - sitemap-pages.xml (static pages)
- * - sitemap-songs.xml (songs from Supabase)
- * 
- * Rules:
- * - NO hash URLs (#)
- * - NO duplicates
- * - All URLs use /musica/ (not /chansons/)
- * - All URLs are absolute (https://www.amusicadasegunda.com/...)
+ * Sitemaps du site : sitemap-index.xml → sitemap-pages.xml + sitemap-songs.xml.
+ *
+ * Source des chansons : `content/songs.json`, le fichier écrit par le prebuild
+ * (export-songs-from-supabase.cjs) et lu par generate-stubs.cjs. Les adresses du
+ * sitemap sont donc exactement celles des pages générées — un slug recalculé ici à
+ * partir du titre avait mis une adresse en 404 dans le sitemap.
+ *
+ * `lastmod` ne ment jamais :
+ * - chanson : sa date de sortie, ou la dernière VRAIE modification de son contenu
+ *   (`content_updated_at`, tenue par un trigger qui ignore les mises à jour
+ *   techniques) si elle est plus récente. Jamais `updated_at`, jamais la date du jour ;
+ * - pages de liste (accueil, /musica, catégorie, archive…) : la sortie de la chanson
+ *   la plus récente qu'elles affichent ;
+ * - autres pages : pas de `lastmod` (la balise est facultative ; mieux vaut l'omettre
+ *   que d'écrire une date sans rapport avec le contenu).
+ *
+ * Contrôle au build : chaque adresse doit correspondre à une page générée dans dist/.
+ * Sinon le script échoue, et le déploiement avec lui.
  */
 
-const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs-extra');
 const path = require('path');
-const { formatISO } = require('date-fns');
-require('dotenv').config({ path: path.resolve(process.cwd(), '.env') });
 
 const cfg = require('./seo.config.json');
 
-// Configuration Supabase — same legacy-JWT fallback as src/lib/supabase.js
-const PUBLISHABLE_KEY_FALLBACK = 'sb_publishable_qQqLLFjAv4sk3z2eQW0-sA_59XCpAKF';
-const SUPABASE_URL_FALLBACK = 'https://efnzmpzkzeuktqkghwfa.supabase.co';
-
-const envUrl = process.env.VITE_SUPABASE_URL;
-const envKey = process.env.VITE_SUPABASE_ANON_KEY;
-
-const supabaseUrl = envUrl || SUPABASE_URL_FALLBACK;
-const supabaseAnonKey = (envKey && !envKey.startsWith('eyJ'))
-  ? envKey
-  : PUBLISHABLE_KEY_FALLBACK;
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-// Static pages configuration
+// Pages statiques.
 // ✅ /playlist removed - redirects to /musica (single source of truth)
 const staticPages = [
   { path: '/', priority: 1.0, changefreq: 'daily' },
@@ -50,7 +39,6 @@ const staticPages = [
   { path: '/adventcalendar', priority: 0.8, changefreq: 'weekly' },
   { path: '/apprendre', priority: 0.7, changefreq: 'monthly' },
   // Category pages — only include categories with ≥2 songs (thin pages excluded)
-  // Managed dynamically: categories with 1 song (outros, seguranca, gastronomia) get lower priority
   // tecnologia and saude excluded until they have songs again
   { path: '/categoria/politica', priority: 0.75, changefreq: 'weekly' },
   { path: '/categoria/internacional', priority: 0.75, changefreq: 'weekly' },
@@ -65,292 +53,140 @@ const staticPages = [
   { path: '/categoria/outros', priority: 0.6, changefreq: 'monthly' },
 ];
 
-/**
- * Deduplicate URLs by canonical loc, keeping the latest lastmod
- */
-function deduplicateUrls(urls) {
-  const urlMap = new Map();
-  
-  for (const url of urls) {
-    // ✅ SEO FIX: Normalize URL for comparison (add trailing slash if missing)
-    let canonical = url.loc;
-    if (!canonical.endsWith('/')) {
-      canonical = canonical + '/';
-    }
-    const existing = urlMap.get(canonical);
-    
-    if (!existing) {
-      urlMap.set(canonical, url);
-    } else {
-      // Keep the one with the latest lastmod
-      const existingDate = new Date(existing.lastmod);
-      const currentDate = new Date(url.lastmod);
-      if (currentDate > existingDate) {
-        urlMap.set(canonical, url);
-      }
-    }
+// Pages qui affichent des chansons : leur lastmod est la sortie de la plus récente.
+const LIST_PAGES = new Set(['/', '/musica', '/roda', '/karaoke', '/calendar']);
+const day = (value) => (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : null);
+const latest = (dates) => dates.filter(Boolean).sort().pop() || null;
+
+/** Date réelle de dernière modification d'une chanson (AAAA-MM-JJ), ou null. */
+function songLastmod(song, today = new Date().toISOString().slice(0, 10)) {
+  const released = day(song.datePublished || song.release_date);
+  const edited = day(song.content_updated_at);
+  // Une date dans le futur (programmation, horloge) n'est pas une modification passée.
+  return latest([released, edited].filter((date) => date && date <= today));
+}
+
+function buildSongUrls(songs, today) {
+  const byDate = [...songs].sort((a, b) => String(b.datePublished || '').localeCompare(String(a.datePublished || '')));
+  const rank = new Map(byDate.map((song, index) => [song.slug, index]));
+  return songs.filter((song) => song.slug).map((song) => {
+    const position = rank.get(song.slug);
+    return {
+      loc: `${cfg.siteUrl}/musica/${song.slug}/`,
+      lastmod: songLastmod(song, today),
+      changefreq: 'weekly',
+      // 10 plus récentes → 0.9, 15 suivantes → 0.8, le reste → 0.7
+      priority: position < 10 ? 0.9 : position < 25 ? 0.8 : 0.7,
+    };
+  });
+}
+
+function buildPageUrls(songs, today) {
+  const dated = songs.map((song) => ({ category: song.category, date: songLastmod({ datePublished: song.datePublished }, today) }));
+  const newest = latest(dated.map((song) => song.date));
+  const urls = staticPages.map((page) => {
+    const category = page.path.startsWith('/categoria/') ? page.path.split('/')[2] : null;
+    let lastmod = null;
+    if (LIST_PAGES.has(page.path)) lastmod = newest;
+    else if (category) lastmod = latest(dated.filter((song) => song.category === category).map((song) => song.date));
+    return { loc: `${cfg.siteUrl}${page.path === '/' ? '/' : `${page.path}/`}`, lastmod, changefreq: page.changefreq, priority: page.priority };
+  });
+  const currentYear = today.slice(0, 4);
+  const years = [...new Set(dated.map((song) => (song.date || '').slice(0, 4)).filter((year) => /^\d{4}$/.test(year)))];
+  for (const year of years) {
+    urls.push({
+      loc: `${cfg.siteUrl}/arquivo/${year}/`,
+      lastmod: latest(dated.filter((song) => (song.date || '').startsWith(year)).map((song) => song.date)),
+      changefreq: year === currentYear ? 'monthly' : 'yearly',
+      priority: 0.65,
+    });
   }
-  
-  return Array.from(urlMap.values());
+  return urls;
 }
 
-/**
- * Generate sitemap XML from URL array
- */
-function generateSitemapXML(urls) {
-  const now = formatISO(new Date(), { representation: 'date' });
-  
-  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-  xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-  
-  // Sort by loc for deterministic output
-  const sortedUrls = urls.sort((a, b) => a.loc.localeCompare(b.loc));
-  
-  for (const url of sortedUrls) {
-    // Ensure absolute URL without hash
-    let loc = url.loc;
-    if (loc.includes('#')) {
-      console.warn(`⚠️  Warning: URL contains hash, removing: ${loc}`);
-      loc = loc.split('#')[0];
-    }
-    if (!loc.startsWith('http')) {
-      loc = loc.startsWith('/') ? `${cfg.siteUrl}${loc}` : `${cfg.siteUrl}/${loc}`;
-    }
-    // ✅ SEO FIX: ADD trailing slash for consistency with canonicals (except root which already has one)
-    // URLs should match the canonical URLs in stubs (which have trailing slashes)
-    if (loc !== `${cfg.siteUrl}/` && !loc.endsWith('/')) {
-      loc = loc + '/';
-    }
-    
-    xml += '  <url>\n';
-    xml += `    <loc>${loc}</loc>\n`;
-    xml += `    <lastmod>${url.lastmod || now}</lastmod>\n`;
-    xml += `    <changefreq>${url.changefreq || 'weekly'}</changefreq>\n`;
-    xml += `    <priority>${url.priority || 0.6}</priority>\n`;
-    xml += '  </url>\n';
+function toSitemapXml(urls) {
+  const seen = new Set();
+  const lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'];
+  for (const url of [...urls].sort((a, b) => a.loc.localeCompare(b.loc))) {
+    if (seen.has(url.loc) || url.loc.includes('#')) continue;
+    seen.add(url.loc);
+    lines.push('  <url>', `    <loc>${url.loc}</loc>`);
+    if (url.lastmod) lines.push(`    <lastmod>${url.lastmod}</lastmod>`);
+    lines.push(`    <changefreq>${url.changefreq || 'weekly'}</changefreq>`, `    <priority>${url.priority || 0.6}</priority>`, '  </url>');
   }
-  
-  xml += '</urlset>\n';
-  return xml;
+  lines.push('</urlset>', '');
+  return lines.join('\n');
 }
 
-/**
- * Generate sitemap index XML
- */
-function generateSitemapIndex(pagesLastmod, songsLastmod) {
-  const now = formatISO(new Date(), { representation: 'date' });
-  
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>${cfg.siteUrl}/sitemap-pages.xml</loc>
-    <lastmod>${pagesLastmod || now}</lastmod>
-  </sitemap>
-  <sitemap>
-    <loc>${cfg.siteUrl}/sitemap-songs.xml</loc>
-    <lastmod>${songsLastmod || now}</lastmod>
-  </sitemap>
-</sitemapindex>`;
-}
-
-/**
- * Generate slug from song data
- */
-function getSlug(song) {
-  if (song.slug) return song.slug;
-  if (song.title) {
-    return song.title
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // Remove accents
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+function toSitemapIndexXml(files) {
+  const lines = ['<?xml version="1.0" encoding="UTF-8"?>', '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'];
+  for (const file of files) {
+    lines.push('  <sitemap>', `    <loc>${cfg.siteUrl}/${file.name}</loc>`);
+    if (file.lastmod) lines.push(`    <lastmod>${file.lastmod}</lastmod>`);
+    lines.push('  </sitemap>');
   }
-  return `song-${song.id}`;
+  lines.push('</sitemapindex>', '');
+  return lines.join('\n');
 }
 
-function loadSongsFromJsonFallback() {
-  const jsonPath = path.join(process.cwd(), 'content', 'songs.json');
-  if (!fs.existsSync(jsonPath)) return null;
-  const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-  if (!Array.isArray(raw)) return null;
-  return raw.map((s, idx) => ({
-    id: s.id || idx,
-    title: s.title || s.name,
-    slug: s.slug,
-    release_date: s.release_date || s.datePublished,
-    updated_at: s.updated_at,
-    created_at: s.created_at,
-  }));
+/** Adresses du sitemap sans page générée dans `distDir` (chemin/index.html). */
+function urlsWithoutPage(urls, distDir) {
+  return urls.map((url) => url.loc).filter((loc) => {
+    const pathname = loc.slice(cfg.siteUrl.length).replace(/^\/+|\/+$/g, '');
+    return !fs.existsSync(path.join(distDir, pathname, 'index.html'));
+  });
+}
+
+function loadSongs() {
+  const file = path.join(process.cwd(), 'content', 'songs.json');
+  if (!fs.existsSync(file)) throw new Error('content/songs.json introuvable : lancer `npm run export:songs` (ou le build complet).');
+  const songs = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!Array.isArray(songs) || songs.length === 0) throw new Error('content/songs.json ne contient aucune chanson.');
+  return songs;
 }
 
 async function main() {
-  console.log('🗺️  Génération unifiée des sitemaps SEO...\n');
-
   try {
-    let songs = null;
-
-    // Fetch songs from Supabase (with fallback to content/songs.json)
-    console.log('📡 Récupération des chansons depuis Supabase...');
-    try {
-      const { data, error } = await supabase
-        .from('songs')
-        .select('id, title, release_date, updated_at, created_at')
-        .order('release_date', { ascending: false });
-      if (error) throw new Error(error.message);
-      songs = data;
-    } catch (err) {
-      console.warn(`⚠️  Supabase indisponible (${err.message}). Fallback sur content/songs.json...`);
-      songs = loadSongsFromJsonFallback();
-      if (!songs) {
-        throw new Error('Aucun fallback songs.json disponible');
-      }
-      console.log(`✅ Fallback: ${songs.length} chanson(s) chargée(s) depuis content/songs.json`);
-    }
-
-    if (!songs || songs.length === 0) {
-      console.warn('⚠️  Aucune chanson trouvée');
-      songs = [];
-    } else {
-      console.log(`✅ ${songs.length} chanson(s) récupérée(s)`);
-    }
-    
-    const now = formatISO(new Date(), { representation: 'date' });
-    
-    // 1. Generate static pages sitemap
-    console.log('\n📄 Génération du sitemap des pages statiques...');
-    const staticUrls = staticPages.map(page => ({
-      loc: `${cfg.siteUrl}${page.path}`,
-      lastmod: now,
-      changefreq: page.changefreq,
-      priority: page.priority
-    }));
-
-    // ✅ AEO #13: Add /arquivo/[year]/ archive pages dynamically from songs
-    const currentYear = new Date().getFullYear().toString();
-    const yearsInData = [...new Set(
-      songs.map(s => (s.release_date || s.datePublished || '').slice(0, 4)).filter(y => /^\d{4}$/.test(y))
-    )];
-    for (const year of yearsInData) {
-      staticUrls.push({
-        loc: `${cfg.siteUrl}/arquivo/${year}`,
-        lastmod: now,
-        changefreq: year === currentYear ? 'monthly' : 'yearly',
-        priority: 0.65
-      });
-    }
-
-    // Deduplicate (shouldn't be needed for static, but safe)
-    const deduplicatedStatic = deduplicateUrls(staticUrls);
-    const staticXml = generateSitemapXML(deduplicatedStatic);
-    const staticFile = path.join(process.cwd(), 'public', 'sitemap-pages.xml');
-    await fs.writeFile(staticFile, staticXml, 'utf8');
-    console.log(`✅ ${staticFile} généré (${deduplicatedStatic.length} pages statiques, dont ${yearsInData.length} archives /arquivo/)`);
-    
-    // 2. Generate songs sitemap
-    console.log('\n🎵 Génération du sitemap des chansons...');
-    // Sort songs by release_date descending to compute priority gradient
-    const sortedByDate = [...songs].sort((a, b) => {
-      const da = new Date(a.release_date || a.created_at || 0);
-      const db = new Date(b.release_date || b.created_at || 0);
-      return db - da;
-    });
-    const priorityBySlug = {};
-    sortedByDate.forEach((song, i) => {
-      const slug = getSlug(song);
-      // Recent 10 → 0.9, next 15 → 0.8, rest → 0.7
-      if (i < 10) priorityBySlug[slug] = 0.9;
-      else if (i < 25) priorityBySlug[slug] = 0.8;
-      else priorityBySlug[slug] = 0.7;
-    });
-
-    const songUrls = songs.map(song => {
-      let lastmod = now;
-      if (song.updated_at) {
-        lastmod = formatISO(new Date(song.updated_at), { representation: 'date' });
-      } else if (song.release_date) {
-        lastmod = formatISO(new Date(song.release_date), { representation: 'date' });
-      } else if (song.created_at) {
-        lastmod = formatISO(new Date(song.created_at), { representation: 'date' });
-      }
-
-      const slug = getSlug(song);
-
-      return {
-        loc: `${cfg.siteUrl}/musica/${slug}`, // ✅ Use /musica/ not /chansons/
-        lastmod,
-        changefreq: 'weekly',
-        priority: priorityBySlug[slug] || 0.7
-      };
-    });
-    
-    // Deduplicate songs
-    const deduplicatedSongs = deduplicateUrls(songUrls);
-    const songsXml = generateSitemapXML(deduplicatedSongs);
-    const songsFile = path.join(process.cwd(), 'public', 'sitemap-songs.xml');
-    await fs.writeFile(songsFile, songsXml, 'utf8');
-    console.log(`✅ ${songsFile} généré (${deduplicatedSongs.length} chansons, ${songUrls.length - deduplicatedSongs.length} doublons supprimés)`);
-    
-    // 3. Generate sitemap index
-    console.log('\n📑 Génération du sitemap index...');
-    const pagesLastmod = deduplicatedStatic.length > 0 
-      ? deduplicatedStatic[0].lastmod 
-      : now;
-    const songsLastmod = deduplicatedSongs.length > 0
-      ? deduplicatedSongs.reduce((latest, url) => {
-          const urlDate = new Date(url.lastmod);
-          const latestDate = new Date(latest);
-          return urlDate > latestDate ? url.lastmod : latest;
-        }, deduplicatedSongs[0].lastmod)
-      : now;
-    
-    const indexXml = generateSitemapIndex(pagesLastmod, songsLastmod);
-    const indexFile = path.join(process.cwd(), 'public', 'sitemap-index.xml');
-    await fs.writeFile(indexFile, indexXml, 'utf8');
-    console.log(`✅ ${indexFile} généré (sitemap index)`);
-    
-    // 4. Copy to dist/ for build process
-    console.log('\n📋 Copie vers dist/ pour le build...');
+    const today = new Date().toISOString().slice(0, 10);
+    const songs = loadSongs();
+    const songUrls = buildSongUrls(songs, today);
+    const pageUrls = buildPageUrls(songs, today);
     const distDir = path.join(process.cwd(), 'dist');
-    await fs.ensureDir(distDir);
-    
-    await fs.copy(staticFile, path.join(distDir, 'sitemap-pages.xml'));
-    await fs.copy(songsFile, path.join(distDir, 'sitemap-songs.xml'));
-    await fs.copy(indexFile, path.join(distDir, 'sitemap-index.xml'));
-    console.log('✅ Sitemaps copiés dans dist/');
-    
-    // 5. Copy to docs/ for GitHub Pages deployment
-    console.log('\n📋 Copie vers docs/ pour le déploiement...');
-    const docsDir = path.join(process.cwd(), 'docs');
-    await fs.ensureDir(docsDir);
-    
-    await fs.copy(staticFile, path.join(docsDir, 'sitemap-pages.xml'));
-    await fs.copy(songsFile, path.join(docsDir, 'sitemap-songs.xml'));
-    await fs.copy(indexFile, path.join(docsDir, 'sitemap-index.xml'));
-    console.log('✅ Sitemaps copiés dans docs/');
-    
-    // Summary
-    console.log('\n📊 Résumé:');
-    console.log(`   - Pages statiques: ${deduplicatedStatic.length}`);
-    console.log(`   - Chansons: ${deduplicatedSongs.length}`);
-    console.log(`   - Total URLs: ${deduplicatedStatic.length + deduplicatedSongs.length}`);
-    console.log(`   - Fichiers générés: public/sitemap-index.xml, public/sitemap-pages.xml, public/sitemap-songs.xml`);
-    console.log(`   - Fichiers copiés: dist/ et docs/ (sitemap-index.xml, sitemap-pages.xml, sitemap-songs.xml)`);
-    console.log('\n✅ Génération terminée avec succès!');
-    
-  } catch (error) {
-    console.error('\n❌ Erreur lors de la génération des sitemaps:');
-    console.error(error.message);
-    if (error.stack) {
-      console.error(error.stack);
+
+    // Contrôle : aucune adresse sans page. Sans dist/ (script lancé seul), rien à comparer.
+    if (fs.existsSync(path.join(distDir, 'index.html'))) {
+      const missing = urlsWithoutPage([...pageUrls, ...songUrls], distDir);
+      if (missing.length > 0) {
+        throw new Error(`${missing.length} adresse(s) du sitemap sans page générée dans dist/ :\n  ${missing.join('\n  ')}`);
+      }
+      console.log(`✅ Sitemap : ${pageUrls.length + songUrls.length} adresses, chacune a sa page dans dist/`);
+    } else {
+      console.warn('⚠️  dist/ absent : adresses du sitemap non contrôlées (lancer le build complet).');
     }
+
+    const files = {
+      'sitemap-pages.xml': toSitemapXml(pageUrls),
+      'sitemap-songs.xml': toSitemapXml(songUrls),
+    };
+    files['sitemap-index.xml'] = toSitemapIndexXml([
+      { name: 'sitemap-pages.xml', lastmod: latest(pageUrls.map((url) => url.lastmod)) },
+      { name: 'sitemap-songs.xml', lastmod: latest(songUrls.map((url) => url.lastmod)) },
+    ]);
+    // public/ (source suivie), dist/ et docs/ (déploiement), comme avant.
+    for (const dir of ['public', 'dist', 'docs']) {
+      const target = path.join(process.cwd(), dir);
+      if (dir !== 'public' && !fs.existsSync(target)) continue;
+      for (const [name, xml] of Object.entries(files)) await fs.outputFile(path.join(target, name), xml, 'utf8');
+    }
+    console.log(`✅ Sitemaps générés : ${pageUrls.length} pages, ${songUrls.length} chansons`);
+  } catch (error) {
+    console.error(`\n❌ Sitemap : ${error.message}`);
     process.exit(1);
   }
 }
 
-// Execute
 if (require.main === module) {
   main();
 }
 
-module.exports = { main };
+module.exports = { main, songLastmod, buildSongUrls, buildPageUrls, toSitemapXml, toSitemapIndexXml, urlsWithoutPage, staticPages };
