@@ -172,8 +172,8 @@ async function main() {
       { name: 'sitemap-pages.xml', lastmod: latest(pageUrls.map((url) => url.lastmod)) },
       { name: 'sitemap-songs.xml', lastmod: latest(songUrls.map((url) => url.lastmod)) },
     ]);
-    // public/ (source suivie), dist/ et docs/ (déploiement), comme avant.
-    for (const dir of ['public', 'dist', 'docs']) {
+    // public/ (source suivie) et dist/ (ce que la CI publie).
+    for (const dir of ['public', 'dist']) {
       const target = path.join(process.cwd(), dir);
       if (dir !== 'public' && !fs.existsSync(target)) continue;
       for (const [name, xml] of Object.entries(files)) await fs.outputFile(path.join(target, name), xml, 'utf8');

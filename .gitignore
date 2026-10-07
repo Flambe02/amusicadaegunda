@@ -59,9 +59,13 @@ temp/
 # Push sender environment
 push-sender/.env
 
-# IMPORTANT: PROTECT CUSTOM DOMAIN FILES
-# NEVER delete these files - they contain custom domain configuration
-!docs/CNAME
+# Le site est publié par la CI à partir de dist/ (GitHub Pages, source « GitHub Actions »).
+# L'ancien dossier docs/ n'existe plus : s'il réapparaît (vieux script, vieille habitude),
+# il ne doit jamais être commité.
+docs/
+
+# IMPORTANT: PROTECT CUSTOM DOMAIN FILE
+# NEVER delete this file - it contains the custom domain configuration
 !public/CNAME
 # Android signing keys (never commit)
 *.keystore

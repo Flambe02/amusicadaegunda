@@ -108,7 +108,7 @@ function verify() {
   console.log('🔍 Vérification SEO des sitemaps...\n');
   
   const publicDir = path.join(process.cwd(), 'public');
-  const docsDir = path.join(process.cwd(), 'docs');
+  const docsDir = path.join(process.cwd(), 'dist'); // le site publié (plus de dossier docs/)
   const allErrors = [];
   const allWarnings = [];
   
@@ -125,7 +125,7 @@ function verify() {
     allErrors.push(...indexPublicResult.errors);
   }
   if (indexDocsResult.errors.length > 0) {
-    allErrors.push(`[docs/${EXPECTED_INDEX}]`);
+    allErrors.push(`[dist/${EXPECTED_INDEX}]`);
     allErrors.push(...indexDocsResult.errors);
   }
   
@@ -167,7 +167,7 @@ function verify() {
       allErrors.push(...publicResult.errors);
     }
     if (docsResult.errors.length > 0) {
-      allErrors.push(`[docs/${sitemap}]`);
+      allErrors.push(`[dist/${sitemap}]`);
       allErrors.push(...docsResult.errors);
     }
     
@@ -176,7 +176,7 @@ function verify() {
       allWarnings.push(...publicResult.warnings);
     }
     if (docsResult.warnings.length > 0) {
-      allWarnings.push(`[docs/${sitemap}]`);
+      allWarnings.push(`[dist/${sitemap}]`);
       allWarnings.push(...docsResult.warnings);
     }
   }

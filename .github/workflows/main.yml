@@ -47,7 +47,7 @@ jobs:
           echo "VITE_VAPID_KEY_VERSION=${{ secrets.VITE_VAPID_KEY_VERSION }}" >> .env
         shell: bash
         
-      - name: Build application and sync to docs/
+      - name: Build application
         run: npm run deploy
         env:
           # Forcer un rebuild complet sans cache
@@ -60,7 +60,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './docs'
+          # Le site construit par cette CI — jamais un dossier commité.
+          path: './dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
