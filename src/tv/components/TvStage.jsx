@@ -88,6 +88,12 @@ function TvDebugViewport({ transform }) {
     stageScale: Number(transform.scale.toFixed(4)),
     offsetX: Math.round(transform.offsetX),
     offsetY: Math.round(transform.offsetY),
+    // Type de pointeur déclaré par la WebView (décision « tablettes » à venir).
+    pointer: ['fine', 'coarse', 'none'].find((v) => window.matchMedia?.(`(pointer: ${v})`).matches) || '?',
+    anyPointer: ['fine', 'coarse', 'none'].filter((v) => window.matchMedia?.(`(any-pointer: ${v})`).matches).join('+') || '?',
+    hover: ['hover', 'none'].find((v) => window.matchMedia?.(`(hover: ${v})`).matches) || '?',
+    anyHover: ['hover', 'none'].filter((v) => window.matchMedia?.(`(any-hover: ${v})`).matches).join('+') || '?',
+    maxTouchPoints: navigator.maxTouchPoints,
   };
   return <pre className="tv-debug">{JSON.stringify(info, null, 2)}</pre>;
 }
