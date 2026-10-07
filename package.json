@@ -56,7 +56,7 @@
     "@capacitor/core": "^8.4.1",
     "@capacitor/ios": "^8.4.1",
     "@capacitor/splash-screen": "^8.0.1",
-    "@noriginmedia/norigin-spatial-navigation": "^3.2.1",
+    "@noriginmedia/norigin-spatial-navigation": "3.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-dropdown-menu": "^2.1.6",
@@ -124,7 +124,10 @@
   "engines": {
     "node": ">=18.17"
   },
+  "//norigin": "Navigation spatiale figée en version EXACTE (pas de ^ ni ~), cœur compris via overrides : le survol de l'interface grand écran (src/tv/lib/pointerMode.js) lit SpatialNavigation.focusableComponents, une table interne non documentée. Toute montée de version se fait à la main ; src/tv/lib/__tests__/pointerMode.test.jsx échoue si la table a changé.",
   "overrides": {
-    "date-fns": "^3.6.0"
+    "date-fns": "^3.6.0",
+    "@noriginmedia/norigin-spatial-navigation-core": "4.0.0",
+    "@noriginmedia/norigin-spatial-navigation-react": "3.2.1"
   }
 }
