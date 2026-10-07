@@ -9,6 +9,8 @@ const escape = (s = '') => {
 };
 
 const json = (obj) => JSON.stringify(obj, null, 2);
+const { SITE_URL, ENTITY_ID, entityJsonLd, websiteEntityJsonLd, verificationMetaTags } = require('./seo-entity.cjs');
+const SONG_GENRE = require('./seo.config.json').brand.genre;
 
 function baseHtml({ lang = 'pt-BR', title, desc, url, image, imageWidth = null, imageHeight = null, ogType = 'website', robots = 'index, follow', body = '', jsonld = [], scripts = { js: '', css: '', pwa: '' }, publishedTime = null, articleSection = null }) {
   const ga4Block = `
@@ -40,6 +42,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="description" content="${escape(desc)}"/>
 <link rel="canonical" href="${url}"/>
 <meta name="robots" content="${escape(robots)}" />
+${verificationMetaTags()}
 ${ga4Block}
 <!-- Open Graph -->
 <meta property="og:title" content="${escape(title)}"/>
@@ -77,19 +80,14 @@ ${scripts.pwa ? scripts.pwa : ''}
 }
 
 // JSON-LD factories
-function orgJsonLd({ name, url, logo, sameAs = [] }) {
-  const logoVal = logo
-    ? { "@type": "ImageObject", "url": logo, "width": 341, "height": 340 }
-    : undefined;
-  const obj = { "@context": "https://schema.org", "@type": "Organization", "name": name, "url": url, "logo": logoVal || logo };
-  if (Array.isArray(sameAs) && sameAs.length > 0) {
-    obj.sameAs = sameAs;
-  }
-  return obj;
+// L'entité (MusicGroup) et le site : une seule définition, dans seo-entity.cjs. Les
+// anciens arguments sont ignorés — toutes les pages décrivent la même entité.
+function orgJsonLd() {
+  return entityJsonLd();
 }
 
-function websiteJsonLd({ url, search }) {
-  const obj = { "@context": "https://schema.org", "@type": "WebSite", "url": url, "name": "A Música da Segunda" };
+function websiteJsonLd({ url, search } = {}) {
+  const obj = websiteEntityJsonLd();
   if (search?.enabled) {
     obj.potentialAction = {
       "@type": "SearchAction",
@@ -107,12 +105,8 @@ function playlistJsonLd({ name, url, image, tracks = [] }) {
     "name": name,
     "url": url,
     "description": "Playlist completa com todas as paródias musicais inteligentes sobre as notícias do Brasil.",
-    "author": {
-      "@type": "MusicGroup",
-      "name": "A Música da Segunda",
-      "url": "https://www.amusicadasegunda.com"
-    },
-    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
+    "author": { "@type": "MusicGroup", "@id": ENTITY_ID, "name": "A Música da Segunda", "url": `${SITE_URL}/` },
+    "genre": SONG_GENRE,
     "inLanguage": "pt-BR",
     "numTracks": tracks.length
   };
@@ -124,36 +118,34 @@ function playlistJsonLd({ name, url, image, tracks = [] }) {
       "@type": "MusicRecording",
       "name": track.name,
       "url": track.url,
-      "byArtist": {
-        "@type": "MusicGroup",
-        "name": track.byArtist || "A Música da Segunda"
-      }
+      "byArtist": { "@type": "MusicGroup", "@id": ENTITY_ID, "name": "A Música da Segunda" }
     }));
   }
   
   return schema;
 }
 
-function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, duration, inLanguage, byArtist, description, keywords, about }) {
+// Pas de `duration` : la durée réelle des chansons n'est pas connue (l'ancienne valeur
+// « PT3M » était une valeur par défaut, fausse pour presque toutes).
+function musicRecordingJsonLd({ name, url, datePublished, audioUrl, image, inLanguage, description, keywords, about, sameAs = [] }) {
   const obj = {
     "@context": "https://schema.org",
     "@type": "MusicRecording",
     "name": name,
     "url": url,
-    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
-    "inLanguage": inLanguage || "pt-BR"
+    "genre": SONG_GENRE,
+    "inLanguage": inLanguage || "pt-BR",
+    // La même entité que sur l'accueil et la page Sobre.
+    "byArtist": { "@type": "MusicGroup", "@id": ENTITY_ID, "name": "A Música da Segunda", "url": `${SITE_URL}/` }
   };
 
   if (datePublished) obj.datePublished = datePublished;
   if (description) obj.description = description;
   if (image) obj.image = image;
-  if (duration) obj.duration = duration;
   if (Array.isArray(keywords) && keywords.length > 0) obj.keywords = keywords;
   if (about) obj.about = about;
-
-  if (byArtist) {
-    obj.byArtist = { "@type": "MusicGroup", "name": byArtist.name, "url": byArtist.url };
-  }
+  // La même chanson sur Spotify, Apple Music et YouTube.
+  if (Array.isArray(sameAs) && sameAs.length > 0) obj.sameAs = sameAs;
   
   // ✅ potentialAction avec ListenAction pour Spotify/YouTube
   if (audioUrl) {

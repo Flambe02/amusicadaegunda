@@ -107,15 +107,7 @@ export function useSEO({
             "url": `${siteUrl}/icons/pwa/icon-512x512.png`,
             "width": 512,
             "height": 512
-          },
-          "sameAs": [
-            "https://www.tiktok.com/@amusicadasegunda",
-            "https://www.youtube.com/@amusicadasegunda",
-            "https://www.youtube.com/channel/UCrkmgvYXtZznqvZNtIKZdaQ",
-            "https://open.spotify.com/user/amusicadasegunda",
-            "https://www.facebook.com/musicadasegunda",
-            "https://www.wikidata.org/wiki/Q140379813"
-          ]
+          }
         },
         "mainEntityOfPage": {
           "@type": "WebPage",

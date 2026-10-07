@@ -1,6 +1,7 @@
 require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
+const { songSameAs } = require('./seo-entity.cjs');
 const {
   baseHtml,
   orgJsonLd,
@@ -826,11 +827,10 @@ ${scripts.js}
         datePublished: s.datePublished,
         audioUrl: s.audioUrl,
         image: songImage,
-        duration: s.duration,
         inLanguage: s.inLanguage,
-        byArtist: s.byArtist,
         description: fullDesc,
         keywords: songKeywords,
+        sameAs: songSameAs(s),
       }),
       // breadcrumbsJsonLd here is the CJS version from seo-templates.cjs,
       // whose signature is { songName, songUrl } — different from the ESM

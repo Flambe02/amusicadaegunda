@@ -871,7 +871,7 @@ export default function Sobre() {
               Acompanhe os lançamentos, bastidores e novidades do projeto nas redes.
             </p>
             <div className="flex justify-center gap-4">
-              <a href="https://www.facebook.com/musicadasegunda/" target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition-colors">
+              <a href="https://www.facebook.com/amusicadasegundaofficial" target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition-colors">
                 <Facebook className="w-6 h-6" />
               </a>
               <a href="https://www.tiktok.com/@amusicadasegunda" target="_blank" rel="noopener noreferrer" className="bg-white/10 border border-white/10 text-white p-3 rounded-full hover:bg-white/20 transition-colors">

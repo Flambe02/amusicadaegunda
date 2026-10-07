@@ -3,9 +3,14 @@
  * Provides structured data for songs and navigation
  */
 
+import seoConfig from '../../scripts/seo.config.json';
 import { extractYouTubeId as extractYouTubeIdFromUtils } from '@/lib/utils';
 
 const CANONICAL_HOST = 'https://www.amusicadasegunda.com';
+
+/** Identifiant de l'entité « A Música da Segunda » (le même que dans le HTML statique). */
+export const ENTITY_ID = `${seoConfig.siteUrl}/#organization`;
+const SONG_GENRE = seoConfig.brand.genre;
 
 /**
  * Generate MusicRecording JSON-LD schema for individual songs
@@ -36,14 +41,12 @@ export function musicRecordingJsonLd({
     "@context": "https://schema.org",
     "@type": "MusicRecording",
     "name": title || slug,
-    "byArtist": {
-      "@type": "MusicGroup",
-      "name": byArtist
-    },
+    // La même entité que dans les pages statiques (scripts/seo-entity.cjs).
+    "byArtist": { "@type": "MusicGroup", "@id": ENTITY_ID, "name": byArtist, "url": `${CANONICAL_HOST}/` },
     "datePublished": datePublished || new Date().toISOString().slice(0, 10),
     "inLanguage": "pt-BR",
     "url": url,
-    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
+    "genre": SONG_GENRE,
     ...(image ? { "image": image } : {}),
     ...(description ? { "description": description } : {}),
     ...(Array.isArray(keywords) && keywords.length > 0 ? { "keywords": keywords } : {}),
@@ -154,7 +157,7 @@ export function musicPlaylistJsonLd({
       "name": "A Música da Segunda",
       "url": CANONICAL_HOST
     },
-    "genre": ["Comedy", "Music", "Música Brasileira", "Paródia"],
+    "genre": SONG_GENRE,
     "inLanguage": "pt-BR",
     "numTracks": tracks.length,
     "track": tracks.map((track, index) => ({
@@ -241,6 +244,21 @@ export function buildYouTubeUrls(videoId) {
 }
 
 /**
+ * Retire du <head> les blocs JSON-LD STATIQUES (écrits dans le HTML de la page, donc
+ * sans id) du type donné. Les blocs posés par React portent un id et ne sont pas touchés.
+ * @param {string} type - @type schema.org (ex. 'MusicRecording', 'FAQPage')
+ */
+export function removeStaticJsonLd(type) {
+  if (typeof document === 'undefined' || !type) return;
+  document.head.querySelectorAll('script[type="application/ld+json"]:not([id])').forEach((script) => {
+    try {
+      const parsed = JSON.parse(script.textContent || 'null');
+      if (parsed && [].concat(parsed['@type']).includes(type)) script.remove();
+    } catch { /* bloc illisible : on n'y touche pas */ }
+  });
+}
+
+/**
  * Helper to inject JSON-LD script tags into document head
  * @param {Object} schema - JSON-LD schema object
  * @param {string} [id] - Optional script ID for removal
@@ -255,21 +273,9 @@ export function injectJsonLd(schema, id = null) {
       if (existing) existing.remove();
     }
     
-    // ✅ Si on injecte un BreadcrumbList, supprimer aussi les breadcrumbs statiques sans ID
-    // Cela évite que Google détecte plusieurs breadcrumbs (statique + React)
-    if (schema['@type'] === 'BreadcrumbList') {
-      const allScripts = document.head.querySelectorAll('script[type="application/ld+json"]');
-      allScripts.forEach(script => {
-        try {
-          const content = script.textContent;
-          if (content && content.includes('"@type":"BreadcrumbList"') && !script.id) {
-            script.remove();
-          }
-        } catch (e) {
-          // Ignore parsing errors
-        }
-      });
-    }
+    // Le HTML statique de la page porte déjà un bloc du même type (sans id) : on le
+    // retire, sinon la page décrit deux fois la même chose après l'hydratation.
+    removeStaticJsonLd(schema['@type']);
     
     const script = document.createElement('script');
     script.type = 'application/ld+json';

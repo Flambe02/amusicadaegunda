@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
@@ -19,6 +20,24 @@ function amdsBootPlugin(mode) {
       return html
         .replace('__AMDS_BOOT_CURRENT_SONG_URL__', buildCurrentSongBootUrl(url, key))
         .replace('__AMDS_DETECT_INTERFACE__', `(${detectInterface.toString()})`)
+    },
+  }
+}
+
+/**
+ * Identité du site dans `index.html` (accueil) : balises de vérification et JSON-LD
+ * `WebSite` + `MusicGroup`, tirés de scripts/seo.config.json par le même module que les
+ * pages statiques (scripts/seo-entity.cjs). Une seule définition de l'entité.
+ */
+function amdsSeoPlugin() {
+  const { entityJsonLd, websiteEntityJsonLd, verificationMetaTags } = createRequire(import.meta.url)('./scripts/seo-entity.cjs')
+  const block = (schema) => `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n</script>`
+  return {
+    name: 'amds-seo',
+    transformIndexHtml(html) {
+      const head = [verificationMetaTags(), block(websiteEntityJsonLd()), block(entityJsonLd())].filter(Boolean).join('\n')
+      if (!html.includes('<!--AMDS_SEO_HEAD-->')) throw new Error('index.html : le repère <!--AMDS_SEO_HEAD--> a disparu (JSON-LD de l\'accueil).')
+      return html.replace('<!--AMDS_SEO_HEAD-->', head)
     },
   }
 }
@@ -87,7 +106,7 @@ function vendorTvGuardPlugin() {
 export default defineConfig(({ command, mode }) => ({
   // ✅ SEO: Base path correct pour GitHub Pages et URLs propres
   base: command === 'build' ? '/' : '/',
-  plugins: [react(), amdsBootPlugin(mode), vendorTvGuardPlugin()],
+  plugins: [react(), amdsBootPlugin(mode), amdsSeoPlugin(), vendorTvGuardPlugin()],
   // ✅ SÉCURITÉ: Les variables d'environnement sont maintenant chargées depuis .env
   // Les clés Supabase ne sont plus exposées dans le code source
   resolve: {

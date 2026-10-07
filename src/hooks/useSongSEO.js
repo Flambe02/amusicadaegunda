@@ -57,7 +57,9 @@ export function useSongSEO({ song, slug, noindex = false, enabled = true }) {
     if (!enabled) return undefined;
     if (slug) injectJsonLd(breadcrumbsJsonLd({ title: null, slug }), 'song-breadcrumb-schema');
     if (song && slug) {
-      const streamingUrls = [song.spotify_url, song.apple_music_url, song.youtube_url, song.youtube_music_url].filter(Boolean);
+      // Un lien « Apple Music » qui pointe ailleurs (quelques chansons) n'est pas déclaré.
+      const appleMusicUrl = /^https:\/\/music\.apple\.com\//.test(song.apple_music_url || '') ? song.apple_music_url : null;
+      const streamingUrls = [...new Set([song.spotify_url, appleMusicUrl, song.youtube_url, song.youtube_music_url].filter(Boolean))];
       const songKeywords = [
         song.title,
         song.subtitle ? song.subtitle.replace(/—.*$/, '').trim() : null,

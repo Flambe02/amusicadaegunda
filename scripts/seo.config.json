@@ -3,16 +3,57 @@
   "defaultLocale": "pt-BR",
   "brand": {
     "name": "A Música da Segunda",
+    "alternateName": [
+      "Música da Segunda",
+      "amusicadasegunda"
+    ],
     "handle": "@amusicadasegunda",
     "logo": "/images/Caipivara_transp-removebg-preview.png",
+    "description": "Projeto de paródia musical semanal que transforma as notícias do Brasil em músicas inteligentes e bem-humoradas. Nova paródia toda segunda-feira.",
+    "siteDescription": "Paródias musicais inteligentes sobre as notícias do Brasil. Nova música toda segunda-feira, com humor, contexto e sátira musical.",
+    "foundingDate": "2024-12",
+    "founder": "Florent Lambert",
+    "country": "Brasil",
+    "genre": [
+      "Paródia musical",
+      "Sátira musical",
+      "Música de humor"
+    ],
+    "knowsAbout": [
+      "paródia musical",
+      "sátira política",
+      "música brasileira",
+      "notícias do Brasil",
+      "humor musical"
+    ],
     "sameAs": [
-      "https://www.tiktok.com/@amusicadasegunda",
+      "https://open.spotify.com/artist/3l1aPSEZ25VwuqJGKYRZbQ",
+      "https://music.apple.com/us/artist/a-m%C3%BAsica-da-segunda/1867784335",
       "https://www.youtube.com/@amusicadasegunda",
       "https://www.youtube.com/channel/UCrkmgvYXtZznqvZNtIKZdaQ",
-      "https://open.spotify.com/user/amusicadasegunda",
-      "https://www.facebook.com/musicadasegunda",
+      "https://music.youtube.com/@amusicadasegunda",
+      "https://www.instagram.com/a_musica_da_segunda/",
+      "https://www.tiktok.com/@amusicadasegunda",
+      "https://www.facebook.com/amusicadasegundaofficial",
       "https://www.wikidata.org/wiki/Q140379813"
-    ]
+    ],
+    "links": {
+      "spotifyArtist": "https://open.spotify.com/artist/3l1aPSEZ25VwuqJGKYRZbQ",
+      "spotifyPlaylist": "https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH",
+      "appleMusicArtist": "https://music.apple.com/us/artist/a-m%C3%BAsica-da-segunda/1867784335",
+      "youtube": "https://www.youtube.com/@amusicadasegunda",
+      "youtubeMusicArtist": "https://music.youtube.com/@amusicadasegunda",
+      "youtubeMusicPlaylist": "https://music.youtube.com/playlist?list=PLmoOyuQg7Y2QZKbcj20s7dcadsVx7WuWH",
+      "instagram": "https://www.instagram.com/a_musica_da_segunda/",
+      "tiktok": "https://www.tiktok.com/@amusicadasegunda",
+      "facebook": "https://www.facebook.com/amusicadasegundaofficial",
+      "androidApp": "https://play.google.com/store/apps/details?id=com.amusicadasegunda.app",
+      "whatsappChannel": ""
+    }
+  },
+  "verification": {
+    "google": "",
+    "bing": ""
   },
   "routes": {
     "static": [

@@ -34,14 +34,15 @@ describe('JSON-LD Schema Validation', () => {
       expect(schema.name).toBe('Nobel Prize');
       expect(schema.url).toBe('https://www.amusicadasegunda.com/musica/nobel-prize/');
       expect(schema.inLanguage).toBe('pt-BR');
-      expect(schema.genre).toContain('Comedy');
-      expect(schema.genre).toContain('Music');
+      expect(schema.genre).toEqual(['Paródia musical', 'Sátira musical', 'Música de humor']);
       expect(schema.description).toBe('Paródia musical sobre o Prêmio Nobel');
 
-      // Vérifier byArtist
+      // Vérifier byArtist : la même entité que dans les pages statiques
       expect(schema.byArtist).toEqual({
         '@type': 'MusicGroup',
-        name: 'A Música da Segunda'
+        '@id': 'https://www.amusicadasegunda.com/#organization',
+        name: 'A Música da Segunda',
+        url: 'https://www.amusicadasegunda.com/'
       });
 
       // Vérifier potentialAction (ListenAction)
@@ -203,8 +204,7 @@ describe('JSON-LD Schema Validation', () => {
       expect(schema.name).toBe('A Música da Segunda - Todas as Músicas');
       expect(schema.url).toBe('https://www.amusicadasegunda.com/musica/');
       expect(schema.inLanguage).toBe('pt-BR');
-      expect(schema.genre).toContain('Comedy');
-      expect(schema.genre).toContain('Music');
+      expect(schema.genre).toEqual(['Paródia musical', 'Sátira musical', 'Música de humor']);
       expect(schema.numTracks).toBe(3);
 
       // Vérifier author
@@ -328,8 +328,8 @@ describe('JSON-LD Schema Validation', () => {
       const music = musicRecordingJsonLd({ title: 'Test', slug: 'test' });
       const playlist = musicPlaylistJsonLd({ tracks: [] });
 
-      expect(music.genre).toEqual(['Comedy', 'Music', 'Música Brasileira', 'Paródia']);
-      expect(playlist.genre).toEqual(['Comedy', 'Music', 'Música Brasileira', 'Paródia']);
+      expect(music.genre).toEqual(['Paródia musical', 'Sátira musical', 'Música de humor']);
+      expect(playlist.genre).toEqual(['Paródia musical', 'Sátira musical', 'Música de humor']);
     });
   });
 });

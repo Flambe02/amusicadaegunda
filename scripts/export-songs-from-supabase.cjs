@@ -81,7 +81,6 @@ async function exportSongs() {
           datePublished: song.release_date,
           image: song.cover_image || '/icons/pwa/icon-512x512.png',
           audioUrl: song.spotify_url || song.youtube_url || '',
-          duration: song.duration || 'PT3M',
           inLanguage: 'pt-BR',
           byArtist: {
             name: song.artist || 'A Música da Segunda',
@@ -90,6 +89,12 @@ async function exportSongs() {
           // ✅ URLs YouTube pour VideoObject JSON-LD dans les stubs
           youtube_music_url: song.youtube_music_url || null,
           youtube_url: song.youtube_url || null,
+          // Liens de la chanson sur chaque plateforme (JSON-LD sameAs, llms.txt).
+          spotify_url: song.spotify_url || null,
+          apple_music_url: song.apple_music_url || null,
+          // Dernière VRAIE modification du contenu (sitemap lastmod) : colonne tenue par
+          // un trigger qui ignore les mises à jour techniques. Absente → date de sortie.
+          content_updated_at: song.content_updated_at || null,
           description: song.description || null,
           lyrics: song.lyrics || null,
           subtitle: song.subtitle || null,
