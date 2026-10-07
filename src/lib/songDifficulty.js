@@ -31,3 +31,37 @@ export function estimateDifficultyKey(lyrics) {
   if (words < DIFFICULTY_MEDIUM_MAX_WORDS) return 'medium';
   return 'hard';
 }
+
+/** Choix « Automática » du champ Dificuldade de l'admin. */
+export const DIFFICULTY_AUTO = 'auto';
+const DIFFICULTY_KEYS = ['easy', 'medium', 'hard'];
+
+/**
+ * Ce que le champ Dificuldade de l'admin doit montrer pour une chanson : la valeur
+ * choisie à la main (`difficulty_manual`), sinon « Automática ».
+ *
+ * Avant la colonne `difficulty_manual` (absente de la chanson), une valeur présente
+ * dans `difficulty` ne pouvait venir que d'un choix manuel : elle est traitée ainsi,
+ * pour ne jamais l'écraser.
+ * @returns {'auto'|'easy'|'medium'|'hard'}
+ */
+export function difficultyChoiceOf(song) {
+  const value = song?.difficulty;
+  if (!DIFFICULTY_KEYS.includes(value)) return DIFFICULTY_AUTO;
+  const manual = song.difficulty_manual === undefined ? true : song.difficulty_manual === true;
+  return manual ? value : DIFFICULTY_AUTO;
+}
+
+/**
+ * Les deux colonnes à enregistrer avec une chanson.
+ * - « Automática » : la difficulté est RECALCULÉE sur la letra enregistrée (NULL sans
+ *   letra), `difficulty_manual` faux ;
+ * - valeur choisie à la main : écrite telle quelle, `difficulty_manual` vrai — le
+ *   recalcul ne la remplace jamais.
+ * @param {{ choice: string, lyrics?: string|null }} input
+ * @returns {{ difficulty: 'easy'|'medium'|'hard'|null, difficulty_manual: boolean }}
+ */
+export function resolveDifficultyFields({ choice, lyrics }) {
+  if (DIFFICULTY_KEYS.includes(choice)) return { difficulty: choice, difficulty_manual: true };
+  return { difficulty: estimateDifficultyKey(lyrics), difficulty_manual: false };
+}

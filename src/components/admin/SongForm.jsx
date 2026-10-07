@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { generateSongData } from '@/lib/hashtagGenerator';
 import { generateSubtitle } from '@/lib/subtitleGenerator';
 import { sanitizeInput, sanitizeURL } from '@/lib/security';
+import { DIFFICULTY_AUTO, difficultyChoiceOf, estimateDifficultyKey, resolveDifficultyFields } from '@/lib/songDifficulty';
 import {
   Plus, X, Save, Hash, Zap, ChevronDown, ChevronUp, Clock, Sparkles,
 } from 'lucide-react';
@@ -35,11 +36,13 @@ const EMPTY_FORM = {
 };
 
 const DIFFICULTY_OPTIONS = [
-  { value: null, label: 'Auto', emoji: '✨' },
+  { value: DIFFICULTY_AUTO, label: 'Automática', emoji: '✨' },
   { value: 'easy', label: 'Fácil', emoji: '🟢' },
   { value: 'medium', label: 'Médio', emoji: '🟡' },
   { value: 'hard', label: 'Difícil', emoji: '🔴' },
 ];
+
+const DIFFICULTY_LABELS = { easy: 'Fácil', medium: 'Médio', hard: 'Difícil' };
 
 const SUBTITLE_MAX_LEN = 100;
 
@@ -73,6 +76,10 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
     difficulty: initial?.difficulty ?? null,
     hashtags: Array.isArray(initial?.hashtags) ? initial.hashtags : [],
   }));
+  // Choix du champ Dificuldade : « Automática » (recalculée sur la letra à chaque
+  // enregistrement) ou une valeur fixée à la main. Hors de `form` : ce qui part en base
+  // (`difficulty`, `difficulty_manual`) est résolu à l'enregistrement.
+  const [difficultyChoice, setDifficultyChoice] = useState(() => difficultyChoiceOf(initial));
   const [showLyrics, setShowLyrics] = useState(!!initial?.lyrics);
   const [hashtagInput, setHashtagInput] = useState('');
   const [isAutoSaving, setIsAutoSaving] = useState(false);
@@ -120,12 +127,14 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const lyrics = sanitizeInput(form.lyrics);
     onSave({
       ...form,
       title: sanitizeInput(form.title),
       subtitle: sanitizeInput(form.subtitle),
       description: sanitizeInput(form.description),
-      lyrics: sanitizeInput(form.lyrics),
+      lyrics,
+      ...resolveDifficultyFields({ choice: difficultyChoice, lyrics }),
       youtube_music_url: sanitizeURL(form.youtube_music_url) || null,
       youtube_url: sanitizeURL(form.youtube_url) || null,
       spotify_url: sanitizeURL(form.spotify_url) || null,
@@ -294,12 +303,13 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
           <Label>Dificuldade <span className="text-gray-500 font-normal">(TV)</span></Label>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIFFICULTY_OPTIONS.map((o) => {
-              const active = (form.difficulty ?? null) === o.value;
+              const active = difficultyChoice === o.value;
               return (
                 <button
                   key={o.label}
                   type="button"
-                  onClick={() => set('difficulty', o.value)}
+                  aria-pressed={active}
+                  onClick={() => setDifficultyChoice(o.value)}
                   className={`inline-flex items-center px-3 py-1 rounded-full text-xs border font-medium transition-all ${
                     active ? 'bg-app-yellow/20 text-app-yellow border-app-yellow/40 ring-2 ring-app-yellow/30 scale-105' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
                   }`}
@@ -309,7 +319,11 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
               );
             })}
           </div>
-          <p className="text-xs mt-1 text-gray-500">« Auto » estima pela densidade da letra. Uma escolha manual tem prioridade na TV.</p>
+          <p className="text-xs mt-1 text-gray-500">
+            {difficultyChoice === DIFFICULTY_AUTO
+              ? `« Automática » recalcula pela letra a cada gravação${estimateDifficultyKey(form.lyrics) ? ` — agora: ${DIFFICULTY_LABELS[estimateDifficultyKey(form.lyrics)]}` : ' (sem letra: fica por definir)'}.`
+              : 'Escolha manual: nunca é substituída pelo cálculo automático.'}
+          </p>
         </div>
 
         <div>
