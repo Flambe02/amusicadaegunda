@@ -52,6 +52,7 @@ function buildLlmsTxt({ songs, hasFeed = false, config = cfg }) {
     `- Idioma: português do Brasil (${config.defaultLocale})`,
     `- Gêneros: ${(brand.genre || []).join(', ')}`,
     '- Frequência: uma música nova toda segunda-feira',
+    `- Produção: músicas originais, criadas com ferramentas de inteligência artificial; tema, humor, letra e curadoria de ${brand.founder}.`,
     '',
     '## Páginas principais',
     '',

@@ -351,6 +351,7 @@ ${sobreContent.faq.map((item) => `
   <p style="font-size: 0.85rem; color: #888; margin-bottom: 2rem; font-family: sans-serif;">Por A Música da Segunda</p>
 
   <p style="margin-bottom: 1.25rem;"><strong>Paródia musical</strong> é a arte de adaptar uma melodia conhecida com uma nova letra — geralmente satírica, cômica ou crítica de um tema atual. No Brasil, essa tradição é profunda e está entrelaçada com a história política e cultural do país. Das marchinhas de carnaval do século XX ao YouTube Shorts de hoje, a paródia musical nunca deixou de ser um dos formatos mais eficazes de comentário sobre a realidade brasileira.</p>
+  <p style="margin-bottom: 1.25rem;">Na A Música da Segunda, a paródia está na letra e no humor: as melodias são originais, criadas com ferramentas de inteligência artificial.</p>
 
   <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">O que é paródia musical?</h2>
   <p style="margin-bottom: 1.25rem;">A paródia musical reutiliza a melodia de uma música existente e compõe uma letra nova com propósito diferente do original. A eficácia do formato vem da familiaridade: o ouvinte já conhece a melodia, o que cria uma ponte imediata entre a mensagem nova e o prazer sonoro. A nova letra se ancora no ritmo e na expectativa gerada pelo original.</p>

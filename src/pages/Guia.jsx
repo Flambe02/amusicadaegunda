@@ -33,6 +33,9 @@ export default function Guia() {
       <p className={pClass}>
         <strong>Paródia musical</strong> é a arte de adaptar uma melodia conhecida com uma nova letra — geralmente satírica, cômica ou crítica de um tema atual. No Brasil, essa tradição é profunda e está entrelaçada com a história política e cultural do país. Das marchinhas de carnaval do século XX ao YouTube Shorts de hoje, a paródia musical nunca deixou de ser um dos formatos mais eficazes de comentário sobre a realidade brasileira.
       </p>
+      <p className={pClass}>
+        Na A Música da Segunda, a paródia está na letra e no humor: as melodias são originais, criadas com ferramentas de inteligência artificial.
+      </p>
 
       <h2 className={h2Class}>O que é paródia musical?</h2>
       <p className={pClass}>

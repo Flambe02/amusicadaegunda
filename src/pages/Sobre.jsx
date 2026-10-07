@@ -169,7 +169,7 @@ function MobileSongSearch() {
 
       <div className="mt-3 space-y-2">
         {loading ? (
-          <div className="py-5 text-center text-sm font-semibold text-white/42">Carregando catalogo...</div>
+          <div className="py-5 text-center text-sm font-semibold text-white/42">Carregando catálogo...</div>
         ) : results.length > 0 ? (
           results.map((song) => {
             const artwork = getMobileSongArtwork(song);
@@ -206,7 +206,7 @@ function MobileSongSearch() {
                   className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full transition active:scale-95 ${
                     isPlaying ? 'bg-app-yellow text-black' : 'bg-white/10 text-white'
                   }`}
-                  aria-label={isPlaying ? 'Pausar musica' : 'Tocar musica'}
+                  aria-label={isPlaying ? 'Pausar música' : 'Tocar música'}
                 >
                   {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
                 </button>
@@ -214,7 +214,7 @@ function MobileSongSearch() {
             );
           })
         ) : (
-          <div className="py-5 text-center text-sm font-semibold text-white/42">Nenhuma musica encontrada.</div>
+          <div className="py-5 text-center text-sm font-semibold text-white/42">Nenhuma música encontrada.</div>
         )}
       </div>
     </section>
@@ -357,7 +357,7 @@ function MobileAboutExperience() {
         >
           <span>
             <span className="block text-sm font-black text-white">Gire a roleta</span>
-            <span className="mt-1 block text-xs font-medium text-white/55">Descubra um tema e uma musica para ouvir agora.</span>
+            <span className="mt-1 block text-xs font-medium text-white/55">Descubra um tema e uma música para ouvir agora.</span>
           </span>
           <ExternalLink className="h-5 w-5 flex-shrink-0 text-app-yellow" aria-hidden="true" />
         </Link>
@@ -421,16 +421,19 @@ export default function Sobre() {
     };
   }, [faqs]);
 
-  const blockClass = "bg-gradient-to-br from-blue-950/60 to-[#0f172a]/70 backdrop-blur-sm rounded-[28px] p-8 mb-6 border border-blue-400/15";
+  const blockClass = "bg-gradient-to-br from-blue-950/60 to-[#0f172a]/70 backdrop-blur-sm rounded-[28px] p-5 md:p-8 mb-6 border border-blue-400/15";
 
   return (
     <>
       <div className="space-y-0">
         <MobileAboutExperience />
 
-        <div className="desktop-about-shell mx-auto hidden max-w-6xl p-4 md:block md:p-5 2xl:max-w-7xl">
+        {/* Texte long et FAQ : affichés aussi sur téléphone, sous le bloc court (Google indexe la
+            version mobile, et le contenu du FAQPage doit être visible). Les blocs que le bloc
+            court couvre déjà (apresentação, redes, contato) restent réservés aux grands écrans. */}
+        <div className="desktop-about-shell mx-auto max-w-6xl p-4 md:p-5 2xl:max-w-7xl">
           {/* Hero */}
-          <section className="glass-panel desktop-shell-gradient mb-6 overflow-hidden rounded-[36px] p-5 md:p-8">
+          <section className="glass-panel desktop-shell-gradient mb-6 hidden overflow-hidden rounded-[36px] p-5 md:block md:p-8">
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(300px,360px)] xl:items-center">
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/70">
@@ -666,7 +669,7 @@ export default function Sobre() {
           </article>
 
           {/* O que oferecemos */}
-          <div className={blockClass}>
+          <div className={`${blockClass} hidden md:block`}>
             <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
                 <Star className="w-6 h-6 text-white" />
@@ -702,7 +705,7 @@ export default function Sobre() {
           </div>
 
           {/* Tecnologia */}
-          <div className={blockClass}>
+          <div className={`${blockClass} hidden md:block`}>
             <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
                 <Award className="w-6 h-6 text-white" />
@@ -798,7 +801,7 @@ export default function Sobre() {
           </article>
 
           {/* Redes sociais */}
-          <div className={blockClass}>
+          <div className={`${blockClass} hidden md:block`}>
             <h3 className="text-2xl font-bold text-white mb-4 flex items-center gap-3">
               <Instagram className="w-6 h-6 text-pink-400" />
                Redes sociais
@@ -829,7 +832,7 @@ export default function Sobre() {
           </div>
 
           {/* Contact */}
-          <div className="bg-gradient-to-br from-blue-900/60 to-[#0f172a]/80 backdrop-blur-sm rounded-[28px] p-8 text-center border border-blue-400/15 mb-6">
+          <div className="hidden md:block bg-gradient-to-br from-blue-900/60 to-[#0f172a]/80 backdrop-blur-sm rounded-[28px] p-8 text-center border border-blue-400/15 mb-6">
             <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
               <MessageCircle className="w-10 h-10 text-white" />
             </div>
