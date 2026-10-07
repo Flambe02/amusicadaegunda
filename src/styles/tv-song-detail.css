@@ -237,3 +237,17 @@
    la mise en page est TOUJOURS 1920×1080 — 720p/4K/fenêtre PC sont gérés par le
    transform scale du stage, jamais par des breakpoints (qui se déclencheraient à
    tort selon la taille de la FENÊTRE alors que le canvas, lui, ne change pas). */
+
+/* ── Chansons liées (box TV et ordinateur) + lien de catégorie (ordinateur) ─── */
+.tvd-related { flex: 0 0 auto; display: flex; align-items: center; gap: clamp(0.6rem, 15.4px, 1rem); min-width: 0; }
+.tvd-related-h { flex: 0 0 auto; color: rgba(255, 255, 255, 0.6); font-size: clamp(0.9rem, 21.1px, 1.2rem); font-weight: 800; }
+.tvd-related-cat { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.tvd-related-item {
+  flex: 0 1 auto; min-width: 0; max-width: 24%;
+  height: clamp(40px, 46.1px, 54px); padding: 0 clamp(0.8rem, 21.1px, 1.2rem);
+  display: inline-flex; align-items: center; border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.16); background: rgba(255, 255, 255, 0.06);
+  color: #fff; font-size: clamp(0.9rem, 21.1px, 1.2rem); font-weight: 800; text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+}
+.tvd-related-item.is-focused { border-color: var(--tvh-yellow); background: rgba(253, 224, 71, 0.14); }

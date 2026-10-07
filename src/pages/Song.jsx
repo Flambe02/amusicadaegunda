@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Song } from '@/api/entities';
-import { useSEO } from '../hooks/useSEO';
-import { musicRecordingJsonLd, breadcrumbsJsonLd, injectJsonLd } from '../lib/seo-jsonld';
+import { SONG_CATEGORY_LABELS, useSongSEO } from '../hooks/useSongSEO';
 import { Helmet } from 'react-helmet-async';
 import {
   Music,
@@ -31,21 +30,7 @@ import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 import { isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
 
-const CATEGORY_LABELS = {
-  internacional: 'Internacional',
-  midia: 'Mídia',
-  energia: 'Energia',
-  esporte: 'Esporte',
-  cultura: 'Cultura',
-  outros: 'Outros',
-  saude: 'Saúde',
-  policia: 'Polícia',
-  politica: 'Política',
-  seguranca: 'Segurança',
-  tecnologia: 'Tecnologia',
-  gastronomia: 'Gastronomia',
-  economia: 'Economia',
-};
+const CATEGORY_LABELS = SONG_CATEGORY_LABELS;
 
 function getYouTubeEmbedSrc(info, params = '') {
   if (!info?.id) return null;
@@ -135,55 +120,9 @@ export default function SongPage() {
     Song.list('-release_date').then((data) => setAllSongs(data || []));
   }, []);
 
-  const normalizedUrl = slug ? `/musica/${slug.replace(/\/$/, '')}/` : '/musica/';
   const shouldNoindex = !isLoading && errorType === 'invalid_slug';
-
-  // ✅ SEO: titre court et keyword-friendly, aligné sur les stubs (generate-stubs.cjs).
-  // Le sous-titre long (phrase) reste affiché dans le <h1>/contexte, pas dans le <title>.
-  const seoTitle = song
-    ? (CATEGORY_LABELS[song.category]
-        ? `${song.title} — Paródia ${CATEGORY_LABELS[song.category]} | A Música da Segunda`
-        : `${song.title} — Paródia Musical | A Música da Segunda`)
-    : slug ? slug.replace(/-/g, ' ') : 'A Música da Segunda';
-  const seoDescription = song?.description
-    ? (song.description.length > 155 ? song.description.slice(0, 152).trimEnd() + '...' : song.description)
-    : 'Paródias musicais inteligentes e divertidas sobre as notícias do Brasil.';
-
-  useSEO({
-    title: seoTitle,
-    description: seoDescription,
-    image: song?.cover_image,
-    url: normalizedUrl,
-    type: 'music.song',
-    robots: shouldNoindex ? 'noindex, follow' : 'index, follow, max-video-preview:0',
-    publishedTime: song?.release_date || null,
-    articleSection: song?.category ? (CATEGORY_LABELS[song.category] || song.category) : null,
-  });
-
-  useEffect(() => {
-    if (slug) injectJsonLd(breadcrumbsJsonLd({ title: null, slug }), 'song-breadcrumb-schema');
-    if (song && slug) {
-      const streamingUrls = [song.spotify_url, song.apple_music_url, song.youtube_url, song.youtube_music_url].filter(Boolean);
-      const songKeywords = [
-        song.title,
-        song.subtitle ? song.subtitle.replace(/—.*$/, '').trim() : null,
-        song.category ? CATEGORY_LABELS[song.category] || song.category : null,
-        'paródia musical', 'música da segunda', 'brasil', 'sátira musical',
-      ].filter(Boolean);
-      injectJsonLd(musicRecordingJsonLd({
-        title: song.title, slug, datePublished: song.release_date,
-        image: song.cover_image, byArtist: song.artist || 'A Música da Segunda',
-        description: song.description || `Paródia musical de ${song.title} por A Música da Segunda.`,
-        streamingUrls,
-        keywords: songKeywords,
-      }), 'song-music-schema');
-      injectJsonLd(breadcrumbsJsonLd({ title: song.title, slug }), 'song-breadcrumb-schema');
-    }
-    return () => {
-      document.getElementById('song-music-schema')?.remove();
-      document.getElementById('song-breadcrumb-schema')?.remove();
-    };
-  }, [song, slug]);
+  // Balises et JSON-LD : même définition que la fiche de l'interface grand écran.
+  const { normalizedUrl } = useSongSEO({ song, slug, noindex: shouldNoindex });
 
   // Player controls:
   // - yellow button/audio uses youtube_url first (YouTube Music audio/playlist)

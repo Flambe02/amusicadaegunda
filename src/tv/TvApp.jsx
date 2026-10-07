@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { init, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Song } from '@/api/entities';
 import { isKaraokePublished } from '@/lib/lrc';
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
@@ -27,6 +27,10 @@ import TvSettingsPanel from './components/TvSettingsPanel';
 import TvStage from './components/TvStage';
 import { BRAND_SQUARE_LARGE } from '@/lib/imageAssets';
 import { emptyAdvanced } from './lib/tvCatalogFilters';
+import { followPointer, setPointerMode } from './lib/pointerMode';
+import { useSEO } from '@/hooks/useSEO';
+import { HOME_SEO, HOME_SEO_IMAGE } from '@/config/homeSeo';
+import { titleToSlug } from '@/lib/utils';
 import '@/styles/tv.css';
 import '@/styles/tv-home-v2.css';
 import '@/styles/tv-home-v3.css';
@@ -45,12 +49,23 @@ const CATEGORY_LABELS = {
   gastronomia: 'Gastronomia', economia: 'Economia',
 };
 
+/** Slug public d'une chanson : la colonne `slug`, sinon dérivé du titre (comme Song.jsx). */
+const songSlug = (song) => (song?.slug || titleToSlug(song?.title) || '');
+/** Adresse d'un écran de la pile : seule la fiche a la sienne (`/musica/<slug>/`). */
+const screenUrl = (screen) => (screen?.name === 'detail' && songSlug(screen.song) ? `/musica/${songSlug(screen.song)}/` : '/');
+
 /**
  * Application TV (« 10-foot UI ») — isolée du mobile/web (montée par App.jsx quand
  * isTV()). Pile d'écrans maison (home → detail → watch/karaoke), Retour matériel via
  * l'adaptateur, nav spatiale mise en pause pendant les overlays plein écran.
+ *
+ * `web` (interface grand écran sur ordinateur, voir src/pages/index.jsx) : la même app,
+ * avec en plus la pile synchronisée avec l'historique du navigateur (la fiche a
+ * l'adresse `/musica/<slug>/`), le SEO, la souris et un bouton retour. Sur la box TV,
+ * `web` est absent et rien de tout cela ne s'exécute.
  */
-export default function TvApp() {
+export default function TvApp({ web = null }) {
+  const isWeb = Boolean(web);
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -161,6 +176,31 @@ export default function TvApp() {
   useEffect(() => { applyTvFlag(true); return () => applyTvFlag(false); }, []);
   useEffect(() => { loadSongs(); }, [loadSongs]);
 
+  // ── Web : souris ─────────────────────────────────────────────────────────────
+  const rootRef = useRef(null);
+  useEffect(() => {
+    if (!isWeb) return undefined;
+    setPointerMode(true);
+    return () => setPointerMode(false);
+  }, [isWeb]);
+  useEffect(() => {
+    if (!isWeb || loading) return undefined;
+    return followPointer(rootRef.current);
+  }, [isWeb, loading]);
+
+  // ── Web : ouverture directe sur /musica/<slug>/ → accueil puis fiche dans la pile.
+  const initialSlugRef = useRef(web?.initialSlug || null);
+  useEffect(() => {
+    if (!isWeb || loading || !initialSlugRef.current) return;
+    const slug = initialSlugRef.current;
+    initialSlugRef.current = null;
+    const song = songs.find((item) => songSlug(item) === slug);
+    // L'entrée d'arrivée devient l'accueil (`/`) ; la fiche est empilée par-dessus avec
+    // sa propre adresse : « Retour » depuis la fiche mène à l'accueil.
+    window.history.replaceState({ ...(window.history.state || {}), amdsTv: 1 }, '', '/');
+    if (song) setStack([{ name: 'home' }, { name: 'detail', song, source: 'home' }]);
+  }, [isWeb, loading, songs]);
+
   const push = useCallback((screen) => setStack((s) => [...s, screen]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
 
@@ -201,15 +241,66 @@ export default function TvApp() {
   // Retour matériel/télécommande — un seul abonnement, dispatch selon la pile.
   const stackRef = useRef(stack);
   stackRef.current = stack;
-  useEffect(() => onBackPress(() => {
+  /** Un overlay ou l'écran courant a-t-il consommé le Retour ? (même ordre qu'avant) */
+  const consumeBack = useCallback(() => {
     // La recommandation de mise à jour est prioritaire sur tout (jamais de piège
     // au Back — équivalent de « Mais tarde »), suivie du panneau de réglages.
-    if (updateDialogOpenRef.current) { dismissRecommendedUpdate(); return; }
-    if (tvSettingsOpenRef.current) { closeTvSettings(); return; }
-    if (backInterceptorRef.current?.()) return; // l'écran courant a géré le Back
+    if (updateDialogOpenRef.current) { dismissRecommendedUpdate(); return true; }
+    if (tvSettingsOpenRef.current) { closeTvSettings(); return true; }
+    return Boolean(backInterceptorRef.current?.()); // l'écran courant a géré le Back
+  }, [closeTvSettings, dismissRecommendedUpdate]);
+  const handleBack = useCallback(() => {
+    if (consumeBack()) return;
     if (stackRef.current.length > 1) pop();
     else exitApp();
-  }), [pop, closeTvSettings, dismissRecommendedUpdate]);
+  }, [consumeBack, pop]);
+  // Dans un navigateur, seul Échap revient en arrière (pas Backspace).
+  useEffect(() => onBackPress(handleBack, { backspace: !isWeb }), [handleBack, isWeb]);
+
+  // ── Web : la pile d'écrans suit l'historique du navigateur ───────────────────
+  // Chaque écran empilé est une entrée d'historique (`amdsTv` = profondeur) ; seule la
+  // fiche change l'adresse. Le bouton Retour du navigateur dépile, comme Échap et le
+  // bouton « Voltar » ; « Suivant » n'est pas géré (on reste où l'on est).
+  const historyDepthRef = useRef(1);
+  const ignorePopRef = useRef(0);
+  useEffect(() => {
+    if (!isWeb) return;
+    const depth = stack.length;
+    const previous = historyDepthRef.current;
+    const state = (d) => ({ ...(window.history.state || {}), amdsTv: d });
+    if (depth > previous) {
+      for (let d = previous + 1; d <= depth; d += 1) window.history.pushState(state(d), '', screenUrl(stack[d - 1]));
+    } else if (depth < previous) {
+      ignorePopRef.current += 1;
+      window.history.go(depth - previous);
+    } else if (!initialSlugRef.current) {
+      window.history.replaceState(state(depth), '', screenUrl(stack[depth - 1]));
+    }
+    historyDepthRef.current = depth;
+  }, [isWeb, stack]);
+  useEffect(() => {
+    if (!isWeb) return undefined;
+    const onPopState = (event) => {
+      if (ignorePopRef.current > 0) { ignorePopRef.current -= 1; return; }
+      const target = Number(event.state?.amdsTv) || 1;
+      const depth = stackRef.current.length;
+      if (target === depth) return;
+      // « Suivant », ou Retour pendant un overlay (qui se ferme) : on revient à l'entrée
+      // de l'écran courant.
+      if (target > depth || consumeBack()) {
+        ignorePopRef.current += 1;
+        window.history.go(depth - target);
+        return;
+      }
+      historyDepthRef.current = target;
+      setStack((s) => s.slice(0, target));
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [isWeb, consumeBack]);
+
+  // Web : hors d'une fiche (qui pose le sien), le SEO est celui de l'accueil.
+  useSEO({ ...HOME_SEO, image: HOME_SEO_IMAGE, enabled: isWeb && top.name !== 'detail' });
 
   // Overlays plein écran (watch/karaoke) : on met la nav spatiale en pause pour
   // laisser flèches/OK au lecteur, puis on la réactive au retour.
@@ -501,6 +592,9 @@ export default function TvApp() {
           key={top.song.id}
           song={top.song}
           source={top.source || 'catalog'}
+          songs={songs}
+          web={isWeb}
+          onOpenRelated={(related) => push({ name: 'detail', song: related, source: top.source || 'catalog' })}
           getThumb={getThumb}
           festaPeople={festaSession ? festaPeopleNames.length : null}
           queue={localQueue}
@@ -630,7 +724,7 @@ export default function TvApp() {
       />
     );
   }, [
-    top, songs, getThumb, getHasKaraoke, push, openCatalog,
+    top, songs, getThumb, getHasKaraoke, push, openCatalog, isWeb,
     onChooseMode, startKaraoke, advanceFesta, startFesta,
     onChooseFesta, openKaraokeLanding, openClipsLanding,
     onRequestKaraoke, openSoloGrid, openDuetGrid, openFestaGrid,
@@ -656,8 +750,14 @@ export default function TvApp() {
 
   return (
     <TvStage>
-      <div className="tv-root">
+      <div className="tv-root" ref={rootRef} data-input={isWeb ? 'pointer' : undefined}>
         {content}
+        {/* Web : retour à la souris (Échap et le bouton Retour du navigateur font pareil). */}
+        {isWeb && stack.length > 1 && (
+          <button type="button" className="tv-web-back" onClick={handleBack} aria-label="Voltar">
+            <ArrowLeft size={22} aria-hidden="true" /> Voltar
+          </button>
+        )}
         {tvSettingsOpen && (
           <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} />
         )}

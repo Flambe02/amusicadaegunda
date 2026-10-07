@@ -12,6 +12,7 @@ import { useHomeSongs } from '@/hooks/useHomeSongs';
 import { markFirstScreenSettled } from '@/lib/firstScreen';
 import { removeBootPoster } from '@/lib/bootPoster';
 import { getInterface } from '@/lib/interface';
+import { HOME_SEO, HOME_SEO_IMAGE } from '@/config/homeSeo';
 
 const MOBILE_QUERY = '(max-width: 767px)';
 
@@ -117,18 +118,7 @@ export default function Home() {
   const showMobile = isMobileViewport && shell !== 'desktop';
   const showDesktop = shell == null || (shell === 'desktop' && !isMobileViewport);
 
-  useSEO({
-    title: 'A Musica da Segunda | Parodias Musicais e Humor Inteligente',
-    description: 'A Musica da Segunda - Nova musica toda segunda-feira! Parodias musicais inteligentes sobre as noticias do Brasil. Descubra humor e musica para sua semana.',
-    keywords: 'musica da segunda, parodias musicais, noticias do brasil, musica brasileira, descoberta musical, nova musica toda segunda, parodias inteligentes',
-    image: currentSong?.cover_image || 'https://www.amusicadasegunda.com/images/og-caipivara-1200x630.jpg',
-    url: '/',
-    type: 'website',
-    // SEO fix: disable video indexing on homepage.
-    // Homepage is not a dedicated watch page for a single stable video.
-    // Keep max-video-preview:0 here.
-    robots: 'index, follow, max-video-preview:0'
-  });
+  useSEO({ ...HOME_SEO, image: currentSong?.cover_image || HOME_SEO_IMAGE });
 
   // VideoObject JSON-LD intentionally removed from homepage.
   // Google expects a dedicated watch page with a single canonical video.

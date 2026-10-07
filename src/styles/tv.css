@@ -593,3 +593,16 @@ html.tv-mode, html.tv-mode body, html.tv-mode #root {
   letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.5);
 }
 .tv-opt-switch.is-on > span { left: 27px; }
+
+/* ── Interface grand écran sur ordinateur (TvApp `web`) ─────────────────────── */
+/* Retour à la souris — absent de la box TV. */
+.tv-web-back {
+  /* En haut à gauche, dans la marge au-dessus du logo : ne recouvre aucun contenu. */
+  position: absolute; left: 28px; top: 14px; z-index: 10050;
+  display: inline-flex; align-items: center; gap: 10px;
+  height: 46px; padding: 0 20px; border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22); background: rgba(10, 10, 14, 0.72);
+  color: #fff; font-size: 20px; font-weight: 800; cursor: pointer;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out;
+}
+.tv-web-back:hover, .tv-web-back:focus-visible { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.5); }

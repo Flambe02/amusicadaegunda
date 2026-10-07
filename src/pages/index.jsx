@@ -1,9 +1,11 @@
 import Layout from "./Layout.jsx";
 import { BrowserRouter as Router, Route, Routes, useLocation, Navigate, useParams, useNavigate } from 'react-router-dom';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { ROUTES } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useDeepLinks } from '@/utils/deepLinks';
+import { getInterface, isBigScreenUiEnabled } from '@/lib/interface';
+import { useInterfaceKind } from '@/hooks/useInterface';
 
 // Export PAGES pour backward compatibility avec Layout.jsx
 export { PAGES } from '@/config/routes';
@@ -37,10 +39,27 @@ function DeepLinkHandler() {
     return null;
 }
 
+// Interface grand écran (TV + ordinateur) : la même app que sur la box, chargée à part.
+const BigScreenApp = lazy(() => import('@/tv/TvApp'));
+// Les routes qu'elle sert sur ordinateur. Toutes les autres (dont /apprendre) gardent
+// leur page actuelle.
+const BIG_SCREEN_SONG = /^\/musica\/([^/]+)\/?$/;
+const isBigScreenRoute = (pathname) => pathname === '/' || BIG_SCREEN_SONG.test(pathname);
+
 // Create a wrapper component that uses useLocation inside the Router context
 function PagesContent() {
     const location = useLocation();
     const gaTimer = useRef(null);
+
+    // Ordinateur + `?ui=bigscreen` (mémorisé) : l'accueil et la fiche chanson passent par
+    // l'interface grand écran. Sans le drapeau, l'ancien desktop reste l'interface par
+    // défaut. Jamais sur téléphone ; la box TV, elle, monte TvApp directement (App.jsx).
+    const interfaceKind = useInterfaceKind();
+    const [bigScreenUi] = useState(() => isBigScreenUiEnabled() && !getInterface().tv);
+    // Adresse d'arrivée : /musica/<slug>/ ouvre directement la fiche.
+    const [bigScreenWeb] = useState(() => ({
+        initialSlug: BIG_SCREEN_SONG.exec(window.location.pathname)?.[1] || null,
+    }));
 
     useEffect(() => {
         if (typeof window.gtag !== 'function') return;
@@ -71,6 +90,14 @@ function PagesContent() {
     // (olive sidebar, branding card, countdown, mobile bottom nav). We split the
     // route tree here so the public shell is never mounted on /admin/*.
     const isAdminRoute = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+
+    if (bigScreenUi && interfaceKind === 'bigscreen' && isBigScreenRoute(location.pathname)) {
+        return (
+            <Suspense fallback={<div style={{ position: 'fixed', inset: 0, background: '#05070c' }} />}>
+                <BigScreenApp web={bigScreenWeb} />
+            </Suspense>
+        );
+    }
 
     if (isAdminRoute) {
         const AdminComponent = ROUTES.find((r) => r.path === '/admin')?.component;

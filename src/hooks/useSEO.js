@@ -152,5 +152,5 @@ export function useSEO({
     } catch (error) {
       console.error('Erro ao atualizar SEO:', error);
     }
-  }, [documentTitle, fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type, robots, defaultImage]);
+  }, [documentTitle, fullTitle, fullDescription, fullKeywords, fullImage, fullUrl, type, robots, defaultImage, enabled]);
 }

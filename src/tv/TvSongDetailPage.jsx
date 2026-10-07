@@ -18,6 +18,9 @@ import TvContextOverlay from './components/TvContextOverlay';
 import TvToast from './components/TvToast';
 import TvBottomInteractionBar from './components/TvBottomInteractionBar';
 import FocusableButton from './components/FocusableButton';
+import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
+import { SONG_CATEGORY_LABELS, useSongSEO } from '@/hooks/useSongSEO';
+import { titleToSlug } from '@/lib/utils';
 import '@/styles/tv-song-detail.css';
 
 // Codes d'erreur runtime du player YouTube (embedding désactivé, retirée…).
@@ -29,6 +32,29 @@ function formatDuration(seconds) {
 }
 
 const ACTIVE_BY_SOURCE = { home: 'inicio', catalog: 'catalogo', karaoke: 'karaoke', festa: 'festa' };
+
+const slugOf = (item) => item?.slug || titleToSlug(item?.title) || '';
+
+/**
+ * Une chanson liée : focalisable au D-pad comme tout le reste. Sur le web c'est un vrai
+ * lien `/musica/<slug>/` (pour les robots) ; le clic reste dans l'app.
+ */
+function RelatedSong({ song, index, web, onOpen }) {
+  const { ref, focused } = useFocusable({ focusKey: `DETAIL_RELATED_${index}`, onEnterPress: () => onOpen(song) });
+  const className = `tvd-related-item ${focused ? 'is-focused' : ''}`;
+  if (web) {
+    return (
+      <a ref={ref} href={`/musica/${slugOf(song)}/`} className={className} onClick={(event) => { event.preventDefault(); onOpen(song); }}>
+        {song.title}
+      </a>
+    );
+  }
+  return (
+    <button ref={ref} type="button" className={className} onClick={() => onOpen(song)}>
+      {song.title}
+    </button>
+  );
+}
 
 /**
  * Fiche chanson TV « song-first » — l'écran de DÉCISION. Conheça a música. Entenda a
@@ -43,6 +69,7 @@ const ACTIVE_BY_SOURCE = { home: 'inicio', catalog: 'catalogo', karaoke: 'karaok
  */
 export default function TvSongDetailPage({
   song, source = 'catalog', getThumb,
+  songs = [], web = false, onOpenRelated,
   festaPeople = null, queue = [],
   onStartKaraoke, onAddToQueue,
   onGoHome, onOpenCatalog, onOpenKaraoke, onOpenFesta, onOpenSettings, onConnectPhone,
@@ -50,6 +77,18 @@ export default function TvSongDetailPage({
 }) {
   const manifest = useTvArtworkManifest();
   const vm = useMemo(() => toTvSong(song), [song]);
+
+  // Web : mêmes balises et même JSON-LD que la page /musica/:slug (useSongSEO).
+  useSongSEO({ song, slug: slugOf(song), enabled: web });
+
+  // Chansons liées : même catégorie, sans celle-ci, 4 au plus (comme la page chanson).
+  const related = useMemo(
+    () => (song?.category && onOpenRelated
+      ? songs.filter((item) => item.category === song.category && item.id !== song.id).slice(0, 4)
+      : []),
+    [songs, song, onOpenRelated]
+  );
+  const categoryLabel = song?.category ? SONG_CATEGORY_LABELS[song.category] || null : null;
   const festaActive = typeof festaPeople === 'number';
 
   useEffect(() => {
@@ -344,6 +383,19 @@ export default function TvSongDetailPage({
         onContext={openContext}
         onTeaser={() => startTeaser('DETAIL_CLIPE')}
       />
+
+      {(related.length > 0 || (web && categoryLabel)) && (
+        <div className="tvd-related">
+          <span className="tvd-related-h">
+            {web && categoryLabel ? (
+              <>Mais de <a className="tvd-related-cat" href={`/categoria/${song.category}/`}>{categoryLabel}</a></>
+            ) : 'Do mesmo tema'}
+          </span>
+          {related.map((item, index) => (
+            <RelatedSong key={item.id} song={item} index={index} web={web} onOpen={onOpenRelated} />
+          ))}
+        </div>
+      )}
 
       {!vm.isSingable && (
         <p className="tvd-unavailable">Karaokê temporariamente indisponível — o contexto e a letra continuam disponíveis.</p>
