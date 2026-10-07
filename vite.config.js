@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 import { buildCurrentSongBootUrl } from './src/api/songColumns.js'
 import { resolveSupabasePublicConfig } from './src/lib/supabasePublicConfig.js'
+import { detectInterface } from './src/lib/interfaceRule.js'
 
 // index.html demande la chanson de la semaine AVANT le JavaScript de l'app (bloc
 // « amds-boot ») : l'adresse de cette requête est écrite ici, à partir des mêmes
@@ -13,7 +14,11 @@ function amdsBootPlugin(mode) {
     transformIndexHtml(html) {
       const env = { ...process.env, ...loadEnv(mode, process.cwd(), 'VITE_') }
       const { url, key } = resolveSupabasePublicConfig(env)
-      return html.replace('__AMDS_BOOT_CURRENT_SONG_URL__', buildCurrentSongBootUrl(url, key))
+      // La règle d'interface (mobile / grand écran) : le texte même de la fonction de
+      // l'app, pour qu'index.html et React ne puissent jamais diverger.
+      return html
+        .replace('__AMDS_BOOT_CURRENT_SONG_URL__', buildCurrentSongBootUrl(url, key))
+        .replace('__AMDS_DETECT_INTERFACE__', `(${detectInterface.toString()})`)
     },
   }
 }

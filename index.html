@@ -26,6 +26,12 @@
       (function () {
         try {
           if (window.location.pathname !== '/' || typeof window.fetch !== 'function') return;
+          // Quelle interface ? La même fonction que l'app (src/lib/interfaceRule.js,
+          // recopiée ici au build) : la miniature du feed n'est peinte que si l'app
+          // va réellement monter le feed — jamais sur TV, même forcée par ?tv=1.
+          var ui = __AMDS_DETECT_INTERFACE__(window);
+          // L'app TV charge son propre catalogue : rien à préparer ici.
+          if (ui.tv) return;
           var boot = (window.__AMDS_BOOT__ = { t: Date.now(), song: null });
           var add = function (tag, attributes) {
             var element = document.createElement(tag);
@@ -35,8 +41,7 @@
             document.head.appendChild(element);
           };
           var prepare = function (song) {
-            var phone = window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
-            if (!song || !phone) return;
+            if (!song || ui.kind !== 'mobile') return;
             var short = /\/shorts\/([\w-]{11})/.exec(song.youtube_music_url || '');
             var search = window.location.search;
             if (short && search.indexOf('musica=') === -1 && search.indexOf('ouvir=') === -1) {

@@ -11,13 +11,13 @@ import { CURRENT_SONG_ARTWORK } from '@/generated/currentSongArtwork';
 import { useHomeSongs } from '@/hooks/useHomeSongs';
 import { isFirstScreenSettled, markFirstScreenSettled, onFirstScreenSettled } from '@/lib/firstScreen';
 import { removeBootPoster } from '@/lib/bootPoster';
+import { getInterface } from '@/lib/interface';
 
 const MOBILE_QUERY = '(max-width: 767px)';
 
+// La même règle que celle d'index.html (qui peint la miniature du feed avant React).
 function matchesMobile() {
-  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-    ? window.matchMedia(MOBILE_QUERY).matches
-    : false;
+  return getInterface().kind === 'mobile';
 }
 
 // Accueil desktop : hors du JavaScript initial. Sur un écran desktop, son
@@ -102,7 +102,7 @@ export default function Home() {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(MOBILE_QUERY);
-    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+    const updateViewport = () => setIsMobileViewport(matchesMobile());
     updateViewport();
     mediaQuery.addEventListener?.('change', updateViewport);
     return () => mediaQuery.removeEventListener?.('change', updateViewport);

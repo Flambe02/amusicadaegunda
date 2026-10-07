@@ -1,23 +1,16 @@
-import { Capacitor } from '@capacitor/core';
+import { getInterface } from '@/lib/interface';
 
-// Marqueurs d'agents utilisateur « 10-foot » (Android TV, Google TV, Fire TV,
-// Tizen, webOS, etc.). Volontairement large — un faux positif tablette est
-// acceptable (l'UI TV reste cliquable au doigt), cf. décision produit.
-const TV_UA = /(SmartTV|Smart-TV|GoogleTV|Google TV|Android ?TV|AFT[A-Z]|BRAVIA|AQUOS|Web0S|WebOS|Tizen|HbbTV|NetCast|VIDAA|Roku|CrKey|\bTV\b)/i;
-
-// Override manuel pour tester au navigateur / à l'émulateur : ?tv=1 (ou ?tv=0).
-function tvOverride() {
-  try {
-    const p = new URLSearchParams(window.location.search);
-    if (p.get('tv') === '1') { localStorage.setItem('force-tv', '1'); return true; }
-    if (p.get('tv') === '0') { localStorage.removeItem('force-tv'); return false; }
-    return localStorage.getItem('force-tv') === '1';
-  } catch { return false; }
-}
+// La règle (agents utilisateur « 10-foot », choix manuel `?tv=1` / `?tv=0` / `?tv=auto`,
+// filet Android sans tactile) vit dans src/lib/interfaceRule.js : `index.html` l'applique
+// lui aussi, avant React, et les deux doivent toujours être d'accord. Le marqueur est
+// volontairement large — un faux positif tablette est acceptable (l'UI TV reste
+// cliquable au doigt), cf. décision produit ; `?tv=0` permet désormais d'en sortir.
 
 /**
  * Détecte un environnement « 10-foot » (télécommande, salon).
- * Priorité : override → UA TV → Android natif sans tactile ET écran large-paysage.
+ * Priorité : choix manuel → UA TV → Android natif sans tactile ET écran large-paysage.
+ * (Le signal FIABLE est le tag UA « AndroidTV » posé nativement par MainActivity. Le
+ * filet ne teste PAS `ontouchstart` : présent dans la WebView Android même sur une TV.)
  *
  * ⚠️ GARDE-FOU CRITIQUE : ce flag bascule TOUTE l'app (mobile/desktop publiés inclus)
  * vers l'écran TV — un faux positif sur un vrai téléphone remplacerait l'app par un
@@ -28,24 +21,7 @@ function tvOverride() {
  */
 export function isTV() {
   if (typeof window === 'undefined') return false;
-  if (tvOverride()) return true;
-
-  const ua = navigator.userAgent || '';
-  if (TV_UA.test(ua)) return true;
-
-  // Filet de sécurité (le signal FIABLE est le tag UA « AndroidTV » posé nativement par
-  // MainActivity, capté ci-dessus par TV_UA). Ici : Android natif SANS pointeur tactile
-  // ET écran large paysage. ⚠️ On NE teste PAS `ontouchstart` : il est présent dans la
-  // WebView Android même sur une TV sans écran tactile → il cassait la détection.
-  // maxTouchPoints=0 (aucun doigt réel) + ≥960px paysage = profil TV ; un vrai téléphone
-  // a maxTouchPoints>0, une tablette tactile aussi.
-  let nativeAndroid = false;
-  try { nativeAndroid = Capacitor.getPlatform?.() === 'android'; } catch { /* web */ }
-  const noTouch = (navigator.maxTouchPoints || 0) === 0;
-  const wideLandscape = window.innerWidth >= 960 && window.innerWidth > window.innerHeight;
-  if (nativeAndroid && noTouch && wideLandscape) return true;
-
-  return false;
+  return getInterface().tv;
 }
 
 /** Pose (ou retire) html[data-device="tv"] — active le focus renforcé (a11y.css + tv.css). */
