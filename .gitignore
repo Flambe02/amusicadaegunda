@@ -93,3 +93,6 @@ local.properties
 
 # Résultats Playwright
 .playwright-results/
+
+# Sources haute définition des animations de la mascotte (trop lourdes pour le dépôt).
+design/mascot/source/

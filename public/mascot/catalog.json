@@ -1,0 +1,27 @@
+{
+  "//": "Animations de la mascotte téléchargées à la demande (jamais dans l'APK). Ajouter une animation : produire le MP4 (540x960, sans son) et son poster avec scripts/encode-mascot-clip.cjs, ajouter une entrée, déployer le site. type : dance | sing | idle. costume : identifiant rapproché de songs.mascot_costume. song : slug de la chanson (repli si la colonne est vide).",
+  "animations": [
+    {
+      "id": "bets-dance",
+      "type": "dance",
+      "costume": "bets",
+      "song": "bets-bets-bets",
+      "category": null,
+      "tier": "remote",
+      "loop": true,
+      "video": "caipivara-bets-dance.mp4",
+      "poster": "caipivara-bets-dance-poster.webp"
+    },
+    {
+      "id": "croissant-dance",
+      "type": "dance",
+      "costume": "croissant",
+      "song": "o-croissant",
+      "category": null,
+      "tier": "remote",
+      "loop": true,
+      "video": "caipivara-croissant-dance.mp4",
+      "poster": "caipivara-croissant-dance-poster.webp"
+    }
+  ]
+}
