@@ -1,0 +1,94 @@
+/* Fiche chanson grand écran — maquette design/bigscreen/02-ficha.png (scène 1920×1080). */
+
+.bs-song { overflow: hidden; }
+/* Fond : la miniature dessinée en 32×18 (BsBackdrop), étirée sur l'écran, sous un voile. */
+.bs-song-backdrop { position: absolute; left: -5%; top: -5%; width: 110%; height: 110%; opacity: 0.42; pointer-events: none; }
+.bs-song-veil {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(90% 80% at 50% 40%, rgba(15, 13, 9, 0.5), rgba(15, 13, 9, 0.9)),
+    linear-gradient(180deg, rgba(15, 13, 9, 0.75), rgba(15, 13, 9, 0.55) 40%, rgba(15, 13, 9, 0.92));
+}
+.bs-song-logo { position: absolute; right: var(--bs-pad-x); top: 52px; width: 48px; height: 48px; border-radius: 12px; z-index: 1; }
+/* Deux classes : cette règle doit l'emporter sur `.bs-scroll` (bs-base.css, chargé après). */
+.bs-scroll.bs-song-scroll { position: relative; padding-top: 132px; }
+
+.bs-song-top { display: flex; align-items: flex-start; gap: 64px; }
+.bs-song-main { flex: 1 1 auto; min-width: 0; }
+.bs-song-side { flex: 0 0 380px; width: 380px; }
+
+.bs-song-date {
+  margin: 0 0 12px; height: 24px; color: var(--bs-text-2);
+  font-size: 19px; line-height: 24px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.bs-song-title {
+  margin: 0 0 22px; height: 96px; font-family: var(--bs-font-title); font-weight: 400; color: #fff; letter-spacing: -0.01em;
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bs-song-title.is-xl, .bs-song-title.is-lg { font-size: 88px; line-height: 96px; -webkit-line-clamp: 1; }
+.bs-song-title.is-md { font-size: 62px; line-height: 96px; -webkit-line-clamp: 1; }
+.bs-song-title.is-sm { font-size: 44px; line-height: 48px; -webkit-line-clamp: 2; }
+.bs-song-context {
+  margin: 0; max-width: 960px; height: 76px; color: var(--bs-text);
+  font-size: 26px; line-height: 38px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.bs-song-context-more { height: 34px; margin: 4px 0 10px; display: flex; align-items: center; }
+.bs-song-actions { display: flex; align-items: center; gap: 22px; margin-top: 28px; }
+.bs-song-cantar { height: 80px; padding: 0 44px; }
+
+.bs-refrain {
+  display: flex; align-items: center; gap: 34px; margin-top: 38px; height: 132px; padding: 0 34px;
+  border-radius: 24px; border: 1.5px solid var(--bs-surface-2); background: rgba(15, 13, 9, 0.62);
+}
+.bs-refrain-label {
+  flex: 0 0 auto; color: var(--bs-gold); font-size: 17px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap;
+}
+.bs-refrain-text {
+  margin: 0; color: var(--bs-text); font-size: 27px; line-height: 39px; font-weight: 600;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+
+/* ── Affiche (et prévia du clip dans le même cadre) ─────────────────────────── */
+.bs-song-visual.tvd-visual {
+  flex: none; width: 380px; height: 520px; border-radius: 24px; border: 0;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+.bs-song-visual .tvd-visual-art { position: absolute; inset: 0; }
+.bs-song-poster { width: 100%; height: 100%; }
+.bs-song-visual .tvd-visual-art .bs-poster img { transform: none; width: 100%; height: 100%; object-fit: cover; }
+.bs-song-links { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+.bs-song-links .bs-btn-small:not(.bs-btn-round) { flex: 1 1 0; padding: 0; }
+
+/* ── Do mesmo tema ────────────────────────────────────────────────────────── */
+.bs-related { margin-top: 44px; }
+.bs-related-heading { font-size: 28px; }
+.bs-related-cards { display: flex; gap: 24px; }
+.bs-related-card {
+  flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 18px; height: 148px; padding: 0 16px;
+  border-radius: 22px; border: 1.5px solid var(--bs-surface-2); background: rgba(15, 13, 9, 0.62);
+  color: var(--bs-text); text-align: left; text-decoration: none; cursor: pointer; font-family: var(--bs-font);
+  scroll-margin: 80px 0 60px;
+}
+.bs-related-thumb { flex: 0 0 92px; width: 92px; height: 120px; border-radius: 12px; }
+.bs-related-text { min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.bs-related-title { font-size: 22px; font-weight: 700; line-height: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-related-meta { font-size: 18px; color: var(--bs-text-2); }
+
+.bs-visually-hidden {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* ── Painel « abrir no celular » (box TV) ───────────────────────────────────── */
+.bs-qr-overlay {
+  position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: rgba(8, 6, 4, 0.86);
+}
+.bs-qr-panel {
+  display: flex; flex-direction: column; align-items: center; gap: 26px; padding: 48px 64px;
+  border-radius: 32px; background: var(--bs-surface); border: 1.5px solid var(--bs-surface-2);
+}
+.bs-qr-title { margin: 0; font-family: var(--bs-font-title); font-weight: 400; font-size: 38px; color: #fff; }
+.bs-qr-code { padding: 22px; border-radius: 24px; background: var(--bs-qr-card); line-height: 0; }
+.bs-qr-hint { margin: 0; color: var(--bs-text-2); font-size: 24px; }

@@ -1,29 +1,33 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { Lightbulb, Calendar, Music, Quote, ChevronRight } from 'lucide-react';
+import { AlignLeft, Mic, Play, Share2 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId } from '@/lib/utils';
 import { resolveLyricsText } from '@/lib/lrc';
-import { useTvArtworkManifest, getTvCardArtwork } from './tvArtwork';
+import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import { toTvSong } from './lib/tvSongRepository';
 import { trackTv } from './lib/tvAnalytics';
-import TvTopNavigation from './components/TvTopNavigation';
+import { formatLongDate, formatShortDate, getBackdropUrl, getRefrain, getShortContext, titleScale } from './lib/bsSong';
 import TvSongVisualPanel from './components/TvSongVisualPanel';
+import BsPoster from './components/BsPoster';
+import BsBackdrop from './components/BsBackdrop';
 import { Song } from '@/api/entities';
 import { useFullSong } from '@/hooks/useFullSong';
-import TvSongMetadataRow from './components/TvSongMetadataRow';
-import TvWhySingDetailPanel from './components/TvWhySingDetailPanel';
-import TvSongActions from './components/TvSongActions';
 import TvModeSelectionOverlay from './components/TvModeSelectionOverlay';
 import TvFullLyricsOverlay from './components/TvFullLyricsOverlay';
 import TvContextOverlay from './components/TvContextOverlay';
 import TvToast from './components/TvToast';
-import TvBottomInteractionBar from './components/TvBottomInteractionBar';
 import FocusableButton from './components/FocusableButton';
+import FocusRow from './components/FocusRow';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
 import { SONG_CATEGORY_LABELS, useSongSEO } from '@/hooks/useSongSEO';
 import { titleToSlug } from '@/lib/utils';
 import '@/styles/tv-song-detail.css';
+import '@/styles/bs-song.css';
+
+// QR code (painel « abrir no celular » de la box) : chargé à la demande.
+const BsQrPanel = lazy(() => import('./components/BsQrPanel'));
+const SITE_URL = 'https://www.amusicadasegunda.com';
 
 // Codes d'erreur runtime du player YouTube (embedding désactivé, retirée…).
 const YT_BLOCKED_CODES = new Set([2, 5, 100, 101, 150]);
@@ -33,7 +37,6 @@ function formatDuration(seconds) {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
-const ACTIVE_BY_SOURCE = { home: 'inicio', catalog: 'catalogo', karaoke: 'karaoke', festa: 'festa' };
 
 const slugOf = (item) => item?.slug || titleToSlug(item?.title) || '';
 
@@ -43,17 +46,27 @@ const slugOf = (item) => item?.slug || titleToSlug(item?.title) || '';
  */
 function RelatedSong({ song, index, web, onOpen }) {
   const { ref, focused } = useFocusable({ focusKey: `DETAIL_RELATED_${index}`, onEnterPress: () => onOpen(song) });
-  const className = `tvd-related-item ${focused ? 'is-focused' : ''}`;
+  const vm = useMemo(() => toTvSong(song), [song]);
+  const className = `bs-related-card bs-focus ${focused ? 'is-focused' : ''}`;
+  const content = (
+    <>
+      <BsPoster song={song} className="bs-related-thumb" />
+      <span className="bs-related-text">
+        <span className="bs-related-title">{song.title}</span>
+        <span className="bs-related-meta">{vm.difficultyLabel} · {formatShortDate(vm.releaseDate)}</span>
+      </span>
+    </>
+  );
   if (web) {
     return (
       <a ref={ref} href={`/musica/${slugOf(song)}/`} className={className} onClick={(event) => { event.preventDefault(); onOpen(song); }}>
-        {song.title}
+        {content}
       </a>
     );
   }
   return (
     <button ref={ref} type="button" className={className} onClick={() => onOpen(song)}>
-      {song.title}
+      {content}
     </button>
   );
 }
@@ -71,16 +84,14 @@ function RelatedSong({ song, index, web, onOpen }) {
  */
 export default function TvSongDetailPage({
   song: listedSong, source = 'catalog', getThumb,
-  songs = [], web = false, onOpenRelated,
-  festaPeople = null, queue = [],
+  songs = [], web = false, onOpenRelated, playClip = false,
+  festaPeople = null,
   onStartKaraoke, onAddToQueue,
-  onGoHome, onOpenCatalog, onOpenKaraoke, onOpenFesta, onOpenSettings, onConnectPhone,
   backInterceptorRef,
 }) {
   // La letra de la liste arrive juste après le premier écran. Une fiche ouverte avant
   // (ou si cette requête a échoué) charge sa chanson complète pour sa prévia de letra.
   const { song } = useFullSong(listedSong, listedSong?.lyrics === undefined);
-  const manifest = useTvArtworkManifest();
   const vm = useMemo(() => toTvSong(song), [song]);
 
   // Web : mêmes balises et même JSON-LD que la page /musica/:slug (useSongSEO).
@@ -108,7 +119,6 @@ export default function TvSongDetailPage({
     if (!vm.isSingable) trackTv('tv_song_media_unavailable', { song_id: vm.id, source });
   }, [vm.id, vm.isSingable, source]);
 
-  const posterSrc = getTvCardArtwork(song, manifest, getThumb(song) || song?.cover_image);
   const teaserThumb = getThumb(song) || song?.cover_image || '';
   const videoId = extractYouTubeId(vm.videoTeaserUrl);
   const hasTeaser = Boolean(videoId);
@@ -322,112 +332,149 @@ export default function TvSongDetailPage({
     return () => { if (backInterceptorRef) backInterceptorRef.current = null; };
   }, [backInterceptorRef, playing, overlay, stopTeaser, closeOverlay]);
 
-  const queueCount = queue.length;
+  // ── Maquette : contexte en deux lignes, refrain, liens externes ────────────────
+  const shortContext = useMemo(() => getShortContext(song), [song]);
+  const fullContext = useMemo(() => (song?.description || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(), [song]);
+  const refrain = useMemo(() => getRefrain(song), [song]);
+  const hasLyrics = Boolean(resolveLyricsText(song).trim());
+  const pageUrl = `${SITE_URL}/musica/${slugOf(song)}/`;
+
+  // « Ver clipe » depuis l'accueil : la fiche s'ouvre et la prévia démarre, une fois.
+  const autoPlayedRef = useRef(false);
+  useEffect(() => {
+    if (!playClip || !hasTeaser || autoPlayedRef.current) return;
+    autoPlayedRef.current = true;
+    startTeaser('DETAIL_CLIPE');
+  }, [playClip, hasTeaser, startTeaser]);
+
+  // Liens externes : sur ordinateur, un nouvel onglet ; sur la box, un QR code à scanner
+  // (ouvrir un lien ferait sortir de l'app).
+  const [qr, setQr] = useState(null); // { title, url }
+  const openExternal = useCallback((title, url, focusKey) => {
+    if (!url) return;
+    if (web) { window.open(url, '_blank', 'noopener,noreferrer'); return; }
+    restoreFocusRef.current = focusKey;
+    setQr({ title, url });
+    setOverlay('qr');
+  }, [web]);
+  const share = useCallback(async () => {
+    if (!web) { openExternal('Compartilhar a música', pageUrl, 'DETAIL_SHARE'); return; }
+    try {
+      if (navigator.share) { await navigator.share({ title: `${vm.title} — A Música da Segunda`, url: pageUrl }); return; }
+      await navigator.clipboard.writeText(pageUrl);
+      setToast({ message: 'Link copiado', nonce: Date.now() });
+    } catch { /* partage annulé ou presse-papiers indisponible */ }
+  }, [web, openExternal, pageUrl, vm.title]);
 
   return (
-    <div className="tvd-page">
-      <TvTopNavigation
-        active={ACTIVE_BY_SOURCE[source] || 'catalogo'}
-        onInicio={onGoHome}
-        onCatalogo={onOpenCatalog}
-        onKaraoke={onOpenKaraoke}
-        onFesta={onOpenFesta}
-        onOpenSettings={onOpenSettings}
-        festaQueueCount={queueCount > 0 ? queueCount : null}
-      />
+    <div className="bs-screen bs-song">
+      {/* Fond : la miniature de l'affiche en 32×18, étirée (aucun filter: blur()). */}
+      <BsBackdrop src={getBackdropUrl(song)} className="bs-song-backdrop" />
+      <span className="bs-song-veil" aria-hidden="true" />
+      <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="bs-song-logo" />
 
-      <div className="tvd-body">
-        <TvSongVisualPanel
-          artSrc={posterSrc}
-          teaserThumb={teaserThumb}
-          durationLabel={durationLabel}
-          hasTeaser={hasTeaser}
-          playing={playing}
-          videoVisible={videoVisible}
-          error={Boolean(apiError) || blocked}
-          hostRef={hostRef}
-          progressRef={progressRef}
-          wrapRef={wrapRef}
-          focusHolderRef={focusHolderRef}
-          onStopTeaser={stopTeaser}
-          onPlayTeaser={() => startTeaser('DETAIL_TEASER')}
-        />
-
-        <div className="tvd-main">
-          <div className="tvd-identity">
-            <span className="tvd-type">{vm.songType}</span>
-            <h1 className="tvd-title">{vm.title}</h1>
-            {vm.shortPitch && <p className="tvd-pitch">{vm.shortPitch}</p>}
-          </div>
-
-          <TvSongMetadataRow vm={vm} />
-
-          <div className="tvd-editorial">
-            <div className="tvd-edit-block">
-              <h3 className="tvd-edit-h"><Lightbulb size={18} /> Conceito</h3>
-              <p className="tvd-edit-text">{vm.concept}</p>
-            </div>
-            <div className="tvd-edit-block">
-              <h3 className="tvd-edit-h tvd-edit-h-context"><Calendar size={18} /> Contexto</h3>
-              <p className="tvd-edit-text">{vm.context}</p>
-            </div>
-          </div>
-
-          <div className="tvd-lyric">
-            <div className="tvd-lyric-head">
-              <h3 className="tvd-lyric-h"><Music size={18} /> Prévia da letra</h3>
-              {vm.hasFullLyrics && (
-                <FocusableButton
-                  focusKey="DETAIL_LYRICS"
-                  className="tvd-lyric-btn"
-                  ariaLabel="Ver letra completa"
-                  onPress={openLyrics}
-                >
-                  Ver letra completa <ChevronRight size={16} />
+      <div className="bs-scroll bs-song-scroll">
+        <div className="bs-song-top">
+          <div className="bs-song-main">
+            {vm.releaseDate && <p className="bs-song-date">Lançada em {formatLongDate(vm.releaseDate)}</p>}
+            <h1 className={`bs-song-title is-${titleScale(vm.title)}`}>{vm.title}</h1>
+            <p className="bs-song-context">{shortContext}</p>
+            <div className="bs-song-context-more">
+              {hasContext && (
+                <FocusableButton focusKey="DETAIL_CONTEXT" className="bs-link bs-focus" ariaLabel="Ver contexto completo" onPress={openContext}>
+                  Ver contexto completo
                 </FocusableButton>
               )}
             </div>
-            <div className="tvd-lyric-quote">
-              <Quote size={22} className="tvd-lyric-qmark" aria-hidden="true" />
-              <div className="tvd-lyric-lines">
-                {vm.lyricPreviewLines.map((line, i) => (
-                  <span key={i} className="tvd-lyric-line">{line}</span>
-                ))}
-              </div>
+            <div className="bs-tags">
+              <span className="bs-tag">{vm.difficultyLabel}</span>
+              <span className="bs-tag">{vm.recommendedMode}</span>
             </div>
+            <FocusRow className="bs-song-actions" focusKey="DETAIL_ACTIONS">
+              {vm.isSingable && (
+                <FocusableButton focusKey="DETAIL_CANTAR" className="bs-btn bs-btn-primary bs-song-cantar bs-focus" onPress={onCantar}>
+                  <Mic size={28} aria-hidden="true" /> Cantar agora
+                </FocusableButton>
+              )}
+              {hasTeaser && (
+                <FocusableButton focusKey="DETAIL_CLIPE" className="bs-btn bs-focus" onPress={() => startTeaser('DETAIL_CLIPE')}>
+                  <Play size={20} aria-hidden="true" className="bs-icon-fill" /> Ver clipe
+                </FocusableButton>
+              )}
+              {hasLyrics && (
+                <FocusableButton focusKey="DETAIL_LYRICS" className="bs-btn bs-focus" onPress={openLyrics}>
+                  <AlignLeft size={22} aria-hidden="true" /> Letra completa
+                </FocusableButton>
+              )}
+            </FocusRow>
+
+            {/* Hauteur fixe : la letra arrive après le résumé, rien ne bouge quand elle arrive. */}
+            <div className="bs-refrain">
+              {refrain && (
+                <>
+                  <span className="bs-refrain-label">{refrain.kind === 'refrain' ? 'O refrão' : 'Trecho da letra'}</span>
+                  <p className="bs-refrain-text">{refrain.lines.join(' / ')}</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="bs-song-side">
+            <TvSongVisualPanel
+              className="bs-song-visual"
+              poster={<BsPoster song={song} className="bs-song-poster" eager />}
+              showTeaserStrip={false}
+              teaserThumb={teaserThumb}
+              durationLabel={durationLabel}
+              hasTeaser={hasTeaser}
+              playing={playing}
+              videoVisible={videoVisible}
+              error={Boolean(apiError) || blocked}
+              hostRef={hostRef}
+              progressRef={progressRef}
+              wrapRef={wrapRef}
+              focusHolderRef={focusHolderRef}
+              onStopTeaser={stopTeaser}
+              onPlayTeaser={() => startTeaser('DETAIL_CLIPE')}
+            />
+            <FocusRow className="bs-song-links" focusKey="DETAIL_LINKS">
+              {song?.spotify_url && (
+                <FocusableButton focusKey="DETAIL_SPOTIFY" className="bs-btn bs-btn-small bs-focus" ariaLabel="Ouvir no Spotify" onPress={() => openExternal('Ouvir no Spotify', song.spotify_url, 'DETAIL_SPOTIFY')}>
+                  Spotify
+                </FocusableButton>
+              )}
+              {song?.youtube_url && (
+                <FocusableButton focusKey="DETAIL_YTMUSIC" className="bs-btn bs-btn-small bs-focus" ariaLabel="Ouvir no YouTube Music" onPress={() => openExternal('Ouvir no YouTube Music', song.youtube_url, 'DETAIL_YTMUSIC')}>
+                  YT Music
+                </FocusableButton>
+              )}
+              <FocusableButton focusKey="DETAIL_SHARE" className="bs-btn bs-btn-small bs-btn-round bs-focus" ariaLabel="Compartilhar" onPress={share}>
+                <Share2 size={22} aria-hidden="true" />
+              </FocusableButton>
+            </FocusRow>
           </div>
         </div>
 
-        <TvWhySingDetailPanel vm={vm} />
+        {related.length > 0 && (
+          <section className="bs-related" aria-label="Do mesmo tema">
+            <header className="bs-rail-head">
+              <h2 className="bs-rail-title bs-related-heading">Do mesmo tema</h2>
+              {web && categoryLabel && (
+                <a className="bs-link bs-rail-action" href={`/categoria/${song.category}/`}>Mais de {categoryLabel}</a>
+              )}
+            </header>
+            <FocusRow className="bs-related-cards" focusKey="DETAIL_RELATED">
+              {related.map((item, index) => (
+                <RelatedSong key={item.id} song={item} index={index} web={web} onOpen={onOpenRelated} />
+              ))}
+            </FocusRow>
+          </section>
+        )}
+
+        {/* Web : la description complète reste dans le DOM (lecteurs d'écran, robots) —
+            c'est le texte que « Ver contexto completo » affiche. */}
+        {web && fullContext && <p className="bs-visually-hidden">{fullContext}</p>}
       </div>
-
-      <TvSongActions
-        hasContext={hasContext}
-        hasTeaser={hasTeaser}
-        canSing={vm.isSingable}
-        onCantar={onCantar}
-        onContext={openContext}
-        onTeaser={() => startTeaser('DETAIL_CLIPE')}
-      />
-
-      {(related.length > 0 || (web && categoryLabel)) && (
-        <div className="tvd-related">
-          <span className="tvd-related-h">
-            {web && categoryLabel ? (
-              <>Mais de <a className="tvd-related-cat" href={`/categoria/${song.category}/`}>{categoryLabel}</a></>
-            ) : 'Do mesmo tema'}
-          </span>
-          {related.map((item, index) => (
-            <RelatedSong key={item.id} song={item} index={index} web={web} onOpen={onOpenRelated} />
-          ))}
-        </div>
-      )}
-
-      {!vm.isSingable && (
-        <p className="tvd-unavailable">Karaokê temporariamente indisponível — o contexto e a letra continuam disponíveis.</p>
-      )}
-
-      <TvBottomInteractionBar onConnectPhone={onConnectPhone} />
 
       <TvToast message={toast.message} nonce={toast.nonce} onDone={() => setToast({ message: '', nonce: 0 })} />
 
@@ -435,10 +482,15 @@ export default function TvSongDetailPage({
         <TvModeSelectionOverlay modes={relevantModes} onSelect={startMode} onClose={closeOverlay} />
       )}
       {overlay === 'context' && (
-        <TvContextOverlay title={vm.title} text={(song?.description || '').replace(/\s+/g, ' ').trim()} onClose={closeOverlay} />
+        <TvContextOverlay title={vm.title} text={fullContext} onClose={closeOverlay} />
       )}
       {overlay === 'lyrics' && (
         <TvFullLyricsOverlay title={vm.title} lyrics={resolveLyricsText(song)} onClose={closeOverlay} />
+      )}
+      {overlay === 'qr' && qr && (
+        <Suspense fallback={null}>
+          <BsQrPanel title={qr.title} url={qr.url} onClose={closeOverlay} />
+        </Suspense>
       )}
     </div>
   );

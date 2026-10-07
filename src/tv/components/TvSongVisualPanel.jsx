@@ -62,19 +62,23 @@ export default function TvSongVisualPanel({
   artSrc, teaserThumb, durationLabel, hasTeaser,
   playing, videoVisible, error, hostRef, progressRef, onPlayTeaser,
   wrapRef, focusHolderRef, onStopTeaser,
+  poster = null, showTeaserStrip = true, className = '',
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showPlayer = playing && !error;
 
   return (
-    <section className="tvd-visual">
+    <section className={`tvd-visual ${className}`}>
       {/* L'affiche ne se démonte jamais : le lecteur vient par-dessus, puis apparaît. */}
+      {/* `poster` : l'affiche fournie par la fiche (refonte 2026-10) ; sinon l'ancienne. */}
+      {poster ? <div className="tvd-visual-art">{poster}</div> : (
       <div className="tvd-visual-art">
         {artSrc && !imgFailed
           ? <img src={artSrc} alt="" decoding="async" onError={() => setImgFailed(true)} />
           : <div className="tvd-visual-fallback"><img src={BRAND_SQUARE_LARGE} alt="" /></div>}
         <div className="tvd-visual-art-scrim" aria-hidden="true" />
       </div>
+      )}
       {showPlayer ? (
         <>
           {/* Puits de focus HORS de l'iframe — jamais l'iframe comme élément actif. */}
@@ -99,7 +103,7 @@ export default function TvSongVisualPanel({
           {error && playing && (
             <p className="tvd-visual-error">Vídeo indisponível para reprodução aqui.</p>
           )}
-          {hasTeaser && (
+          {hasTeaser && showTeaserStrip && (
             <TeaserStrip thumb={teaserThumb} durationLabel={durationLabel} onPress={onPlayTeaser} />
           )}
         </>

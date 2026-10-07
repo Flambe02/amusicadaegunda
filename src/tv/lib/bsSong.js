@@ -71,7 +71,10 @@ export function getRefrain(song, maxLines = 3) {
   const text = resolveLyricsText(song).replace(/\r/g, '');
   if (!text.trim()) return null;
   const stanzas = text.split(/\n\s*\n/).map((block) => block.split('\n').map((line) => line.trim()).filter(Boolean)).filter((lines) => lines.length);
-  const sung = (lines) => lines.filter((line) => !SECTION_MARKER.test(line));
+  // Lignes chantées, sans les balises de section ni les répétitions immédiates d'une ligne.
+  const sung = (lines) => lines
+    .filter((line) => !SECTION_MARKER.test(line))
+    .filter((line, index, all) => index === 0 || line.toLowerCase() !== all[index - 1].toLowerCase());
 
   // 1. Strophe balisée.
   for (const lines of stanzas) {

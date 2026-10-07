@@ -677,18 +677,12 @@ export default function TvApp({ web = null }) {
           source={top.source || 'catalog'}
           songs={songs}
           web={isWeb}
+          playClip={Boolean(top.playClip)}
           onOpenRelated={(related) => push({ name: 'detail', song: related, source: top.source || 'catalog' })}
           getThumb={getThumb}
           festaPeople={festaSession ? festaPeopleNames.length : null}
-          queue={localQueue}
           onStartKaraoke={startKaraoke}
           onAddToQueue={addToQueue}
-          onGoHome={goHome}
-          onOpenCatalog={openCatalog}
-          onOpenKaraoke={openKaraokeLanding}
-          onOpenFesta={onChooseFesta}
-          onOpenSettings={openTvSettings}
-          onConnectPhone={onChooseFesta}
           backInterceptorRef={backInterceptorRef}
         />
       );
