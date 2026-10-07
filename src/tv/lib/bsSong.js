@@ -128,11 +128,21 @@ export function getBackdropUrl(song) {
   return id ? `https://i.ytimg.com/vi/${id}/default.jpg` : null;
 }
 
-/** Taille du grand titre selon sa longueur : une ligne tant que possible. */
-export function titleScale(title) {
-  const length = String(title || '').length;
-  if (length <= 14) return 'xl';
-  if (length <= 22) return 'lg';
-  if (length <= 34) return 'md';
-  return 'sm';
+// Largeur moyenne d'un caractère d'Archivo Black, en fraction du corps (mesurée sur les
+// titres du catalogue : « Bets Bets Bets » fait 820 px à 104 px).
+const TITLE_CHAR_EM = 0.6;
+
+/**
+ * Corps du grand titre pour qu'il tienne dans `width` pixels : une ligne tant que le
+ * corps reste lisible, sinon deux lignes. La hauteur du bloc titre ne change jamais
+ * (`boxHeight`), donc rien ne bouge autour.
+ * @returns {{ fontSize: number, lines: 1|2, lineHeight: number }}
+ */
+export function fitTitle(title, width, { max = 104, boxHeight = 104, minOneLine = 54 } = {}) {
+  const length = Math.max(1, String(title || '').trim().length);
+  const oneLine = Math.floor(width / (length * TITLE_CHAR_EM));
+  if (oneLine >= minOneLine) return { fontSize: Math.min(max, oneLine), lines: 1, lineHeight: boxHeight };
+  const twoLines = Math.floor(width / (Math.ceil(length / 2 + 2) * TITLE_CHAR_EM));
+  const fontSize = Math.max(28, Math.min(Math.floor(boxHeight / 2) - 4, twoLines));
+  return { fontSize, lines: 2, lineHeight: Math.floor(boxHeight / 2) };
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatLongDate, formatShortDate, formatWeekdayDate, getBackdropUrl, getPosterCandidates,
-  getRefrain, getShortContext, titleScale,
+  fitTitle, getRefrain, getShortContext,
 } from '../bsSong';
 
 describe('bsSong — dates en portugais', () => {
@@ -78,9 +78,13 @@ describe('bsSong — affiches et fond', () => {
     expect(getBackdropUrl({})).toBeNull();
   });
 
-  it('the title size follows its length', () => {
-    expect(titleScale('Bets Bets Bets')).toBe('xl');
-    expect(titleScale('Tá Chovendo de Novo')).toBe('lg');
-    expect(titleScale('Doze no Bolo, Trinta e Sete no Papel')).toBe('sm');
+  it('the title fits its block: one line when it can, two smaller lines when it cannot', () => {
+    expect(fitTitle('Bets Bets Bets', 867)).toEqual({ fontSize: 103, lines: 1, lineHeight: 104 });
+    expect(fitTitle('Bets Bets Bets', 675).lines).toBe(1);
+    expect(fitTitle('Bets Bets Bets', 675).fontSize).toBeLessThan(90);
+    const long = fitTitle('Doze no Bolo, Trinta e Sete no Papel', 867);
+    expect(long.lines).toBe(2);
+    expect(long.fontSize * 2).toBeLessThanOrEqual(104);
+    expect(fitTitle('Itau', 867).fontSize).toBe(104);
   });
 });

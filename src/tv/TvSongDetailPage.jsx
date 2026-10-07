@@ -7,7 +7,8 @@ import { resolveLyricsText } from '@/lib/lrc';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import { toTvSong } from './lib/tvSongRepository';
 import { trackTv } from './lib/tvAnalytics';
-import { formatLongDate, formatShortDate, getBackdropUrl, getRefrain, getShortContext, titleScale } from './lib/bsSong';
+import { fitTitle, formatLongDate, formatShortDate, getBackdropUrl, getRefrain, getShortContext } from './lib/bsSong';
+import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import TvSongVisualPanel from './components/TvSongVisualPanel';
 import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
@@ -338,6 +339,9 @@ export default function TvSongDetailPage({
   const refrain = useMemo(() => getRefrain(song), [song]);
   const hasLyrics = Boolean(resolveLyricsText(song).trim());
   const pageUrl = `${SITE_URL}/musica/${slugOf(song)}/`;
+  // Le titre tient dans la colonne de gauche : scène − marges − affiche (380) − écart (64).
+  const stageWidth = useTvStageWidth() || TV_STAGE_WIDTH;
+  const titleFit = fitTitle(vm.title, stageWidth - 96 * 2 - 380 - 64, { max: 88, boxHeight: 96, minOneLine: 50 });
 
   // « Ver clipe » depuis l'accueil : la fiche s'ouvre et la prévia démarre, une fois.
   const autoPlayedRef = useRef(false);
@@ -377,7 +381,7 @@ export default function TvSongDetailPage({
         <div className="bs-song-top">
           <div className="bs-song-main">
             {vm.releaseDate && <p className="bs-song-date">Lançada em {formatLongDate(vm.releaseDate)}</p>}
-            <h1 className={`bs-song-title is-${titleScale(vm.title)}`}>{vm.title}</h1>
+            <h1 className="bs-song-title" style={{ fontSize: titleFit.fontSize, lineHeight: `${titleFit.lineHeight}px`, WebkitLineClamp: titleFit.lines }}>{vm.title}</h1>
             <p className="bs-song-context">{shortContext}</p>
             <div className="bs-song-context-more">
               {hasContext && (

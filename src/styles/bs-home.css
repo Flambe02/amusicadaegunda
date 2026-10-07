@@ -37,10 +37,12 @@
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
 }
 .bs-hero-title { height: 104px; }
-.bs-hero-title.is-xl { font-size: 104px; line-height: 104px; -webkit-line-clamp: 1; }
-.bs-hero-title.is-lg { font-size: 72px; line-height: 104px; -webkit-line-clamp: 1; }
-.bs-hero-title.is-md { font-size: 50px; line-height: 52px; }
-.bs-hero-title.is-sm { font-size: 40px; line-height: 52px; }
+/* Écran plus étroit que 1920 : boutons compacts (le corps du titre est calculé en JS). */
+.bs-hero.is-compact .bs-hero-actions { gap: 12px; }
+.bs-hero.is-compact .bs-btn { height: 60px; padding: 0 22px; font-size: 21px; gap: 10px; }
+.bs-hero.is-compact .bs-btn-primary { height: 72px; padding: 0 30px; font-size: 24px; }
+.bs-btn svg { flex: none; }
+.bs-btn { flex-shrink: 0; }
 .bs-hero-context {
   margin: 0 0 22px; max-width: 720px; height: 76px; color: var(--bs-text);
   font-size: 27px; line-height: 38px; font-weight: 400;

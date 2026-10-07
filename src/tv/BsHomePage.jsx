@@ -8,7 +8,7 @@ import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import { toTvSong } from './lib/tvSongRepository';
-import { formatShortDate, formatWeekdayDate, getBackdropUrl, getShortContext, titleScale } from './lib/bsSong';
+import { fitTitle, formatShortDate, formatWeekdayDate, getBackdropUrl, getShortContext } from './lib/bsSong';
 import '@/styles/bs-home.css';
 
 // Une carte de rangée : 195 px d'affiche + 24 px d'écart (maquette : 8 cartes en 1920).
@@ -113,6 +113,12 @@ export default function BsHomePage({
   }
 
   const backdrop = getBackdropUrl(week.raw);
+  // Sur une scène plus étroite que 1920 (ordinateur 16:10, 4:3), le bloc se resserre :
+  // boutons compacts, puis affiche masquée — le titre garde toute sa place.
+  const width = stageWidth || TV_STAGE_WIDTH;
+  const compact = width < 1900;
+  const showPoster = width >= 1700;
+  const title = fitTitle(week.title, width - SIDE_PADDING * 2 - 448 - 40 - 64 - 56 - (showPoster ? 213 + 40 : 0));
   const heroFocus = (key) => () => onCardFocusKey?.(key);
 
   return (
@@ -120,7 +126,7 @@ export default function BsHomePage({
       {nav}
       <div className="bs-scroll">
         <div className="bs-top">
-          <section className="bs-hero" aria-label="Música da semana">
+          <section className={`bs-hero ${compact ? 'is-compact' : ''}`} aria-label="Música da semana">
             {/* Fond flouté sans filter: blur() : miniature dessinée en 32×18 puis étirée. */}
             <BsBackdrop src={backdrop} className="bs-hero-backdrop" />
             <span className="bs-hero-veil" aria-hidden="true" />
@@ -129,7 +135,7 @@ export default function BsHomePage({
                 <span className="bs-badge">Música da semana</span>
                 {week.releaseDate && <span className="bs-hero-date">Nova desde {formatWeekdayDate(week.releaseDate)}</span>}
               </p>
-              <h1 className={`bs-hero-title is-${titleScale(week.title)}`}>{week.title}</h1>
+              <h1 className="bs-hero-title" style={{ fontSize: title.fontSize, lineHeight: `${title.lineHeight}px`, WebkitLineClamp: title.lines }}>{week.title}</h1>
               <p className="bs-hero-context">{getShortContext(week.raw)}</p>
               <div className="bs-tags">
                 <span className="bs-tag">{week.difficultyLabel}</span>
@@ -151,7 +157,7 @@ export default function BsHomePage({
                 </FocusableButton>
               </FocusRow>
             </div>
-            <BsPoster song={week.raw} className="bs-hero-poster" eager />
+            {showPoster && <BsPoster song={week.raw} className="bs-hero-poster" eager />}
           </section>
 
           <aside className="bs-festa-card" aria-label="Modo Festa">
