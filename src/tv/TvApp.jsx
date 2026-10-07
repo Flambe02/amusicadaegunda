@@ -48,6 +48,30 @@ import '@/styles/bs-base.css';
 const loadFestaInvite = () => import('./components/TvFestaInvite');
 const TvFestaInvite = lazy(loadFestaInvite);
 
+// Polices de la refonte (auto-hébergées, voir bs-base.css) : demandées dès le chargement
+// du module, sans attendre qu'un texte les utilise.
+let fontsPromise = null;
+function bigScreenFontsReady() {
+  if (!fontsPromise) {
+    const fonts = typeof document !== 'undefined' ? document.fonts : null;
+    const load = fonts?.load
+      ? Promise.all([fonts.load('400 1em "Archivo Black"'), fonts.load('400 1em Archivo'), fonts.load('700 1em Archivo')]).catch(() => {})
+      : Promise.resolve();
+    fontsPromise = Promise.race([load, new Promise((resolve) => setTimeout(resolve, 1200))]);
+  }
+  return fontsPromise;
+}
+bigScreenFontsReady();
+
+// Les affiches viennent de i.ytimg.com : la connexion s'ouvre pendant la requête des
+// chansons, pas après le premier rendu.
+if (typeof document !== 'undefined' && !document.querySelector('link[rel="preconnect"][href="https://i.ytimg.com"]')) {
+  const link = document.createElement('link');
+  link.rel = 'preconnect';
+  link.href = 'https://i.ytimg.com';
+  document.head.appendChild(link);
+}
+
 // Écrans qui portent la barre du haut (le bouton « Voltar » de l'ordinateur s'y range dessous).
 const NAV_SCREENS = new Set(['home', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing']);
 
@@ -195,7 +219,10 @@ export default function TvApp({ web = null }) {
     setLoadError(false);
     const descriptions = Song.listHomeDescriptions(null).catch(() => []);
     try {
-      let all = (await Song.listBigScreen()) || [];
+      // Les polices se chargent pendant la requête : le premier écran est dessiné avec
+      // elles, sans changement de police ensuite (CLS nul). Jamais plus de 1,2 s d'attente.
+      const [list] = await Promise.all([Song.listBigScreen(), bigScreenFontsReady()]);
+      let all = list || [];
       const lyrics = Song.listLyricsText().catch(() => []);
       if (initialSlugRef.current) {
         all = mergeSongLyrics(mergeSongDescriptions(all, await descriptions), await lyrics);

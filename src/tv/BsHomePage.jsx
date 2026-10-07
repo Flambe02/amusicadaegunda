@@ -7,9 +7,27 @@ import FocusRow from './components/FocusRow';
 import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
-import { toTvSong } from './lib/tvSongRepository';
+import { getDifficultyMeta, getMode } from './lib/songMeta';
 import { fitTitle, formatShortDate, formatWeekdayDate, getBackdropUrl, getShortContext } from './lib/bsSong';
 import '@/styles/bs-home.css';
+
+/**
+ * Ce que l'accueil lit d'une chanson — et rien d'autre. Le view model complet
+ * (toTvSong : conceito, contexto, prévia da letra…) coûte cher pour tout le catalogue,
+ * et l'accueil est recalculé à chaque arrivée de données (descriptions, letras).
+ */
+function toHomeSong(song) {
+  const difficulty = getDifficultyMeta(song);
+  return {
+    id: song.id,
+    title: (song.title || '').trim(),
+    difficulty: difficulty.key,
+    difficultyLabel: difficulty.label,
+    releaseDate: song.release_date || null,
+    videoTeaserUrl: song.youtube_music_url || song.youtube_url || null,
+    raw: song,
+  };
+}
 
 // Une carte de rangée : 195 px d'affiche + 24 px d'écart (maquette : 8 cartes en 1920).
 const CARD_SLOT = 219;
@@ -67,7 +85,7 @@ export default function BsHomePage({
   const stageWidth = useTvStageWidth();
   const perRow = Math.max(4, Math.floor(((stageWidth || TV_STAGE_WIDTH) - SIDE_PADDING * 2 + 24) / CARD_SLOT));
 
-  const vms = useMemo(() => songs.map(toTvSong), [songs]);
+  const vms = useMemo(() => songs.map(toHomeSong), [songs]);
   const week = vms[0] || null;
   const rows = useMemo(() => ({
     novas: vms.slice(1, perRow + 1),
@@ -139,7 +157,7 @@ export default function BsHomePage({
               <p className="bs-hero-context">{getShortContext(week.raw)}</p>
               <div className="bs-tags">
                 <span className="bs-tag">{week.difficultyLabel}</span>
-                <span className="bs-tag">{week.recommendedMode}</span>
+                <span className="bs-tag">{getMode(week.raw)}</span>
               </div>
               <FocusRow className="bs-hero-actions" focusKey="BS_HERO_ACTIONS">
                 {weekSingable && (
