@@ -17,7 +17,6 @@ export const EDGE_VIGNETTE = 'radial-gradient(ellipse closest-side at 50% 50%, t
 /** Boucle de repos, jouée en continu. */
 export const IDLE_CLIP = {
   key: 'idle',
-  webm: `${CLIP_BASE}/caipivara-idle.webm`,
   mp4: `${CLIP_BASE}/caipivara-idle.mp4`,
   poster: `${CLIP_BASE}/caipivara-idle-poster.webp`,
 };
@@ -25,7 +24,6 @@ export const IDLE_CLIP = {
 /** Boucle de danse, tant que la musique joue avec le son. */
 export const DANCE_CLIP = {
   key: 'dance',
-  webm: `${CLIP_BASE}/caipivara-dance.webm`,
   mp4: `${CLIP_BASE}/caipivara-dance.mp4`,
   poster: `${CLIP_BASE}/caipivara-dance-poster.webp`,
 };
@@ -35,7 +33,6 @@ export const ANIMATIONS = [
   {
     key: 'hat',
     line: 'Deixa eu procurar no chapéu…',
-    webm: `${CLIP_BASE}/caipivara-hat.webm`,
     mp4: `${CLIP_BASE}/caipivara-hat.mp4`,
     poster: `${CLIP_BASE}/caipivara-hat-poster.webp`,
   },
@@ -43,7 +40,6 @@ export const ANIMATIONS = [
     key: 'flip',
     line: 'Segura essa!',
     longFade: true, // ne finit pas dans la pose de repos
-    webm: `${CLIP_BASE}/caipivara-flip.webm`,
     mp4: `${CLIP_BASE}/caipivara-flip.mp4`,
     poster: `${CLIP_BASE}/caipivara-flip-poster.webp`,
   },
@@ -51,7 +47,6 @@ export const ANIMATIONS = [
     key: 'samba',
     line: 'Rodando a roda…',
     longFade: true,
-    webm: `${CLIP_BASE}/caipivara-samba.webm`,
     mp4: `${CLIP_BASE}/caipivara-samba.mp4`,
     poster: `${CLIP_BASE}/caipivara-samba-poster.webp`,
   },
@@ -60,9 +55,11 @@ export const ANIMATIONS = [
 const pick = (items, random) => items[Math.floor(random() * items.length) % items.length];
 
 /** Une animation au hasard, jamais la même que la précédente. */
-export function pickAnimation(lastKey, random = Math.random) {
-  const choices = ANIMATIONS.filter((animation) => animation.key !== lastKey);
-  return pick(choices.length ? choices : ANIMATIONS, random);
+export function pickAnimation(lastKey, random = Math.random, extra = []) {
+  // `extra` : les danses à la demande du catalogue (mascotCatalog.js) rejoignent le tirage.
+  const all = [...ANIMATIONS, ...extra];
+  const choices = all.filter((animation) => animation.key !== lastKey);
+  return pick(choices.length ? choices : all, random);
 }
 
 const songKey = (song) => song?.id ?? song?.slug ?? song?.title;

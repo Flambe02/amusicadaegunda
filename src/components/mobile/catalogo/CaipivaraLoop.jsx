@@ -15,7 +15,6 @@ function playSafely(video) {
 function Sources({ clip }) {
   return (
     <>
-      <source src={clip.webm} type="video/webm" />
       <source src={clip.mp4} type="video/mp4" />
     </>
   );

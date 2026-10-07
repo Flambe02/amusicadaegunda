@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, SkipForward, VolumeX } from 'lucide-react';
 import { useShortPlayer } from '@/components/mobile/feed/useShortPlayer';
 import FeedStorySheet from '@/components/mobile/feed/FeedStorySheet';
@@ -17,6 +17,7 @@ import {
 import LyricsDialog from '@/components/LyricsDialog';
 import { isKaraokePublished } from '@/lib/lrc';
 import { ANIMATIONS, DANCE_CLIP, EDGE_VIGNETTE, IDLE_CLIP, getSongAudioId, pickAnimation, pickSong } from './stageDraw';
+import { findCostumeClip, getClipUrl, isDataSaver, loadMascotCatalog, remoteDances } from './mascotCatalog';
 
 // Filet : si une animation ne se termine jamais (lecture refusée, réseau), on rend la
 // main à la boucle de repos ou de danse.
@@ -61,7 +62,6 @@ function playSafely(video) {
 function ClipSources({ clip }) {
   return (
     <>
-      <source src={clip.webm} type="video/webm" />
       <source src={clip.mp4} type="video/mp4" />
     </>
   );
@@ -152,6 +152,40 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
     return () => clearTimeout(id);
   }, [reduceMotion]);
 
+  // ── Animations à la demande (costumes, nouvelles danses) — voir mascotCatalog.js ──
+  // Le catalogue est lu sur le site quand le navigateur est inactif : jamais sur le
+  // chemin du premier écran. Injoignable : les cinq animations de base, comme avant.
+  const [catalog, setCatalog] = useState([]);
+  const catalogRef = useRef(catalog);
+  catalogRef.current = catalog;
+  const [dataSaver] = useState(isDataSaver);
+  useEffect(() => {
+    let active = true;
+    const run = () => { loadMascotCatalog().then((list) => { if (active) setCatalog(list); }); };
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(run, { timeout: 4000 });
+      return () => { active = false; window.cancelIdleCallback?.(id); };
+    }
+    const id = setTimeout(run, 2500);
+    return () => { active = false; clearTimeout(id); };
+  }, []);
+  // La chanson en cours a-t-elle un costume ? Il remplace alors la boucle tant qu'elle joue.
+  const costume = useMemo(() => findCostumeClip(catalog, current), [catalog, current]);
+  // Clip à la demande à l'écran : une danse tirée au sort, sinon le costume.
+  const remoteClip = animation?.remote ? animation : costume;
+  // Vidéo téléchargée (ou sortie du cache) puis lue ; `remoteReady` : elle joue vraiment.
+  const [remoteSrc, setRemoteSrc] = useState({});
+  const [remoteReady, setRemoteReady] = useState(null);
+  const remoteKey = remoteClip?.key || null;
+  useEffect(() => {
+    // Économie de données ou mouvement réduit : le poster seulement, aucun téléchargement.
+    if (!remoteClip || dataSaver || reduceMotion) return undefined;
+    let active = true;
+    getClipUrl(remoteClip).then((url) => { if (active && url) setRemoteSrc((map) => (map[remoteClip.key] ? map : { ...map, [remoteClip.key]: url })); });
+    return () => { active = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteKey, dataSaver, reduceMotion]);
+
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
 
   const finishAnimation = useCallback(() => {
@@ -160,9 +194,13 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
     setAnimation(null); // retour à la boucle (danse ou repos), fondu
   }, []);
 
-  const startAnimation = useCallback(() => {
+  const startAnimation = useCallback((nextSong) => {
     if (reduceMotion) return;
-    const next = pickAnimation(lastAnimationRef.current);
+    // La chanson tirée a un costume : pas de danse ponctuelle, le costume prend la scène.
+    if (findCostumeClip(catalogRef.current, nextSong)) return;
+    // Sinon une danse au hasard parmi TOUTES les danses (de base et à la demande), jamais
+    // deux fois la même. En économie de données, seulement celles de l'app.
+    const next = pickAnimation(lastAnimationRef.current, Math.random, dataSaver ? [] : remoteDances(catalogRef.current));
     lastAnimationRef.current = next.key;
     busyRef.current = true;
     setWarmAnimations(true);
@@ -177,7 +215,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
       playSafely(video);
     }
     timeoutRef.current = setTimeout(finishAnimation, ANIMATION_TIMEOUT_MS);
-  }, [reduceMotion, finishAnimation]);
+  }, [reduceMotion, finishAnimation, dataSaver]);
 
   /** Lance une chanson avec le son — appelé dans le geste. */
   const startSong = useCallback((song, preloaded) => {
@@ -198,17 +236,20 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
 
   const draw = useCallback(() => {
     if (busyRef.current) return; // tap pendant une animation : ignoré
-    startAnimation();
+    // La chanson est tirée AVANT l'animation : son costume éventuel décide de ce qu'on voit.
+    const usesQueued = !currentRef.current && queued;
+    const nextSong = usesQueued ? queued : pickSong(songs, currentRef.current);
+    startAnimation(nextSong);
     if (currentRef.current && !retapUsed) {
       // Changement de chanson par la Caipivara : l'indice a servi.
       rememberRetapUsed();
       setRetapUsed(true);
     }
-    if (!currentRef.current && queued) {
+    if (usesQueued) {
       startSong(queued, true);
       return;
     }
-    const song = pickSong(songs, currentRef.current);
+    const song = nextSong;
     if (song) startSong(song, false);
     else pendingStartRef.current = true; // catalogue pas encore là : dès qu'il arrive
   }, [queued, songs, startAnimation, startSong, retapUsed]);
@@ -309,7 +350,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
         >
           <div aria-hidden="true" className="absolute inset-0">
             {reduceMotion ? (
-              <img src={IDLE_CLIP.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <img src={(costume || IDLE_CLIP).poster} alt="" data-clip-poster={costume?.key} className="absolute inset-0 h-full w-full object-cover" />
             ) : (
               <>
                 <video
@@ -356,6 +397,36 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
                     <ClipSources clip={clip} />
                   </video>
                 ))}
+                {/* Clip à la demande (costume de la chanson, ou nouvelle danse) : son poster
+                    tout de suite, puis la vidéo en fondu dès qu'elle joue. Cadre déjà
+                    dimensionné : rien ne bouge autour (CLS nul). */}
+                {remoteClip && (
+                  <img
+                    key={`${remoteClip.key}-poster`}
+                    src={remoteClip.poster}
+                    alt=""
+                    data-clip-poster={remoteClip.key}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                )}
+                {remoteClip && !dataSaver && remoteSrc[remoteClip.key] && (
+                  <video
+                    key={remoteClip.key}
+                    src={remoteSrc[remoteClip.key]}
+                    className={`absolute inset-0 h-full w-full object-cover ${CROSSFADE_LONG} ${
+                      remoteReady === remoteClip.key ? 'opacity-100' : 'opacity-0'
+                    }`}
+                    autoPlay
+                    muted
+                    playsInline
+                    loop={!animation?.remote && remoteClip.loop}
+                    preload="auto"
+                    disablePictureInPicture
+                    data-clip={remoteClip.key}
+                    onPlaying={() => setRemoteReady(remoteClip.key)}
+                    onEnded={animation?.key === remoteClip.key ? finishAnimation : undefined}
+                  />
+                )}
               </>
             )}
             {/* Bords fondus dans le fond, par-dessus les vidéos (voir EDGE_VIGNETTE). */}
