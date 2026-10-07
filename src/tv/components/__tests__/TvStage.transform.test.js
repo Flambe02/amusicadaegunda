@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeTransform, TV_STAGE_MIN_WIDTH } from '../TvStage';
+import { computeTransform, readTvDebugFlag, TV_STAGE_MIN_WIDTH } from '../TvStage';
 
 describe('TvStage — hauteur logique 1080, largeur variable', () => {
   it.each([
@@ -39,5 +39,17 @@ describe('TvStage — hauteur logique 1080, largeur variable', () => {
 
   it('no size yet: the 1920 stage at scale 1', () => {
     expect(computeTransform(0, 0)).toEqual({ scale: 1, offsetX: 0, offsetY: 0, width: 1920 });
+  });
+});
+
+describe('readTvDebugFlag — overlay de diagnostic', () => {
+  it('the address the installed app was opened with turns the overlay on and off', () => {
+    localStorage.removeItem('tv-debug');
+    expect(readTvDebugFlag('https://www.amusicadasegunda.com/?tvdebug=1')).toBe(true);
+    expect(localStorage.getItem('tv-debug')).toBe('1');
+    expect(readTvDebugFlag('https://www.amusicadasegunda.com/')).toBeNull();
+    expect(localStorage.getItem('tv-debug')).toBe('1'); // mémorisé
+    expect(readTvDebugFlag('https://www.amusicadasegunda.com/?tvdebug=0')).toBe(false);
+    expect(localStorage.getItem('tv-debug')).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import '@/styles/tv.css'; // .tv-viewport/.tv-stage/.tv-debug — le stage doit être stylable seul (cf. TvErrorFallback)
 
 /**
@@ -77,16 +78,48 @@ export function computeTransform(
   return { scale, offsetX, offsetY, width };
 }
 
-/** Overlay de diagnostic (activé par ?tvdebug=1, persistant ; ?tvdebug=0 le retire). */
+/** `tvdebug=1` / `tvdebug=0` dans une adresse : active / retire l'overlay (mémorisé). */
+export function readTvDebugFlag(url) {
+  try {
+    const value = new URL(url, 'https://localhost').searchParams.get('tvdebug');
+    if (value === '1') { localStorage.setItem('tv-debug', '1'); return true; }
+    if (value === '0') { localStorage.removeItem('tv-debug'); return false; }
+  } catch { /* ignore */ }
+  return null;
+}
+
+/**
+ * Overlay de diagnostic (activé par ?tvdebug=1, persistant ; ?tvdebug=0 le retire).
+ *
+ * Dans l'app installée, l'adresse de la WebView n'est pas modifiable : on lit aussi
+ * l'adresse avec laquelle l'app a été OUVERTE (lien https du site, Android App Links),
+ * ce qui permet de l'activer depuis un ordinateur :
+ *   adb shell am start -W -a android.intent.action.VIEW \
+ *     -d "https://www.amusicadasegunda.com/?tvdebug=1" com.amusicadasegunda.app
+ */
 function useTvDebug() {
-  const [on] = useState(() => {
-    try {
-      const p = new URLSearchParams(window.location.search);
-      if (p.get('tvdebug') === '1') { localStorage.setItem('tv-debug', '1'); return true; }
-      if (p.get('tvdebug') === '0') { localStorage.removeItem('tv-debug'); return false; }
-      return localStorage.getItem('tv-debug') === '1';
-    } catch { return false; }
+  const [on, setOn] = useState(() => {
+    const fromUrl = readTvDebugFlag(window.location.href);
+    if (fromUrl !== null) return fromUrl;
+    try { return localStorage.getItem('tv-debug') === '1'; } catch { return false; }
   });
+  useEffect(() => {
+    if (!Capacitor?.isNativePlatform?.()) return undefined;
+    let active = true;
+    let subscription = null;
+    const apply = (url) => {
+      const flag = url ? readTvDebugFlag(url) : null;
+      if (active && flag !== null) setOn(flag);
+    };
+    import('@capacitor/app')
+      .then(async ({ App }) => {
+        apply((await App.getLaunchUrl())?.url);
+        const handle = await App.addListener('appUrlOpen', (event) => apply(event?.url));
+        if (active) subscription = handle; else handle.remove();
+      })
+      .catch(() => { /* plugin absent : l'overlay reste piloté par l'adresse */ });
+    return () => { active = false; try { subscription?.remove?.(); } catch { /* ignore */ } };
+  }, []);
   return on;
 }
 
