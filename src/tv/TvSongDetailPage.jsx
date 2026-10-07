@@ -9,6 +9,7 @@ import { toTvSong } from './lib/tvSongRepository';
 import { trackTv } from './lib/tvAnalytics';
 import TvTopNavigation from './components/TvTopNavigation';
 import TvSongVisualPanel from './components/TvSongVisualPanel';
+import { Song } from '@/api/entities';
 import TvSongMetadataRow from './components/TvSongMetadataRow';
 import TvWhySingDetailPanel from './components/TvWhySingDetailPanel';
 import TvSongActions from './components/TvSongActions';
@@ -90,6 +91,13 @@ export default function TvSongDetailPage({
   );
   const categoryLabel = song?.category ? SONG_CATEGORY_LABELS[song.category] || null : null;
   const festaActive = typeof festaPeople === 'number';
+
+  // Ouverture de la fiche = moment où la chanson complète (LRC, timing par mot) devient
+  // utile : demandée d'avance pour que « Cantar agora » démarre sans attente. En cas
+  // d'échec, l'écran karaokê la redemande et propose de réessayer.
+  useEffect(() => {
+    if (vm.isSingable) Song.getFull(song).catch(() => { /* redemandée par le karaokê */ });
+  }, [song, vm.isSingable]);
 
   useEffect(() => {
     trackTv('tv_song_detail_opened', { song_id: vm.id, source });
@@ -176,6 +184,8 @@ export default function TvSongDetailPage({
   const focusHolderRef = useRef(null); // puits de focus (jamais l'iframe)
   const [playerReady, setPlayerReady] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  // L'affiche reste visible jusqu'à ce que la vidéo JOUE (état PLAYING du lecteur).
+  const [videoVisible, setVideoVisible] = useState(false);
 
   // Garde le focus HORS de l'iframe YouTube (sinon D-pad piégé + crash Back sur TV).
   const parkFocus = useCallback(() => {
@@ -206,6 +216,7 @@ export default function TvSongDetailPage({
           try { wrapRef.current?.setAttribute('inert', ''); } catch { /* ignore */ }
           parkFocus();
         },
+        onStateChange: (e) => { if (!destroyed && e?.data === 1 /* PLAYING */) setVideoVisible(true); },
         onError: (e) => { if (!destroyed && YT_BLOCKED_CODES.has(e?.data)) setBlocked(true); },
       },
     });
@@ -220,6 +231,7 @@ export default function TvSongDetailPage({
       try { player.destroy(); } catch { /* ignore */ }
       playerRef.current = null;
       setPlayerReady(false);
+      setVideoVisible(false);
     };
   }, [playing, ready, YT, videoId, parkFocus]);
 
@@ -231,11 +243,21 @@ export default function TvSongDetailPage({
       try {
         const d = p.getDuration?.() || 0;
         const t = p.getCurrentTime?.() || 0;
+        // Filet : la vidéo avance sans que l'état PLAYING soit arrivé jusqu'ici.
+        if (t > 0.15) setVideoVisible(true);
         progressRef.current.style.width = d > 0 ? `${Math.min(100, (t / d) * 100)}%` : '0%';
       } catch { /* ignore */ }
     }, 250);
     return () => clearInterval(id);
   }, [playing, playerReady]);
+
+  // Lecture automatique refusée (navigateur) : au bout de 6 s sans PLAYING, on montre
+  // le lecteur tel quel — comme avant, plutôt qu'une affiche qui attend indéfiniment.
+  useEffect(() => {
+    if (!playing || !playerReady || videoVisible) return undefined;
+    const id = setTimeout(() => setVideoVisible(true), 6000);
+    return () => clearTimeout(id);
+  }, [playing, playerReady, videoVisible]);
 
   // Pendant la lecture : nav spatiale en pause + OK/±10s au clavier (comme ailleurs).
   // Escape/Backspace = fermeture (fallback si le Retour matériel n'arrive pas jusqu'à
@@ -317,7 +339,7 @@ export default function TvSongDetailPage({
           durationLabel={durationLabel}
           hasTeaser={hasTeaser}
           playing={playing}
-          loading={playing && (!ready || !playerReady) && !apiError && !blocked}
+          videoVisible={videoVisible}
           error={Boolean(apiError) || blocked}
           hostRef={hostRef}
           progressRef={progressRef}

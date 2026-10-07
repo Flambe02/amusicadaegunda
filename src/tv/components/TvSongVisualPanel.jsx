@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
-import { Play, Loader2 } from 'lucide-react';
+import { Play } from 'lucide-react';
 import { BRAND_SQUARE_LARGE } from '@/lib/imageAssets';
 
 /**
@@ -49,10 +49,18 @@ function TeaserStrip({ thumb, durationLabel, onPress }) {
  *  - `focusHolderRef` = puits de focus (tabindex -1) que la page focalise pour que
  *    l'élément actif ne soit JAMAIS l'iframe ;
  *  - barre d'aide visible : rappelle OK = pausar, ◀▶ = avançar, Voltar = sair.
+ *
+ * Affiche d'abord (2026-10-07) : l'affiche reste EN PLACE sous le lecteur, qui est
+ * caché par opacité + clip-path tant que la vidéo ne joue pas (`videoVisible`) — plus
+ * d'écran noir entre l'appui sur « Prévia » et la première image. ⚠️ Jamais
+ * `visibility: hidden` ni `display: none` sur le lecteur : Chrome bride alors l'iframe
+ * et la vidéo démarre plusieurs secondes plus tard (mesuré sur le feed mobile).
+ * Indice d'attente : rien pendant 400 ms, puis une ligne à l'emplacement de la barre
+ * de progression et un mini égaliseur — CSS seulement, effacés avec le fondu.
  */
 export default function TvSongVisualPanel({
   artSrc, teaserThumb, durationLabel, hasTeaser,
-  playing, loading, error, hostRef, progressRef, onPlayTeaser,
+  playing, videoVisible, error, hostRef, progressRef, onPlayTeaser,
   wrapRef, focusHolderRef, onStopTeaser,
 }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -60,14 +68,24 @@ export default function TvSongVisualPanel({
 
   return (
     <section className="tvd-visual">
+      {/* L'affiche ne se démonte jamais : le lecteur vient par-dessus, puis apparaît. */}
+      <div className="tvd-visual-art">
+        {artSrc && !imgFailed
+          ? <img src={artSrc} alt="" decoding="async" onError={() => setImgFailed(true)} />
+          : <div className="tvd-visual-fallback"><img src={BRAND_SQUARE_LARGE} alt="" /></div>}
+        <div className="tvd-visual-art-scrim" aria-hidden="true" />
+      </div>
       {showPlayer ? (
         <>
           {/* Puits de focus HORS de l'iframe — jamais l'iframe comme élément actif. */}
           <div ref={focusHolderRef} tabIndex={-1} className="tvd-visual-focustrap" aria-hidden="true" />
-          <div ref={wrapRef} className="tvd-visual-player">
+          <div ref={wrapRef} className={`tvd-visual-player ${videoVisible ? '' : 'is-hidden'}`}>
             <div ref={hostRef} className="tvd-visual-host" />
-            {loading && <span className="tvd-visual-loading"><Loader2 size={40} className="tv-spin" /></span>}
             <div className="tvd-visual-progress"><span ref={progressRef} /></div>
+          </div>
+          <div className="tvd-visual-wait" data-active={videoVisible ? 'false' : 'true'} aria-hidden="true">
+            <span className="tvd-visual-wait-eq"><i /><i /><i /></span>
+            <span className="tvd-visual-wait-line"><i /></span>
           </div>
           <div className="tvd-visual-teaser-bar" role="note">
             <button type="button" className="tvd-visual-close" onClick={onStopTeaser} aria-label="Fechar prévia">
@@ -78,12 +96,6 @@ export default function TvSongVisualPanel({
         </>
       ) : (
         <>
-          <div className="tvd-visual-art">
-            {artSrc && !imgFailed
-              ? <img src={artSrc} alt="" decoding="async" onError={() => setImgFailed(true)} />
-              : <div className="tvd-visual-fallback"><img src={BRAND_SQUARE_LARGE} alt="" /></div>}
-            <div className="tvd-visual-art-scrim" aria-hidden="true" />
-          </div>
           {error && playing && (
             <p className="tvd-visual-error">Vídeo indisponível para reprodução aqui.</p>
           )}
