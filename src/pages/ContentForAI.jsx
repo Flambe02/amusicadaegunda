@@ -35,7 +35,7 @@ export default function ContentForAI() {
             uniqueValue: "Análise crítica da atualidade através de paródias musicais",
             format: "Paródias musicais semanais sobre eventos do Brasil",
             style: "Humor inteligente, crítica social, comentário musical",
-            productionQuality: "Produção profissional com equipamentos de alta qualidade"
+            production: "Música produzida com ferramentas de inteligência artificial; tema, humor, letra e curadoria de Florent Lambert."
           },
           recentSongs: recentSongs.map(song => ({
             title: song.title,

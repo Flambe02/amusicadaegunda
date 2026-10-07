@@ -177,8 +177,7 @@ class ErrorBoundary extends React.Component {
               <div className="p-8">
                 <div className="mb-6">
                   <p className="text-gray-700 text-lg mb-4">
-                    Não se preocupe, não é culpa sua! Nossa equipe foi notificada e 
-                    estamos trabalhando para resolver o problema.
+                    O erro foi registrado. Tente recarregar a página.
                   </p>
                   
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
