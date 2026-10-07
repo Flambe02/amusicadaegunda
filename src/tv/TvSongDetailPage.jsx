@@ -10,6 +10,7 @@ import { trackTv } from './lib/tvAnalytics';
 import TvTopNavigation from './components/TvTopNavigation';
 import TvSongVisualPanel from './components/TvSongVisualPanel';
 import { Song } from '@/api/entities';
+import { useFullSong } from '@/hooks/useFullSong';
 import TvSongMetadataRow from './components/TvSongMetadataRow';
 import TvWhySingDetailPanel from './components/TvWhySingDetailPanel';
 import TvSongActions from './components/TvSongActions';
@@ -69,13 +70,16 @@ function RelatedSong({ song, index, web, onOpen }) {
  * letra non focusables ; seules leurs actions le sont.
  */
 export default function TvSongDetailPage({
-  song, source = 'catalog', getThumb,
+  song: listedSong, source = 'catalog', getThumb,
   songs = [], web = false, onOpenRelated,
   festaPeople = null, queue = [],
   onStartKaraoke, onAddToQueue,
   onGoHome, onOpenCatalog, onOpenKaraoke, onOpenFesta, onOpenSettings, onConnectPhone,
   backInterceptorRef,
 }) {
+  // La letra de la liste arrive juste après le premier écran. Une fiche ouverte avant
+  // (ou si cette requête a échoué) charge sa chanson complète pour sa prévia de letra.
+  const { song } = useFullSong(listedSong, listedSong?.lyrics === undefined);
   const manifest = useTvArtworkManifest();
   const vm = useMemo(() => toTvSong(song), [song]);
 
@@ -96,8 +100,8 @@ export default function TvSongDetailPage({
   // utile : demandée d'avance pour que « Cantar agora » démarre sans attente. En cas
   // d'échec, l'écran karaokê la redemande et propose de réessayer.
   useEffect(() => {
-    if (vm.isSingable) Song.getFull(song).catch(() => { /* redemandée par le karaokê */ });
-  }, [song, vm.isSingable]);
+    if (vm.isSingable) Song.getFull(listedSong).catch(() => { /* redemandée par le karaokê */ });
+  }, [listedSong, vm.isSingable]);
 
   useEffect(() => {
     trackTv('tv_song_detail_opened', { song_id: vm.id, source });

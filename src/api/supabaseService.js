@@ -109,7 +109,7 @@ export const supabaseSongService = {
     return this.listPublished(SONG_KARAOKE_COLUMNS, { syncedOnly: true })
   },
 
-  /** Interface grand écran : tout le catalogue, sans LRC ni timing (≈ 59 Ko). */
+  /** Interface grand écran : tout le catalogue, sans letra, LRC ni timing (≈ 14 Ko). */
   listBigScreen() {
     return this.listPublished(SONG_BIGSCREEN_COLUMNS)
   },

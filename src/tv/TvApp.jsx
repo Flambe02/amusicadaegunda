@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { init, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { ArrowLeft, Loader2, Maximize, Minimize } from 'lucide-react';
 import { Song } from '@/api/entities';
-import { mergeSongDescriptions } from '@/api/songColumns';
+import { mergeSongDescriptions, mergeSongLyrics } from '@/api/songColumns';
 import { isKaraokePublished } from '@/lib/lrc';
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
 import { onBackPress, exitApp } from './adapters/backButton';
@@ -164,24 +164,30 @@ export default function TvApp({ web = null }) {
   // Web : slug de l'ouverture directe sur /musica/<slug>/ (consommé plus bas).
   const initialSlugRef = useRef(web?.initialSlug || null);
 
-  // Chargement des chansons en RÉSUMÉ (Song.listBigScreen : ≈ 59 Ko au lieu des ≈ 235 Ko
+  // Chargement des chansons en RÉSUMÉ (Song.listBigScreen : ≈ 14 Ko au lieu des ≈ 235 Ko
   // de `*`, et repli tout seul sur content/songs.json si Supabase échoue — cf.
   // src/api/entities.js). `loadError` = liste vide au final (les deux sources ont
   // échoué) → l'état d'erreur du catálogo propose de réessayer.
-  // Les descriptions (contexto de la fiche, recherche) partent en même temps, à part :
-  // le premier écran ne les attend pas — sauf ouverture directe sur une fiche (web),
-  // qui les affiche tout de suite. La chanson complète (LRC, timing par mot) n'est
-  // demandée que par le karaokê (TvKaraokeScreen → Song.getFull).
+  // Le premier écran n'attend que ce résumé. Les descriptions (contexto de la fiche,
+  // recherche) partent en même temps, à part ; la letra (prévia de la fiche, recherche)
+  // part une fois le résumé arrivé. Une fiche ouverte avant la letra charge sa chanson
+  // complète (TvSongDetailPage). Ouverture directe sur une fiche (web) : on attend les
+  // deux, elle les affiche tout de suite. La chanson complète (LRC, timing par mot)
+  // n'est demandée que par le karaokê (TvKaraokeScreen → Song.getFull).
   const loadSongs = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
     const descriptions = Song.listHomeDescriptions(null).catch(() => []);
     try {
       let all = (await Song.listBigScreen()) || [];
-      if (initialSlugRef.current) all = mergeSongDescriptions(all, await descriptions);
+      const lyrics = Song.listLyricsText().catch(() => []);
+      if (initialSlugRef.current) {
+        all = mergeSongLyrics(mergeSongDescriptions(all, await descriptions), await lyrics);
+      }
       setSongs(all);
       setLoadError(all.length === 0);
       descriptions.then((rows) => setSongs((current) => mergeSongDescriptions(current, rows)));
+      lyrics.then((rows) => setSongs((current) => mergeSongLyrics(current, rows)));
     } catch {
       setSongs([]);
       setLoadError(true);

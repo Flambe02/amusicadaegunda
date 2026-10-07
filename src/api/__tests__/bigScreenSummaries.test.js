@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DUET_LRC_FILTER, SONG_BIGSCREEN_COLUMNS } from '../songColumns';
+import { DUET_LRC_FILTER, SONG_BIGSCREEN_COLUMNS, mergeSongLyrics } from '../songColumns';
 
 // Faux client Supabase : enregistre chaque requête et répond selon ce qu'elle demande.
 const queries = [];
@@ -38,8 +38,8 @@ import { getDifficulty, getMode, isDuetReady } from '@/tv/lib/songMeta';
 
 const LYRICS = Array.from({ length: 300 }, (_, index) => `palavra${index}`).join(' ');
 const ROWS = [
-  { id: 1, title: 'Um', status: 'published', youtube_url: 'https://music.youtube.com/watch?v=aaaaaaaaaaa', karaoke_synced_at: '2026-09-01', karaoke_published: true, difficulty: null, lyrics: LYRICS },
-  { id: 2, title: 'Dois', status: 'published', youtube_url: 'https://music.youtube.com/watch?v=bbbbbbbbbbb', karaoke_synced_at: '2026-09-02', karaoke_published: true, difficulty: 'easy', lyrics: LYRICS },
+  { id: 1, title: 'Um', status: 'published', youtube_url: 'https://music.youtube.com/watch?v=aaaaaaaaaaa', karaoke_synced_at: '2026-09-01', karaoke_published: true, difficulty: 'hard' },
+  { id: 2, title: 'Dois', status: 'published', youtube_url: 'https://music.youtube.com/watch?v=bbbbbbbbbbb', karaoke_synced_at: '2026-09-02', karaoke_published: true, difficulty: 'easy' },
 ];
 
 beforeEach(() => {
@@ -48,12 +48,12 @@ beforeEach(() => {
 });
 
 describe('Interface grand écran — résumés au démarrage (jamais select *)', () => {
-  it('the start-up columns leave out the LRC, the word timing, the pitch map and the description', () => {
-    for (const heavy of ['lrc_content', 'timing_data', 'pitch_map', 'karaoke_ai_raw_transcript', 'description']) {
+  it('the start-up columns leave out the lyrics, the LRC, the word timing, the pitch map and the description', () => {
+    for (const heavy of ['lyrics', 'lyrics_karaoke', 'lrc_content', 'timing_data', 'pitch_map', 'karaoke_ai_raw_transcript', 'description']) {
       expect(SONG_BIGSCREEN_COLUMNS).not.toContain(heavy);
     }
-    // Ce que les cartes affichent : la difficulté se calcule sur la letra quand la colonne est vide.
-    expect(SONG_BIGSCREEN_COLUMNS).toEqual(expect.arrayContaining(['difficulty', 'hashtags', 'lyrics', 'lyrics_karaoke', 'karaoke_synced_at']));
+    // Ce que les cartes affichent : la difficulté vient de la colonne, plus de la letra.
+    expect(SONG_BIGSCREEN_COLUMNS).toEqual(expect.arrayContaining(['difficulty', 'hashtags', 'karaoke_synced_at']));
   });
 
   it('Song.listBigScreen asks for those columns only, plus the ids of the duet songs', async () => {
@@ -66,7 +66,8 @@ describe('Interface grand écran — résumés au démarrage (jamais select *)',
 
   it('the cards read the same labels from a summary as from the full song', async () => {
     const [one, two] = await Song.listBigScreen();
-    expect(getDifficulty(one)).toBe(getDifficulty({ ...ROWS[0], lrc_content: '[00:01.00]a' }));
+    // La colonne (remplie pour toutes les chansons) donne l'étiquette que la letra donnait.
+    expect(getDifficulty(one)).toBe(getDifficulty({ lyrics: LYRICS }));
     expect(getDifficulty(two)).toBe(getDifficulty(ROWS[1]));
     expect(getMode(one)).toBe(getMode({ ...ROWS[0], lrc_content: '[00:01.00]a' }));
     expect(getMode(two)).toBe(getMode({ ...ROWS[1], lrc_content: '[00:01.00]{A}a\n[00:02.00]{B}b' }));
@@ -99,5 +100,23 @@ describe('DUET_LRC_FILTER — même réponse que hasDuetTags', () => {
   ])('%j → %s', (lrc, expected) => {
     expect(hasDuetTags(lrc)).toBe(expected);
     expect(server(lrc)).toBe(expected);
+  });
+});
+
+describe('mergeSongLyrics — la letra arrive après le premier écran', () => {
+  it('fills the lyrics of the summaries, and keeps a song that already has its own', () => {
+    const summary = { id: 1, title: 'Um', __summary: true };
+    const full = { id: 2, title: 'Dois', lyrics: 'a letra completa', lyrics_karaoke: null };
+    const merged = mergeSongLyrics([summary, full], [
+      { id: 1, lyrics: 'primeira linha', lyrics_karaoke: 'primeira  linha' },
+      { id: 2, lyrics: 'outra', lyrics_karaoke: 'outra' },
+    ]);
+    expect(merged[0]).toEqual({ ...summary, lyrics: 'primeira linha', lyrics_karaoke: 'primeira  linha' });
+    expect(merged[1]).toBe(full);
+  });
+
+  it('no row (failed request): the list is returned untouched', () => {
+    const songs = [{ id: 1 }];
+    expect(mergeSongLyrics(songs, [])).toBe(songs);
   });
 });

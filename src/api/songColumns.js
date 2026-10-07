@@ -54,21 +54,19 @@ export const SONG_KARAOKE_COLUMNS = [
 
 /**
  * Interface grand écran (TV + ordinateur) : tout le catalogue au démarrage, avec ce que
- * ses cartes affichent. La difficulté (« Fácil / Médio / Difícil ») se calcule sur le
- * nombre de mots de la letra quand la colonne `difficulty` est vide — d'où `lyrics` ici
- * (≈ 59 Ko compressés contre ≈ 235 Ko pour `*`, mesuré le 2026-10-06, 69 chansons).
- * Le jour où `difficulty` est renseignée pour toutes les chansons, `lyrics` et
- * `lyrics_karaoke` peuvent sortir de cette liste (≈ 14 Ko).
+ * ses cartes affichent — ≈ 14 Ko compressés contre ≈ 235 Ko pour `*` (69 chansons).
  *
+ * Sans la letra : l'étiquette « Fácil / Médio / Difícil » se lit dans la colonne
+ * `difficulty`, remplie pour toutes les chansons (l'admin la recalcule à chaque
+ * enregistrement, src/lib/songDifficulty.js). La letra (prévia de la fiche, recherche)
+ * et les descriptions arrivent à part, une fois le premier écran affiché.
  * Sans `lrc_content`, `timing_data` ni `pitch_map` : le karaokê charge la chanson
- * complète (Song.getFull). Sans `description` : elle arrive à part, en parallèle.
+ * complète (Song.getFull).
  */
 export const SONG_BIGSCREEN_COLUMNS = [
   ...SONG_INDEX_COLUMNS,
   'difficulty',
   'hashtags',
-  'lyrics',
-  'lyrics_karaoke',
 ];
 
 /**
@@ -94,6 +92,21 @@ export function mergeSongDescriptions(songs, rows) {
       ? { ...song, description: byId.get(song.id) }
       : song
   );
+}
+
+/**
+ * Catalogue en résumé enrichi de ses paroles (lignes `{ id, lyrics, lyrics_karaoke }`).
+ * Une chanson qui porte déjà les siennes est gardée telle quelle, objet compris.
+ */
+export function mergeSongLyrics(songs, rows) {
+  const byId = new Map((rows || []).map((row) => [row.id, row]));
+  if (byId.size === 0) return songs;
+  return songs.map((song) => {
+    const row = byId.get(song.id);
+    return song.lyrics === undefined && row
+      ? { ...song, lyrics: row.lyrics ?? null, lyrics_karaoke: row.lyrics_karaoke ?? null }
+      : song;
+  });
 }
 
 /** Nombre de chansons de l'accueil (feed mobile, catalogue mensuel desktop). */
