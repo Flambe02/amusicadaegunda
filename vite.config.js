@@ -27,11 +27,67 @@ function amdsBootPlugin(mode) {
 // deux n'importe React, et seuls des modules de `src` les importent.
 const LAZY_ONLY_LIBRARIES = /[\\/]node_modules[\\/](zod|dompurify)[\\/]/
 
+// Navigation spatiale de l'interface grand écran, importée uniquement depuis `src/tv/`
+// — lui-même chargé à la demande. Elle forme `vendor-tv`, que le téléphone ne
+// télécharge jamais.
+const TV_ONLY_LIBRARIES = /[\\/]node_modules[\\/](@noriginmedia|lodash-es)[\\/]/
+
+// QR code de la festa : importé par le seul écran d'invitation (src/tv/components/
+// TvFestaInvite.jsx), chargé à la demande. Sans morceau imposé, Rollup le range avec lui.
+const FESTA_ONLY_LIBRARIES = /[\\/]node_modules[\\/](react-qr-code|qrcode-generator)[\\/]/
+
+/**
+ * Garde-fou des morceaux sortis de `vendor-app`, vérifié à chaque build :
+ * - `vendor-app` (React) ne doit importer AUCUN morceau qui l'importe en retour. Sinon
+ *   les deux s'importent l'un l'autre et la WebView Android peut évaluer une
+ *   bibliothèque avant React (« Cannot read properties of undefined (reading
+ *   'forwardRef') » → écran blanc) ;
+ * - le point d'entrée ne doit pas dépendre statiquement de `vendor-tv`, sinon le
+ *   téléphone le télécharge quand même.
+ */
+function vendorTvGuardPlugin() {
+  return {
+    name: 'amds-vendor-tv-guard',
+    generateBundle(_options, bundle) {
+      const chunks = Object.values(bundle).filter((file) => file.type === 'chunk')
+      const isTvVendor = (fileName) => /(^|\/)vendor-tv-/.test(fileName)
+      const byName = new Map(chunks.map((chunk) => [chunk.fileName, chunk]))
+      const vendorApp = chunks.find((chunk) => chunk.name === 'vendor-app')
+      for (const imported of vendorApp?.imports || []) {
+        const seen = new Set()
+        const stack = [imported]
+        while (stack.length) {
+          const fileName = stack.pop()
+          if (seen.has(fileName)) continue
+          seen.add(fileName)
+          if (fileName === vendorApp.fileName) {
+            this.error(`vendor-app et ${imported} s'importent l'un l'autre : dépendance circulaire entre morceaux (piège forwardRef). Voir manualChunks dans vite.config.js.`)
+          }
+          stack.push(...(byName.get(fileName)?.imports || []))
+        }
+      }
+      for (const entry of chunks.filter((chunk) => chunk.isEntry)) {
+        const seen = new Set()
+        const stack = [...entry.imports]
+        while (stack.length) {
+          const fileName = stack.pop()
+          if (seen.has(fileName)) continue
+          seen.add(fileName)
+          if (isTvVendor(fileName)) {
+            this.error(`Le point d'entrée ${entry.fileName} dépend statiquement de vendor-tv : le téléphone le téléchargerait. Chercher un import de src/tv/ hors d'un import() dynamique.`)
+          }
+          stack.push(...(byName.get(fileName)?.imports || []))
+        }
+      }
+    },
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => ({
   // ✅ SEO: Base path correct pour GitHub Pages et URLs propres
   base: command === 'build' ? '/' : '/',
-  plugins: [react(), amdsBootPlugin(mode)],
+  plugins: [react(), amdsBootPlugin(mode), vendorTvGuardPlugin()],
   // ✅ SÉCURITÉ: Les variables d'environnement sont maintenant chargées depuis .env
   // Les clés Supabase ne sont plus exposées dans le code source
   resolve: {
@@ -65,8 +121,17 @@ export default defineConfig(({ command, mode }) => ({
             // écrans (vendor-app : 186 → 165 Ko gzip, téléchargé à chaque visite).
             // Ne jamais ajouter ici une bibliothèque qui importe React (piège forwardRef
             // ci-dessous), ni une dépendance d'une bibliothèque restée dans vendor-app :
-            // Rollup l'y ramène (norigin-core, lodash-es, qrcode-generator).
+            // Rollup l'y ramène.
             if (LAZY_ONLY_LIBRARIES.test(id)) {
+              return undefined;
+            }
+            // Interface grand écran : un morceau à part, à sens unique (vendor-tv importe
+            // React depuis vendor-app, jamais l'inverse — vérifié par vendorTvGuardPlugin).
+            // Les bibliothèques ET leurs dépendances propres y vont ensemble.
+            if (TV_ONLY_LIBRARIES.test(id)) {
+              return 'vendor-tv';
+            }
+            if (FESTA_ONLY_LIBRARIES.test(id)) {
               return undefined;
             }
             // Supabase client (~100KB, rarement mis à jour)

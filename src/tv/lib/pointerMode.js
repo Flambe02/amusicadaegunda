@@ -1,21 +1,6 @@
 import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 
-/**
- * « Mode pointeur » de l'interface grand écran : vrai quand elle tourne dans un
- * navigateur d'ordinateur (souris + clavier), faux dans l'app TV (télécommande).
- *
- * Posé par TvApp au montage. Tout ce qui n'existe que pour la souris le lit — sur la
- * box TV il reste faux, et rien de ce qui suit ne s'exécute.
- */
-let pointerMode = false;
-
-export function setPointerMode(on) {
-  pointerMode = Boolean(on);
-}
-
-export function isPointerMode() {
-  return pointerMode;
-}
+export { isPointerMode, setPointerMode } from './pointerModeState';
 
 /**
  * Le survol déplace le focus, comme les flèches : l'élément sous la souris devient

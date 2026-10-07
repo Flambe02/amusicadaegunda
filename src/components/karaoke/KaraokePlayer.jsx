@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense, Fragment } from 'react';
-import { isPointerMode } from '@/tv/lib/pointerMode';
+import { isPointerMode } from '@/tv/lib/pointerModeState';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import {
