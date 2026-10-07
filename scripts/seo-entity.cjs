@@ -77,12 +77,21 @@ function verificationMetaTags(verification = cfg.verification || {}) {
   return tags.join('\n');
 }
 
+/** Adresse sans paramètre de suivi (`si` de Spotify et YouTube, `utm_*`). */
+function cleanPlatformUrl(value) {
+  try {
+    const url = new URL(String(value).trim());
+    if (url.protocol !== 'https:') return null;
+    for (const key of [...url.searchParams.keys()]) if (key === 'si' || key.startsWith('utm_')) url.searchParams.delete(key);
+    return url.toString();
+  } catch { return null; }
+}
+
 /** Liens d'UNE chanson sur les plateformes (Spotify, Apple Music, YouTube), sans doublon. */
 function songSameAs(song) {
   const apple = /^https:\/\/music\.apple\.com\//.test(song.apple_music_url || '') ? song.apple_music_url : null;
   return [...new Set([song.spotify_url, apple, song.youtube_url, song.youtube_music_url]
-    .filter((url) => typeof url === 'string' && /^https:\/\//.test(url.trim()))
-    .map((url) => url.trim()))];
+    .filter(Boolean).map(cleanPlatformUrl).filter(Boolean))];
 }
 
-module.exports = { SITE_URL, ENTITY_ID, entityJsonLd, websiteEntityJsonLd, verificationMetaTags, sameAsUrls, songSameAs };
+module.exports = { SITE_URL, ENTITY_ID, entityJsonLd, websiteEntityJsonLd, verificationMetaTags, sameAsUrls, songSameAs, cleanPlatformUrl };

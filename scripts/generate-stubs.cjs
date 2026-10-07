@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
-const { songSameAs } = require('./seo-entity.cjs');
+const { songSameAs, ENTITY_ID } = require('./seo-entity.cjs');
 const {
   baseHtml,
   orgJsonLd,
@@ -497,17 +497,9 @@ ${songListHtml}
     "datePublished": `${launchYear}-01-01`,
     "dateModified": guiaLastUpdated,
     "inLanguage": "pt-BR",
-    "author": {
-      "@type": "Organization",
-      "name": "A Música da Segunda",
-      "url": siteUrl
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "A Música da Segunda",
-      "url": siteUrl,
-      "logo": { "@type": "ImageObject", "url": `${siteUrl}/images/brand-logo.png` }
-    },
+    // La même entité que sur les autres pages (seo-entity.cjs).
+    "author": { "@id": ENTITY_ID },
+    "publisher": { "@id": ENTITY_ID },
     "about": {
       "@type": "Thing",
       "name": "Paródia musical brasileira",
