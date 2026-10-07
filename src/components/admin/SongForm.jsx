@@ -27,6 +27,7 @@ const EMPTY_FORM = {
   release_date: '',
   status: 'draft',
   description: '',
+  context_short: '',
   lyrics: '',
   category: '',
   difficulty: null,
@@ -45,6 +46,7 @@ const DIFFICULTY_OPTIONS = [
 const DIFFICULTY_LABELS = { easy: 'Fácil', medium: 'Médio', hard: 'Difícil' };
 
 const SUBTITLE_MAX_LEN = 100;
+const CONTEXT_SHORT_MAX_LEN = 220;
 
 function nextMonday() {
   const d = new Date();
@@ -70,6 +72,7 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
     youtube_music_url: initial?.youtube_music_url ?? '',
     cover_image: initial?.cover_image ?? '',
     description: initial?.description ?? '',
+    context_short: initial?.context_short ?? '',
     lyrics: initial?.lyrics ?? '',
     publish_at: initial?.publish_at ?? '',
     release_date: initial?.release_date || nextMonday(),
@@ -133,6 +136,8 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
       title: sanitizeInput(form.title),
       subtitle: sanitizeInput(form.subtitle),
       description: sanitizeInput(form.description),
+      // Vide = NULL : la tela grande mostra então o início da descrição.
+      context_short: sanitizeInput(form.context_short).trim() || null,
       lyrics,
       ...resolveDifficultyFields({ choice: difficultyChoice, lyrics }),
       youtube_music_url: sanitizeURL(form.youtube_music_url) || null,
@@ -259,6 +264,21 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
       <div>
         <Label htmlFor="description">Descrição</Label>
         <Textarea id="description" value={form.description} onChange={(e) => set('description', e.target.value)} placeholder="Descreve o contexto da música e a sua ligação com a atualidade…" rows={4} className="mt-1" />
+      </div>
+
+      {/* Contexto curto — bloc « Música da semana » et fiche de la tela grande */}
+      <div>
+        <Label htmlFor="context_short">Contexto curto (tela grande) <span className="text-gray-500 font-normal">— opcional</span></Label>
+        <Textarea
+          id="context_short"
+          value={form.context_short}
+          onChange={(e) => set('context_short', e.target.value.slice(0, CONTEXT_SHORT_MAX_LEN))}
+          placeholder="Uma ou duas frases. Vazio: a tela grande mostra o início da descrição."
+          rows={2}
+          maxLength={CONTEXT_SHORT_MAX_LEN}
+          className="mt-1"
+        />
+        <p className="text-xs mt-1 text-gray-500">{form.context_short.length}/{CONTEXT_SHORT_MAX_LEN} — cabe em duas linhas na TV até cerca de 150 caracteres.</p>
       </div>
 
       {/* Lyrics toggle */}

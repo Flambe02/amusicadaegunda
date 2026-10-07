@@ -55,3 +55,19 @@ describe('SongForm — campo Dificuldade', () => {
     expect(auto).toMatchObject({ difficulty: 'easy', difficulty_manual: false });
   });
 });
+
+describe('SongForm — campo Contexto curto (tela grande)', () => {
+  it('is saved when written, and saved as null when left empty', () => {
+    const written = save({ ...base, lyrics: 'a b c' }, () => {
+      fireEvent.change(screen.getByLabelText(/Contexto curto/), { target: { value: '  O Tigrinho conseguiu licença.  ' } });
+    });
+    expect(written.context_short).toBe('O Tigrinho conseguiu licença.');
+  });
+
+  it('empty: null, so the big screen falls back to the description', () => {
+    const empty = save({ ...base, lyrics: 'a b c', context_short: 'antigo' }, () => {
+      fireEvent.change(screen.getByLabelText(/Contexto curto/), { target: { value: '' } });
+    });
+    expect(empty.context_short).toBeNull();
+  });
+});
