@@ -5,7 +5,9 @@
  * AVERTIT sans faire échouer le build : tout <title> de plus de 60 caractères, toute
  * meta description absente ou de plus de 160, et toute page où og:title ou
  * og:description ne reprennent pas le titre et la description. Les pages `noindex`
- * (redirections, admin, recherche…) ne sont pas contrôlées.
+ * (redirections, admin, recherche…) ne sont pas contrôlées. Avertit aussi de tout titre
+ * de chanson du catalogue (content/songs.json) avec des espaces au début, à la fin, ou
+ * en double : ils viennent de la saisie dans l'admin et se corrigent en base.
  *
  *   node scripts/check-seo-text.cjs [dossier]     (défaut : dist)
  */
@@ -36,6 +38,13 @@ function checkSeoText(html) {
   return problems;
 }
 
+/** Chansons dont le titre a des espaces en trop (début, fin, ou doubles). */
+function songTitleProblems(songs) {
+  return (songs || [])
+    .filter((song) => typeof song?.name === 'string' && (song.name !== song.name.trim() || /\s{2,}/.test(song.name)))
+    .map((song) => `titre de chanson avec des espaces en trop : « ${song.name} » (${song.slug})`);
+}
+
 function listPages(dir) {
   const pages = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -51,19 +60,25 @@ function main() {
   if (!fs.existsSync(root)) { console.log(`⚠️  check-seo-text : ${root} introuvable, contrôle ignoré.`); return; }
   let checked = 0;
   let warnings = 0;
+  const warn = (text) => {
+    warnings += 1;
+    // `::warning::` : visible dans le résumé du workflow GitHub, sans le faire échouer.
+    console.log(`${process.env.GITHUB_ACTIONS ? '::warning::' : '⚠️  '}SEO ${text}`);
+  };
   for (const file of listPages(root)) {
     const problems = checkSeoText(fs.readFileSync(file, 'utf8'));
     if (problems === null) continue;
     checked += 1;
     const page = `/${path.relative(root, path.dirname(file)).split(path.sep).join('/')}`.replace(/\/$/, '') + '/';
-    for (const problem of problems) {
-      warnings += 1;
-      // `::warning::` : visible dans le résumé du workflow GitHub, sans le faire échouer.
-      console.log(`${process.env.GITHUB_ACTIONS ? '::warning::' : '⚠️  '}SEO ${page} — ${problem}`);
-    }
+    for (const problem of problems) warn(`${page} — ${problem}`);
+  }
+  const catalogFile = path.join(__dirname, '..', 'content', 'songs.json');
+  if (fs.existsSync(catalogFile)) {
+    const catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
+    for (const problem of songTitleProblems(Array.isArray(catalog) ? catalog : catalog.songs)) warn(problem);
   }
   console.log(warnings ? `⚠️  Titres et descriptions : ${warnings} avertissement(s) sur ${checked} pages.` : `✅ Titres et descriptions : ${checked} pages contrôlées, rien à signaler.`);
 }
 
 if (require.main === module) main();
-module.exports = { checkSeoText, TITLE_MAX, DESCRIPTION_MAX };
+module.exports = { checkSeoText, songTitleProblems, TITLE_MAX, DESCRIPTION_MAX };

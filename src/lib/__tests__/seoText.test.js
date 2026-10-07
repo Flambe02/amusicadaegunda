@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url);
 const pages = require('../../../scripts/seo.pages.json');
 const guia = require('../../../scripts/guia.examples.json');
 const catalog = require('../../../content/songs.json');
-const { checkSeoText } = require('../../../scripts/check-seo-text.cjs');
+const { checkSeoText, songTitleProblems } = require('../../../scripts/check-seo-text.cjs');
 const SONGS = Array.isArray(catalog) ? catalog : catalog.songs;
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -150,6 +150,13 @@ describe('contrôle du build — scripts/check-seo-text.cjs', () => {
     expect(checkSeoText(page({ description: 'x'.repeat(161) }))[0]).toMatch(/description de 161 caractères/);
     expect(checkSeoText(page({ ogTitle: 'Outro' }))[0]).toMatch(/og:title différent/);
     expect(checkSeoText(page({ ogDescription: 'Outra' }))).toContain('og:description différente de la description');
+  });
+
+  it('warns about a song title with spaces at the start, at the end or doubled', () => {
+    const problems = songTitleProblems([{ name: ' Já é Natal ', slug: 'ja-e-natal' }, { name: 'Dark Horse  do Brasil', slug: 'dark' }, { name: 'Ypê Ypê', slug: 'ype-ype' }]);
+    expect(problems).toHaveLength(2);
+    expect(problems[0]).toMatch(/ja-e-natal/);
+    expect(songTitleProblems(undefined)).toEqual([]);
   });
 
   it('skips noindex pages and counts an escaped character once', () => {
