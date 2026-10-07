@@ -167,6 +167,16 @@ export default function TvApp({ web = null }) {
     setStack((s) => (s.length > 1 ? s.slice(0, -1) : s));
   }, []);
 
+  // « Encerrar Festa » (confirmé dans la salle d'attente) : la session est fermée pour
+  // tout le monde et on revient à l'accueil.
+  const endFestaNow = useCallback(() => {
+    const id = festaSessionRef.current?.id;
+    festaPlaybackStartedRef.current = false;
+    setFestaSession(null);
+    if (id) endFestaSession(id).catch(() => { /* best-effort, comme exitFestaInvite */ });
+    setStack([{ name: 'home' }]);
+  }, []);
+
   // Web : slug de l'ouverture directe sur /musica/<slug>/ (consommé plus bas).
   const initialSlugRef = useRef(web?.initialSlug || null);
 
@@ -757,6 +767,7 @@ export default function TvApp({ web = null }) {
           queuedCount={festaQueue.filter((q) => q.status === 'waiting').length}
           onContinue={proceedToFestaPicker}
           onBack={exitFestaInvite}
+          onEnd={endFestaNow}
           backInterceptorRef={backInterceptorRef}
         />
       );
@@ -807,7 +818,7 @@ export default function TvApp({ web = null }) {
     onRequestKaraoke, openSoloGrid, openDuetGrid, openFestaGrid,
     goHome, pop, getCat, setHomeFocusKey, setKaraokeFocusKey, openTvSettings,
     festaSession, festaPeopleNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
-    liveEnergyByEntry, festaQueue, festaWaitingCount,
+    liveEnergyByEntry, festaQueue, festaWaitingCount, endFestaNow,
     // Catálogo
     loading, loadError, localQueue, setCatalogState, markFamiliar,
     addToQueue, removeFromQueue, clearQueue, startLocalQueue, loadSongs,

@@ -1,0 +1,60 @@
+/* Salle d'attente du Modo Festa — maquette design/bigscreen/03-festa.png (scène 1920×1080). */
+
+.bs-screen.bs-festa {
+  flex-direction: row; align-items: stretch; gap: 72px;
+  padding: 140px var(--bs-pad-x) 48px; background: var(--bs-festa-bg);
+}
+.bs-festa-badge {
+  position: absolute; right: var(--bs-pad-x); top: 56px;
+  display: inline-flex; align-items: center; height: 40px; padding: 0 18px; border-radius: 999px;
+  background: var(--bs-pink); color: var(--bs-on-pink);
+  font-size: 17px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+.bs-festa-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.bs-festa-title { margin: 0 0 30px; font-family: var(--bs-font-title); font-weight: 400; font-size: 104px; line-height: 104px; color: #fff; }
+.bs-festa-lead { margin: 0 0 44px; max-width: 900px; height: 78px; color: var(--bs-text); font-size: 27px; line-height: 39px; }
+
+.bs-festa-steps { display: flex; gap: 24px; margin: 0 0 54px; padding: 0; list-style: none; }
+.bs-festa-steps li {
+  flex: 1 1 0; display: flex; flex-direction: column; gap: 26px; height: 192px; padding: 28px 28px 0;
+  border-radius: 24px; background: var(--bs-plum); border: 1.5px solid var(--bs-plum-border);
+  color: var(--bs-text); font-size: 25px; line-height: 32px; font-weight: 600;
+}
+.bs-festa-step-n {
+  display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 999px;
+  background: var(--bs-pink); color: var(--bs-on-pink); font-family: var(--bs-font-title); font-size: 24px;
+}
+
+.bs-festa-guests-head { display: flex; align-items: baseline; gap: 18px; margin: 0 0 22px; }
+.bs-festa-guests-title { font-family: var(--bs-font-title); font-size: 28px; color: #fff; }
+.bs-festa-guests-hint { color: var(--bs-pink-text); font-size: 20px; opacity: 0.85; }
+/* Hauteur fixe : un invité qui arrive remplit une place, rien ne se déplace. */
+.bs-festa-seats { display: flex; gap: 20px; height: 128px; margin: 0; padding: 0; list-style: none; overflow: hidden; }
+.bs-festa-seat { flex: 0 0 94px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.bs-festa-seat-circle {
+  display: flex; align-items: center; justify-content: center; width: 94px; height: 94px; border-radius: 999px;
+  border: 2px dashed var(--bs-plum-border); color: var(--bs-on-pink); font-family: var(--bs-font-title); font-size: 40px;
+}
+.bs-festa-seat.is-taken .bs-festa-seat-circle { border: 0; background: var(--bs-pink); }
+.bs-festa-seat-name {
+  max-width: 94px; height: 24px; color: var(--bs-text); font-size: 18px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.bs-festa-actions { display: flex; align-items: center; gap: 22px; margin-top: auto; padding: 0 0 8px 6px; height: 100px; }
+.bs-festa-start { height: 84px; }
+.bs-festa-confirm { margin-right: 12px; font-family: var(--bs-font-title); font-size: 30px; color: #fff; }
+
+.bs-festa-qr-card {
+  flex: 0 0 560px; display: flex; flex-direction: column; align-items: center;
+  padding: 48px 40px; border-radius: 32px; background: var(--bs-qr-card); color: var(--bs-on-pink);
+}
+.bs-festa-qr {
+  display: flex; align-items: center; justify-content: center; width: 428px; height: 428px;
+  border-radius: 24px; line-height: 0;
+}
+.bs-festa-qr-empty { margin: 0; padding: 0 24px; text-align: center; font-size: 24px; line-height: 34px; color: #5C1E3A; }
+.bs-festa-code-label { margin: 30px 0 6px; font-size: 20px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #5C1E3A; }
+.bs-festa-code { margin: 0 0 30px; font-family: var(--bs-font-title); font-size: 92px; line-height: 96px; letter-spacing: 0.08em; }
+.bs-festa-nocam { margin: 0; max-width: 470px; text-align: center; font-size: 21px; line-height: 31px; }

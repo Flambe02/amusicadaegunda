@@ -88,8 +88,12 @@
 /* ── Barre du haut ────────────────────────────────────────────────────────── */
 .bs-nav {
   flex: 0 0 auto; display: flex; align-items: center; gap: 24px;
-  height: 148px; padding: 12px var(--bs-pad-x) 0;
+  height: 96px; padding: 0;
 }
+/* Sur un écran de la refonte, la barre porte elle-même les marges de la maquette ; sur
+   les autres (catálogo, karaokê), elle suit les marges de l'écran qui la contient. */
+.bs-screen > .bs-nav { height: 148px; padding: 12px var(--bs-pad-x) 0; }
+.tvc-header-more { margin-left: auto; align-self: flex-end; margin-bottom: 6px; }
 .bs-nav-brand { display: flex; align-items: center; gap: 18px; margin-right: auto; }
 .bs-nav-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; display: block; }
 .bs-nav-name { font-family: var(--bs-font-title); font-size: 26px; line-height: 1; color: var(--bs-text); white-space: nowrap; }

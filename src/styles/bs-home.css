@@ -1,6 +1,5 @@
 /* Accueil grand écran — maquette design/bigscreen/01-inicio.png (scène 1920×1080). */
 
-.bs-screen > .bs-nav { height: 148px; padding: 12px var(--bs-pad-x) 0; }
 .bs-empty { padding: 80px var(--bs-pad-x); color: var(--bs-text-2); font-size: 26px; }
 .bs-icon-fill { fill: currentColor; }
 
