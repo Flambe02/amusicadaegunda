@@ -5,6 +5,9 @@
  * Usage :
  *   node scripts/backfill-difficulty.mjs            tableau seulement, AUCUNE écriture
  *   node scripts/backfill-difficulty.mjs --json     le même tableau, en JSON
+ *   node scripts/backfill-difficulty.mjs --sql      le SQL à coller dans le tableau de
+ *                                                    bord Supabase (une transaction,
+ *                                                    un UPDATE par chanson), AUCUNE écriture
  *   node scripts/backfill-difficulty.mjs --write    écrit les lignes « à écrire »
  *
  * Ne touche jamais une chanson qui a déjà une valeur, ni une chanson sans letra (rien
@@ -21,6 +24,7 @@ import { countLyricsWords, estimateDifficultyKey } from '../src/lib/songDifficul
 
 const WRITE = process.argv.includes('--write');
 const JSON_OUT = process.argv.includes('--json');
+const SQL_OUT = process.argv.includes('--sql');
 const LABEL = { easy: 'Fácil', medium: 'Médio', hard: 'Difícil' };
 
 const { url, key: publicKey } = resolveSupabasePublicConfig(process.env);
@@ -59,7 +63,21 @@ const rows = data.map((song) => {
   };
 });
 
-if (JSON_OUT) {
+if (SQL_OUT) {
+  // `AND difficulty IS NULL` : jamais d'écrasement d'une valeur déjà présente.
+  const toWrite = rows.filter((row) => row.action === 'write').sort((a, b) => a.id - b.id);
+  console.log('BEGIN;');
+  for (const row of toWrite) {
+    console.log(`UPDATE public.songs SET difficulty = '${row.computed}' WHERE id = ${Number(row.id)} AND difficulty IS NULL; -- ${String(row.title).replace(/\s+/g, ' ').trim()} (${row.words} palavras)`);
+  }
+  console.log('COMMIT;');
+  const expected = { easy: 0, medium: 0, hard: 0 };
+  for (const row of rows.filter((item) => item.status === 'published')) {
+    const value = row.action === 'write' ? row.computed : row.current;
+    if (value) expected[value] += 1;
+  }
+  console.log(`-- ${toWrite.length} UPDATE. Attendu ensuite, chansons publiées : easy ${expected.easy}, medium ${expected.medium}, hard ${expected.hard}.`);
+} else if (JSON_OUT) {
   console.log(JSON.stringify(rows, null, 2));
 } else {
   const pad = (value, width) => String(value ?? '—').padEnd(width).slice(0, width);
