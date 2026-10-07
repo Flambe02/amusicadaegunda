@@ -83,7 +83,7 @@ export default function Guia() {
 
       <h2 className={h2Class}>A Música da Segunda: sátira musical semanal</h2>
       <p className={pClass}>
-        <strong>A Música da Segunda</strong> é um projeto independente brasileiro de sátira musical semanal. Toda segunda-feira, um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical publicada com letra completa, vídeo e contexto editorial.
+        <strong>A Música da Segunda</strong> é um projeto brasileiro de paródia musical semanal, criado por Florent Lambert em dezembro de 2024. Toda segunda-feira, um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical publicada com letra completa, vídeo e contexto editorial. Cada música é uma criação original, com letra e melodia próprias, produzida com ferramentas de inteligência artificial no estilo de gêneros populares brasileiros.
       </p>
       <p className={pClass}>
         O projeto já publicou dezenas de paródias sobre política brasileira, eleições, crises energéticas, escândalos corporativos, futebol, carnaval e geopolítica internacional. A ideia é simples: toda segunda-feira, o Brasil acorda com uma nova música sobre o que aconteceu na semana anterior.

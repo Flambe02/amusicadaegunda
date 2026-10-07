@@ -1,0 +1,84 @@
+{
+  "//": "Texte factuel de la page Sobre — UNE source pour le HTML statique (generate-stubs.cjs) et la page affichée (src/pages/Sobre.jsx). Validé par Florent Lambert le 2026-10-08. {count} = nombre de chansons publiées, calculé au build.",
+  "tagline": "Paródia e sátira musical das notícias do Brasil, toda segunda-feira.",
+  "intro": [
+    "A Música da Segunda é um projeto brasileiro de paródia musical semanal, criado por Florent Lambert em dezembro de 2024. Toda segunda-feira, uma nova paródia transforma um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — em música.",
+    "O catálogo tem {count} paródias publicadas. Cada música tem a sua página, com o vídeo, a letra completa e o contexto da notícia que a inspirou."
+  ],
+  "introWithoutCount": "Cada música tem a sua página, com o vídeo, a letra completa e o contexto da notícia que a inspirou.",
+  "howItWorksTitle": "Como funciona",
+  "howItWorks": "A cada semana, um tema do noticiário é escolhido. Florent Lambert cria a letra e a música com o apoio de ferramentas de inteligência artificial, e tudo é publicado na segunda-feira, no site e nas plataformas.",
+  "production": "Cada faixa é produzida com ferramentas de inteligência artificial, com tema, humor, letra e curadoria final de Florent Lambert.",
+  "whereToListenTitle": "Onde ouvir",
+  "whereToListen": "No site, no Spotify, no Apple Music, no YouTube e no YouTube Music. O projeto também está no Instagram, no TikTok e no Facebook, e tem um aplicativo para Android.",
+  "faq": [
+    {
+      "question": "O que é A Música da Segunda?",
+      "answer": "Um projeto brasileiro de paródia musical semanal, criado por Florent Lambert em dezembro de 2024. Toda segunda-feira, uma notícia do Brasil vira uma paródia, com letra, vídeo e contexto."
+    },
+    {
+      "question": "Quem faz as paródias?",
+      "answer": "Florent Lambert, criador do projeto, que faz tudo sozinho. Ele escolhe o tema da semana, cria a letra e a música com o apoio de ferramentas de inteligência artificial e publica a paródia toda segunda-feira."
+    },
+    {
+      "question": "As músicas são feitas com inteligência artificial?",
+      "answer": "Sim. A música é produzida com ferramentas de inteligência artificial. A escolha do tema, o humor, a letra e a curadoria final são de Florent Lambert."
+    },
+    {
+      "question": "Quando sai uma música nova?",
+      "answer": "Uma nova música é publicada toda segunda-feira no site, no YouTube e no TikTok. Ela também fica disponível no Spotify, no Apple Music e no YouTube Music."
+    },
+    {
+      "question": "Como funciona o processo de criação?",
+      "answer": "O processo começa com a seleção de notícias da semana anterior. Escolho um tema que pode virar paródia, crio a letra e a música com o apoio de ferramentas de inteligência artificial, e a paródia é publicada na segunda-feira, com vídeo para TikTok e YouTube."
+    },
+    {
+      "question": "As músicas são sobre política?",
+      "answer": "Não apenas sobre política. A Música da Segunda aborda diversos temas: política, economia, sociedade, cultura, esportes e até mesmo curiosidades. O importante é que cada tema seja relevante para os brasileiros e possa ser trabalhado de forma criativa e reflexiva. Busco diversidade nos temas para manter o projeto interessante e abrangente."
+    },
+    {
+      "question": "Onde posso ouvir as músicas?",
+      "answer": "Você pode ouvir as músicas em várias plataformas: TikTok para vídeos curtos, YouTube para vídeos completos, Spotify e Apple Music para streaming, além do site oficial www.amusicadasegunda.com, onde estão o acervo, as letras e mais informações sobre cada lançamento."
+    },
+    {
+      "question": "As músicas são gratuitas?",
+      "answer": "Sim! Todas as músicas são totalmente gratuitas e disponíveis em todas as plataformas. Você pode ouvir, compartilhar e comentar sem custo algum."
+    },
+    {
+      "question": "Como posso compartilhar uma música?",
+      "answer": "Na página de cada música há um botão para compartilhar pelo WhatsApp. No celular, o botão de compartilhar abre as opções do aparelho ou copia o link da música. Você também pode copiar o endereço da página e enviar para quem quiser."
+    },
+    {
+      "question": "Posso usar as músicas em meus próprios vídeos?",
+      "answer": "O uso das músicas depende do contexto. Para uso pessoal e não comercial, em geral é permitido. Para uso comercial ou em projetos que gerem receita, é necessário entrar em contato por e-mail, em contact@amusicadasegunda.com, para discutir permissões e possíveis licenças."
+    },
+    {
+      "question": "As músicas usam melodias de outros artistas?",
+      "answer": "Não. Cada música é uma criação original, com letra e melodia próprias, produzida com ferramentas de inteligência artificial no estilo de gêneros populares brasileiros, como marchinha, pagode, funk, forró e axé. O humor está na letra e na forma de contar a notícia da semana."
+    },
+    {
+      "question": "O projeto tem algum viés político?",
+      "answer": "A Música da Segunda busca criar humor e reflexão, não promover uma agenda política específica. As paródias podem criticar diferentes aspectos da política e da sociedade, sempre com foco no humor e na análise crítica. O projeto respeita a diversidade de opiniões e procura apresentar diferentes perspectivas por meio da música."
+    },
+    {
+      "question": "Como posso apoiar o projeto?",
+      "answer": "A melhor forma de apoiar é compartilhando as músicas, seguindo nas redes sociais (TikTok, Instagram, YouTube), e engajando com o conteúdo. Você também pode entrar em contato se quiser contribuir de outras formas ou fazer sugestões de temas para futuras músicas."
+    },
+    {
+      "question": "Você faz músicas personalizadas ou encomendas?",
+      "answer": "Atualmente, o foco do projeto está nas músicas semanais sobre a atualidade. Ainda assim, há abertura para conversas sobre projetos especiais ou colaborações. Entre em contato por e-mail, em contact@amusicadasegunda.com, para avaliar possibilidades."
+    },
+    {
+      "question": "Onde posso ver todas as músicas já lançadas?",
+      "answer": "No site oficial, você pode acessar o acervo musical e a playlist com todas as músicas em ordem cronológica. Cada música tem sua própria página com letras completas, vídeos e links para todas as plataformas."
+    },
+    {
+      "question": "As letras das músicas estão disponíveis?",
+      "answer": "Sim! Todas as letras completas estão disponíveis no site. Basta clicar em qualquer música para ver a letra completa, além de informações sobre o tema abordado, contexto histórico e referências. As letras são apresentadas de forma clara e fácil de ler."
+    },
+    {
+      "question": "Como posso sugerir um tema para uma música?",
+      "answer": "Adoro sugestões. Você pode entrar em contato por e-mail, em contact@amusicadasegunda.com, ou pelas redes sociais. Embora nem toda sugestão possa virar música, todas as ideias são consideradas e muitas vezes inspiram lançamentos futuros."
+    }
+  ]
+}

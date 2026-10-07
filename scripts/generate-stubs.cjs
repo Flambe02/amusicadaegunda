@@ -2,6 +2,8 @@ require('dotenv').config();
 const fs = require('fs-extra');
 const path = require('path');
 const { songSameAs, ENTITY_ID } = require('./seo-entity.cjs');
+const sobreContent = require('./sobre.content.json');
+const escapeHtml = (text) => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const {
   baseHtml,
   orgJsonLd,
@@ -302,87 +304,38 @@ ${songListHtml}
     }
   ];
 
-  // ✅ AEO: FAQPage JSON-LD for /sobre — most extractable format for AI engines
+  // Page Sobre : le texte et la FAQ validés (scripts/sobre.content.json), les mêmes que
+  // dans la page affichée (src/pages/Sobre.jsx). Lisibles sans JavaScript.
+  const sobreHtml = (text) => escapeHtml(String(text).replace('{count}', String(songs.length)));
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "O que é A Música da Segunda?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": `A Música da Segunda é um projeto brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um evento do noticiário brasileiro é transformado em paródia musical — com letra, vídeo e contexto editorial. Mais de ${songs.length} paródias publicadas.`
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Quando sai música nova?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Uma nova paródia musical é publicada toda segunda-feira. A música aborda o tema mais relevante do noticiário brasileiro da semana."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Quem faz as paródias?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "A Música da Segunda é um projeto independente de sátira musical brasileiro. As paródias são criadas por uma equipe editorial que acompanha as notícias da semana e transforma os eventos em músicas com letra, vídeo e contexto."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Onde ouvir as músicas?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "As músicas estão disponíveis no site amusicadasegunda.com, no Spotify, no Apple Music, no YouTube Music e no YouTube (Shorts). Cada página traz o vídeo, a letra completa e o contexto da notícia que inspirou a paródia."
-        }
-      }
-    ]
+    "mainEntity": sobreContent.faq.map((item) => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": { "@type": "Answer", "text": item.answer }
+    }))
   };
 
-  // ✅ SEO/AEO: Rich static body for /sobre — E-E-A-T + visible FAQ (crawlable without JS)
   const sobreBody = `
 <div style="max-width: 800px; margin: 0 auto; padding: 1.5rem 1rem 3rem; font-family: Georgia, serif; line-height: 1.8; color: #222;">
   <h1 style="font-size: 2rem; font-weight: bold; margin-bottom: 0.25rem; color: #111;">A Música da Segunda</h1>
-  <p style="font-size: 1.05rem; color: #666; font-style: italic; margin-bottom: 2rem;">Paródia e sátira musical das notícias do Brasil, publicada toda segunda-feira.</p>
+  <p style="font-size: 1.05rem; color: #666; font-style: italic; margin-bottom: 2rem;">${sobreHtml(sobreContent.tagline)}</p>
 
-  <p style="margin-bottom: 1.25rem;">A Música da Segunda é um projeto independente brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical. O projeto já publicou <strong>${songs.length} paródias</strong>, disponíveis no site, no Spotify, no Apple Music e no YouTube.</p>
+${sobreContent.intro.map((paragraph) => `  <p style="margin-bottom: 1.25rem;">${sobreHtml(paragraph)}</p>`).join('\n')}
 
-  <p style="margin-bottom: 1.25rem;">O projeto surgiu da ideia de que o humor é uma das formas mais eficazes de processar e comentar a realidade. Em vez de um artigo ou uma thread, a sátira vem em forma de música: com letra, melodia e um ponto de vista bem claro sobre o que está acontecendo no Brasil.</p>
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">${sobreHtml(sobreContent.howItWorksTitle)}</h2>
+  <p style="margin-bottom: 1.25rem;">${sobreHtml(sobreContent.howItWorks)}</p>
 
-  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Por que paródia musical?</h2>
-  <p style="margin-bottom: 1.25rem;">A paródia musical combina duas coisas que os brasileiros adoram: música e humor político. Uma letra bem construída consegue sintetizar em três minutos o que levaria uma coluna inteira para explicar — e ainda faz rir. É crítica com melodia. É análise com ritmo.</p>
-
-  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Como funciona?</h2>
-  <p style="margin-bottom: 1.25rem;">A cada semana, o projeto acompanha as notícias do Brasil e do mundo. Quando um tema se destaca — um escândalo político, uma crise econômica, um momento cultural, uma polêmica internacional — ele vira o mote da nova música. A letra é escrita, a música gravada, e tudo é publicado às segundas.</p>
-  <p style="margin-bottom: 1.25rem;">Cada página de música traz a letra completa, o vídeo, e o contexto da notícia que inspirou a paródia. Porque entender o que está sendo satirizado faz parte da piada.</p>
-
-  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Temas</h2>
-  <p style="margin-bottom: 1.25rem;">O projeto já publicou paródias sobre política brasileira, economia, energia elétrica, futebol, carnaval, geopolítica internacional, escândalos corporativos, cultura popular e muito mais. Cada semana é uma surpresa — e uma nova janela de humor sobre a realidade.</p>
+  <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">${sobreHtml(sobreContent.whereToListenTitle)}</h2>
+  <p style="margin-bottom: 1.25rem;">${sobreHtml(sobreContent.whereToListen)}</p>
 
   <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Perguntas frequentes</h2>
-
+${sobreContent.faq.map((item) => `
   <div style="margin-bottom: 1.5rem;">
-    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">O que é A Música da Segunda?</h3>
-    <p style="margin: 0;">A Música da Segunda é um projeto brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um evento do noticiário brasileiro é transformado em paródia musical — com letra, vídeo e contexto editorial. São mais de ${songs.length} paródias publicadas.</p>
-  </div>
-
-  <div style="margin-bottom: 1.5rem;">
-    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">Quando sai música nova?</h3>
-    <p style="margin: 0;">Uma nova paródia musical é publicada toda segunda-feira. A música aborda o tema mais relevante do noticiário brasileiro da semana anterior.</p>
-  </div>
-
-  <div style="margin-bottom: 1.5rem;">
-    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">Quem faz as paródias?</h3>
-    <p style="margin: 0;">A Música da Segunda é um projeto independente de sátira musical brasileiro. As paródias são criadas por uma equipe editorial que acompanha as notícias da semana e transforma os eventos em músicas com letra, vídeo e contexto — sem filtro, com humor.</p>
-  </div>
-
-  <div style="margin-bottom: 1.5rem;">
-    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">Onde ouvir as músicas?</h3>
-    <p style="margin: 0;">As músicas estão disponíveis no site <a href="${siteUrl}/musica/" style="color: #2563eb;">amusicadasegunda.com</a>, no Spotify, no Apple Music, no YouTube Music e no YouTube (Shorts). Cada página traz o vídeo, a letra completa e o contexto da notícia.</p>
-  </div>
+    <h3 style="font-size: 1.1rem; font-weight: bold; color: #111; margin-bottom: 0.5rem;">${sobreHtml(item.question)}</h3>
+    <p style="margin: 0;">${sobreHtml(item.answer)}</p>
+  </div>`).join('\n')}
 
   <p style="margin-top: 2rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
     <a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif;">← Ver todas as músicas</a>
@@ -428,7 +381,7 @@ ${songListHtml}
   </ul>
 
   <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111; font-family: sans-serif;">A Música da Segunda: sátira musical semanal</h2>
-  <p style="margin-bottom: 1.25rem;"><a href="${siteUrl}/" style="color: #2563eb; text-decoration: none;"><strong>A Música da Segunda</strong></a> é um projeto independente brasileiro de sátira musical semanal. Desde ${launchYear}, toda segunda-feira um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical publicada com letra completa, vídeo e contexto editorial.</p>
+  <p style="margin-bottom: 1.25rem;"><a href="${siteUrl}/" style="color: #2563eb; text-decoration: none;"><strong>A Música da Segunda</strong></a> é um projeto brasileiro de paródia musical semanal, criado por Florent Lambert em dezembro de 2024. Toda segunda-feira, um acontecimento real do noticiário brasileiro — político, econômico, cultural ou internacional — vira o tema de uma nova paródia musical publicada com letra completa, vídeo e contexto editorial. Cada música é uma criação original, com letra e melodia próprias, produzida com ferramentas de inteligência artificial no estilo de gêneros populares brasileiros.</p>
   <p style="margin-bottom: 1.25rem;">O projeto já publicou mais de ${songs.length} paródias sobre política brasileira, eleições, crises energéticas, escândalos corporativos, futebol, carnaval e geopolítica internacional. A ideia é simples: toda segunda-feira, o Brasil acorda com uma nova música sobre o que aconteceu na semana anterior.</p>
 
   <p style="margin-bottom: 0.75rem; font-weight: bold; font-family: sans-serif;">Explorar por tema:</p>

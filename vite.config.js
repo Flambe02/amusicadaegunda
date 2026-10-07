@@ -2,6 +2,7 @@ import { createRequire } from 'node:module'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
+import { readFileSync } from 'node:fs'
 import { buildCurrentSongBootUrl } from './src/api/songColumns.js'
 import { resolveSupabasePublicConfig } from './src/lib/supabasePublicConfig.js'
 import { detectInterface } from './src/lib/interfaceRule.js'
@@ -102,11 +103,25 @@ function vendorTvGuardPlugin() {
   }
 }
 
+// Nombre de chansons publiées (page Sobre) : lu dans content/songs.json, le fichier écrit
+// par le prebuild et lu par les pages statiques — le même nombre des deux côtés.
+function publishedSongCount() {
+  try {
+    const songs = JSON.parse(readFileSync(resolve(__dirname, 'content/songs.json'), 'utf8'))
+    return Array.isArray(songs) && songs.length > 0 ? songs.length : null
+  } catch {
+    return null
+  }
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command, mode }) => ({
   // ✅ SEO: Base path correct pour GitHub Pages et URLs propres
   base: command === 'build' ? '/' : '/',
   plugins: [react(), amdsBootPlugin(mode), amdsSeoPlugin(), vendorTvGuardPlugin()],
+  define: {
+    __AMDS_SONG_COUNT__: JSON.stringify(publishedSongCount()),
+  },
   // ✅ SÉCURITÉ: Les variables d'environnement sont maintenant chargées depuis .env
   // Les clés Supabase ne sont plus exposées dans le code source
   resolve: {

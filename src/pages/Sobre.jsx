@@ -3,11 +3,18 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import OptimizedImage from '../components/OptimizedImage';
 import { useSEO } from '../hooks/useSEO';
+import { ENTITY_ID, injectJsonLd } from '@/lib/seo-jsonld';
+import sobreContent from '../../scripts/sobre.content.json';
 import { createPageUrl } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { BRAND_LOGO_MEDIUM } from '@/lib/imageAssets';
 import { Song } from '@/api/entities';
 import { extractYouTubeId, getYouTubeThumbnailUrl, titleToSlug } from '@/lib/utils';
+
+// Nombre de chansons publiées, écrit au build par vite.config.js (content/songs.json).
+// Absent en développement et dans les tests : la phrase qui le cite n'est alors pas affichée.
+/* global __AMDS_SONG_COUNT__ */
+const SONG_COUNT = typeof __AMDS_SONG_COUNT__ === 'number' ? __AMDS_SONG_COUNT__ : null;
 
 function normalizeSearchText(value) {
   return (value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -134,7 +141,7 @@ function MobileSongSearch() {
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.24em] text-app-yellow">Pesquisa</p>
-          <h2 className="mt-1 text-lg font-black text-white">Buscar musicas</h2>
+          <h2 className="mt-1 text-lg font-black text-white">Buscar músicas</h2>
         </div>
         <Music className="h-5 w-5 text-white/38" aria-hidden="true" />
       </div>
@@ -189,7 +196,7 @@ function MobileSongSearch() {
                 <Link to={slug ? `/musica/${slug}/` : createPageUrl('Playlist')} className="min-w-0 flex-1 text-left">
                   <h3 className="truncate text-sm font-black text-white">{song.title}</h3>
                   <p className="mt-0.5 line-clamp-2 text-xs font-medium leading-4 text-white/50">
-                    {song.description || song.artist || 'A Musica da Segunda'}
+                    {song.description || song.artist || 'A Música da Segunda'}
                   </p>
                 </Link>
 
@@ -245,8 +252,8 @@ function MobileAboutExperience() {
   const pillars = [
     {
       icon: Music,
-      title: 'Nova musica toda semana',
-      text: 'Toda segunda tem lancamento.',
+      title: 'Nova música toda semana',
+      text: 'Toda segunda tem lançamento.',
     },
     {
       icon: Smile,
@@ -255,7 +262,7 @@ function MobileAboutExperience() {
     },
     {
       icon: Headphones,
-      title: 'Disponivel em varias plataformas',
+      title: 'Disponível em várias plataformas',
       text: 'Ouça onde e como quiser.',
     },
   ];
@@ -271,7 +278,7 @@ function MobileAboutExperience() {
           <div className="absolute inset-2 rounded-full border border-app-yellow/35" />
           <OptimizedImage
             src={BRAND_LOGO_MEDIUM}
-            alt="Logo A Musica da Segunda"
+            alt="Logo A Música da Segunda"
             className="h-full w-full rounded-full object-cover"
             loading="eager"
           />
@@ -281,10 +288,10 @@ function MobileAboutExperience() {
           Sobre o projeto
         </p>
         <h1 className="max-w-[12ch] text-[2.1rem] font-black leading-[0.98] tracking-normal text-white landscape:max-w-[28ch] landscape:text-[1.8rem]">
-          Toda segunda, o Brasil vira refrao.
+          Toda segunda, o Brasil vira refrão.
         </h1>
         <p className="mt-4 max-w-[20rem] text-[14px] font-medium leading-6 text-white/68">
-          A Musica da Segunda transforma noticias, politica, cultura e caos do Brasil em parodias musicais cheias de humor e contexto.
+          A Música da Segunda transforma notícias, política, cultura e caos do Brasil em paródias musicais cheias de humor e contexto.
         </p>
 
         <div className="mt-6 grid w-full grid-cols-3 gap-2.5">
@@ -338,8 +345,8 @@ function MobileAboutExperience() {
           className="flex items-center justify-between rounded-[18px] border border-white/10 bg-white/[0.055] px-4 py-4 text-left transition active:scale-[0.99]"
         >
           <span>
-            <span className="block text-sm font-black text-white">Conheca o catalogo</span>
-            <span className="mt-1 block text-xs font-medium text-white/55">Todas as parodias em ordem cronologica.</span>
+            <span className="block text-sm font-black text-white">Conheça o catálogo</span>
+            <span className="mt-1 block text-xs font-medium text-white/55">Todas as paródias em ordem cronológica.</span>
           </span>
           <ExternalLink className="h-5 w-5 flex-shrink-0 text-app-yellow" aria-hidden="true" />
         </Link>
@@ -373,68 +380,8 @@ function MobileAboutExperience() {
 export default function Sobre() {
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
 
-  const faqs = [
-    {
-      question: "O que é A Música da Segunda?",
-      answer: "A Música da Segunda é um projeto criativo brasileiro que produz paródias musicais inteligentes sobre a atualidade do Brasil. Toda segunda-feira, uma nova música transforma notícias e acontecimentos em canções divertidas, críticas e reflexivas. O projeto combina humor musical com análise social, oferecendo uma perspectiva própria sobre os eventos do país por meio da música."
-    },
-    {
-      question: "Quando sai uma música nova?",
-      answer: "Uma nova música é publicada toda segunda-feira. Esta regularidade garante que os fãs sempre tenham conteúdo novo para começar a semana. A música é lançada simultaneamente em todas as plataformas: TikTok, YouTube, Spotify, Apple Music, YouTube Music e no site oficial."
-    },
-    {
-      question: "Como funciona o processo de criação?",
-      answer: "O processo começa com a seleção cuidadosa de notícias da semana anterior. Escolho temas relevantes que podem ser transformados em paródias musicais. Depois, crio as letras, que são escritas para serem inteligentes e equilibradas entre humor e crítica. A produção musical é feita com equipamentos profissionais, e cada música ganha um vídeo criativo para TikTok e YouTube."
-    },
-    {
-      question: "As músicas são sobre política?",
-      answer: "Não apenas sobre política. A Música da Segunda aborda diversos temas: política, economia, sociedade, cultura, esportes e até mesmo curiosidades. O importante é que cada tema seja relevante para os brasileiros e possa ser trabalhado de forma criativa e reflexiva. Busco diversidade nos temas para manter o projeto interessante e abrangente."
-    },
-    {
-      question: "Onde posso ouvir as músicas?",
-      answer: "Você pode ouvir as músicas em várias plataformas: TikTok para vídeos curtos, YouTube para vídeos completos, Spotify e Apple Music para streaming, além do site oficial www.amusicadasegunda.com, onde estão o acervo, as letras e mais informações sobre cada lançamento."
-    },
-    {
-      question: "As músicas são gratuitas?",
-      answer: "Sim! Todas as músicas são totalmente gratuitas e disponíveis em todas as plataformas. Você pode ouvir, compartilhar e comentar sem custo algum."
-    },
-    {
-      question: "Como posso compartilhar uma música?",
-      answer: "Cada página de música no site tem botões de compartilhamento para redes sociais como Facebook, Twitter, WhatsApp e mais. Você também pode copiar o link direto da música ou compartilhar diretamente do TikTok, YouTube ou outras plataformas. Compartilhar ajuda muito o projeto a crescer!"
-    },
-    {
-      question: "Posso usar as músicas em meus próprios vídeos?",
-      answer: "O uso das músicas depende do contexto. Para uso pessoal e não comercial, em geral é permitido. Para uso comercial ou em projetos que gerem receita, é necessário entrar em contato por e-mail, em contact@amusicadasegunda.com, para discutir permissões e possíveis licenças."
-    },
-    {
-      question: "Como são escolhidas as músicas que serão parodiadas?",
-      answer: "A escolha da música base (a canção original que será parodiada) é estratégica. Uso músicas conhecidas que, quando combinadas com novas letras sobre atualidades, criam um contraste interessante e memorável. Não me limito a um gênero: parodio MPB, pop, rock, samba, funk e outros estilos musicais brasileiros."
-    },
-    {
-      question: "O projeto tem algum viés político?",
-      answer: "A Música da Segunda busca criar humor e reflexão, não promover uma agenda política específica. As paródias podem criticar diferentes aspectos da política e da sociedade, sempre com foco no humor e na análise crítica. O projeto respeita a diversidade de opiniões e procura apresentar diferentes perspectivas por meio da música."
-    },
-    {
-      question: "Como posso apoiar o projeto?",
-      answer: "A melhor forma de apoiar é compartilhando as músicas, seguindo nas redes sociais (TikTok, Instagram, YouTube), e engajando com o conteúdo. Você também pode entrar em contato se quiser contribuir de outras formas ou fazer sugestões de temas para futuras músicas."
-    },
-    {
-      question: "Vocês fazem músicas personalizadas ou encomendas?",
-      answer: "Atualmente, o foco do projeto está nas músicas semanais sobre a atualidade. Ainda assim, há abertura para conversas sobre projetos especiais ou colaborações. Entre em contato por e-mail, em contact@amusicadasegunda.com, para avaliar possibilidades."
-    },
-    {
-      question: "Onde posso ver todas as músicas já lançadas?",
-      answer: "No site oficial, você pode acessar o acervo musical e a playlist com todas as músicas em ordem cronológica. Cada música tem sua própria página com letras completas, vídeos e links para todas as plataformas."
-    },
-    {
-      question: "As letras das músicas estão disponíveis?",
-      answer: "Sim! Todas as letras completas estão disponíveis no site. Basta clicar em qualquer música para ver a letra completa, além de informações sobre o tema abordado, contexto histórico e referências. As letras são apresentadas de forma clara e fácil de ler."
-    },
-    {
-      question: "Como posso sugerir um tema para uma música?",
-      answer: "Adoro sugestões. Você pode entrar em contato por e-mail, em contact@amusicadasegunda.com, ou pelas redes sociais. Embora nem toda sugestão possa virar música, todas as ideias são consideradas e muitas vezes inspiram lançamentos futuros."
-    }
-  ];
+  // La liste validée, la même que dans le HTML statique (scripts/sobre.content.json).
+  const faqs = sobreContent.faq;
 
   const toggleFAQ = (index) => {
     setOpenFAQIndex(openFAQIndex === index ? null : index);
@@ -448,44 +395,36 @@ export default function Sobre() {
     type: 'website'
   });
 
+  // JSON-LD dans le <head> : le bloc FAQPage remplace celui du HTML statique (même liste),
+  // et AboutPage renvoie à l'entité déclarée sur toutes les pages.
+  useEffect(() => {
+    injectJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+      })),
+    }, 'sobre-faq-schema');
+    injectJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'AboutPage',
+      name: 'Sobre A Música da Segunda',
+      url: 'https://www.amusicadasegunda.com/sobre/',
+      description: sobreContent.intro[0],
+      mainEntity: { '@id': ENTITY_ID },
+    }, 'sobre-about-schema');
+    return () => {
+      document.getElementById('sobre-faq-schema')?.remove();
+      document.getElementById('sobre-about-schema')?.remove();
+    };
+  }, [faqs]);
+
   const blockClass = "bg-gradient-to-br from-blue-950/60 to-[#0f172a]/70 backdrop-blur-sm rounded-[28px] p-8 mb-6 border border-blue-400/15";
 
   return (
     <>
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          "mainEntity": faqs.map(faq => ({
-            "@type": "Question",
-            "name": faq.question,
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": faq.answer
-            }
-          }))
-        })}
-      </script>
-
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "AboutPage",
-          "name": "Sobre a Música da Segunda",
-            "description": "Informações sobre o projeto A Música da Segunda, que produz paródias musicais sobre a atualidade do Brasil",
-            "mainEntity": {
-              "@type": "MusicGroup",
-              "name": "A Música da Segunda",
-              "description": "Projeto musical brasileiro que transforma notícias em paródias musicais inteligentes",
-              "genre": ["Paródia", "Humor", "Música popular brasileira"],
-              "foundingLocation": {
-                "@type": "Country",
-                "name": "Brasil"
-              }
-            }
-          })}
-        </script>
-
       <div className="space-y-0">
         <MobileAboutExperience />
 
@@ -496,7 +435,7 @@ export default function Sobre() {
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] uppercase tracking-[0.28em] text-white/70">
                   <Heart className="h-3.5 w-3.5 text-[#FDE047]" />
-                  Quem somos
+                  Sobre o projeto
                 </div>
 
                 <div className="space-y-4">
@@ -575,14 +514,16 @@ export default function Sobre() {
               <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-pink-500 rounded-full flex items-center justify-center shadow-lg">
                 <Heart className="w-6 h-6 text-white" />
               </div>
-              Quem somos: a história do projeto
+              A história do projeto
             </h2>
 
             <div className="space-y-4 text-white/68 text-base leading-relaxed">
               <p>
-                <strong className="text-white">A Música da Segunda</strong> é um projeto autoral brasileiro que cria paródias musicais
-                sobre a atualidade do país. O conceito é simples: toda segunda-feira, uma nova música comenta com humor e
-                sagacidade os principais acontecimentos da semana anterior.
+                {sobreContent.intro[0]}
+              </p>
+
+              <p>
+                {SONG_COUNT ? sobreContent.intro[1].replace('{count}', String(SONG_COUNT)) : sobreContent.introWithoutCount}
               </p>
 
               <h3 className="text-xl font-bold text-white mt-6 mb-3">Origem e inspiração</h3>
@@ -605,7 +546,7 @@ export default function Sobre() {
               <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center shadow-lg">
                 <Music className="w-6 h-6 text-white" />
               </div>
-               Nossa missão
+               A missão do projeto
             </h2>
 
             <div className="space-y-4 text-white/68 text-base leading-relaxed">
@@ -637,13 +578,12 @@ export default function Sobre() {
 
               <h3 className="text-xl font-bold text-white mt-6 mb-3">Seleção e escrita</h3>
               <p>
-                Acompanho os principais temas da semana e seleciono assuntos que podem ser transformados em paródias musicais.
-                As letras são escritas para equilibrar humor, crítica, ritmo e reconhecimento imediato.
+                {sobreContent.howItWorks}
               </p>
 
               <h3 className="text-xl font-bold text-white mt-6 mb-3">Produção</h3>
               <p>
-                Cada faixa é produzida com cuidado técnico, buscando boa qualidade sonora e coerência com a música-base.
+                {sobreContent.production}
                 O lançamento também pode ganhar vídeo, capa e contexto editorial.
               </p>
 
@@ -713,18 +653,14 @@ export default function Sobre() {
             <div className="space-y-4 text-white/68 text-base leading-relaxed">
               <p>
                 As paródias de <strong className="text-white">A Música da Segunda</strong> seguem uma abordagem musical diversificada.
-                O repertório pode passar por MPB, pop, rock, samba, funk e outras referências populares, dependendo do tema.
+                Cada música é uma criação original, no estilo de gêneros populares brasileiros como marchinha, pagode, funk,
+                forró e axé, dependendo do tema.
               </p>
 
               <p>
                 O humor varia entre sátira política, ironia social, comentário cultural e observação do cotidiano. O importante
                 é que cada música seja <strong className="text-white">memorável, cantável e reflexiva</strong>, convidando o ouvinte
                 a pensar sobre o tema abordado enquanto se diverte.
-              </p>
-
-              <p>
-                Todas as músicas buscam qualidade de produção, clareza de letra e uma identidade musical brasileira, crítica e
-                acessível.
               </p>
             </div>
           </article>

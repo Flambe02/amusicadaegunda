@@ -189,3 +189,31 @@ describe('IndexNow — un refus se voit', () => {
     expect(await indexNow.pingAll(['https://www.amusicadasegunda.com/'], { fetchImpl, log: () => {} })).toEqual([]);
   });
 });
+
+describe('Page Sobre — texte factuel partagé (HTML statique et page affichée)', () => {
+  const sobre = require('../../../scripts/sobre.content.json');
+  const everything = JSON.stringify(sobre);
+
+  it('names the creator and the founding date, and says how the music is made', () => {
+    expect(sobre.intro[0]).toContain('criado por Florent Lambert em dezembro de 2024');
+    expect(sobre.howItWorks).toContain('com o apoio de ferramentas de inteligência artificial');
+    expect(sobre.intro[1]).toContain('{count}');
+  });
+
+  it('never mentions a team, a studio, professional equipment or reused melodies', () => {
+    expect(everything).not.toMatch(/equipe|est[uú]dio|equipamento|m[uú]sica[- ]base|m[uú]sicas conhecidas|gravada|simultaneamente|Vocês/i);
+  });
+
+  it('the FAQ has the validated questions, each with a non-empty answer, without duplicates', () => {
+    const questions = sobre.faq.map((item) => item.question);
+    expect(questions).toHaveLength(17);
+    expect(new Set(questions).size).toBe(17);
+    expect(questions).toEqual(expect.arrayContaining([
+      'Quem faz as paródias?',
+      'As músicas são feitas com inteligência artificial?',
+      'As músicas usam melodias de outros artistas?',
+      'Você faz músicas personalizadas ou encomendas?',
+    ]));
+    for (const item of sobre.faq) expect(item.answer.length).toBeGreaterThan(40);
+  });
+});
