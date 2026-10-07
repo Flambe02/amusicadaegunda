@@ -347,9 +347,12 @@ export default function TvApp({ web = null }) {
   const sitePageQrRef = useRef(null);
   sitePageQrRef.current = sitePageQr;
   const openSitePage = useCallback((title, path) => {
+    // Adresse hors du site (canal WhatsApp) : nouvel onglet sur ordinateur.
+    const external = /^https?:\/\//.test(path);
+    if (isWeb && external) { window.open(path, '_blank', 'noopener,noreferrer'); return; }
     if (isWeb) { window.location.assign(path); return; }
     setTvSettingsOpen(false);
-    setSitePageQr({ title, url: `https://www.amusicadasegunda.com${path}` });
+    setSitePageQr({ title, url: external ? path : `https://www.amusicadasegunda.com${path}` });
   }, [isWeb]);
 
   // Un écran peut « intercepter » le Back (ex. fiche en lecture vidéo → couper la vidéo

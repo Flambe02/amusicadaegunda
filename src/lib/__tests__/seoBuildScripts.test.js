@@ -44,8 +44,19 @@ describe('Identité — une seule entité, des faits déclarés', () => {
     expect(new Set(group.sameAs).size).toBe(group.sameAs.length);
   });
 
-  it('the WhatsApp channel joins sameAs only once its address is filled in', () => {
-    expect(group.sameAs.join(' ')).not.toMatch(/whatsapp/);
+  it('the WhatsApp channel is one plain link, the same address in llms.txt, the menu and the Sobre text', async () => {
+    const url = config.brand.links.whatsappChannel;
+    expect(url).toBe('https://whatsapp.com/channel/0029Vb8ioY53bbV6QyxYop0Q');
+    expect(llms.buildLlmsTxt({ songs: [], hasFeed: false })).toContain(`- [WhatsApp](${url})`);
+    const { PLATFORMS } = await import('@/components/mobile/menu/platforms');
+    expect(PLATFORMS.at(-1)).toEqual({ label: 'Seguir no WhatsApp', href: url });
+    expect(require('../../../scripts/sobre.content.json').whereToListen).toMatch(/canal do WhatsApp/);
+  });
+
+  it('the WhatsApp channel is in sameAs, and only when its address is filled in', () => {
+    expect(group.sameAs).toContain('https://whatsapp.com/channel/0029Vb8ioY53bbV6QyxYop0Q');
+    const without = entity.sameAsUrls({ ...config.brand, links: { ...config.brand.links, whatsappChannel: '' } });
+    expect(without.join(' ')).not.toMatch(/whatsapp/);
     const withChannel = entity.sameAsUrls({ ...config.brand, links: { ...config.brand.links, whatsappChannel: 'https://whatsapp.com/channel/abc' } });
     expect(withChannel).toContain('https://whatsapp.com/channel/abc');
   });

@@ -16,6 +16,7 @@ const {
 } = require('./seo-templates.cjs');
 
 const cfg = require('./seo.config.json');
+const whatsappChannel = cfg.brand.links.whatsappChannel || '';
 const songsPath = path.resolve('content', 'songs.json');
 const songs = fs.existsSync(songsPath) ? JSON.parse(fs.readFileSync(songsPath, 'utf8')) : [];
 
@@ -329,7 +330,8 @@ ${sobreContent.intro.map((paragraph) => `  <p style="margin-bottom: 1.25rem;">${
 
   <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">${sobreHtml(sobreContent.whereToListenTitle)}</h2>
   <p style="margin-bottom: 1.25rem;">${sobreHtml(sobreContent.whereToListen)}</p>
-
+${whatsappChannel ? `  <p style="margin-bottom: 1.25rem;"><a href="${whatsappChannel}" rel="noopener" style="color: #2563eb; text-decoration: underline;">Seguir no WhatsApp</a></p>
+` : ''}
   <h2 style="font-size: 1.4rem; font-weight: bold; margin: 2rem 0 0.75rem; color: #111;">Perguntas frequentes</h2>
 ${sobreContent.faq.map((item) => `
   <div style="margin-bottom: 1.5rem;">

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { WHATSAPP_CHANNEL_URL } from '@/lib/whatsappChannel';
 import { FocusContext, useFocusable, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { Users, Flame, Globe, LogOut } from 'lucide-react';
 import { FONT_SCALES, PLAYBACK_RATES, TRANSLATION_LANGS } from '@/lib/karaokeOptions';
@@ -29,7 +30,7 @@ function ExitLine({ onPress }) {
  * (contrairement au karaokê) — inutile de la réactiver ici. La fermeture (Retour)
  * et la restauration du focus sur l'avatar sont gérées par TvHome.
  */
-/** Lien discret vers une page du site (Sobre, Blog). */
+/** Lien discret vers une page du site (Sobre, Blog) ou vers le canal WhatsApp. */
 function SiteLink({ focusKey, label, onPress }) {
   const { ref, focused } = useFocusable({ focusKey, onEnterPress: onPress });
   return (
@@ -78,6 +79,9 @@ export default function TvSettingsPanel({ opts, setOpts, onExitApp, onOpenSitePa
               <div className="tv2-settings-links">
                 <SiteLink focusKey="HSET_SOBRE" label="Sobre o projeto" onPress={() => onOpenSitePage('Sobre o projeto', '/sobre/')} />
                 <SiteLink focusKey="HSET_BLOG" label="Blog" onPress={() => onOpenSitePage('Blog', '/blog/')} />
+                {WHATSAPP_CHANNEL_URL && (
+                  <SiteLink focusKey="HSET_WHATSAPP" label="Canal no WhatsApp" onPress={() => onOpenSitePage('Canal no WhatsApp', WHATSAPP_CHANNEL_URL)} />
+                )}
               </div>
             )}
             <ExitLine onPress={onExitApp} />

@@ -170,7 +170,7 @@ describe('Layout — shell mobile', () => {
       expect(within(dialog).queryByText(gone)).toBeNull();
     }
     const pills = within(dialog).getAllByRole('link').filter((a) => a.getAttribute('target') === '_blank');
-    expect(pills.map((a) => a.textContent)).toEqual(['YouTube', 'Spotify', 'Apple Music', 'TikTok', 'Instagram']);
+    expect(pills.map((a) => a.textContent)).toEqual(['YouTube', 'Spotify', 'Apple Music', 'TikTok', 'Instagram', 'Seguir no WhatsApp']);
     for (const pill of pills) expect(pill.className).not.toMatch(/red|green|pink|FF0000|1DB954|FA233B/);
     expect(dialog.innerHTML).not.toMatch(/yellow|FDE047/i); // pas de jaune dans le Menu
   });
