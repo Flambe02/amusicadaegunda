@@ -6,7 +6,7 @@ import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
  * (fallback tactile pour le cas « tablette détectée comme TV »).
  */
 export default function FocusableButton({
-  onPress, children, className = '', focusKey, autoFocus = false, ariaLabel, style,
+  onPress, children, className = '', focusKey, autoFocus = false, ariaLabel, style, onFocused,
 }) {
   // Au focus, on ramène le bouton dans la zone visible du conteneur qui défile.
   // Sans ça, sur l'accueil/les landings (nav + hero + rangées plus hauts que
@@ -18,6 +18,7 @@ export default function FocusableButton({
     onEnterPress: onPress,
     focusKey,
     onFocus: () => {
+      onFocused?.();
       try {
         ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
       } catch { /* ignore */ }

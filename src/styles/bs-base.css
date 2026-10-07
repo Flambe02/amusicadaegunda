@@ -1,0 +1,150 @@
+/* ==========================================================================
+   Interface grand écran (TV + ordinateur) — socle de la refonte 2026-10 :
+   polices auto-hébergées, tokens, focus, barre du haut, boutons, étiquettes.
+   Maquettes de référence : design/bigscreen/ (1920×1080, la scène logique).
+   Chargé seulement par src/tv/TvApp.jsx → le mobile ne télécharge rien d'ici.
+   ========================================================================== */
+
+/* Polices auto-hébergées (sous-ensemble latin, accents portugais compris) : aucune
+   requête externe, la box fonctionne hors ligne. Licence OFL : src/assets/fonts/. */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/archivo-latin-variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Archivo Black';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/archivo-black-latin.woff2') format('woff2');
+}
+
+:root {
+  --bs-bg: #0F0D09;
+  --bs-surface: #1A1711;
+  --bs-surface-2: #2A251B;
+  --bs-tag-border: #4A4232;
+  --bs-text: #F7F2E8;
+  --bs-text-2: #BDB3A1;
+  --bs-gold: #F5C542;
+  --bs-on-gold: #1A1405;
+  --bs-plum: #2A0F1C;
+  --bs-plum-border: #5C1E3A;
+  --bs-pink: #FF5C93;
+  --bs-on-pink: #1A0710;
+  --bs-pink-text: #FF7AA8;
+  --bs-festa-bg: #16070E;
+  --bs-qr-card: #FFF7F0;
+  --bs-font: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --bs-font-title: 'Archivo Black', 'Archivo', 'Arial Black', system-ui, sans-serif;
+  --bs-pad-x: 96px;
+
+  /* Les écrans non redessinés (catálogo, karaokê, painéis) prennent les mêmes couleurs
+     par leurs propres variables — mise en page inchangée. */
+  --tv-bg: var(--bs-bg);
+  --tv-card: var(--bs-surface);
+  --tv-accent: var(--bs-gold);
+  --tv-focus: #ffffff;
+  --tvh-yellow: var(--bs-gold);
+  --tvh-ink: var(--bs-on-gold);
+  --tvh-panel: var(--bs-surface);
+  --tvh-border: var(--bs-surface-2);
+  --tvh-pink: var(--bs-pink);
+}
+
+.tv-root {
+  background: var(--bs-bg);
+  color: var(--bs-text);
+  font-family: var(--bs-font);
+}
+
+/* ── Focus : identique à la télécommande et au survol de la souris ───────────── */
+.bs-focus {
+  transition: transform 140ms ease-out, box-shadow 140ms ease-out;
+  outline: 4px solid transparent; outline-offset: 6px;
+}
+.bs-focus.is-focused {
+  transform: scale(1.06);
+  outline-color: #fff;
+  box-shadow: 0 0 0 14px rgba(245, 197, 66, 0.18);
+  z-index: 2;
+}
+@media (prefers-reduced-motion: reduce) { .bs-focus { transition: none; } }
+
+/* ── Écran : marges de la maquette, défilement vertical par rangée ───────────── */
+.bs-screen {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  background: var(--bs-bg); color: var(--bs-text);
+}
+.bs-scroll {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  padding: 0 var(--bs-pad-x) 48px; scrollbar-width: none;
+}
+.bs-scroll::-webkit-scrollbar { display: none; }
+
+/* ── Barre du haut ────────────────────────────────────────────────────────── */
+.bs-nav {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 24px;
+  height: 148px; padding: 12px var(--bs-pad-x) 0;
+}
+.bs-nav-brand { display: flex; align-items: center; gap: 18px; margin-right: auto; }
+.bs-nav-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; display: block; }
+.bs-nav-name { font-family: var(--bs-font-title); font-size: 26px; line-height: 1; color: var(--bs-text); white-space: nowrap; }
+.bs-nav-menu { display: flex; align-items: center; gap: 12px; }
+.bs-nav-item {
+  display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 26px;
+  border: 0; border-radius: 999px; background: transparent; cursor: pointer;
+  color: var(--bs-text); font-family: var(--bs-font); font-size: 22px; font-weight: 600;
+}
+.bs-nav-item.is-active { background: var(--bs-surface-2); color: var(--bs-gold); font-weight: 700; }
+.bs-nav-item.is-festa { color: var(--bs-pink-text); font-weight: 700; }
+.bs-nav-round {
+  display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px;
+  border-radius: 999px; border: 1.5px solid var(--bs-tag-border); background: var(--bs-surface);
+  color: var(--bs-text); cursor: pointer; margin-left: 12px;
+}
+.bs-nav-queue {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 999px;
+  background: var(--bs-plum); border: 1px solid var(--bs-plum-border); color: var(--bs-pink-text);
+  font-size: 18px; font-weight: 700;
+}
+
+/* ── Boutons, étiquettes ──────────────────────────────────────────────────── */
+.bs-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 14px;
+  border-radius: 999px; cursor: pointer; white-space: nowrap;
+  font-family: var(--bs-font); font-weight: 700; color: var(--bs-text);
+  border: 1.5px solid var(--bs-tag-border); background: rgba(15, 13, 9, 0.72);
+  height: 66px; padding: 0 34px; font-size: 24px;
+}
+.bs-btn-primary {
+  height: 84px; padding: 0 46px; font-size: 28px;
+  background: var(--bs-gold); color: var(--bs-on-gold); border-color: var(--bs-gold);
+}
+.bs-btn-ghost { border-color: transparent; background: transparent; }
+.bs-btn-pink { background: var(--bs-pink); color: var(--bs-on-pink); border-color: var(--bs-pink); }
+.bs-btn-small { height: 54px; padding: 0 28px; font-size: 19px; }
+.bs-btn-round { width: 54px; height: 54px; padding: 0; }
+.bs-tags { display: flex; flex-wrap: wrap; gap: 12px; }
+.bs-tag {
+  display: inline-flex; align-items: center; height: 42px; padding: 0 18px; border-radius: 999px;
+  border: 1.5px solid var(--bs-tag-border); color: var(--bs-text); font-size: 18px; font-weight: 600;
+}
+.bs-link {
+  border: 0; background: transparent; padding: 4px 0; cursor: pointer; border-radius: 8px;
+  color: var(--bs-gold); font-family: var(--bs-font); font-size: 20px; font-weight: 700;
+}
+
+/* ── Bouton retour de l'ordinateur (TvApp) : la pilule « Voltar » des maquettes ── */
+.tv-web-back {
+  position: absolute; left: var(--bs-pad-x); top: 46px; z-index: 10050;
+  display: inline-flex; align-items: center; gap: 12px; height: 60px; padding: 0 26px;
+  border-radius: 999px; border: 1.5px solid var(--bs-tag-border); background: rgba(15, 13, 9, 0.72);
+  color: var(--bs-text); font-family: var(--bs-font); font-size: 21px; font-weight: 600; cursor: pointer;
+}
+.tv-web-back:hover, .tv-web-back:focus-visible { border-color: #fff; outline: none; }
+/* Sur un écran qui a la barre du haut, « Voltar » se range sous elle, à gauche. */
+.tv-root[data-nav='1'] .tv-web-back { top: 104px; height: 44px; font-size: 18px; padding: 0 18px; }

@@ -175,17 +175,26 @@ async function listKaraokeCatalogueSongs() {
 // LRC (absent du résumé) pour savoir si une chanson se chante à deux voix.
 async function listBigScreenSongs() {
   try {
-    const [songs, duetIds] = await Promise.all([
+    const [songs, duetIds, contexts, weekDescription] = await Promise.all([
       supabaseSongService.listBigScreen(),
       // Sans cette réponse, les chansons sont proposées en solo : jamais bloquant.
       supabaseSongService.listDuetIds().catch((error) => {
         logger.error('Erro ao carregar as músicas em dueto:', error);
         return [];
       }),
+      // Contexte court (colonne facultative) : sans elle, le début de la description sert.
+      supabaseSongService.listContextShort().catch(() => []),
+      // Description de la música da semana seulement (≈ 1 Ko) : le premier écran affiche
+      // son contexte. Celles des autres chansons arrivent à part, sans bloquer.
+      supabaseSongService.listHomeDescriptions(1).catch(() => []),
     ]);
     if (songs.length > 0) {
       const duets = new Set(duetIds);
-      return songs.map((song) => ({ ...song, __summary: true, __duet: duets.has(song.id) }));
+      const shortById = new Map(contexts.map((row) => [row.id, row.context_short]));
+      const summaries = songs.map((song) => ({
+        ...song, __summary: true, __duet: duets.has(song.id), context_short: shortById.get(song.id) || null,
+      }));
+      return mergeSongDescriptions(summaries, weekDescription);
     }
   } catch (error) {
     if (isMissingColumnError(error)) return Song._listUncached('-release_date', null);

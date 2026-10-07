@@ -58,7 +58,8 @@ describe('Interface grand écran — résumés au démarrage (jamais select *)',
 
   it('Song.listBigScreen asks for those columns only, plus the ids of the duet songs', async () => {
     const songs = await Song.listBigScreen();
-    expect(queries.map((query) => query.select)).toEqual([SONG_BIGSCREEN_COLUMNS.join(','), 'id']);
+    // Résumé, ids des duos, contextes courts, description de la música da semana.
+    expect(queries.map((query) => query.select)).toEqual([SONG_BIGSCREEN_COLUMNS.join(','), 'id', 'id,context_short', 'id,description']);
     expect(queries.every((query) => query.select !== '*')).toBe(true);
     expect(queries[1].filter).toEqual(['lrc_content', 'imatch', DUET_LRC_FILTER]);
     expect(songs.map((song) => [song.id, song.__summary, song.__duet])).toEqual([[1, true, false], [2, true, true]]);

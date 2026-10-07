@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { init, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { ArrowLeft, Loader2, Maximize, Minimize } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Song } from '@/api/entities';
 import { mergeSongDescriptions, mergeSongLyrics } from '@/api/songColumns';
 import { isKaraokePublished } from '@/lib/lrc';
@@ -15,7 +15,8 @@ import {
 } from '@/lib/festa';
 import { useFestaSession } from '@/hooks/useFestaSession';
 import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
-import TvHomePage from './TvHomePage';
+import BsHomePage from './BsHomePage';
+import { TvChromeProvider } from './lib/chromeContext';
 import TvCatalogPage from './TvCatalogPage';
 import TvGrid from './TvGrid';
 import TvSongDetailPage from './TvSongDetailPage';
@@ -38,12 +39,17 @@ import '@/styles/tv-catalog.css';
 import '@/styles/tv-karaoke-landing.css';
 import '@/styles/tv-clips-landing.css';
 import '@/styles/tv-karaoke-mode-landing.css';
+// Après les autres : la refonte 2026-10 redéfinit leurs couleurs et la police.
+import '@/styles/bs-base.css';
 
 // Fonctions secondaires chargées à la demande — elles ne servent pas au premier écran :
 // l'invitation de la festa (avec la bibliothèque de QR code) et le lecteur karaokê
 // (TvKaraokeScreen). Les deux sont demandés d'avance, une fois l'accueil affiché.
 const loadFestaInvite = () => import('./components/TvFestaInvite');
 const TvFestaInvite = lazy(loadFestaInvite);
+
+// Écrans qui portent la barre du haut (le bouton « Voltar » de l'ordinateur s'y range dessous).
+const NAV_SCREENS = new Set(['home', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing']);
 
 // Initialise la navigation spatiale une seule fois (au chargement du bundle TV).
 init({ debug: false, visualDebug: false });
@@ -405,6 +411,15 @@ export default function TvApp({ web = null }) {
   // Destination « Catálogo » de la nav = page dédiée song-first (recherche, filtres,
   // grille + panneau contextuel, fila). Remplace l'ancienne grille générique.
   const openCatalog = useCallback(() => setStack((s) => [...s, { name: 'catalog' }]), []);
+  // « Buscar » de la barre du haut : le catálogo, avec sa recherche déjà ouverte.
+  const openSearch = useCallback(() => {
+    catalogStateRef.current = { ...catalogStateRef.current, openSearch: true };
+    setStack((s) => [...s, { name: 'catalog' }]);
+  }, []);
+  const chrome = useMemo(
+    () => ({ web: isWeb, onBuscar: openSearch, canFullscreen, fullscreen, toggleFullscreen }),
+    [isWeb, openSearch, canFullscreen, fullscreen, toggleFullscreen]
+  );
 
   // ── Landing Karaokê (page dédiée) : 4 modes + rangée « Para cantar agora » ──
   const openKaraokeLanding = useCallback(() => setStack((s) => [...s, { name: 'karaoke-landing' }]), []);
@@ -777,17 +792,16 @@ export default function TvApp({ web = null }) {
       );
     }
     return (
-      <TvHomePage
+      <BsHomePage
         songs={songs}
-        getThumb={getThumb}
         getHasKaraoke={getHasKaraoke}
         festaQueueCount={festaSession ? festaWaitingCount : null}
         initialFocusKey={homeFocusKeyRef.current}
         onOpenDetail={(s) => { markFamiliar(s); push({ name: 'detail', song: s, source: 'home' }); }}
+        onOpenClip={(s) => { markFamiliar(s); push({ name: 'detail', song: s, source: 'home', playClip: true }); }}
         onCantar={(s) => startKaraoke(s, null)}
-        onChooseMode={onChooseMode}
+        onOpenFesta={onChooseFesta}
         onOpenCatalog={openCatalog}
-        onOpenKaraoke={openKaraokeLanding}
         onOpenSettings={openTvSettings}
         onCardFocusKey={setHomeFocusKey}
       />
@@ -820,7 +834,13 @@ export default function TvApp({ web = null }) {
 
   return (
     <TvStage>
-      <div className="tv-root" ref={rootRef} data-input={isWeb ? 'pointer' : undefined}>
+      <div
+        className="tv-root"
+        ref={rootRef}
+        data-input={isWeb ? 'pointer' : undefined}
+        data-nav={NAV_SCREENS.has(top.name) ? '1' : undefined}
+      >
+        <TvChromeProvider value={chrome}>
         {/* Écran chargé à la demande pas encore arrivé : rien pendant 400 ms (tv-wait). */}
         <Suspense
           fallback={(
@@ -832,19 +852,8 @@ export default function TvApp({ web = null }) {
         >
           {content}
         </Suspense>
+        </TvChromeProvider>
         {/* Web : retour à la souris (Échap et le bouton Retour du navigateur font pareil). */}
-        {canFullscreen && (
-          <button
-            type="button"
-            className="tv-web-fullscreen"
-            onClick={toggleFullscreen}
-            aria-pressed={fullscreen}
-            aria-label={fullscreen ? 'Sair da tela cheia' : 'Modo TV — tela cheia'}
-          >
-            {fullscreen ? <Minimize size={20} aria-hidden="true" /> : <Maximize size={20} aria-hidden="true" />}
-            {fullscreen ? 'Sair da tela cheia' : 'Modo TV'}
-          </button>
-        )}
         {isWeb && stack.length > 1 && (
           <button type="button" className="tv-web-back" onClick={handleBack} aria-label="Voltar">
             <ArrowLeft size={22} aria-hidden="true" /> Voltar

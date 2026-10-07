@@ -84,7 +84,7 @@ export default function TvKaraokeModeLanding({
   // Focus initial : action principale (cf. cahier des charges) — jamais sur un
   // bouton désactivé.
   useEffect(() => {
-    const target = disabled ? 'HOME_NAV_KARAOKE' : cfg.focusPrimary;
+    const target = disabled ? 'HOME_NAV_INICIO' : cfg.focusPrimary;
     const t = setTimeout(() => { try { SpatialNavigation.setFocus(target); } catch { /* ignore */ } }, 0);
     return () => clearTimeout(t);
   }, [disabled, cfg.focusPrimary]);

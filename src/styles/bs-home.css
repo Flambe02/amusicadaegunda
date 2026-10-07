@@ -1,0 +1,88 @@
+/* Accueil grand écran — maquette design/bigscreen/01-inicio.png (scène 1920×1080). */
+
+.bs-screen > .bs-nav { height: 148px; padding: 12px var(--bs-pad-x) 0; }
+.bs-empty { padding: 80px var(--bs-pad-x); color: var(--bs-text-2); font-size: 26px; }
+.bs-icon-fill { fill: currentColor; }
+
+/* ── Música da semana + carte Festa ───────────────────────────────────────── */
+.bs-top { display: flex; gap: 40px; height: 480px; }
+
+.bs-hero {
+  position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; overflow: clip;
+  border-radius: 32px; background: var(--bs-surface);
+  display: flex; align-items: stretch; gap: 40px; padding: 0 56px 0 64px;
+}
+/* Fond flouté bon marché : la miniature de 120×90 est étirée sur tout le bloc (et un peu
+   au-delà, pour cacher ses bords). Aucun filter: blur(). */
+.bs-hero-backdrop {
+  position: absolute; left: -6%; top: -10%; width: 112%; height: 120%;
+  opacity: 0.55; pointer-events: none;
+}
+.bs-hero-veil {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(15, 13, 9, 0.9) 0%, rgba(15, 13, 9, 0.62) 55%, rgba(15, 13, 9, 0.38) 100%),
+    linear-gradient(0deg, rgba(15, 13, 9, 0.55), rgba(15, 13, 9, 0));
+}
+.bs-hero-body { position: relative; flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; padding-top: 26px; }
+.bs-hero-kicker { display: flex; align-items: center; gap: 16px; margin: 0 0 18px; }
+.bs-badge {
+  display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px;
+  background: var(--bs-gold); color: var(--bs-on-gold);
+  font-size: 15px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.bs-hero-date { color: var(--bs-text); font-size: 19px; font-weight: 600; opacity: 0.9; }
+.bs-hero-title {
+  margin: 0 0 20px; font-family: var(--bs-font-title); font-weight: 400; color: #fff;
+  letter-spacing: -0.01em;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.bs-hero-title { height: 104px; }
+.bs-hero-title.is-xl { font-size: 104px; line-height: 104px; -webkit-line-clamp: 1; }
+.bs-hero-title.is-lg { font-size: 72px; line-height: 104px; -webkit-line-clamp: 1; }
+.bs-hero-title.is-md { font-size: 50px; line-height: 52px; }
+.bs-hero-title.is-sm { font-size: 40px; line-height: 52px; }
+.bs-hero-context {
+  margin: 0 0 22px; max-width: 720px; height: 76px; color: var(--bs-text);
+  font-size: 27px; line-height: 38px; font-weight: 400;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+.bs-hero-actions { display: flex; align-items: center; gap: 18px; margin-top: 28px; }
+.bs-hero-poster {
+  position: relative; flex: 0 0 213px; width: 213px; height: 378px; align-self: center;
+  border-radius: 18px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+.bs-poster { display: block; overflow: hidden; background: var(--bs-surface-2); }
+.bs-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.bs-festa-card {
+  flex: 0 0 448px; display: flex; flex-direction: column; justify-content: center;
+  padding: 0 44px; border-radius: 32px; background: var(--bs-plum); border: 1.5px solid var(--bs-plum-border);
+}
+.bs-festa-card-kicker {
+  display: flex; align-items: center; gap: 14px; margin: 0 0 22px; color: var(--bs-pink-text);
+  font-size: 18px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.bs-festa-card-title { margin: 0 0 22px; font-family: var(--bs-font-title); font-weight: 400; font-size: 50px; line-height: 1.04; color: #fff; }
+.bs-festa-card-text { margin: 0 0 34px; color: var(--bs-text); font-size: 23px; line-height: 34px; opacity: 0.92; }
+.bs-festa-card-btn { width: 100%; height: 72px; font-size: 25px; }
+
+/* ── Rangées ──────────────────────────────────────────────────────────────── */
+.bs-rail { margin-top: 38px; }
+.bs-rail-head { display: flex; align-items: baseline; gap: 18px; margin: 0 0 20px; }
+.bs-rail-title { margin: 0; font-family: var(--bs-font-title); font-weight: 400; font-size: 32px; line-height: 1; color: #fff; }
+.bs-rail-hint { color: var(--bs-text-2); font-size: 20px; }
+.bs-rail-action { margin-left: auto; }
+.bs-rail-cards { display: flex; gap: 24px; }
+.bs-card {
+  flex: 0 0 195px; width: 195px; display: flex; flex-direction: column; align-items: stretch;
+  padding: 0; border: 0; background: transparent; color: var(--bs-text); text-align: left; cursor: pointer;
+  border-radius: 18px; scroll-margin: 110px 0 96px;
+}
+.bs-card-poster { width: 195px; height: 262px; border-radius: 18px; }
+.bs-card-title {
+  margin-top: 12px; font-size: 20px; font-weight: 700; line-height: 26px; color: var(--bs-text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bs-card-meta { margin-top: 4px; font-size: 17px; line-height: 24px; color: var(--bs-text-2); }
+.bs-hero-actions .bs-focus, .bs-festa-card-btn { scroll-margin: 200px 0; }

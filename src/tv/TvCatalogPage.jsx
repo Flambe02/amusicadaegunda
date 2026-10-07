@@ -52,7 +52,9 @@ export default function TvCatalogPage({
   const [quickId, setQuickId] = useState(init.quickId || 'todas');
   const [advanced, setAdvanced] = useState(init.advanced || emptyAdvanced());
   const [searchQuery, setSearchQuery] = useState(init.searchQuery || '');
-  const [overlay, setOverlay] = useState(null); // 'search' | 'advanced' | 'queue' | null
+  // « Buscar » de la barre du haut ouvre le catálogo avec la recherche (une seule fois).
+  const [overlay, setOverlay] = useState(init.openSearch ? 'search' : null); // 'search' | 'advanced' | 'queue' | null
+  useEffect(() => { if (init.openSearch) onStateChange?.({ openSearch: false }); }, [init.openSearch, onStateChange]);
 
   const vms = useMemo(() => toTvSongs(songs), [songs]);
   const themeDimension = useMemo(() => buildThemeDimension(vms), [vms]);
@@ -196,7 +198,7 @@ export default function TvCatalogPage({
         active="catalogo"
         onInicio={onGoHome}
         onCatalogo={resetAll}
-        onKaraoke={onOpenKaraoke}
+        onBuscar={openSearch}
         onFesta={onOpenFesta}
         onOpenSettings={onOpenSettings}
         festaQueueCount={null}
@@ -207,6 +209,7 @@ export default function TvCatalogPage({
         festaQueueCount={festaQueueCount}
         festaPeople={festaPeople}
         onOpenQueue={openQueue}
+        onMoreModes={onOpenKaraoke}
       />
 
       <TvCatalogFilters

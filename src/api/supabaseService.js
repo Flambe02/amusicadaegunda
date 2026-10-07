@@ -125,6 +125,21 @@ export const supabaseSongService = {
     return (data || []).map((row) => row.id)
   },
 
+  /**
+   * Contextes courts écrits dans l'admin (« Contexto curto (tela grande) »), seulement
+   * les chansons qui en ont un. Colonne facultative : absente, la requête échoue et
+   * l'appelant s'en passe.
+   */
+  async listContextShort() {
+    const { data, error } = await supabase
+      .from(TABLES.SONGS)
+      .select('id,context_short')
+      .eq('status', 'published')
+      .not('context_short', 'is', null)
+    if (error) throw error
+    return data || []
+  },
+
   /** Paroles de tout le catalogue, pour la recherche (≈ 42 Ko). */
   listLyricsText() {
     return this.listPublished(SONG_LYRICS_COLUMNS)

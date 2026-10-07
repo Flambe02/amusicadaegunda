@@ -1,89 +1,74 @@
-import { ListMusic } from 'lucide-react';
+import { ListMusic, Maximize, Minimize, Search, Settings } from 'lucide-react';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import FocusRow from './FocusRow';
 import FocusableButton from './FocusableButton';
+import { useTvChrome } from '../lib/chromeContext';
 
 /**
- * Navigation supérieure des écrans TV « song-first ». Wordmark à gauche (SANS
- * mascote — le logo capivara de gauche a été retiré à la demande produit ; l'avatar
- * capivara reste à droite), 4 destinations centrées (Início | Catálogo | Karaokê |
- * Festa), avatar mascote décoratif à droite + statut « Fila · N músicas » quand une
- * session Festa est active.
+ * Barre du haut de l'interface grand écran (maquette design/bigscreen/01-inicio.png) :
+ * logo + « A Música da Segunda » à gauche ; à droite Início, Catálogo, Buscar, Festa
+ * (en rose) et Ajustes. Sur ordinateur seulement, « Modo TV » (plein écran) s'y ajoute.
  *
- * PAS de loupe/recherche (la recherche vit dans le Catálogo), PAS de réglages, PAS
- * de niveau/nom d'utilisateur.
+ * Partagée par l'accueil, le catálogo et les écrans karaokê. « Buscar » et « Modo TV »
+ * viennent de TvApp par contexte (useTvChrome) ; un écran peut fournir son propre
+ * `onBuscar` (le catálogo ouvre sa recherche sur place).
  *
- * `active` = destination courante → texte jaune + soulignement discret. Le focus
- * D-pad (halo/pill fort) reste un concept séparé.
- *
- * L'avatar est focusable (`onOpenSettings`) et ouvre le même panneau de
- * réglages/sortie que les écrans « v2 » (TvHomeNavigation) — même clé de focus
- * (`TOPNAV_SETTINGS`) sur tous les écrans qui rendent cette barre, réutilisable
- * car un seul écran est monté à la fois.
+ * Les clés de focus HOME_NAV_* / TOPNAV_SETTINGS sont lues ailleurs (focus de secours,
+ * retour du painel de ajustes) : ne pas les renommer. `onKaraoke` n'a plus de bouton —
+ * les écrans karaokê restent atteignables depuis le catálogo (« Mais modos »).
  */
 export default function TvTopNavigation({
-  active = 'inicio', onInicio, onCatalogo, onKaraoke, onFesta, onOpenSettings, festaQueueCount = null,
+  active = 'inicio', onInicio, onCatalogo, onFesta, onOpenSettings, onBuscar, festaQueueCount = null,
 }) {
-  const cls = (key) => `tvh-nav-item ${active === key ? 'is-active' : ''}`;
+  const chrome = useTvChrome();
+  const buscar = onBuscar || chrome.onBuscar;
+  const cls = (key, extra = '') => `bs-nav-item bs-focus ${active === key ? 'is-active' : ''} ${extra}`;
   const hasFesta = typeof festaQueueCount === 'number';
 
   return (
-    <header className="tvh-nav">
-      <div className="tvh-nav-brand">
-        <span className="tvh-nav-wordmark">A Música<br />da Segunda</span>
+    <header className="bs-nav">
+      <div className="bs-nav-brand">
+        <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="bs-nav-logo" />
+        <span className="bs-nav-name">A Música da Segunda</span>
       </div>
 
-      <FocusRow className="tvh-nav-menu" focusKey="HOME_NAV">
-        <FocusableButton
-          focusKey="HOME_NAV_INICIO"
-          className={cls('inicio')}
-          ariaLabel="Início"
-          onPress={onInicio}
-        >
+      {hasFesta && (
+        <span className="bs-nav-queue" aria-live="polite">
+          <ListMusic size={18} aria-hidden="true" />
+          Fila · {festaQueueCount} {festaQueueCount === 1 ? 'música' : 'músicas'}
+        </span>
+      )}
+
+      <FocusRow className="bs-nav-menu" focusKey="HOME_NAV">
+        <FocusableButton focusKey="HOME_NAV_INICIO" className={cls('inicio')} ariaLabel="Início" onPress={onInicio}>
           Início
         </FocusableButton>
-        <FocusableButton
-          focusKey="HOME_NAV_CATALOGO"
-          className={cls('catalogo')}
-          ariaLabel="Abrir o catálogo completo"
-          onPress={onCatalogo}
-        >
+        <FocusableButton focusKey="HOME_NAV_CATALOGO" className={cls('catalogo')} ariaLabel="Abrir o catálogo completo" onPress={onCatalogo}>
           Catálogo
         </FocusableButton>
-        <FocusableButton
-          focusKey="HOME_NAV_KARAOKE"
-          className={cls('karaoke')}
-          ariaLabel="Abrir o Karaokê"
-          onPress={onKaraoke}
-        >
-          Karaokê
-        </FocusableButton>
-        <FocusableButton
-          focusKey="HOME_NAV_FESTA"
-          className={cls('festa')}
-          ariaLabel="Abrir o Modo Festa"
-          onPress={onFesta}
-        >
+        {buscar && (
+          <FocusableButton focusKey="HOME_NAV_BUSCAR" className={cls('buscar')} ariaLabel="Buscar uma música" onPress={buscar}>
+            <Search size={22} aria-hidden="true" /> Buscar
+          </FocusableButton>
+        )}
+        <FocusableButton focusKey="HOME_NAV_FESTA" className={cls('festa', 'is-festa')} ariaLabel="Abrir o Modo Festa" onPress={onFesta}>
           Festa
         </FocusableButton>
-      </FocusRow>
-
-      <div className="tvh-nav-status" aria-live="polite">
-        {hasFesta && (
-          <span className="tvh-nav-festa-pill">
-            <ListMusic size={16} />
-            Fila · {festaQueueCount} {festaQueueCount === 1 ? 'música' : 'músicas'}
-          </span>
+        {chrome.canFullscreen && (
+          <FocusableButton
+            focusKey="HOME_NAV_MODOTV"
+            className={cls('modotv')}
+            ariaLabel={chrome.fullscreen ? 'Sair da tela cheia' : 'Modo TV — tela cheia'}
+            onPress={chrome.toggleFullscreen}
+          >
+            {chrome.fullscreen ? <Minimize size={20} aria-hidden="true" /> : <Maximize size={20} aria-hidden="true" />}
+            {chrome.fullscreen ? 'Sair da tela cheia' : 'Modo TV'}
+          </FocusableButton>
         )}
-        <FocusableButton
-          focusKey="TOPNAV_SETTINGS"
-          className="tvh-nav-avatar-btn"
-          ariaLabel="Abrir configurações"
-          onPress={onOpenSettings}
-        >
-          <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="tvh-nav-avatar" />
+        <FocusableButton focusKey="TOPNAV_SETTINGS" className="bs-nav-round bs-focus" ariaLabel="Ajustes" onPress={onOpenSettings}>
+          <Settings size={26} aria-hidden="true" />
         </FocusableButton>
-      </div>
+      </FocusRow>
     </header>
   );
 }
