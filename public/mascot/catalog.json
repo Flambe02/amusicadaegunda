@@ -11,6 +11,17 @@
       "loop": true,
       "video": "caipivara-bets-dance.mp4",
       "poster": "caipivara-bets-dance-poster.webp"
+    },
+    {
+      "id": "croissant-dance",
+      "type": "dance",
+      "costume": "croissant",
+      "song": "o-croissant",
+      "category": null,
+      "tier": "remote",
+      "loop": true,
+      "video": "caipivara-croissant-dance.mp4",
+      "poster": "caipivara-croissant-dance-poster.webp"
     }
   ]
 }

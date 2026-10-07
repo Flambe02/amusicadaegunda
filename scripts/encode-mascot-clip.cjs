@@ -14,8 +14,8 @@
  *   --glasses  y du milieu des lunettes de soleil (le même accessoire sur tous les clips)
  *   --feet     y du bas des pattes
  *   --center   x du milieu des lunettes
- * Le zoom est le rapport lunettes→pattes avec la référence ; les pattes et l'axe sont
- * ensuite posés sur ceux de la référence. `--compare <fichier.png>` écrit les deux posters
+ * Le zoom est le rapport lunettes→pattes avec la référence (porté au minimum qui garde
+ * la fenêtre dans l'image) ; les pattes et l'axe sont ensuite posés sur ceux de la référence. `--compare <fichier.png>` écrit les deux posters
  * côte à côte avec les lignes de repère, pour contrôler à l'œil.
  *
  * Nécessite ffmpeg dans le PATH. Sortie : public/mascot/<nom>.mp4 et <nom>-poster.webp.
@@ -60,10 +60,15 @@ async function main() {
   const feet = Number(option(args, '--feet'));
   const center = Number(option(args, '--center'));
   if (![glasses, feet, center].every(Number.isFinite)) throw new Error('Repères manquants : --glasses <y> --feet <y> --center <x> (voir --frame)');
-  const zoom = (REF.feet - REF.glasses) / (feet - glasses);
+  const measured = (REF.feet - REF.glasses) / (feet - glasses);
+  // La fenêtre ne doit pas sortir de l'image (une bande noire couperait le faisceau du
+  // projecteur) : si la mesure le demande, on zoome juste assez pour la contenir.
+  const inside = Math.max(REF.feet / feet, (OUT_H - REF.feet) / (OUT_H - feet), REF.center / center, (OUT_W - REF.center) / (OUT_W - center));
+  const zoom = Math.max(measured, inside);
+  if (zoom > measured) console.log(`zoom mesuré ${measured.toFixed(3)} porté à ${zoom.toFixed(3)} pour ne laisser aucune bande noire`);
   // Après zoom, les pattes et l'axe de la source tombent sur ceux de la référence.
-  const offsetX = Math.round(center * zoom - REF.center);
-  const offsetY = Math.round(feet * zoom - REF.feet);
+  const offsetX = Math.max(0, Math.round(center * zoom - REF.center));
+  const offsetY = Math.max(0, Math.round(feet * zoom - REF.feet));
   console.log(`recadrage : zoom ${zoom.toFixed(3)}, fenêtre ${OUT_W}x${OUT_H} en (${offsetX}, ${offsetY}) de l'image zoomée`);
 
   // Zoom, marge noire (la fenêtre peut dépasser de l'image), puis la fenêtre 540×960.
