@@ -45,8 +45,18 @@ const slugOf = (item) => item?.slug || titleToSlug(item?.title) || '';
  * Une chanson liée : focalisable au D-pad comme tout le reste. Sur le web c'est un vrai
  * lien `/musica/<slug>/` (pour les robots) ; le clic reste dans l'app.
  */
-function RelatedSong({ song, index, web, onOpen }) {
-  const { ref, focused } = useFocusable({ focusKey: `DETAIL_RELATED_${index}`, onEnterPress: () => onOpen(song) });
+function RelatedSong({ song, index, web, onOpen, upFocusKey }) {
+  const { ref, focused } = useFocusable({
+    focusKey: `DETAIL_RELATED_${index}`,
+    onEnterPress: () => onOpen(song),
+    // ▲ remonte sur le premier bouton d'action (« Cantar agora » quand il existe), pas sur
+    // le bouton géométriquement le plus proche (Spotify, sous l'affiche).
+    onArrowPress: (direction) => {
+      if (direction !== 'up' || !upFocusKey) return true;
+      try { SpatialNavigation.setFocus(upFocusKey); } catch { /* ignore */ }
+      return false;
+    },
+  });
   const vm = useMemo(() => toTvSong(song), [song]);
   const className = `bs-related-card bs-focus ${focused ? 'is-focused' : ''}`;
   const content = (
@@ -343,6 +353,9 @@ export default function TvSongDetailPage({
   const stageWidth = useTvStageWidth() || TV_STAGE_WIDTH;
   const titleFit = fitTitle(vm.title, stageWidth - 96 * 2 - 380 - 64, { max: 88, boxHeight: 96, minOneLine: 50 });
 
+  // Premier bouton d'action présent — cible de ▲ depuis « Do mesmo tema ».
+  const firstActionKey = vm.isSingable ? 'DETAIL_CANTAR' : hasTeaser ? 'DETAIL_CLIPE' : hasLyrics ? 'DETAIL_LYRICS' : hasContext ? 'DETAIL_CONTEXT' : null;
+
   // « Ver clipe » depuis l'accueil : la fiche s'ouvre et la prévia démarre, une fois.
   const autoPlayedRef = useRef(false);
   useEffect(() => {
@@ -469,7 +482,7 @@ export default function TvSongDetailPage({
             </header>
             <FocusRow className="bs-related-cards" focusKey="DETAIL_RELATED">
               {related.map((item, index) => (
-                <RelatedSong key={item.id} song={item} index={index} web={web} onOpen={onOpenRelated} />
+                <RelatedSong key={item.id} song={item} index={index} web={web} onOpen={onOpenRelated} upFocusKey={firstActionKey} />
               ))}
             </FocusRow>
           </section>

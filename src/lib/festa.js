@@ -62,7 +62,15 @@ export async function getFestaSessionByCode(code) {
   return data;
 }
 
+/**
+ * Ferme une session. Par la fonction de base `end_festa_session` : un UPDATE direct est
+ * refusé par les règles d'accès (la ligne fermée n'est plus lisible par la règle de
+ * lecture « sessions actives », et Postgres rejette alors l'écriture). Tant que la
+ * fonction n'existe pas en base, on tente l'ancien UPDATE — qui échoue de la même façon.
+ */
 export async function endFestaSession(sessionId) {
+  const { error: rpcError } = await supabase.rpc('end_festa_session', { p_session_id: sessionId });
+  if (!rpcError) return;
   const { error } = await supabase.from('festa_sessions').update({ active: false }).eq('id', sessionId);
   if (error) throw error;
 }
