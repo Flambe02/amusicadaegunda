@@ -607,3 +607,14 @@ html.tv-mode, html.tv-mode body, html.tv-mode #root {
   transition: background-color 150ms ease-out, border-color 150ms ease-out;
 }
 .tv-web-back:hover, .tv-web-back:focus-visible { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.5); }
+/* « Modo TV » : plein écran sur ordinateur — absent de la box TV. En haut à droite,
+   dans la marge au-dessus de l'avatar. */
+.tv-web-fullscreen {
+  position: absolute; right: 28px; top: 14px; z-index: 10050;
+  display: inline-flex; align-items: center; gap: 10px;
+  height: 46px; padding: 0 20px; border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.22); background: rgba(10, 10, 14, 0.72);
+  color: #fff; font-size: 20px; font-weight: 800; cursor: pointer;
+  transition: background-color 150ms ease-out, border-color 150ms ease-out;
+}
+.tv-web-fullscreen:hover, .tv-web-fullscreen:focus-visible { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.5); }

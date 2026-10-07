@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { init, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Maximize, Minimize } from 'lucide-react';
 import { Song } from '@/api/entities';
 import { isKaraokePublished } from '@/lib/lrc';
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
@@ -187,6 +187,24 @@ export default function TvApp({ web = null }) {
     if (!isWeb || loading) return undefined;
     return followPointer(rootRef.current);
   }, [isWeb, loading]);
+
+  // ── Web : « Tela cheia » (Fullscreen API). Le navigateur en sort avec Échap ; la
+  // navigation au clavier façon D-pad est la même qu'en fenêtre. Jamais sur la box.
+  const [fullscreen, setFullscreen] = useState(false);
+  const canFullscreen = isWeb && typeof document !== 'undefined' && Boolean(document.documentElement.requestFullscreen);
+  useEffect(() => {
+    if (!canFullscreen) return undefined;
+    const sync = () => setFullscreen(Boolean(document.fullscreenElement));
+    sync();
+    document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, [canFullscreen]);
+  const toggleFullscreen = useCallback(() => {
+    const request = document.fullscreenElement
+      ? document.exitFullscreen()
+      : document.documentElement.requestFullscreen();
+    request?.catch?.(() => { /* refusé par le navigateur : on reste en fenêtre */ });
+  }, []);
 
   // ── Web : ouverture directe sur /musica/<slug>/ → accueil puis fiche dans la pile.
   const initialSlugRef = useRef(web?.initialSlug || null);
@@ -753,6 +771,18 @@ export default function TvApp({ web = null }) {
       <div className="tv-root" ref={rootRef} data-input={isWeb ? 'pointer' : undefined}>
         {content}
         {/* Web : retour à la souris (Échap et le bouton Retour du navigateur font pareil). */}
+        {canFullscreen && (
+          <button
+            type="button"
+            className="tv-web-fullscreen"
+            onClick={toggleFullscreen}
+            aria-pressed={fullscreen}
+            aria-label={fullscreen ? 'Sair da tela cheia' : 'Modo TV — tela cheia'}
+          >
+            {fullscreen ? <Minimize size={20} aria-hidden="true" /> : <Maximize size={20} aria-hidden="true" />}
+            {fullscreen ? 'Sair da tela cheia' : 'Modo TV'}
+          </button>
+        )}
         {isWeb && stack.length > 1 && (
           <button type="button" className="tv-web-back" onClick={handleBack} aria-label="Voltar">
             <ArrowLeft size={22} aria-hidden="true" /> Voltar
