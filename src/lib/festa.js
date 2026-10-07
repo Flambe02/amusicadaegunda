@@ -35,6 +35,12 @@ export function buildFestaJoinUrl(code) {
 /** Crée une nouvelle session festa (retente en cas de collision de code, très
  * improbable vu l'espace de ~13M combinaisons). */
 export async function createFestaSession() {
+  // Ménage : chaque nouvelle fête ferme les sessions sans activité depuis 6 heures
+  // (fonction de base `cleanup_stale_festa_sessions`). Sans attendre la réponse, et sans
+  // effet si l'appel échoue — la création de la session n'en dépend pas.
+  try {
+    Promise.resolve(supabase.rpc('cleanup_stale_festa_sessions')).catch(() => {});
+  } catch { /* client indisponible : on crée la session quand même */ }
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const code = generateFestaCode();
     const { data, error } = await supabase
