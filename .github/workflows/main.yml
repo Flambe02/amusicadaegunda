@@ -66,4 +66,11 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+      # Après la mise en ligne : les adresses annoncées existent vraiment. Un refus
+      # (ex. Bing 403 tant que le site n'est pas vérifié chez eux) marque CETTE étape en
+      # échec avec une annotation, sans annuler le déploiement déjà fait.
+      - name: IndexNow
+        continue-on-error: true
+        run: npm run indexnow
+
 
