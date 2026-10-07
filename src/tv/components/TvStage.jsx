@@ -1,21 +1,25 @@
-import { useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import '@/styles/tv.css'; // .tv-viewport/.tv-stage/.tv-debug — le stage doit être stylable seul (cf. TvErrorFallback)
 
 /**
- * Canvas TV fixe 1920×1080 explicitement mis à l'échelle — architecture retenue
- * pour l'UI TV (décision 2026-07-13) : toute l'interface a été conçue sur une
- * grille logique 1920×1080 ; plutôt que de dépendre du comportement implicite du
- * wide viewport de la WebView, on pose la mise à l'échelle nous-mêmes.
+ * Scène de l'interface grand écran, explicitement mise à l'échelle — architecture
+ * retenue pour l'UI TV (décision 2026-07-13) : plutôt que de dépendre du comportement
+ * implicite du wide viewport de la WebView, on pose la mise à l'échelle nous-mêmes.
  *
- *   960×540  (WebView 1080p densité 2×, meta viewport ignoré) → échelle 0,5
- *   1280×720                                                   → échelle 0,6667
- *   1920×1080 (meta width=1920 respecté — cas Capacitor)       → échelle 1
- *   3840×2160                                                  → échelle 2
+ * Depuis le 2026-10-07 (phase 4 du grand écran) : HAUTEUR logique fixe de 1080,
+ * LARGEUR logique variable. L'échelle se calcule sur la hauteur, et la scène prend
+ * toute la largeur de l'écran : plus de bandes sur un écran 16:10 ou 21:9, les
+ * rangées s'étirent. Sur un écran 16:9 la largeur logique vaut exactement 1920 —
+ * rien ne change pour une box ou une télévision 16:9 :
  *
- * Fonctionne AVEC le meta viewport `width=1920` posé avant le montage React
- * (src/main.jsx) : quand il est respecté l'échelle vaut 1 (no-op), sinon le stage
- * rattrape la différence. min(w/1920, h/1080) préserve les proportions
- * (letterbox si la dalle n'est pas 16:9, jamais de déformation).
+ *   960×540  (WebView 1080p densité 2×) → échelle 0,5    largeur 1920
+ *   1920×1080                           → échelle 1      largeur 1920
+ *   3840×2160                           → échelle 2      largeur 1920
+ *   1280×800  (ordinateur 16:10)        → échelle 0,741  largeur 1728
+ *   2560×1080 (écran 21:9)              → échelle 1      largeur 2560
+ *
+ * Sous TV_STAGE_MIN_WIDTH (fenêtre étroite ou haute), la mise en page ne tiendrait
+ * plus : l'échelle se calcule alors sur la largeur, avec des bandes en haut et en bas.
  *
  * ⚠️ RÈGLE : tout élément TV (overlays, panneaux, lecteurs, toasts) doit être
  * rendu À L'INTÉRIEUR du stage. Un portal React vers document.body échapperait à
@@ -25,6 +29,14 @@ import '@/styles/tv.css'; // .tv-viewport/.tv-stage/.tv-debug — le stage doit 
  */
 export const TV_STAGE_WIDTH = 1920;
 export const TV_STAGE_HEIGHT = 1080;
+/** Largeur logique minimale : en dessous, la mise en page 3 colonnes ne tient plus. */
+export const TV_STAGE_MIN_WIDTH = 1600;
+
+/** Largeur logique courante de la scène (1920 en 16:9) — pour remplir les rangées. */
+const StageWidthContext = createContext(TV_STAGE_WIDTH);
+export function useTvStageWidth() {
+  return useContext(StageWidthContext);
+}
 
 const PORTAL_ROOT_ID = 'tv-portal-root';
 
@@ -44,17 +56,25 @@ export function getTvPortalRoot() {
  * ancre le canvas en HAUT-GAUCHE (`transform-origin: 0 0`) puis on le translate
  * explicitement pour le centrer (letterbox symétrique si la dalle n'est pas 16:9).
  */
-function computeTransform() {
-  const w = window.visualViewport?.width ?? window.innerWidth ?? TV_STAGE_WIDTH;
-  const h = window.visualViewport?.height ?? window.innerHeight ?? TV_STAGE_HEIGHT;
-  if (!w || !h) return { scale: 1, offsetX: 0, offsetY: 0 };
-  const scale = Math.min(w / TV_STAGE_WIDTH, h / TV_STAGE_HEIGHT);
+export function computeTransform(
+  w = window.visualViewport?.width ?? window.innerWidth ?? TV_STAGE_WIDTH,
+  h = window.visualViewport?.height ?? window.innerHeight ?? TV_STAGE_HEIGHT,
+) {
+  if (!w || !h) return { scale: 1, offsetX: 0, offsetY: 0, width: TV_STAGE_WIDTH };
+  // Échelle sur la hauteur ; la scène prend la largeur disponible.
+  let scale = h / TV_STAGE_HEIGHT;
+  let width = Math.round(w / scale);
+  if (width < TV_STAGE_MIN_WIDTH) {
+    // Trop étroit : échelle sur la largeur, bandes en haut et en bas.
+    width = TV_STAGE_MIN_WIDTH;
+    scale = w / TV_STAGE_MIN_WIDTH;
+  }
   // Translation en px ÉCRAN : dans `transform: translate() scale()`, la
   // translate() s'applique DANS l'espace écran (après le scale au niveau de la
-  // matrice) → pas de division par l'échelle. Centre le letterbox.
-  const offsetX = (w - TV_STAGE_WIDTH * scale) / 2;
+  // matrice) → pas de division par l'échelle. Centre ce qui reste.
+  const offsetX = (w - width * scale) / 2;
   const offsetY = (h - TV_STAGE_HEIGHT * scale) / 2;
-  return { scale, offsetX, offsetY };
+  return { scale, offsetX, offsetY, width };
 }
 
 /** Overlay de diagnostic (activé par ?tvdebug=1, persistant ; ?tvdebug=0 le retire). */
@@ -86,6 +106,7 @@ function TvDebugViewport({ transform }) {
     screenHeight: window.screen.height,
     dpr: window.devicePixelRatio,
     stageScale: Number(transform.scale.toFixed(4)),
+    stageWidth: transform.width,
     offsetX: Math.round(transform.offsetX),
     offsetY: Math.round(transform.offsetY),
     // Type de pointeur déclaré par la WebView (décision « tablettes » à venir).
@@ -123,12 +144,13 @@ export default function TvStage({ children }) {
     '--tv-off-y': `${transform.offsetY}px`,
     transform: `translate(var(--tv-off-x), var(--tv-off-y)) scale(var(--tv-scale))`,
     transformOrigin: '0 0',
+    width: `${transform.width}px`,
   };
 
   return (
     <div className="tv-viewport">
       <div className="tv-stage" style={stageStyle}>
-        {children}
+        <StageWidthContext.Provider value={transform.width}>{children}</StageWidthContext.Provider>
         {/* Cible des portals TV — TOUJOURS en dernier enfant du stage (au-dessus). */}
         <div id={PORTAL_ROOT_ID} />
         {debug && <TvDebugViewport transform={transform} />}

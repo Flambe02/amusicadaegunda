@@ -5,6 +5,7 @@ import { trackTv } from './lib/tvAnalytics';
 import TvTopNavigation from './components/TvTopNavigation';
 import TvFeaturedSection from './components/TvFeaturedSection';
 import TvSongSelectionRail from './components/TvSongSelectionRail';
+import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import TvSingingModes from './components/TvSingingModes';
 import TvBottomInteractionBar from './components/TvBottomInteractionBar';
 
@@ -20,6 +21,8 @@ const FOCUS_ANALYTICS_DWELL_MS = 600;
 // (5 emplacements) → tient sans débordement sur une TV 1080p standard, et la carte
 // finale mène droit au Catálogo (au lieu d'une rangée qui défile à l'infini).
 const RAIL_VISIBLE = 4;
+// Une carte et son espacement (≈ 278 + 21 px logiques, tv-home-v3.css `.tvh-card`).
+const RAIL_SLOT_WIDTH = 300;
 // Bannière « roll out » du hero : cycle automatiquement les 3 dernières chansons
 // (3 pastilles). Cadence de rotation ; la rotation se met en pause tant que
 // l'utilisateur parcourt la rangée (le hero suit alors la carte focalisée) et
@@ -56,8 +59,12 @@ export default function TvHomePage({
 
   useEffect(() => { trackTv('tv_home_opened'); }, []);
 
-  const railSongs = useMemo(() => songs.slice(0, RAIL_VISIBLE), [songs]);
-  const railRemaining = Math.max(0, songs.length - RAIL_VISIBLE);
+  // 4 cartes + « Ver outras músicas » sur une scène de 1920 ; une carte de plus par
+  // tranche de largeur gagnée sur un écran plus large (21:9…), pour ne pas laisser de vide.
+  const stageWidth = useTvStageWidth();
+  const railVisible = RAIL_VISIBLE + Math.max(0, Math.floor((stageWidth - TV_STAGE_WIDTH) / RAIL_SLOT_WIDTH));
+  const railSongs = useMemo(() => songs.slice(0, railVisible), [songs, railVisible]);
+  const railRemaining = Math.max(0, songs.length - railVisible);
   // Bannière roll-out : les 3 dernières chansons.
   const carouselSongs = useMemo(() => songs.slice(0, CAROUSEL_MAX), [songs]);
 

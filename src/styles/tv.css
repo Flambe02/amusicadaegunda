@@ -11,7 +11,8 @@
   --tv-card: #14161c;
 }
 
-/* ── Canvas TV fixe 1920×1080 mis à l'échelle (TvStage.jsx) ────────────────────
+/* ── Scène TV mise à l'échelle (TvStage.jsx) — hauteur logique 1080, largeur
+   logique variable (1920 en 16:9, posée inline par TvStage). ─────────────────
    L'UI TV est conçue sur une grille logique 1920×1080 ; le stage la met à
    l'échelle du viewport réel (min(w/1920, h/1080) → proportions préservées,
    letterbox si la dalle n'est pas 16:9). `transform` fait du stage le containing

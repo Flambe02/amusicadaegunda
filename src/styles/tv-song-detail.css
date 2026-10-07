@@ -7,7 +7,9 @@
    ========================================================================== */
 
 .tvd-page {
-  height: 100%; min-height: 0; max-width: 2400px; margin: 0 auto;
+  /* Largeur maximale : 1,5 × la scène 16:9. Au-delà (écran 32:9), la fiche reste centrée
+     plutôt que d'étirer ses colonnes de texte. */
+  height: 100%; min-height: 0; max-width: 2880px; margin: 0 auto;
   display: flex; flex-direction: column; gap: clamp(0.5rem, 11.9px, 0.9rem);
 }
 
