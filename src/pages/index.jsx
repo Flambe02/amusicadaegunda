@@ -51,9 +51,10 @@ function PagesContent() {
     const location = useLocation();
     const gaTimer = useRef(null);
 
-    // Ordinateur + `?ui=bigscreen` (mémorisé) : l'accueil et la fiche chanson passent par
-    // l'interface grand écran. Sans le drapeau, l'ancien desktop reste l'interface par
-    // défaut. Jamais sur téléphone ; la box TV, elle, monte TvApp directement (App.jsx).
+    // Ordinateur (pointeur fin, ≥ 1024 px) : l'accueil et la fiche chanson passent par
+    // l'interface grand écran, par défaut. `?ui=legacy` (mémorisé) garde l'ancien desktop,
+    // `?ui=auto` revient au défaut. Jamais sur téléphone ; la box TV, elle, monte TvApp
+    // directement (App.jsx).
     const interfaceKind = useInterfaceKind();
     const [bigScreenUi] = useState(() => isBigScreenUiEnabled() && !getInterface().tv);
     // Adresse d'arrivée : /musica/<slug>/ ouvre directement la fiche.

@@ -17,23 +17,14 @@ export function getInterface() {
   return detectInterface(window, nativeAndroid);
 }
 
-const UI_KEY = 'force-ui';
-
 /**
- * L'interface grand écran dérivée de la TV est-elle activée sur cet ordinateur ?
+ * Sur le web, l'accueil et la fiche chanson montent-ils l'interface grand écran ?
  *
- * Tant que la phase 3 n'est pas validée, l'ancien desktop reste l'interface par défaut :
- * `?ui=bigscreen` active la nouvelle (mémorisé, comme `?tv=`), `?ui=auto` revient au
- * défaut. Sans effet sur un téléphone ni sur la TV.
+ * Oui par défaut sur un ordinateur (pointeur fin, fenêtre d'au moins 1024 px).
+ * `?ui=legacy` garde l'ancien desktop (mémorisé), `?ui=bigscreen` force le grand écran,
+ * `?ui=auto` revient au défaut. La règle est dans `interfaceRule.js` (`webBigScreen`),
+ * la même qu'index.html. Sans effet sur un téléphone ni sur la TV.
  */
 export function isBigScreenUiEnabled() {
-  if (typeof window === 'undefined') return false;
-  try {
-    const asked = /[?&]ui=([^&#]*)/.exec(window.location.search || '');
-    if (asked?.[1] === 'bigscreen') window.localStorage.setItem(UI_KEY, 'bigscreen');
-    else if (asked?.[1] === 'auto') window.localStorage.removeItem(UI_KEY);
-    return window.localStorage.getItem(UI_KEY) === 'bigscreen';
-  } catch {
-    return false;
-  }
+  return getInterface().webBigScreen === true;
 }

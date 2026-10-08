@@ -12,13 +12,23 @@
  * du module, rien que du JavaScript que comprend une vieille WebView (pas de `?.`, pas
  * de fonction fléchée). Tout ce dont elle a besoin est dans son corps.
  *
- * Résultat : { kind: 'mobile' | 'bigscreen', input: 'touch' | 'dpad' | 'pointer', tv }
- *   - TV (télécommande)               → bigscreen / dpad
- *   - écran de moins de 768 px        → mobile / touch
- *   - le reste (ordinateur, tablette) → bigscreen / pointer
- * La troisième ligne est le comportement actuel du site (coquille desktop dès 768 px).
- * La décision « tablettes en interface mobile » se fera ICI, en phase 2, avec le
- * changement de coquille — pas avant, sinon index.html et l'app ne seraient plus d'accord.
+ * Résultat : { kind, input, tv, desktop, webBigScreen }
+ *   - TV (télécommande)               → kind bigscreen / input dpad
+ *   - écran de moins de 768 px        → kind mobile / input touch
+ *   - le reste (ordinateur, tablette) → kind bigscreen / input pointer
+ *
+ * `desktop` : un ordinateur — pointeur fin (souris, pavé tactile) ET fenêtre d'au moins
+ * 1024 px. Une tablette (pointeur grossier) ou une fenêtre étroite n'en est pas un.
+ *
+ * `webBigScreen` : sur le web, l'accueil et la fiche chanson montent-ils l'interface
+ * grand écran (celle de la TV) ? Oui par défaut sur un ordinateur. Choix manuel, mémorisé
+ * dans `localStorage['force-ui']` : `?ui=legacy` garde l'ancien desktop (pour comparer,
+ * jusqu'à son retrait), `?ui=bigscreen` force le grand écran (aussi sur tablette),
+ * `?ui=auto` oublie le choix. Jamais sur un écran de moins de 768 px ; la TV, elle,
+ * monte toujours le grand écran (App.jsx) et ne lit pas ce drapeau.
+ *
+ * Les tablettes et les fenêtres de 768 à 1023 px gardent l'ancienne coquille desktop
+ * tant que la coquille mobile dépend encore de la limite de 768 px.
  *
  * Détection TV, inchangée (voir src/tv/platform.js pour le pourquoi de chaque signal) :
  *   1. choix manuel : `?tv=1` force la TV, `?tv=0` l'interdit (même si l'agent
@@ -33,10 +43,10 @@
 export function detectInterface(win, nativeAndroid) {
   var TV_UA = /(SmartTV|Smart-TV|GoogleTV|Google TV|Android ?TV|AFT[A-Z]|BRAVIA|AQUOS|Web0S|WebOS|Tizen|HbbTV|NetCast|VIDAA|Roku|CrKey|\bTV\b)/i;
   var FORCE_KEY = 'force-tv';
-  var result = function (tv, mobile) {
-    if (tv) return { kind: 'bigscreen', input: 'dpad', tv: true };
-    if (mobile) return { kind: 'mobile', input: 'touch', tv: false };
-    return { kind: 'bigscreen', input: 'pointer', tv: false };
+  var result = function (tv, mobile, desktop, webBigScreen) {
+    if (tv) return { kind: 'bigscreen', input: 'dpad', tv: true, desktop: false, webBigScreen: false };
+    if (mobile) return { kind: 'mobile', input: 'touch', tv: false, desktop: false, webBigScreen: false };
+    return { kind: 'bigscreen', input: 'pointer', tv: false, desktop: Boolean(desktop), webBigScreen: Boolean(webBigScreen) };
   };
   if (!win) return result(false, false);
 
@@ -82,5 +92,26 @@ export function detectInterface(win, nativeAndroid) {
   } catch (_error) {
     mobile = false;
   }
-  return result(tv, mobile);
+
+  // Ordinateur : pointeur fin et fenêtre d'au moins 1024 px.
+  var desktop = false;
+  try {
+    desktop = Boolean(win.matchMedia && win.matchMedia('(pointer: fine)').matches && win.innerWidth >= 1024);
+  } catch (_error) {
+    desktop = false;
+  }
+
+  // Grand écran sur le web : le défaut d'un ordinateur, sauf choix manuel mémorisé.
+  var UI_KEY = 'force-ui';
+  var choice = null;
+  try {
+    var askedUi = /[?&]ui=([^&#]*)/.exec(win.location.search || '');
+    if (askedUi && (askedUi[1] === 'bigscreen' || askedUi[1] === 'legacy')) win.localStorage.setItem(UI_KEY, askedUi[1]);
+    else if (askedUi && askedUi[1] === 'auto') win.localStorage.removeItem(UI_KEY);
+    choice = win.localStorage.getItem(UI_KEY);
+  } catch (_error) {
+    choice = null;
+  }
+  var webBigScreen = choice === 'bigscreen' || (choice !== 'legacy' && desktop);
+  return result(tv, mobile, desktop, webBigScreen);
 }

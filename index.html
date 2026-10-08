@@ -44,16 +44,12 @@
             if (!song) return;
             var short = /\/shorts\/([\w-]{11})/.exec(song.youtube_music_url || '');
             if (ui.kind !== 'mobile') {
-              // Interface grand écran sur ordinateur (drapeau ?ui=bigscreen, mémorisé —
-              // même lecture que isBigScreenUiEnabled) : l'affiche verticale de la
-              // música da semana est demandée dès maintenant, à l'adresse exacte que
-              // l'accueil affichera (un seul téléchargement). Sans le drapeau, l'ancien
-              // desktop ne l'utilise pas : rien n'est préchargé.
-              var asked = /[?&]ui=([^&#]*)/.exec(window.location.search || '');
-              var stored = null;
-              try { stored = window.localStorage.getItem('force-ui'); } catch (error) { /* stockage indisponible */ }
-              var bigScreen = asked ? asked[1] === 'bigscreen' : stored === 'bigscreen';
-              if (short && bigScreen) add('link', { rel: 'preload', as: 'image', href: 'https://i.ytimg.com/vi/' + short[1] + '/oar2.jpg' });
+              // Interface grand écran sur le web (le défaut d'un ordinateur, ou
+              // ?ui=bigscreen — `webBigScreen`, la règle de l'app) : l'affiche verticale
+              // de la música da semana est demandée dès maintenant, à l'adresse exacte
+              // que l'accueil affichera (un seul téléchargement). Avec l'ancien desktop
+              // (?ui=legacy, tablette), elle ne sert pas : rien n'est préchargé.
+              if (short && ui.webBigScreen) add('link', { rel: 'preload', as: 'image', href: 'https://i.ytimg.com/vi/' + short[1] + '/oar2.jpg' });
               return;
             }
             var search = window.location.search;

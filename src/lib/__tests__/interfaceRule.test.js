@@ -4,9 +4,10 @@ import rootIndexHtml from '../../../index.html?raw';
 import viteConfigSource from '../../../vite.config.js?raw';
 
 // ── Fausse fenêtre ───────────────────────────────────────────────────────────────────
-function fakeWindow({ ua = '', search = '', width = 390, height = 844, touch = 5, stored = null, capacitor = undefined } = {}) {
+function fakeWindow({ ua = '', search = '', width = 390, height = 844, touch = 5, stored = null, capacitor = undefined, fine = false, ui = null } = {}) {
   const store = new Map();
   if (stored != null) store.set('force-tv', stored);
+  if (ui != null) store.set('force-ui', ui);
   return {
     location: { search },
     navigator: { userAgent: ua, maxTouchPoints: touch },
@@ -17,7 +18,7 @@ function fakeWindow({ ua = '', search = '', width = 390, height = 844, touch = 5
       setItem: (key, value) => store.set(key, String(value)),
       removeItem: (key) => store.delete(key),
     },
-    matchMedia: (query) => ({ matches: query === '(max-width: 767px)' ? width <= 767 : false }),
+    matchMedia: (query) => ({ matches: query === '(max-width: 767px)' ? width <= 767 : query === '(pointer: fine)' ? fine : false }),
     Capacitor: capacitor,
     __store: store,
   };
@@ -87,11 +88,11 @@ describe('detectInterface — même résultat que l’ancien isTV()', () => {
 
   it('the phone app is never a TV; the TV box always is — with or without the native UA tag', () => {
     // Téléphone : portrait verrouillé, écran tactile.
-    expect(detectInterface(fakeWindow({ ua: UA.phoneApp, width: 412, height: 915, touch: 5 }), true)).toEqual({ kind: 'mobile', input: 'touch', tv: false });
+    expect(detectInterface(fakeWindow({ ua: UA.phoneApp, width: 412, height: 915, touch: 5 }), true)).toMatchObject({ kind: 'mobile', input: 'touch', tv: false });
     // Le bug WebView connu : maxTouchPoints transitoirement à 0 sur un téléphone.
     expect(detectInterface(fakeWindow({ ua: UA.phoneApp, width: 412, height: 915, touch: 0 }), true).tv).toBe(false);
     // Box TV : tag « AndroidTV » posé par MainActivity.
-    expect(detectInterface(fakeWindow({ ua: UA.tvBox, width: 960, height: 540, touch: 0 }), true)).toEqual({ kind: 'bigscreen', input: 'dpad', tv: true });
+    expect(detectInterface(fakeWindow({ ua: UA.tvBox, width: 960, height: 540, touch: 0 }), true)).toMatchObject({ kind: 'bigscreen', input: 'dpad', tv: true });
     // Sans le tag : le filet (Android natif, pas de tactile, large et paysage).
     expect(detectInterface(fakeWindow({ ua: UA.tvBoxNoTag, width: 960, height: 540, touch: 0 }), true).tv).toBe(true);
   });
@@ -114,7 +115,7 @@ describe('detectInterface — choix manuel', () => {
 
   it('?tv=0 now really turns the TV off, even when the user agent looks like a TV, and is remembered', () => {
     const win = fakeWindow({ ua: UA.tizen, width: 1920, height: 1080, touch: 0, search: '?tv=0' });
-    expect(detectInterface(win)).toEqual({ kind: 'bigscreen', input: 'pointer', tv: false });
+    expect(detectInterface(win)).toMatchObject({ kind: 'bigscreen', input: 'pointer', tv: false });
     win.location.search = '';
     expect(detectInterface(win).tv).toBe(false);
   });
@@ -130,24 +131,24 @@ describe('detectInterface — choix manuel', () => {
   it('a blocked localStorage never breaks the detection', () => {
     const win = fakeWindow({ ua: UA.chromePhone });
     win.localStorage = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); }, removeItem() {} };
-    expect(detectInterface(win)).toEqual({ kind: 'mobile', input: 'touch', tv: false });
+    expect(detectInterface(win)).toMatchObject({ kind: 'mobile', input: 'touch', tv: false });
   });
 });
 
 describe('detectInterface — interface', () => {
   it('under 768 px: mobile; from 768 px: big screen with a pointer (today’s desktop shell)', () => {
-    expect(detectInterface(fakeWindow({ ua: UA.iphone, width: 390 }))).toEqual({ kind: 'mobile', input: 'touch', tv: false });
+    expect(detectInterface(fakeWindow({ ua: UA.iphone, width: 390 }))).toMatchObject({ kind: 'mobile', input: 'touch', tv: false });
     expect(detectInterface(fakeWindow({ ua: UA.chromePhone, width: 767 })).kind).toBe('mobile');
-    expect(detectInterface(fakeWindow({ ua: UA.desktop, width: 768, height: 900, touch: 0 }))).toEqual({ kind: 'bigscreen', input: 'pointer', tv: false });
+    expect(detectInterface(fakeWindow({ ua: UA.desktop, width: 768, height: 900, touch: 0 }))).toMatchObject({ kind: 'bigscreen', input: 'pointer', tv: false });
     expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 820, height: 1180, touch: 5 })).kind).toBe('bigscreen');
   });
 
   it('a phone forced into TV mode is big screen — so index.html paints no feed poster there', () => {
-    expect(detectInterface(fakeWindow({ ua: UA.chromePhone, width: 390, search: '?tv=1' }))).toEqual({ kind: 'bigscreen', input: 'dpad', tv: true });
+    expect(detectInterface(fakeWindow({ ua: UA.chromePhone, width: 390, search: '?tv=1' }))).toMatchObject({ kind: 'bigscreen', input: 'dpad', tv: true });
   });
 
   it('no window: big screen, not a TV (never throws)', () => {
-    expect(detectInterface(null)).toEqual({ kind: 'bigscreen', input: 'pointer', tv: false });
+    expect(detectInterface(null)).toMatchObject({ kind: 'bigscreen', input: 'pointer', tv: false });
   });
 });
 
@@ -159,7 +160,7 @@ describe('index.html applique LA MÊME fonction', () => {
   it('the function survives being copied as text: no import, no outer variable', () => {
     const win = () => fakeWindow({ ua: UA.tvBox, width: 960, height: 540, touch: 0, capacitor: { getPlatform: () => 'android' } });
     expect(embedded(win())).toEqual(detectInterface(win()));
-    expect(embedded(fakeWindow({ ua: UA.iphone }))).toEqual({ kind: 'mobile', input: 'touch', tv: false });
+    expect(embedded(fakeWindow({ ua: UA.iphone }))).toMatchObject({ kind: 'mobile', input: 'touch', tv: false });
   });
 
   it('it is written for old WebViews: no arrow function, no optional chaining', () => {
@@ -181,5 +182,43 @@ describe('index.html applique LA MÊME fonction', () => {
   it('the build replaces the marker with the function of the app', () => {
     expect(viteConfigSource).toContain("import { detectInterface } from './src/lib/interfaceRule.js'");
     expect(viteConfigSource).toContain(".replace('__AMDS_DETECT_INTERFACE__', `(${detectInterface.toString()})`)");
+  });
+});
+
+describe('Grand écran sur le web — le défaut sur ordinateur', () => {
+  const computer = (extra = {}) => fakeWindow({ ua: UA.desktop, width: 1440, height: 900, touch: 0, fine: true, ...extra });
+
+  it('a computer (fine pointer, 1024 px or more) gets the big screen by default, without any flag', () => {
+    expect(detectInterface(computer())).toMatchObject({ kind: 'bigscreen', input: 'pointer', tv: false, desktop: true, webBigScreen: true });
+    expect(detectInterface(computer({ width: 1024 })).webBigScreen).toBe(true);
+  });
+
+  it('a narrow window or a coarse pointer (tablet) is not a computer: no big screen by default', () => {
+    expect(detectInterface(computer({ width: 1023 }))).toMatchObject({ desktop: false, webBigScreen: false });
+    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1366, height: 1024, touch: 5, fine: false }))).toMatchObject({ kind: 'bigscreen', desktop: false, webBigScreen: false });
+  });
+
+  it('?ui=legacy keeps the old desktop and is remembered; ?ui=auto returns to the default', () => {
+    const win = computer({ search: '?ui=legacy' });
+    expect(detectInterface(win).webBigScreen).toBe(false);
+    win.location.search = '';
+    expect(detectInterface(win).webBigScreen).toBe(false);
+    win.location.search = '?x=1&ui=auto';
+    expect(detectInterface(win).webBigScreen).toBe(true);
+    expect(win.__store.has('force-ui')).toBe(false);
+  });
+
+  it('?ui=bigscreen still forces the big screen where it is not the default (tablet)', () => {
+    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1024, height: 768, fine: false, ui: 'bigscreen' })).webBigScreen).toBe(true);
+  });
+
+  it('never on a phone, and the TV does not read the flag', () => {
+    expect(detectInterface(fakeWindow({ ua: UA.iphone, width: 390, ui: 'bigscreen', fine: true })).webBigScreen).toBe(false);
+    expect(detectInterface(fakeWindow({ ua: UA.tvBox, width: 960, height: 540, touch: 0, fine: true }), true)).toMatchObject({ tv: true, webBigScreen: false });
+  });
+
+  it('index.html preloads the poster with the same rule (webBigScreen), not its own reading of the flag', () => {
+    expect(rootIndexHtml).toContain('ui.webBigScreen');
+    expect(rootIndexHtml).not.toContain("getItem('force-ui')");
   });
 });

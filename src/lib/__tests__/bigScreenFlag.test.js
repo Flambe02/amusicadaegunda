@@ -10,7 +10,7 @@ beforeEach(() => {
 });
 
 describe('isBigScreenUiEnabled — ?ui=bigscreen', () => {
-  it('is off by default: the old desktop stays the default interface', () => {
+  it('is off where the device is not a computer (no fine pointer here)', () => {
     expect(isBigScreenUiEnabled()).toBe(false);
   });
 
