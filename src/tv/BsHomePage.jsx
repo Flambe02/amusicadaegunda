@@ -6,6 +6,8 @@ import FocusableButton from './components/FocusableButton';
 import FocusRow from './components/FocusRow';
 import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
+import TvHomeRemoteHint from './components/TvHomeRemoteHint';
+import { getInterface } from '@/lib/interface';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import { getDifficultyMeta, getMode } from './lib/songMeta';
 import { fitTitle, formatShortDate, formatWeekdayDate, getBackdropUrl, getShortContext } from './lib/bsSong';
@@ -200,6 +202,7 @@ export default function BsHomePage({
         <Rail id="FACEIS" title="Fáceis para começar" vms={rows.faceis} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} />
         <Rail id="KARAOKE" title="Com karaokê" vms={rows.karaoke} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} />
       </div>
+      {getInterface().tv && <TvHomeRemoteHint />}
     </div>
   );
 }

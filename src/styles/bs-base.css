@@ -69,7 +69,7 @@
 .bs-focus.is-focused {
   transform: scale(1.06);
   outline-color: #fff;
-  box-shadow: 0 0 0 14px rgba(245, 197, 66, 0.18);
+  box-shadow: 0 0 0 14px rgba(245, 197, 66, 0.32);
   z-index: 2;
 }
 @media (prefers-reduced-motion: reduce) { .bs-focus { transition: none; } }
