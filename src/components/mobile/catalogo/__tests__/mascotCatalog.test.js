@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
-  findCostumeClip, loadMascotCatalog, normalizeCatalog, remoteDances, resetMascotCatalogForTests,
+  findCostumeClip, getLoadedMascotCatalog, loadMascotCatalog, normalizeCatalog, remoteDances, resetMascotCatalogForTests,
 } from '../mascotCatalog';
 import { ANIMATIONS, pickAnimation } from '../stageDraw';
 import catalogFile from '../../../../../public/mascot/catalog.json';
@@ -68,6 +68,15 @@ describe('mascotCatalog — animations à la demande', () => {
     const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => RAW });
     expect((await loadMascotCatalog(fetchImpl)).map((entry) => entry.id)).toEqual(['bets-dance', 'frevo']);
     expect(fetchImpl.mock.calls[0][0]).toBe('/mascot/catalog.json');
+  });
+
+  it('remembers the catalogue once read, so a neighbouring slide can use it without a request', async () => {
+    expect(getLoadedMascotCatalog()).toEqual([]);
+    const fetchImpl = vi.fn().mockResolvedValue({ ok: true, json: async () => RAW });
+    await loadMascotCatalog(fetchImpl);
+    expect(getLoadedMascotCatalog().map((entry) => entry.id)).toEqual(['bets-dance', 'frevo']);
+    resetMascotCatalogForTests();
+    expect(getLoadedMascotCatalog()).toEqual([]);
   });
 
   it('the built-in animations are MP4 only (no WebM copy in the app)', () => {

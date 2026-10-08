@@ -12,6 +12,7 @@ import { getPlatform } from '@/native';
 import { isTV } from '@/tv/platform';
 import CaipivaraStage from '@/components/mobile/catalogo/CaipivaraStage';
 import CaipivaraLoop from '@/components/mobile/catalogo/CaipivaraLoop';
+import { useSongCostume } from '@/components/mobile/catalogo/useSongCostume';
 import { getSongAudioId } from '@/components/mobile/catalogo/stageDraw';
 
 // Sous l'en-tête transparent de l'Início (52 px + zone de sécurité).
@@ -466,7 +467,7 @@ export default function MobileFeed({
           ) : (
             // Sans Short : la scène de la Caipivara (danse seulement quand la musique
             // joue réellement avec le son). Jamais d'écran vide.
-            <CaipivaraScene dancing={caipivaraDancing} mode={slideMode} />
+            <CaipivaraScene song={current} dancing={caipivaraDancing} mode={slideMode} />
           )}
 
           {/* Vidéo : iframe 9:16 en « cover » (× SHORTS_UI_ZOOM, 1,0 aujourd'hui), pour
@@ -584,10 +585,13 @@ const SR_NAV_BUTTON =
   'sr-only rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white focus:not-sr-only focus-visible:not-sr-only';
 
 /** Scène de la Caipivara pour une chanson sans Short (fond noir, au-dessus du titre). */
-function CaipivaraScene({ dancing, mode }) {
+function CaipivaraScene({ song, dancing, mode }) {
+  // La Caipivara dans le costume de la chanson, s'il en existe un (catalogue public/mascot/).
+  // Diapositive voisine : le poster seulement, sans rien demander de plus au réseau.
+  const costume = useSongCostume(song, getPublicSlug(song), mode !== 'neighbour');
   return (
     <div data-feed-scene={mode} className="absolute inset-0 flex items-center justify-center bg-app-black pb-28 pt-16">
-      <CaipivaraLoop dancing={dancing} className="h-full max-h-[520px] max-w-[80cqw]" />
+      <CaipivaraLoop dancing={dancing} costume={costume} costumeVideo={mode !== 'neighbour'} className="h-full max-h-[520px] max-w-[80cqw]" />
     </div>
   );
 }
@@ -596,7 +600,7 @@ function NeighbourSlide({ song, buildArtwork, position }) {
   const hasShort = Boolean(getShortVideoId(song));
   return (
     <div aria-hidden="true" className="absolute inset-0" style={{ transform: `translate3d(0, ${position}, 0)` }}>
-      {hasShort ? <FeedPoster song={song} buildArtwork={buildArtwork} /> : <CaipivaraScene dancing={false} mode="neighbour" />}
+      {hasShort ? <FeedPoster song={song} buildArtwork={buildArtwork} /> : <CaipivaraScene song={song} dancing={false} mode="neighbour" />}
       <p className={`pointer-events-none absolute bottom-6 left-4 right-24 line-clamp-2 text-[28px] font-black leading-[1.1] tracking-tight text-white ${TEXT_SHADOW}`}>
         {song.title}
       </p>

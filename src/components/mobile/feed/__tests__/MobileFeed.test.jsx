@@ -3,6 +3,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import MobileFeed from '../MobileFeed';
 import { FALLBACK_DELAY_MS, REVEAL_DELAY_MS } from '../useShortPlayer';
+import { resetMascotCatalogForTests } from '@/components/mobile/catalogo/mascotCatalog';
 
 vi.mock('@/components/ui/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }), toast: vi.fn(() => ({ dismiss: vi.fn() })) }));
 
@@ -456,6 +457,29 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     swipe(container, +300);
     expect(players).toHaveLength(1);
     expect(player.calls.filter((c) => c === 'loadVideoById:BBBBBBBBBBB')).toHaveLength(2);
+  });
+
+  it('song without a Short that has a costume: the Caipivara shows in it, read from the catalogue at idle time', async () => {
+    const catalog = { animations: [{ id: 'um-dance', type: 'dance', costume: 'um', song: 'semana-um', video: 'caipivara-um-dance.mp4', poster: 'caipivara-um-dance-poster.webp' }] };
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => catalog });
+    vi.stubGlobal('fetch', fetchMock);
+    resetMascotCatalogForTests();
+    try {
+      const { container } = await renderLoaded();
+      // Premier écran : aucune requête vers le catalogue de la mascotte.
+      expect(fetchMock.mock.calls.filter(([url]) => /\/mascot\//.test(String(url)))).toHaveLength(0);
+      act(() => { players[0].ready(); players[0].play(); });
+      swipe(container, -300);
+      swipe(container, -300); // OLDEST : pas de Short, costume « um »
+      await act(async () => { vi.advanceTimersByTime(3000); await Promise.resolve(); await Promise.resolve(); });
+      const scene = container.querySelector('[data-feed-scene="audio"]');
+      expect(scene.querySelector('[data-caipivara-loop]')).toHaveAttribute('data-costume', 'remote:um-dance');
+      expect(scene.querySelector('[data-costume-poster]').getAttribute('src')).toBe('/mascot/caipivara-um-dance-poster.webp');
+      expect(scene.querySelector('[data-clip="idle"]')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+      resetMascotCatalogForTests();
+    }
   });
 
   it('song with neither a Short nor a youtube_url: the Caipivara at rest, no player, Letra still there — never an empty screen', async () => {

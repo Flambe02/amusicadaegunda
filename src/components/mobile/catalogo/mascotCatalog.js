@@ -55,17 +55,20 @@ export function normalizeCatalog(raw, base = mascotBaseUrl()) {
 }
 
 let catalogPromise = null;
+let loadedCatalog = [];
+/** Le catalogue déjà lu (liste vide tant qu'il ne l'est pas) : pour ne rien demander de plus. */
+export function getLoadedMascotCatalog() { return loadedCatalog; }
 /** Catalogue des animations à la demande. Injoignable ou invalide : liste vide, jamais d'erreur. */
 export function loadMascotCatalog(fetchImpl = typeof fetch === 'function' ? fetch : null) {
   if (!catalogPromise) {
     catalogPromise = (fetchImpl
       ? fetchImpl(`${mascotBaseUrl()}catalog.json`, { cache: 'no-cache' }).then((response) => (response.ok ? response.json() : []))
       : Promise.resolve([])
-    ).then((raw) => normalizeCatalog(raw), () => []);
+    ).then((raw) => { loadedCatalog = normalizeCatalog(raw); return loadedCatalog; }, () => []);
   }
   return catalogPromise;
 }
-export function resetMascotCatalogForTests() { catalogPromise = null; }
+export function resetMascotCatalogForTests() { catalogPromise = null; loadedCatalog = []; }
 
 /** Le costume de la chanson : la colonne `mascot_costume` l'emporte, sinon le catalogue nomme la chanson. */
 export function findCostumeClip(catalog, song) {

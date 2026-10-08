@@ -16,3 +16,29 @@ describe('CaipivaraLoop — bords fondus sans mask-image', () => {
     expect(vignette.style.backgroundImage).toMatch(/radial-gradient/);
   });
 });
+
+// Costume de la chanson (catalogue public/mascot/) : le poster tout de suite, la vidéo
+// seulement quand la Caipivara danse, jamais sur une diapositive voisine.
+describe('CaipivaraLoop — costume de la chanson', () => {
+  const costume = { key: 'remote:croissant-dance', costume: 'croissant', mp4: '/mascot/caipivara-croissant-dance.mp4', poster: '/mascot/caipivara-croissant-dance-poster.webp' };
+
+  it('shows the costume poster and none of the built-in idle or dance clips', () => {
+    const { container } = render(<CaipivaraLoop costume={costume} costumeVideo={false} />);
+    const loop = container.querySelector('[data-caipivara-loop]');
+    expect(loop).toHaveAttribute('data-costume', 'remote:croissant-dance');
+    expect(loop.querySelector('[data-costume-poster]').getAttribute('src')).toBe(costume.poster);
+    expect(loop.querySelector('[data-clip="idle"]')).toBeNull();
+    expect(loop.querySelector('[data-clip="dance"]')).toBeNull();
+  });
+
+  it('a neighbouring slide gets the poster only: no video element, nothing to download', () => {
+    const { container } = render(<CaipivaraLoop costume={costume} costumeVideo={false} dancing />);
+    expect(container.querySelector('video')).toBeNull();
+  });
+
+  it('without a costume, the built-in clips are unchanged', () => {
+    const { container } = render(<CaipivaraLoop />);
+    expect(container.querySelector('[data-clip="idle"]')).not.toBeNull();
+    expect(container.querySelector('[data-costume-poster]')).toBeNull();
+  });
+});
