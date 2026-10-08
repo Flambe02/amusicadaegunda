@@ -55,15 +55,15 @@ export default function InstallAppBanner() {
               <>
                 <p className="text-sm font-semibold">Instalar o app</p>
                 <p className="mt-1 text-sm leading-6 text-white/70">
-                  Adicione a PWA a tela inicial para abrir mais rapido, receber push e manter o shell offline.
+                  Adicione o app à tela inicial para abrir mais rápido.
                 </p>
               </>
             ) : (
               <>
-                <p className="text-sm font-semibold">Instalar no iPhone</p>
+                <p className="text-sm font-semibold">Instalar o app</p>
                 <p className="mt-1 text-sm leading-6 text-white/70">
                   Toque em <span className="font-semibold text-white">Compartilhar</span> e depois em
-                  {' '}<span className="font-semibold text-white">Adicionar a Tela de Inicio</span>.
+                  {' '}<span className="font-semibold text-white">Adicionar à Tela de Início</span>.
                 </p>
               </>
             )}

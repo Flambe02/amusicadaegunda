@@ -24,13 +24,15 @@
  * tactile, ou une fenêtre plus étroite, n'en est pas un.
  *
  * `webBigScreen` : sur le web, l'accueil et la fiche chanson montent-ils l'interface
- * grand écran (celle de la TV) ? Oui par défaut sur un ordinateur. Choix manuel, mémorisé
+ * grand écran (celle de la TV) ? Oui par défaut sur un ordinateur, et sur une tablette
+ * tenue en paysage (900 px ou plus, plus large que haute : le grand écran se pilote
+ * aussi au doigt). Choix manuel, mémorisé
  * dans `localStorage['force-ui']` : `?ui=legacy` garde l'ancien desktop (pour comparer,
  * jusqu'à son retrait), `?ui=bigscreen` force le grand écran (aussi sur tablette),
  * `?ui=auto` oublie le choix. Jamais sur un écran de moins de 768 px ; la TV, elle,
  * monte toujours le grand écran (App.jsx) et ne lit pas ce drapeau.
  *
- * Les tablettes et les fenêtres de 768 à 899 px gardent l'ancienne coquille desktop
+ * Les tablettes en portrait et les fenêtres de 768 à 899 px gardent l'ancienne coquille desktop
  * tant que la coquille mobile dépend encore de la limite de 768 px.
  *
  * Détection TV, inchangée (voir src/tv/platform.js pour le pourquoi de chaque signal) :
@@ -115,6 +117,8 @@ export function detectInterface(win, nativeAndroid) {
   } catch (_error) {
     choice = null;
   }
-  var webBigScreen = choice === 'bigscreen' || (choice !== 'legacy' && desktop);
+  // Tablette en paysage : pas de pointeur fin, mais assez large pour le grand écran.
+  var wideTablet = !desktop && win.innerWidth >= 900 && win.innerWidth > win.innerHeight;
+  var webBigScreen = choice === 'bigscreen' || (choice !== 'legacy' && (desktop || wideTablet));
   return result(tv, mobile, desktop, webBigScreen);
 }

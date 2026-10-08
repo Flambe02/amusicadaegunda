@@ -201,10 +201,18 @@ describe('Grand écran sur le web — le défaut sur ordinateur', () => {
     expect(detectInterface(fakeWindow({ ua: UA.desktop, width: 1366, height: 768, touch: 10, fine: false, anyFine: true }))).toMatchObject({ desktop: true, webBigScreen: true });
   });
 
-  it('a window under 900 px, or a tablet without mouse or trackpad, is not: the old desktop stays', () => {
+  it('a window under 900 px, or a tablet held upright, is not: the old desktop stays', () => {
     expect(detectInterface(computer({ width: 899 }))).toMatchObject({ kind: 'bigscreen', desktop: false, webBigScreen: false });
-    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1366, height: 1024, touch: 5, fine: false, anyFine: false }))).toMatchObject({ kind: 'bigscreen', desktop: false, webBigScreen: false });
     expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 820, height: 1180, touch: 5, fine: false, anyFine: false })).webBigScreen).toBe(false);
+    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1024, height: 1366, touch: 5, fine: false, anyFine: false })).webBigScreen).toBe(false);
+  });
+
+  it('a tablet in landscape, 900 px or more, gets the big screen without being a computer', () => {
+    const tablet = (extra = {}) => fakeWindow({ ua: UA.ipad, width: 1180, height: 820, touch: 5, fine: false, anyFine: false, ...extra });
+    expect(detectInterface(tablet())).toMatchObject({ kind: 'bigscreen', tv: false, desktop: false, webBigScreen: true });
+    expect(detectInterface(tablet({ width: 1366, height: 1024 })).webBigScreen).toBe(true);
+    expect(detectInterface(tablet({ width: 899, height: 600 })).webBigScreen).toBe(false);
+    expect(detectInterface(tablet({ ui: 'legacy' })).webBigScreen).toBe(false);
   });
 
   it('?ui=legacy keeps the old desktop and is remembered; ?ui=auto returns to the default', () => {

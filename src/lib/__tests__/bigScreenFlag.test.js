@@ -1,16 +1,21 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { isBigScreenUiEnabled } from '../interface';
 import { onBackPress } from '@/tv/adapters/backButton';
 
 const visit = (search) => window.history.replaceState(null, '', `/${search}`);
 
+// Fenêtre de téléphone-tablette tenue droite : ni ordinateur, ni tablette en paysage.
+const { innerWidth, innerHeight } = window;
+afterAll(() => Object.assign(window, { innerWidth, innerHeight }));
+
 beforeEach(() => {
+  Object.assign(window, { innerWidth: 820, innerHeight: 1180 });
   localStorage.clear();
   visit('');
 });
 
 describe('isBigScreenUiEnabled — ?ui=bigscreen', () => {
-  it('is off where the device is not a computer (no fine pointer here)', () => {
+  it('is off on a tablet held upright (no fine pointer, not in landscape)', () => {
     expect(isBigScreenUiEnabled()).toBe(false);
   });
 
