@@ -16,6 +16,7 @@ const CATEGORY_LABELS = {
   midia:         'Mídia',
   esporte:       'Esporte',
   energia:       'Energia',
+  cidades:       'Cidades',
   seguranca:     'Segurança',
   gastronomia:   'Gastronomia',
   outros:        'Outros',

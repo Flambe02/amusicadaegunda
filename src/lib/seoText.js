@@ -23,7 +23,7 @@ export const SEO_THEMES = {
   policia: 'casos de polícia',
   seguranca: 'segurança pública',
   internacional: 'notícias do mundo',
-  energia: 'energia',
+  cidades: 'o caos urbano',
   gastronomia: 'comida',
   tecnologia: 'tecnologia',
   saude: 'saúde',
@@ -62,6 +62,12 @@ export function songSeoTitle(song) {
   return withSiteName(base);
 }
 
+/**
+ * Catégories retirées : leur page renvoie vers celle qui a reçu leurs chansons
+ * (HTML statique : redirection noindex + canonical ; React : <Navigate>).
+ */
+export const CATEGORY_REDIRECTS = { energia: 'cidades' };
+
 /** Titre d'une page de catégorie. */
 export function categorySeoTitle(slug, label) {
   const theme = SEO_THEMES[slug];
@@ -72,7 +78,7 @@ export function categorySeoTitle(slug, label) {
 export const CATEGORY_DESCRIPTIONS = {
   internacional: 'Paródias sobre geopolítica, diplomacia e eventos fora do Brasil.',
   midia: 'Sátiras sobre jornalismo, redes sociais e comunicação.',
-  energia: 'Músicas sobre crises energéticas, apagões e infraestrutura elétrica.',
+  cidades: 'Paródias sobre chuva, apagão, trem parado e o caos do dia a dia nas grandes cidades.',
   esporte: 'Paródias do universo do esporte brasileiro e internacional.',
   cultura: 'Sátiras sobre carnaval, entretenimento e vida cultural brasileira.',
   outros: 'Músicas sobre temas variados do cotidiano.',

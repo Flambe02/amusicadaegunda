@@ -18,7 +18,7 @@ export const DEFAULT_CATEGORIES = [
   { value: 'policia',       label: 'Polícia',        emoji: '👮', color: 'bg-red-500/20 text-red-300 border-red-500/30' },
   { value: 'midia',         label: 'Mídia',          emoji: '📺', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
   { value: 'internacional', label: 'Internacional',  emoji: '🌍', color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' },
-  { value: 'energia',       label: 'Energia',        emoji: '⚡', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
+  { value: 'cidades',       label: 'Cidades',        emoji: '🏙️', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
   { value: 'saude',         label: 'Saúde',          emoji: '🏥', color: 'bg-rose-500/20 text-rose-300 border-rose-500/30' },
   { value: 'esporte',       label: 'Esporte',        emoji: '⚽', color: 'bg-green-500/20 text-green-300 border-green-500/30' },
   { value: 'tecnologia',    label: 'Tecnologia',     emoji: '💻', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },

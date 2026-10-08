@@ -46,7 +46,7 @@ const staticPages = [
   { path: '/categoria/policia', priority: 0.75, changefreq: 'weekly' },
   { path: '/categoria/midia', priority: 0.75, changefreq: 'weekly' },
   { path: '/categoria/esporte', priority: 0.7, changefreq: 'weekly' },
-  { path: '/categoria/energia', priority: 0.7, changefreq: 'weekly' },
+  { path: '/categoria/cidades', priority: 0.7, changefreq: 'weekly' },
   { path: '/categoria/economia', priority: 0.7, changefreq: 'weekly' },
   { path: '/categoria/seguranca', priority: 0.65, changefreq: 'monthly' },
   { path: '/categoria/gastronomia', priority: 0.65, changefreq: 'monthly' },
@@ -84,8 +84,11 @@ function buildSongUrls(songs, today) {
 function buildPageUrls(songs, today) {
   const dated = songs.map((song) => ({ category: song.category, date: songLastmod({ datePublished: song.datePublished }, today) }));
   const newest = latest(dated.map((song) => song.date));
-  const urls = staticPages.map((page) => {
-    const category = page.path.startsWith('/categoria/') ? page.path.split('/')[2] : null;
+  const categoryOf = (page) => (page.path.startsWith('/categoria/') ? page.path.split('/')[2] : null);
+  // Une catégorie sans chanson n'a pas de page (seulement une redirection) : hors sitemap.
+  const listed = staticPages.filter((page) => !categoryOf(page) || dated.some((song) => song.category === categoryOf(page)));
+  const urls = listed.map((page) => {
+    const category = categoryOf(page);
     let lastmod = null;
     if (LIST_PAGES.has(page.path)) lastmod = newest;
     else if (category) lastmod = latest(dated.filter((song) => song.category === category).map((song) => song.date));

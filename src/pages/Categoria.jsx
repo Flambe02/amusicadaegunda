@@ -1,6 +1,6 @@
-import { CATEGORY_DESCRIPTIONS, categorySeoTitle } from '@/lib/seoText';
+import { CATEGORY_DESCRIPTIONS, CATEGORY_REDIRECTS, categorySeoTitle } from '@/lib/seoText';
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { Song } from '@/api/entities';
 import { useSEO } from '../hooks/useSEO';
 import { Helmet } from 'react-helmet-async';
@@ -9,7 +9,9 @@ import { Tag, Music } from 'lucide-react';
 const CATEGORY_LABELS = {
   internacional: 'Internacional',
   midia: 'Mídia',
-  energia: 'Energia',
+  cidades: 'Cidades',
+  economia: 'Economia',
+  energia: 'Energia', // retirée : redirige vers « cidades » une fois vide
   esporte: 'Esporte',
   cultura: 'Cultura',
   outros: 'Outros',
@@ -24,13 +26,14 @@ const CATEGORY_LABELS = {
 // Related categories — 2-3 adjacent topics per category
 const RELATED_CATEGORIES = {
   politica: ['midia', 'policia', 'internacional'],
-  internacional: ['politica', 'midia', 'energia'],
+  internacional: ['politica', 'midia', 'economia'],
   midia: ['politica', 'cultura', 'tecnologia'],
   saude: ['politica', 'tecnologia', 'outros'],
   esporte: ['cultura', 'internacional', 'outros'],
   cultura: ['midia', 'esporte', 'gastronomia'],
-  energia: ['politica', 'internacional', 'tecnologia'],
-  tecnologia: ['midia', 'energia', 'outros'],
+  cidades: ['politica', 'economia', 'seguranca'],
+  economia: ['politica', 'internacional', 'cidades'],
+  tecnologia: ['midia', 'economia', 'outros'],
   policia: ['politica', 'seguranca', 'outros'],
   seguranca: ['policia', 'politica', 'outros'],
   gastronomia: ['cultura', 'outros'],
@@ -42,6 +45,11 @@ export default function Categoria() {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Catégorie retirée (energia) : une fois vide, sa page renvoie vers celle qui a reçu
+  // ses chansons. Tant qu'elle en a encore (entre le déploiement et le reclassement en
+  // base), elle s'affiche normalement.
+  const successor = CATEGORY_REDIRECTS[slug] || null;
+  const redirectTo = successor && !loading && songs.length === 0 ? successor : null;
   const label = CATEGORY_LABELS[slug] || slug;
   const description = CATEGORY_DESCRIPTIONS[slug] || `Paródias musicais da categoria ${label} — A Música da Segunda.`;
 
@@ -53,6 +61,7 @@ export default function Categoria() {
     url: `/categoria/${slug}`,
     type: 'website',
     robots: 'index, follow, max-video-preview:0',
+    enabled: !redirectTo,
   });
 
   useEffect(() => {
@@ -65,6 +74,8 @@ export default function Categoria() {
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [slug]);
+
+  if (redirectTo) return <Navigate to={`/categoria/${redirectTo}`} replace />;
 
   if (!CATEGORY_LABELS[slug]) {
     return (

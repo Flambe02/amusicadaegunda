@@ -3,7 +3,7 @@ import { Search, Plus, Check } from 'lucide-react';
 import { getYouTubeThumbnailUrl } from '@/lib/utils';
 
 const CATEGORY_LABELS = {
-  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', esporte: 'Esporte',
+  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', cidades: 'Cidades', esporte: 'Esporte',
   cultura: 'Cultura', outros: 'Outros', saude: 'Saúde', policia: 'Polícia',
   politica: 'Política', seguranca: 'Segurança', tecnologia: 'Tecnologia',
   gastronomia: 'Gastronomia', economia: 'Economia',

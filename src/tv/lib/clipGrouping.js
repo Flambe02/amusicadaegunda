@@ -5,7 +5,7 @@ import { MONTHS_PT } from '../tvMonths';
 // module indépendant de React (pas d'import d'un fichier écran). Toute nouvelle
 // catégorie Supabase absente de cette table retombe sur une capitalisation simple.
 const CATEGORY_LABELS = {
-  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', esporte: 'Esporte',
+  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', cidades: 'Cidades', esporte: 'Esporte',
   cultura: 'Cultura', outros: 'Outros', saude: 'Saúde', policia: 'Polícia',
   politica: 'Política', seguranca: 'Segurança', tecnologia: 'Tecnologia',
   gastronomia: 'Gastronomia', economia: 'Economia',

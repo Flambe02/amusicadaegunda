@@ -80,7 +80,7 @@ const NAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'mo
 init({ debug: false, visualDebug: false });
 
 const CATEGORY_LABELS = {
-  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', esporte: 'Esporte',
+  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', cidades: 'Cidades', esporte: 'Esporte',
   cultura: 'Cultura', outros: 'Outros', saude: 'Saúde', policia: 'Polícia',
   politica: 'Política', seguranca: 'Segurança', tecnologia: 'Tecnologia',
   gastronomia: 'Gastronomia', economia: 'Economia',

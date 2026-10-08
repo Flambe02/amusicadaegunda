@@ -7,7 +7,8 @@ import { isKaraokePublished } from '@/lib/lrc';
 export const SONG_CATEGORY_LABELS = {
   internacional: 'Internacional',
   midia: 'Mídia',
-  energia: 'Energia',
+  energia: 'Energia', // ancienne catégorie, versée dans « cidades »
+  cidades: 'Cidades',
   esporte: 'Esporte',
   cultura: 'Cultura',
   outros: 'Outros',

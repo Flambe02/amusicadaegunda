@@ -7,7 +7,7 @@ import TvSongMetadataCard from './TvSongMetadataCard';
 const THEME_ICON = {
   esporte: Volleyball, politica: Landmark, economia: Coins, internacional: Globe,
   cultura: Sparkles, gastronomia: UtensilsCrossed, saude: Shield, seguranca: Shield,
-  policia: Shield, midia: Sparkles, tecnologia: Zap, energia: Zap, outros: Tag,
+  policia: Shield, midia: Sparkles, tecnologia: Zap, energia: Zap, cidades: Zap, outros: Tag,
 };
 
 const MODE_LABELS = { solo: 'Solo', duet: 'Dueto', family: 'Família', festa: 'Festa' };

@@ -19,7 +19,7 @@ const BASE_TAGS = ['parodia', 'satiria', 'musicadasegunda', 'noticias'];
 // Ordered from MOST SPECIFIC to LEAST SPECIFIC.
 // detectCategory() iterates in this order → first match wins.
 // This prevents generic categories (politica, economia) from overriding
-// specific ones (gastronomia, energia, esporte…).
+// specific ones (gastronomia, cidades, esporte…).
 // ---------------------------------------------------------------------------
 const CATEGORIES = [
   {
@@ -32,11 +32,11 @@ const CATEGORIES = [
     ],
   },
   {
-    key: 'energia',
+    key: 'cidades',
     keywords: [
       'apagao', 'enel', 'aneel', 'energia eletrica', 'distribuidora de energia',
-      'falta de luz', 'blecaute', 'hidreletrica', 'usina',
-      'conta de luz', 'tarifa eletrica', 'renovavel', 'solar', 'eolica',
+      'falta de luz', 'blecaute', 'conta de luz',
+      'enchente', 'alagamento', 'temporal', 'cptm', 'metro parado', 'linha 12-safira',
     ],
   },
   {

@@ -104,7 +104,7 @@ export default function Guia() {
       </p>
 
       <div className="mt-8 flex flex-wrap gap-2">
-        {['politica', 'internacional', 'economia', 'cultura', 'esporte', 'midia', 'energia'].map((cat) => (
+        {['politica', 'internacional', 'economia', 'cultura', 'esporte', 'midia', 'cidades'].map((cat) => (
           <Link
             key={cat}
             to={`/categoria/${cat}`}

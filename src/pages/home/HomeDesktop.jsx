@@ -787,7 +787,7 @@ export default function HomeDesktop({ currentSong, allSongs, isMobileViewport = 
               { slug: 'saude', label: 'Saúde' },
               { slug: 'esporte', label: 'Esporte' },
               { slug: 'cultura', label: 'Cultura' },
-              { slug: 'energia', label: 'Energia' },
+              { slug: 'cidades', label: 'Cidades' },
               { slug: 'tecnologia', label: 'Tecnologia' },
               { slug: 'policia', label: 'Polícia' },
               { slug: 'seguranca', label: 'Segurança' },

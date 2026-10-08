@@ -33,7 +33,7 @@ const ENERGY_KEY = {
 };
 
 const CATEGORY_LABELS = {
-  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', esporte: 'Esporte',
+  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', cidades: 'Cidades', esporte: 'Esporte',
   cultura: 'Cultura', outros: 'Outros', saude: 'Saúde', policia: 'Polícia',
   politica: 'Política', seguranca: 'Segurança', tecnologia: 'Tecnologia',
   gastronomia: 'Gastronomia', economia: 'Economia',
@@ -45,7 +45,7 @@ const CATEGORY_LABELS = {
 const ENERGY_BY_CATEGORY = {
   esporte: ENERGY.HIGH, cultura: ENERGY.HIGH, gastronomia: ENERGY.HIGH, midia: ENERGY.HIGH,
   internacional: ENERGY.MEDIUM, tecnologia: ENERGY.MEDIUM, economia: ENERGY.MEDIUM,
-  energia: ENERGY.MEDIUM, policia: ENERGY.MEDIUM, politica: ENERGY.MEDIUM,
+  energia: ENERGY.MEDIUM, cidades: ENERGY.MEDIUM, policia: ENERGY.MEDIUM, politica: ENERGY.MEDIUM,
   seguranca: ENERGY.MEDIUM, outros: ENERGY.MEDIUM, saude: ENERGY.LOW,
 };
 
@@ -182,13 +182,13 @@ const TYPE_ADJECTIVE = {
   esporte: 'esportiva', politica: 'política', economia: 'econômica', cultura: 'cultural',
   internacional: 'internacional', tecnologia: 'tecnológica', midia: 'da mídia',
   gastronomia: 'gastronômica', saude: 'sobre saúde', seguranca: 'sobre segurança',
-  policia: 'policial', energia: 'sobre energia', outros: 'musical',
+  policia: 'policial', energia: 'sobre energia', cidades: 'sobre o caos urbano', outros: 'musical',
 };
 // Sujet court par catégorie pour le sous-texte « Por que cantar? » (« Futebol, … »).
 const THEME_SUBJECT = {
   esporte: 'Futebol', politica: 'Política', economia: 'Economia', cultura: 'Cultura',
   internacional: 'Mundo', tecnologia: 'Tecnologia', midia: 'Mídia', gastronomia: 'Comida',
-  saude: 'Saúde', seguranca: 'Segurança', policia: 'Polícia', energia: 'Energia', outros: 'Humor',
+  saude: 'Saúde', seguranca: 'Segurança', policia: 'Polícia', energia: 'Energia', cidades: 'Cidade', outros: 'Humor',
 };
 
 /** Type éditorial affiché au-dessus du titre (« Paródia esportiva »). */

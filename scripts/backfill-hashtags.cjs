@@ -38,10 +38,10 @@ const CATEGORIES = [
     'patisserie', 'boulangerie', 'jacquin', 'paul cabannes', 'eric jacquin',
     'ratatouille', 'michelin', 'haute cuisine',
   ]},
-  { key: 'energia', keywords: [
+  { key: 'cidades', keywords: [
     'apagao', 'enel', 'aneel', 'energia eletrica', 'distribuidora de energia',
-    'falta de luz', 'blecaute', 'hidreletrica', 'usina',
-    'conta de luz', 'tarifa eletrica', 'renovavel', 'solar', 'eolica',
+    'falta de luz', 'blecaute', 'conta de luz',
+    'enchente', 'alagamento', 'temporal', 'cptm', 'metro parado', 'linha 12-safira',
   ]},
   { key: 'esporte', keywords: [
     'futebol', 'copa do mundo', 'olimpiadas', 'selecao brasileira',
@@ -178,7 +178,7 @@ function generateHashtags(description = '', title = '') {
 // Main
 // ---------------------------------------------------------------------------
 const CATEGORY_LABELS = {
-  gastronomia: '🍽️', energia: '⚡', esporte: '⚽', cultura: '🎭',
+  gastronomia: '🍽️', cidades: '🏙️', esporte: '⚽', cultura: '🎭',
   midia: '📺', saude: '🏥', tecnologia: '💻', seguranca: '🚔',
   policia: '👮', internacional: '🌍', economia: '💰', politica: '🏛️',
   outros: '❓',

@@ -58,7 +58,8 @@ const OG_IMAGE_H = 630;
 const CATEGORY_LABELS = {
   internacional: 'Internacional',
   midia: 'Mídia',
-  energia: 'Energia',
+  energia: 'Energia', // retirée : sa page redirige vers « cidades » dès qu'elle est vide
+  cidades: 'Cidades',
   esporte: 'Esporte',
   cultura: 'Cultura',
   outros: 'Outros',
@@ -137,7 +138,7 @@ function extractScriptsFromIndex() {
 
 (async () => {
   // La règle des titres et descriptions, partagée avec les pages React (module ESM).
-  const { songSeoTitle, songSeoDescription, categorySeoTitle, archiveSeoTitle, archiveSeoDescription, CATEGORY_DESCRIPTIONS } = await import(require('node:url').pathToFileURL(path.join(__dirname, '..', 'src', 'lib', 'seoText.js')).href);
+  const { songSeoTitle, songSeoDescription, categorySeoTitle, archiveSeoTitle, archiveSeoDescription, CATEGORY_DESCRIPTIONS, CATEGORY_REDIRECTS } = await import(require('node:url').pathToFileURL(path.join(__dirname, '..', 'src', 'lib', 'seoText.js')).href);
   await fs.ensureDir(OUT);
   
   const scripts = extractScriptsFromIndex();
@@ -384,7 +385,7 @@ ${guiaExamples.items.map((item) => `    <li style="margin-bottom: 0.5rem;"><a hr
     <a href="${siteUrl}/categoria/cultura/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Cultura</a>
     <a href="${siteUrl}/categoria/esporte/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Esporte</a>
     <a href="${siteUrl}/categoria/midia/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Mídia</a>
-    <a href="${siteUrl}/categoria/energia/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Energia</a>
+    <a href="${siteUrl}/categoria/cidades/" style="color: #2563eb; text-decoration: none; background: #f0f4ff; padding: 0.2rem 0.7rem; border-radius: 999px; font-family: sans-serif; font-size: 0.9rem; margin-right: 0.25rem;">Cidades</a>
   </p>
 
   <p><a href="${siteUrl}/musica/" style="color: #2563eb; text-decoration: underline; font-family: sans-serif; font-weight: bold;">Ver todas as paródias →</a></p>
@@ -887,8 +888,11 @@ ${catSongListHtml}
     const catDir = path.join(OUT, 'categoria', catSlug);
     await fs.ensureDir(catDir);
     const catFile = path.join(catDir, 'index.html');
-    const target = `${siteUrl}/musica/`;
-    const html = redirectStubHtml(target, 'todas as músicas');
+    // Catégorie retirée : vers celle qui a reçu ses chansons (si elle a bien une page).
+    const successor = CATEGORY_REDIRECTS[catSlug];
+    const toCategory = successor && categoriesInUse.includes(successor);
+    const target = toCategory ? `${siteUrl}/categoria/${successor}/` : `${siteUrl}/musica/`;
+    const html = redirectStubHtml(target, toCategory ? CATEGORY_LABELS[successor] : 'todas as músicas');
     await fs.writeFile(catFile, `<!-- build:${new Date().toISOString()} -->\n` + html, { encoding: 'utf8' });
   }
   console.log(`✅ Stubs /categoria/[slug] vides → redirection /musica/ (${emptyCategories.length} : ${emptyCategories.join(', ') || 'aucune'})`);

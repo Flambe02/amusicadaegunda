@@ -117,6 +117,13 @@ describe('Sitemap — adresses réelles, dates réelles', () => {
     expect(sitemap.songLastmod({}, today)).toBeNull();
   });
 
+  it('lists a category only when it has songs — a retired or empty one is a redirect, not a page', () => {
+    const locs = (songs) => sitemap.buildPageUrls(songs, today).map((url) => url.loc.replace('https://www.amusicadasegunda.com', ''));
+    expect(locs([{ datePublished: '2026-09-21', category: 'cidades' }])).toContain('/categoria/cidades/');
+    expect(locs([{ datePublished: '2026-09-21', category: 'politica' }])).not.toContain('/categoria/cidades/');
+    expect(locs([{ datePublished: '2026-09-21', category: 'energia' }]).join(' ')).not.toContain('energia');
+  });
+
   it('list pages take the newest release they show; other pages have no lastmod', () => {
     const pages = Object.fromEntries(sitemap.buildPageUrls(SONGS, today).map((url) => [url.loc.replace('https://www.amusicadasegunda.com', ''), url.lastmod]));
     expect(pages['/']).toBe('2026-08-31');

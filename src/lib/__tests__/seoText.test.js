@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  DESCRIPTION_MAX, TITLE_MAX, categorySeoTitle, songSeoDescription, songSeoTitle, splitSentences, withSiteName,
+  CATEGORY_DESCRIPTIONS, CATEGORY_REDIRECTS, DESCRIPTION_MAX, TITLE_MAX, categorySeoTitle, songSeoDescription, songSeoTitle, splitSentences, withSiteName,
 } from '../seoText';
 import { pageSeo } from '../pageSeo';
 
@@ -44,6 +44,14 @@ describe('titres des chansons — 60 caractères au plus', () => {
     for (const song of SONGS) {
       expect(songSeoTitle({ title: song.name, category: song.category }).length, song.slug).toBeLessThanOrEqual(TITLE_MAX);
     }
+  });
+
+  it('« cidades » : o caos urbano ; « energia », retirée, renvoie vers elle', () => {
+    expect(songSeoTitle({ title: 'Tá Chovendo de Novo', category: 'cidades' })).toBe('Tá Chovendo de Novo — paródia sobre o caos urbano');
+    expect(categorySeoTitle('cidades', 'Cidades')).toBe('Paródias sobre o caos urbano | A Música da Segunda');
+    expect(CATEGORY_DESCRIPTIONS.cidades).toBeTruthy();
+    expect(CATEGORY_DESCRIPTIONS.energia).toBeUndefined();
+    expect(CATEGORY_REDIRECTS).toEqual({ energia: 'cidades' });
   });
 
   it('category pages: « Paródias sobre tema »', () => {
