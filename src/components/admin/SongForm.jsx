@@ -109,9 +109,15 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
     }
   };
 
+  const [categoryMissing, setCategoryMissing] = useState(false);
+
   const handleGenerate = async () => {
     if (!form.title && !form.description) return;
-    const { category, hashtags } = generateSongData({ title: form.title, description: form.description });
+    const generated = generateSongData({ title: form.title, description: form.description });
+    const { hashtags } = generated;
+    // « outros » n'est jamais proposé d'office : sans thème reconnu, la catégorie déjà
+    // choisie reste (ou reste vide, et la personne choisit elle-même).
+    const category = generated.category && generated.category !== 'outros' ? generated.category : form.category;
     let nextSubtitle = form.subtitle;
     if (!form.subtitle?.trim()) {
       setIsGeneratingSubtitle(true);
@@ -125,13 +131,18 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
     setForm((f) => ({ ...f, category, hashtags, subtitle: nextSubtitle }));
     if (songId && onAutoSaveHashtags && hashtags.length > 0) {
       setIsAutoSaving(true);
-      await onAutoSaveHashtags({ hashtags, category, subtitle: nextSubtitle });
+      await onAutoSaveHashtags({ hashtags, ...(category ? { category } : {}), subtitle: nextSubtitle });
       setIsAutoSaving(false);
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Nouvelle chanson : la catégorie se choisit, elle n'est jamais mise par défaut.
+    if (!songId && !form.category) {
+      setCategoryMissing(true);
+      return;
+    }
     const lyrics = sanitizeInput(form.lyrics);
     onSave({
       ...form,
@@ -319,13 +330,13 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
         </div>
 
         <div>
-          <Label>Categoria</Label>
+          <Label>Categoria{!songId && <span className="text-red-400"> *</span>}</Label>
           <div className="mt-2 flex flex-wrap gap-2">
             {(categories || DEFAULT_CATEGORIES).map((o) => (
               <button
                 key={o.value}
                 type="button"
-                onClick={() => set('category', o.value)}
+                onClick={() => { set('category', o.value); setCategoryMissing(false); }}
                 className={`inline-flex items-center px-3 py-1 rounded-full text-xs border font-medium transition-all ${
                   form.category === o.value ? `${o.color} ring-2 ring-white/30 scale-105` : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
                 }`}
@@ -334,6 +345,9 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
               </button>
             ))}
           </div>
+          {categoryMissing && (
+            <p role="alert" className="mt-2 text-xs text-red-400">Escolha uma categoria antes de guardar.</p>
+          )}
         </div>
 
         <div>

@@ -792,7 +792,6 @@ export default function HomeDesktop({ currentSong, allSongs, isMobileViewport = 
               { slug: 'policia', label: 'Polícia' },
               { slug: 'seguranca', label: 'Segurança' },
               { slug: 'gastronomia', label: 'Gastronomia' },
-              { slug: 'outros', label: 'Outros' },
             ].map(cat => (
               <Link
                 key={cat.slug}

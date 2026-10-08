@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import SongForm from '../SongForm';
 
 const words = (count) => Array.from({ length: count }, (_, index) => `palavra${index}`).join(' ');
@@ -69,5 +69,34 @@ describe('SongForm — campo Contexto curto (tela grande)', () => {
       fireEvent.change(screen.getByLabelText(/Contexto curto/), { target: { value: '' } });
     });
     expect(empty.context_short).toBeNull();
+  });
+});
+
+describe('SongForm — categoria obrigatória numa música nova', () => {
+  it('a new song cannot be saved without a category; choosing one (even « Outros ») saves it', () => {
+    const onSave = vi.fn();
+    render(<SongForm initial={{ title: 'Nova', status: 'draft', release_date: '2026-10-12' }} onSave={onSave} onCancel={() => {}} isSaving={false} />);
+    fireEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Escolha uma categoria antes de guardar.');
+    fireEvent.click(screen.getByRole('button', { name: /Outros/ }));
+    expect(screen.queryByRole('alert')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    expect(onSave.mock.calls[0][0].category).toBe('outros');
+  });
+
+  it('offers « Cidades » and no longer « Energia »', () => {
+    render(<SongForm initial={{ title: 'Nova' }} onSave={() => {}} onCancel={() => {}} isSaving={false} />);
+    expect(screen.getByRole('button', { name: /Cidades/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Energia/ })).toBeNull();
+  });
+
+  it('« Gerar » never puts « Outros » by itself when no theme is recognised', async () => {
+    const onSave = vi.fn();
+    render(<SongForm initial={{ title: 'Zzz', subtitle: 'Já escrito', description: 'Qqq www.', status: 'draft', release_date: '2026-10-12' }} onSave={onSave} onCancel={() => {}} isSaving={false} />);
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Gerar' })); });
+    fireEvent.click(screen.getByRole('button', { name: /Salvar/ }));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 });
