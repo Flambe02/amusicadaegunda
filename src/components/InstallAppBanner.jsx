@@ -5,7 +5,6 @@ import usePWAInstall from '@/hooks/usePWAInstall';
 export default function InstallAppBanner() {
   const {
     canInstall,
-    isIOS,
     showIOSHint,
     updateAvailable,
     promptInstall,
@@ -110,11 +109,6 @@ export default function InstallAppBanner() {
           ) : null}
         </div>
 
-        {isIOS && showIOSHint ? (
-          <p className="mt-3 text-xs leading-5 text-white/48">
-            O Safari nao dispara `beforeinstallprompt`, entao esse fluxo e manual.
-          </p>
-        ) : null}
       </div>
     </div>
   );
