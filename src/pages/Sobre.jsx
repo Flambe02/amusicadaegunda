@@ -1,4 +1,8 @@
 import { pageSeo } from '@/lib/pageSeo';
+import { useShell } from '@/components/mobile/ShellContext';
+import { isBigScreenUiEnabled } from '@/lib/interface';
+import { bigScreenEntryUrl } from '@/lib/bigScreenEntry';
+import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 import { Heart, Music, Calendar, Users, Star, Award, Instagram, Video, Youtube, Mail, MessageCircle, HelpCircle, ChevronDown, Facebook, Bell, Smile, Headphones, ExternalLink, Search as SearchIcon, X, Play, Pause } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -389,7 +393,104 @@ function MobileAboutExperience() {
   );
 }
 
+const DESKTOP_LINKS = [
+  ['Spotify', 'https://open.spotify.com/playlist/5z7Jan9yS1KRzwWEPYs4sH?si=c32b67518b2a4817'],
+  ['Apple Music', 'https://music.apple.com/us/artist/a-m%C3%BAsica-da-segunda/1867784335'],
+  ['YouTube Music', 'https://music.youtube.com/playlist?list=PLmoOyuQg7Y2QZKbcj20s7dcadsVx7WuWH'],
+  ['Instagram', 'https://www.instagram.com/a_musica_da_segunda/'],
+  ['TikTok', 'https://www.tiktok.com/@amusicadasegunda'],
+  ['Facebook', 'https://www.facebook.com/amusicadasegundaofficial'],
+];
+
+/**
+ * Sobre sur ordinateur, sur le modèle du guide (/guia) : une colonne de lecture, même
+ * largeur, même typographie, mêmes couleurs. Le texte est celui de sobre.content.json
+ * (validé), sans changement ; seule la mise en page diffère de l'ancienne page.
+ */
+function SobreDesktop({ faqs, openFAQIndex, toggleFAQ }) {
+  const h2Class = 'mb-3 mt-8 text-xl font-bold text-[#FDE047]';
+  const pClass = 'mb-4 text-[15px] leading-7 text-white/82';
+  const linkClass = 'text-[#FDE047] underline hover:text-yellow-300';
+  return (
+    <div data-sobre-desktop className="mx-auto max-w-3xl px-4 py-8 text-white lg:py-12">
+      <header className="mb-8 border-b border-white/10 pb-6">
+        <div className="flex items-start gap-6">
+          <div className="min-w-0 flex-1">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/50">Sobre o projeto</p>
+            <h1 className="mb-3 text-3xl font-black tracking-tight text-white lg:text-4xl">Sobre A Música da Segunda</h1>
+            <p className="text-[15px] leading-7 text-white/82">{sobreContent.intro[0]}</p>
+          </div>
+          <img src={BRAND_SQUARE_MEDIUM} alt="Caipivara, a mascote de A Música da Segunda" width="112" height="112" className="h-28 w-28 flex-shrink-0 rounded-3xl object-cover" />
+        </div>
+        <ul className="mt-6 grid grid-cols-3 gap-3 text-center text-sm font-semibold text-white/85">
+          {['Toda segunda-feira', 'Desde dezembro de 2024', 'Letra, contexto e karaokê'].map((mark) => (
+            <li key={mark} className="rounded-xl border border-white/10 bg-white/5 px-3 py-3">{mark}</li>
+          ))}
+        </ul>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <a href="/" className="inline-flex min-h-[44px] items-center rounded-full bg-[#FDE047] px-6 text-sm font-bold text-black hover:bg-yellow-300">Ouvir a música da semana</a>
+          <a href={bigScreenEntryUrl('catalogo')} rel="nofollow" className="inline-flex min-h-[44px] items-center rounded-full border border-white/20 px-6 text-sm font-bold text-white hover:bg-white/10">Ver o catálogo</a>
+        </div>
+      </header>
+
+      <p className={pClass}>
+        {SONG_COUNT ? sobreContent.intro[1].replace('{count}', String(SONG_COUNT)) : sobreContent.introWithoutCount}
+      </p>
+
+      <h2 className={h2Class}>{sobreContent.howItWorksTitle}</h2>
+      <p className={pClass}>{sobreContent.howItWorks}</p>
+      <p className={pClass}>{sobreContent.production}</p>
+
+      <h2 className={h2Class}>{sobreContent.whereToListenTitle}</h2>
+      <p className={pClass}>{sobreContent.whereToListen}</p>
+      <p className={`${pClass} flex flex-wrap gap-x-4 gap-y-1`}>
+        {DESKTOP_LINKS.map(([label, href]) => (
+          <a key={label} href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>{label}</a>
+        ))}
+        {WHATSAPP_CHANNEL_URL && (
+          <a href={WHATSAPP_CHANNEL_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>{WHATSAPP_CHANNEL_LABEL}</a>
+        )}
+      </p>
+
+      <h2 className={h2Class}>Perguntas frequentes</h2>
+      <div className="mb-4 divide-y divide-white/10 border-y border-white/10">
+        {faqs.map((faq, index) => (
+          <div key={faq.question}>
+            <button
+              type="button"
+              onClick={() => toggleFAQ(index)}
+              aria-expanded={openFAQIndex === index}
+              aria-controls={`faq-desktop-${index}`}
+              className="flex w-full items-center justify-between gap-6 py-4 text-left"
+            >
+              <h3 className="text-[15px] font-semibold text-white">{faq.question}</h3>
+              <ChevronDown className={`h-5 w-5 flex-shrink-0 text-white/40 transition-transform ${openFAQIndex === index ? 'rotate-180' : ''}`} aria-hidden="true" />
+            </button>
+            <p id={`faq-desktop-${index}`} hidden={openFAQIndex !== index} className="pb-4 text-[15px] leading-7 text-white/82">{faq.answer}</p>
+          </div>
+        ))}
+      </div>
+
+      {sobreContent.aiMessage && (
+        <>
+          <h2 className={h2Class}>{sobreContent.aiMessageTitle}</h2>
+          <p className={pClass}>{sobreContent.aiMessage}</p>
+        </>
+      )}
+
+      <p className="mt-8 border-t border-white/10 pt-6 text-[15px] leading-7 text-white/82">
+        Contato: <a href="mailto:contact@amusicadasegunda.com" className={linkClass}>contact@amusicadasegunda.com</a>
+        {' · '}
+        <Link to="/guia" className={linkClass}>Guia: paródia musical no Brasil</Link>
+      </p>
+    </div>
+  );
+}
+
 export default function Sobre() {
+  const shell = useShell();
+  // Ordinateur où le grand écran est l'interface par défaut : page sur le modèle du guide.
+  const [guideLayout] = useState(() => isBigScreenUiEnabled());
   const [openFAQIndex, setOpenFAQIndex] = useState(null);
 
   // La liste validée, la même que dans le HTML statique (scripts/sobre.content.json).
@@ -431,6 +532,10 @@ export default function Sobre() {
       document.getElementById('sobre-about-schema')?.remove();
     };
   }, [faqs]);
+
+  if (shell === 'desktop' && guideLayout) {
+    return <SobreDesktop faqs={faqs} openFAQIndex={openFAQIndex} toggleFAQ={toggleFAQ} />;
+  }
 
   const blockClass = "bg-gradient-to-br from-blue-950/60 to-[#0f172a]/70 backdrop-blur-sm rounded-[28px] p-5 md:p-8 mb-6 border border-blue-400/15";
 

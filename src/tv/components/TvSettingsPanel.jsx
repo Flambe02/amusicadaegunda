@@ -40,7 +40,7 @@ function SiteLink({ focusKey, label, onPress }) {
   );
 }
 
-export default function TvSettingsPanel({ opts, setOpts, onExitApp, onOpenSitePage }) {
+export default function TvSettingsPanel({ opts, setOpts, onExitApp, onOpenSitePage, web = false }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'HOME_SETTINGS_PANEL', isFocusBoundary: true, trackChildren: true, saveLastFocusedChild: true,
   });
@@ -77,11 +77,17 @@ export default function TvSettingsPanel({ opts, setOpts, onExitApp, onOpenSitePa
             <h2 className="tv2-settings-h tv2-settings-h-app">Aplicativo</h2>
             {onOpenSitePage && (
               <div className="tv2-settings-links">
+                {/* Pages secondaires du site, dans cet ordre, Privacidade en dernier. Sur
+                    ordinateur on y va ; sur la box, un QR code à ouvrir au téléphone. */}
                 <SiteLink focusKey="HSET_SOBRE" label="Sobre o projeto" onPress={() => onOpenSitePage('Sobre o projeto', '/sobre/')} />
                 <SiteLink focusKey="HSET_BLOG" label="Blog" onPress={() => onOpenSitePage('Blog', '/blog/')} />
+                <SiteLink focusKey="HSET_GUIA" label="Guia: o que é paródia musical?" onPress={() => onOpenSitePage('Guia: o que é paródia musical?', '/guia/')} />
                 {WHATSAPP_CHANNEL_URL && (
                   <SiteLink focusKey="HSET_WHATSAPP" label="Canal no WhatsApp" onPress={() => onOpenSitePage('Canal no WhatsApp', WHATSAPP_CHANNEL_URL)} />
                 )}
+                {/* Page de téléchargement de l'app TV : utile sur ordinateur, pas sur la box. */}
+                {web && <SiteLink focusKey="HSET_TV" label="App para TV" onPress={() => onOpenSitePage('App para TV', '/tv/')} />}
+                <SiteLink focusKey="HSET_PRIVACY" label="Privacidade" onPress={() => onOpenSitePage('Política de Privacidade', '/privacy/')} />
               </div>
             )}
             <ExitLine onPress={onExitApp} />

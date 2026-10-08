@@ -204,6 +204,8 @@ export default function TvApp({ web = null }) {
 
   // Web : slug de l'ouverture directe sur /musica/<slug>/ (consommé plus bas).
   const initialSlugRef = useRef(web?.initialSlug || null);
+  // Web : écran demandé par /?abrir=… (consommé plus bas, une fois le catalogue chargé).
+  const initialEntryRef = useRef(web?.initialEntry || null);
 
   // Chargement des chansons en RÉSUMÉ (Song.listBigScreen : ≈ 14 Ko au lieu des ≈ 235 Ko
   // de `*`, et repli tout seul sur content/songs.json si Supabase échoue — cf.
@@ -503,6 +505,19 @@ export default function TvApp({ web = null }) {
   // déjà remplie serait ignorée — piège découvert en test réel) ; sinon,
   // comportement historique inchangé (mène au choix manuel de la 1ère chanson).
   const onChooseFesta = useCallback(() => openFestaInvite(), [openFestaInvite]);
+
+  // ── Web : entrée directe /?abrir=catalogo|buscar|festa|ajustes (barre du haut des
+  // pages hors grand écran). Le paramètre est retiré de l'adresse : la page reste `/`.
+  useEffect(() => {
+    if (!isWeb || loading || !initialEntryRef.current) return;
+    const entry = initialEntryRef.current;
+    initialEntryRef.current = null;
+    window.history.replaceState({ ...(window.history.state || {}), amdsTv: 1 }, '', '/');
+    if (entry === 'catalogo') openCatalog();
+    else if (entry === 'buscar') openSearch();
+    else if (entry === 'festa') onChooseFesta();
+    else if (entry === 'ajustes') openTvSettings();
+  }, [isWeb, loading, openCatalog, openSearch, onChooseFesta, openTvSettings]);
   // Dispatcher unique pour la section « Como você quer cantar? » de l'accueil v3 :
   // chaque mode mène à SON parcours (jamais la même page), cf. onChoose* ci-dessus.
   const onChooseMode = useCallback((mode) => {
@@ -912,7 +927,7 @@ export default function TvApp({ web = null }) {
           </button>
         )}
         {tvSettingsOpen && (
-          <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} onOpenSitePage={openSitePage} />
+          <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} onOpenSitePage={openSitePage} web={isWeb} />
         )}
         {sitePageQr && (
           <Suspense fallback={null}>

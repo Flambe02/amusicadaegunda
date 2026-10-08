@@ -22,6 +22,8 @@ import { useSEO } from '../hooks/useSEO';
 import { getRouteSEO, getCurrentPage } from '@/config/routes';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 import { useInterfaceKind } from '@/hooks/useInterface';
+import { isBigScreenUiEnabled } from '@/lib/interface';
+import DesktopTopBar from '@/components/desktop/DesktopTopBar';
 
 const TutorialManager = lazy(() => import('@/components/TutorialManager'));
 const StandaloneOnboarding = lazy(() => import('@/components/StandaloneOnboarding'));
@@ -106,6 +108,9 @@ export default function Layout({ children }) {
   // l'étaient, l'une masquée en CSS : chaque page vivait deux fois — état, requêtes,
   // effets.) La règle est celle d'index.html (src/lib/interfaceRule.js).
   const isMobileInterface = useInterfaceKind() === 'mobile';
+  // Ordinateur où le grand écran est l'interface par défaut : les autres pages portent
+  // sa barre du haut à la place du menu latéral. `?ui=legacy` garde l'ancien menu.
+  const [topBarShell] = useState(() => isBigScreenUiEnabled());
   const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchRequested, setSearchRequested] = useState(false);
@@ -268,8 +273,10 @@ export default function Layout({ children }) {
         <div className="hidden md:block min-h-screen text-white">
           <a href="#main-desktop" className="skip-link">Ir para o conteudo</a>
 
+          {topBarShell ? <DesktopTopBar /> : null}
+
           {/* Desktop sidebar shell */}
-          <aside className="hidden md:flex fixed inset-y-0 left-0 z-40 w-[260px] p-4">
+          <aside className={topBarShell ? 'hidden' : 'hidden md:flex fixed inset-y-0 left-0 z-40 w-[260px] p-4'}>
             <div className="glass-panel desktop-shell-gradient relative flex h-full w-full flex-col overflow-hidden rounded-[30px] px-5 py-6">
               <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,_rgba(253,224,71,0.2),_transparent_65%)]" />
 
@@ -348,7 +355,7 @@ export default function Layout({ children }) {
           </aside>
 
           {/* Desktop content area */}
-          <div className="relative min-h-screen md:ml-[260px]">
+          <div className={`relative min-h-screen ${topBarShell ? '' : 'md:ml-[260px]'}`}>
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(253,224,71,0.08),_transparent_18%),radial-gradient(circle_at_85%_10%,_rgba(255,255,255,0.06),_transparent_20%)]" />
 
             <main id="main-desktop" className="relative z-10 min-h-screen px-6 pb-32 pt-4 xl:px-8 2xl:px-10">

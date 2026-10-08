@@ -5,6 +5,7 @@ import { ROUTES } from '@/config/routes';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { useDeepLinks } from '@/utils/deepLinks';
 import { getInterface, isBigScreenUiEnabled } from '@/lib/interface';
+import { readBigScreenEntry } from '@/lib/bigScreenEntry';
 import { useInterfaceKind } from '@/hooks/useInterface';
 
 // Export PAGES pour backward compatibility avec Layout.jsx
@@ -60,6 +61,9 @@ function PagesContent() {
     // Adresse d'arrivée : /musica/<slug>/ ouvre directement la fiche.
     const [bigScreenWeb] = useState(() => ({
         initialSlug: BIG_SCREEN_SONG.exec(window.location.pathname)?.[1] || null,
+        // /?abrir=catalogo|buscar|festa|ajustes : écran à ouvrir en arrivant (barre du
+        // haut des autres pages).
+        initialEntry: window.location.pathname === '/' ? readBigScreenEntry() : null,
     }));
 
     useEffect(() => {
