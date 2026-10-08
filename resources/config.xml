@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <widget id="com.tonorg.musicadasegunda" version="2.0.0" xmlns="http://www.w3.org/ns/widgets">
     <name>Música da Segunda</name>
-    <description>Descubra uma nova música incrível toda segunda-feira</description>
+    <description>Toda segunda-feira, uma paródia musical sobre as notícias do Brasil.</description>
     <author email="dev@tonorg.com" href="https://amusicadasegunda.com">
         Música da Segunda Team
     </author>

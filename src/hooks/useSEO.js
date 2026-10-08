@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { pageSeo } from '../lib/pageSeo';
 import { buildFullTitle, getDocumentTitle, isStandalonePwa, stripAppNameFromTitle } from '../lib/documentTitle';
 
 /**
@@ -31,7 +32,7 @@ export function useSEO({
   const documentTitle = exactTitle
     ? (isStandalonePwa() ? stripAppNameFromTitle(fullTitle) : fullTitle)
     : getDocumentTitle(title, siteName);
-  const fullDescription = description || 'Descubra uma nova música incrível toda segunda-feira. Sua dose semanal de descobertas musicais.';
+  const fullDescription = description || pageSeo('/').description; // la même que l'accueil (scripts/seo.pages.json)
   const fullKeywords = keywords || 'música, segunda-feira, descobertas musicais, nova música, playlist semanal, música brasileira, indie music';
   const fullImage = image || defaultImage;
   const fullUrl = url ? `${siteUrl}${url}` : siteUrl;
