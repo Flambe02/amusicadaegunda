@@ -52,7 +52,7 @@ function PagesContent() {
     const location = useLocation();
     const gaTimer = useRef(null);
 
-    // Ordinateur (pointeur fin, ≥ 1024 px) : l'accueil et la fiche chanson passent par
+    // Ordinateur (un pointeur fin disponible, ≥ 900 px) : l'accueil et la fiche chanson passent par
     // l'interface grand écran, par défaut. `?ui=legacy` (mémorisé) garde l'ancien desktop,
     // `?ui=auto` revient au défaut. Jamais sur téléphone ; la box TV, elle, monte TvApp
     // directement (App.jsx).

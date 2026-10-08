@@ -4,7 +4,7 @@ import rootIndexHtml from '../../../index.html?raw';
 import viteConfigSource from '../../../vite.config.js?raw';
 
 // ── Fausse fenêtre ───────────────────────────────────────────────────────────────────
-function fakeWindow({ ua = '', search = '', width = 390, height = 844, touch = 5, stored = null, capacitor = undefined, fine = false, ui = null } = {}) {
+function fakeWindow({ ua = '', search = '', width = 390, height = 844, touch = 5, stored = null, capacitor = undefined, fine = false, anyFine = fine, ui = null } = {}) {
   const store = new Map();
   if (stored != null) store.set('force-tv', stored);
   if (ui != null) store.set('force-ui', ui);
@@ -18,7 +18,7 @@ function fakeWindow({ ua = '', search = '', width = 390, height = 844, touch = 5
       setItem: (key, value) => store.set(key, String(value)),
       removeItem: (key) => store.delete(key),
     },
-    matchMedia: (query) => ({ matches: query === '(max-width: 767px)' ? width <= 767 : query === '(pointer: fine)' ? fine : false }),
+    matchMedia: (query) => ({ matches: query === '(max-width: 767px)' ? width <= 767 : query === '(pointer: fine)' ? fine : query === '(any-pointer: fine)' ? anyFine : false }),
     Capacitor: capacitor,
     __store: store,
   };
@@ -188,14 +188,23 @@ describe('index.html applique LA MÊME fonction', () => {
 describe('Grand écran sur le web — le défaut sur ordinateur', () => {
   const computer = (extra = {}) => fakeWindow({ ua: UA.desktop, width: 1440, height: 900, touch: 0, fine: true, ...extra });
 
-  it('a computer (fine pointer, 1024 px or more) gets the big screen by default, without any flag', () => {
+  it('a computer (a fine pointer available, 900 px or more) gets the big screen by default, without any flag', () => {
     expect(detectInterface(computer())).toMatchObject({ kind: 'bigscreen', input: 'pointer', tv: false, desktop: true, webBigScreen: true });
-    expect(detectInterface(computer({ width: 1024 })).webBigScreen).toBe(true);
+    expect(detectInterface(computer({ width: 900 })).webBigScreen).toBe(true);
   });
 
-  it('a narrow window or a coarse pointer (tablet) is not a computer: no big screen by default', () => {
-    expect(detectInterface(computer({ width: 1023 }))).toMatchObject({ desktop: false, webBigScreen: false });
-    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1366, height: 1024, touch: 5, fine: false }))).toMatchObject({ kind: 'bigscreen', desktop: false, webBigScreen: false });
+  it('a laptop scaled by Windows (1366 px at 150 % = 911 px) with a mouse is a computer', () => {
+    expect(detectInterface(computer({ width: 911, height: 512 }))).toMatchObject({ desktop: true, webBigScreen: true });
+  });
+
+  it('a touch-screen laptop with a trackpad is a computer, even when touch is the primary pointer', () => {
+    expect(detectInterface(fakeWindow({ ua: UA.desktop, width: 1366, height: 768, touch: 10, fine: false, anyFine: true }))).toMatchObject({ desktop: true, webBigScreen: true });
+  });
+
+  it('a window under 900 px, or a tablet without mouse or trackpad, is not: the old desktop stays', () => {
+    expect(detectInterface(computer({ width: 899 }))).toMatchObject({ kind: 'bigscreen', desktop: false, webBigScreen: false });
+    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1366, height: 1024, touch: 5, fine: false, anyFine: false }))).toMatchObject({ kind: 'bigscreen', desktop: false, webBigScreen: false });
+    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 820, height: 1180, touch: 5, fine: false, anyFine: false })).webBigScreen).toBe(false);
   });
 
   it('?ui=legacy keeps the old desktop and is remembered; ?ui=auto returns to the default', () => {
@@ -209,7 +218,7 @@ describe('Grand écran sur le web — le défaut sur ordinateur', () => {
   });
 
   it('?ui=bigscreen still forces the big screen where it is not the default (tablet)', () => {
-    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1024, height: 768, fine: false, ui: 'bigscreen' })).webBigScreen).toBe(true);
+    expect(detectInterface(fakeWindow({ ua: UA.ipad, width: 1024, height: 768, fine: false, anyFine: false, ui: 'bigscreen' })).webBigScreen).toBe(true);
   });
 
   it('never on a phone, and the TV does not read the flag', () => {
@@ -219,6 +228,12 @@ describe('Grand écran sur le web — le défaut sur ordinateur', () => {
 
   it('index.html preloads the poster with the same rule (webBigScreen), not its own reading of the flag', () => {
     expect(rootIndexHtml).toContain('ui.webBigScreen');
+    // Une seule règle : index.html reçoit le texte de detectInterface au build, il ne
+    // contient ni seuil ni requête de pointeur à lui.
+    expect(rootIndexHtml).toContain('__AMDS_DETECT_INTERFACE__(window)');
+    expect(rootIndexHtml).not.toMatch(/any-pointer|pointer: fine|innerWidth >= \d/);
+    expect(detectInterface.toString()).toContain("(any-pointer: fine)");
+    expect(detectInterface.toString()).toContain('innerWidth >= 900');
     expect(rootIndexHtml).not.toContain("getItem('force-ui')");
   });
 });

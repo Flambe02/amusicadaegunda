@@ -17,8 +17,11 @@
  *   - écran de moins de 768 px        → kind mobile / input touch
  *   - le reste (ordinateur, tablette) → kind bigscreen / input pointer
  *
- * `desktop` : un ordinateur — pointeur fin (souris, pavé tactile) ET fenêtre d'au moins
- * 1024 px. Une tablette (pointeur grossier) ou une fenêtre étroite n'en est pas un.
+ * `desktop` : un ordinateur — un pointeur fin DISPONIBLE (souris, pavé tactile :
+ * `any-pointer: fine`, même si l'écran tactile est le pointeur principal) ET fenêtre
+ * d'au moins 900 px. Le seuil est à 900 et non 1024 pour les portables dont Windows
+ * agrandit l'affichage (1366 px à 150 % = 911 px). Une tablette sans souris ni pavé
+ * tactile, ou une fenêtre plus étroite, n'en est pas un.
  *
  * `webBigScreen` : sur le web, l'accueil et la fiche chanson montent-ils l'interface
  * grand écran (celle de la TV) ? Oui par défaut sur un ordinateur. Choix manuel, mémorisé
@@ -27,7 +30,7 @@
  * `?ui=auto` oublie le choix. Jamais sur un écran de moins de 768 px ; la TV, elle,
  * monte toujours le grand écran (App.jsx) et ne lit pas ce drapeau.
  *
- * Les tablettes et les fenêtres de 768 à 1023 px gardent l'ancienne coquille desktop
+ * Les tablettes et les fenêtres de 768 à 899 px gardent l'ancienne coquille desktop
  * tant que la coquille mobile dépend encore de la limite de 768 px.
  *
  * Détection TV, inchangée (voir src/tv/platform.js pour le pourquoi de chaque signal) :
@@ -93,10 +96,10 @@ export function detectInterface(win, nativeAndroid) {
     mobile = false;
   }
 
-  // Ordinateur : pointeur fin et fenêtre d'au moins 1024 px.
+  // Ordinateur : un pointeur fin disponible et fenêtre d'au moins 900 px.
   var desktop = false;
   try {
-    desktop = Boolean(win.matchMedia && win.matchMedia('(pointer: fine)').matches && win.innerWidth >= 1024);
+    desktop = Boolean(win.matchMedia && win.matchMedia('(any-pointer: fine)').matches && win.innerWidth >= 900);
   } catch (_error) {
     desktop = false;
   }
