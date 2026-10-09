@@ -58,10 +58,14 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           # Le site construit par cette CI — jamais un dossier commité.
           path: './dist'
+          # Depuis la v4, les fichiers cachés sont écartés par défaut : sans ceci,
+          # /.well-known/assetlinks.json n'est pas publié et les App Links Android
+          # échouent à la vérification du domaine.
+          include-hidden-files: true
 
       - name: Deploy to GitHub Pages
         id: deployment
