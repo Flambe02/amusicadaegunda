@@ -1,5 +1,8 @@
 const CACHE_VERSION = 'v9.3.0';
 const CACHE_NAME = `musica-da-segunda-${CACHE_VERSION}`;
+
+// cache.put rejette les 206 (requêtes Range audio/vidéo) : seules les 200 entières se mettent en cache.
+const isCacheable = (response) => Boolean(response) && response.status === 200;
 const SHELL_MANIFEST_URL = '/sw-assets.json';
 
 const CORE_URLS = [
@@ -114,8 +117,10 @@ self.addEventListener('fetch', (event) => {
           // `/karaoke` → `/karaoke/`, donc le cas est courant → on ignore le
           // preload et on refait un fetch normal qui, lui, suit la redirection.
           if (preloadResponse && preloadResponse.type !== 'opaqueredirect' && !preloadResponse.redirected) {
-            const copy = preloadResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            if (isCacheable(preloadResponse)) {
+              const copy = preloadResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
+            }
             return preloadResponse;
           }
         } catch {
@@ -126,7 +131,7 @@ self.addEventListener('fetch', (event) => {
           .then((response) => {
             // `cache.put` rejette sur une réponse redirigée → on ne met en cache
             // que les réponses directes (le /karaoke → /karaoke/ est déjà suivi).
-            if (response && response.ok && !response.redirected) {
+            if (isCacheable(response) && !response.redirected) {
               const copy = response.clone();
               caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
             }
@@ -155,9 +160,9 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached;
         try {
           const response = await fetch(request);
-          if (response && response.ok) {
+          if (isCacheable(response)) {
             const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
           }
           return response;
         } catch {
@@ -173,9 +178,9 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response && response.ok) {
+          if (isCacheable(response)) {
             const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
           }
           return response;
         })
@@ -196,9 +201,9 @@ self.addEventListener('fetch', (event) => {
         if (cached) return cached;
         try {
           const response = await fetch(request);
-          if (response && response.ok) {
+          if (isCacheable(response)) {
             const copy = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
           }
           return response;
         } catch {
@@ -215,9 +220,9 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then(async (cached) => {
         const networkFetch = fetch(request)
           .then((response) => {
-            if (response && response.ok) {
+            if (isCacheable(response)) {
               const copy = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
             }
             return response;
           })
@@ -233,9 +238,9 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response && response.ok) {
+        if (isCacheable(response)) {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => undefined);
         }
         return response;
       })
