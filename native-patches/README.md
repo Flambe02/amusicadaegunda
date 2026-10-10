@@ -4,7 +4,7 @@ Le dossier `android/` est volontairement exclu du dépôt (`.gitignore` : dépô
 
 ## `capacitor-android/MainActivity.patch`
 
-Deux réglages dans `MainActivity.onCreate`, **sur téléphone seulement** (`!isTelevision()`) — la TV n'est jamais concernée :
+Deux réglages dans `MainActivity.onCreate`, **sur téléphone seulement** (`!isTelevision()`) — la TV n'est jamais concernée. Le verrou portrait ne s'applique en plus qu'aux écrans de moins de 600 dp (`smallestScreenWidthDp < 600`) :
 
 1. **Portrait uniquement** :
 
@@ -12,7 +12,7 @@ Deux réglages dans `MainActivity.onCreate`, **sur téléphone seulement** (`!is
    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
    ```
 
-   **Pourquoi :** l'app mobile n'a pas d'affichage horizontal (décision du 2026-09-25). La TV reste en paysage. Côté web, la PWA est déjà en `"orientation": "portrait"` (`public/manifest.json`) et un navigateur de téléphone tourné en paysage affiche l'écran « Gire o celular ».
+   **Pourquoi :** l'app mobile n'a pas d'affichage horizontal (décision du 2026-09-25). La TV reste en paysage. **Tablettes et pliants (600 dp et plus) : orientation libre** (2026-10-10, avertissement Play Console : Android 16 ignore le verrou sur grand écran, et une tablette en paysage reçoit l'interface grand écran de `interfaceRule.js`). Côté web, la PWA est déjà en `"orientation": "portrait"` (`public/manifest.json`) et un navigateur de téléphone tourné en paysage affiche l'écran « Gire o celular ».
 
 2. **Son sans geste préalable** :
 
