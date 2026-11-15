@@ -435,19 +435,23 @@ export default function SongPage() {
           <div className="mt-5 rounded-[18px] border border-white/10 bg-white/[0.045] px-4 py-3">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-app-yellow">Audio da musica</p>
-                <p className="mt-0.5 text-xs font-medium text-white/48">Controles do link YouTube Music</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.22em] text-app-yellow">Ouvir a música</p>
+                <p className="mt-0.5 text-xs font-medium text-white/48">A versão completa, aqui mesmo</p>
               </div>
               {playerBarPlaying ? <span className="rounded-full bg-app-yellow/12 px-2.5 py-1 text-[10px] font-black text-app-yellow">Tocando</span> : null}
             </div>
-            <div className="grid grid-cols-[1fr_auto] items-center gap-3">
-              <button type="button" onClick={handlePlayerPlay} disabled={!youtubeAudioSrc} className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-full bg-app-yellow px-5 text-sm font-black text-black shadow-[0_0_32px_rgba(253,224,71,0.28)] transition active:scale-[0.98] disabled:opacity-50" aria-label={playerBarPlaying ? 'Pausar audio' : 'Tocar audio'}>
+            {/* « Parar » n'apparaît qu'une fois la musique lancée : avant, un carré grisé
+                sans légende n'avait aucun sens. */}
+            <div className={`grid items-center gap-3 ${playerBarActive ? 'grid-cols-[1fr_auto]' : 'grid-cols-1'}`}>
+              <button type="button" onClick={handlePlayerPlay} disabled={!youtubeAudioSrc} className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-full bg-app-yellow px-5 text-sm font-black text-black shadow-[0_0_32px_rgba(253,224,71,0.28)] transition active:scale-[0.98] disabled:opacity-50" aria-label={playerBarPlaying ? 'Pausar a música' : 'Ouvir a música agora'}>
                 {playerBarPlaying ? <Pause className="h-5 w-5" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
-                {playerBarPlaying ? 'Pausar audio' : 'Tocar audio'}
+                {playerBarPlaying ? 'Pausar' : 'Ouvir agora'}
               </button>
-              <button type="button" onClick={handlePlayerStop} disabled={!playerBarActive} className="inline-flex h-[54px] w-[54px] items-center justify-center rounded-full border border-white/12 bg-white/6 text-white/72 transition active:scale-95 disabled:opacity-35" aria-label="Parar audio">
-                <Square className="h-4 w-4" />
-              </button>
+              {playerBarActive ? (
+                <button type="button" onClick={handlePlayerStop} className="inline-flex h-[54px] w-[54px] items-center justify-center rounded-full border border-white/12 bg-white/6 text-white/72 transition active:scale-95" aria-label="Parar a música">
+                  <Square className="h-4 w-4" />
+                </button>
+              ) : null}
             </div>
             {hasKaraoke ? (
               <button

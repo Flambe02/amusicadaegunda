@@ -14,6 +14,7 @@ import CaipivaraStage from '@/components/mobile/catalogo/CaipivaraStage';
 import CaipivaraLoop from '@/components/mobile/catalogo/CaipivaraLoop';
 import { useSongCostume } from '@/components/mobile/catalogo/useSongCostume';
 import { getSongAudioId } from '@/components/mobile/catalogo/stageDraw';
+import { Song } from '@/api/entities';
 
 // Sous l'en-tête transparent de l'Início (52 px + zone de sécurité).
 const HEADER_OFFSET = 'pt-[calc(max(env(safe-area-inset-top),0.35rem)+3.75rem)]';
@@ -259,6 +260,14 @@ export default function MobileFeed({
   useEffect(() => {
     if (phase === 'playing' || phase === 'none') onFirstScreenSettled?.();
   }, [phase, onFirstScreenSettled]);
+
+  // « Letra » sans attente : une fois la vidéo de la chanson affichée (premier écran
+  // en place), sa version complète est demandée en arrière-plan. Song.getFull la garde
+  // pour la session ; un échec est ignoré ici (la fenêtre Letra le dira et réessaiera).
+  useEffect(() => {
+    if (phase !== 'playing' || !current?.__summary) return;
+    Song.getFull(current).catch(() => {});
+  }, [phase, current]);
 
   // Sans Short, pas de miniature à attendre : le lecteur (audio) peut être créé.
   useEffect(() => {

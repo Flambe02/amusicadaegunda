@@ -57,9 +57,31 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
   useEffect(() => { setStoryOpen(false); }, [song?.id, song?.title]);
 
   const { share, linkSheet } = useShareSong(song);
+  // Une vidéo YouTube est (ou sera) affichée : ses calques d'interface sont à masquer.
+  const hasVideo = player.phase !== 'none' && karaokeMode === 'video';
 
   return (
     <>
+      {/* YouTube superpose parfois son interface Shorts pendant toute la lecture (avatar,
+          muet et « ⋮ » en haut, nom de la chaîne en bas, ~85 px des bords). La vidéo est
+          une iframe fermée : on ne peut pas la retirer, seulement la recouvrir. Deux
+          bandes floues et assombries, fondues dans l'image, sans zoom (décision du
+          2026-11-15). Les boutons de droite ont leur propre fond (Rail glass). */}
+      {hasVideo ? (
+        <>
+          <div
+            aria-hidden="true"
+            data-yt-mask="top"
+            className="pointer-events-none absolute inset-x-0 top-0 z-[15] h-[calc(max(env(safe-area-inset-top),0.35rem)+4.5rem)] bg-gradient-to-b from-black/55 to-transparent backdrop-blur-md [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
+          />
+          <div
+            aria-hidden="true"
+            data-yt-mask="bottom"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-24 bg-gradient-to-t from-black/60 to-transparent backdrop-blur-md [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+          />
+        </>
+      ) : null}
+
       {/* Haut : ruban éphémère de la semaine, sous l'en-tête (remplace le chip permanent). */}
       <WeekRibbon song={song} phase={player.phase} />
 
@@ -110,7 +132,7 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
 
       {/* Colonne droite, de haut en bas : Ouvir, Letra, História, Cantar, Compartilhar.
           Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
-      <Rail className="absolute bottom-6 right-1.5">
+      <Rail glass={hasVideo} className="absolute bottom-6 right-1.5">
         {/* Ouvir : la chanson complète dans le Catálogo (calque), son lancé dans ce geste.
             Seulement si la chanson a un lien youtube_url lisible (onOuvir fourni). */}
         {onOuvir ? (

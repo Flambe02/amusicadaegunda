@@ -544,8 +544,8 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
           onOpenChange={setLyricsOpen}
           song={current}
           title="Letras da Música"
-          maxHeight="h-96"
           showIcon={false}
+          asSheet
         />
       ) : null}
 

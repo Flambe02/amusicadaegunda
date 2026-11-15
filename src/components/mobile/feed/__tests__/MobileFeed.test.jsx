@@ -676,9 +676,10 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     expect(stage(container)).toHaveAttribute('data-feed-phase', 'playing');
   });
 
-  it('has no gradient over the video, on the current slide or the neighbours', async () => {
+  it('has no gradient over the video besides the YouTube-UI masks, and none on the neighbours', async () => {
     const { container } = await renderLoaded();
-    expect(stage(container).querySelector('[class*="bg-gradient"]')).toBeNull();
+    const gradients = [...stage(container).querySelectorAll('[class*="bg-gradient"]')];
+    expect(gradients.every((el) => el.hasAttribute('data-yt-mask'))).toBe(true);
   });
 
   it('opens on the song passed by « Ouvir » (/?musica=slug), muted, then clears the parameter', async () => {

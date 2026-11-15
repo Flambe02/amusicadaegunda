@@ -207,8 +207,8 @@ export default function Home() {
         onOpenChange={setShowLyricsDialog}
         song={lyricsSong}
         title="Letras da Música"
-        maxHeight="h-96"
         showIcon={false}
+        asSheet
       />
     </div>
   );

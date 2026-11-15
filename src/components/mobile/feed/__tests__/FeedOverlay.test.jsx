@@ -175,14 +175,32 @@ describe('FeedOverlay (étape 4)', () => {
     expect(screen.getByRole('heading', { level: 1 }).className).toMatch(/motion-reduce:transition-none/);
   });
 
-  it('puts no gradient or veil on the video; text and icons get a soft shadow instead', () => {
+  it('puts no veil on the video except the two YouTube-UI masks; text and icons get a soft shadow', () => {
     const { container } = renderOverlay({ player: soundPlayer });
-    expect(container.querySelector('[class*="bg-gradient"]')).toBeNull();
+    // Seules exceptions (décision du 2026-11-15) : les bandes floues haut/bas qui cachent
+    // l'interface Shorts que YouTube superpose parfois. Aucun autre dégradé.
+    const gradients = [...container.querySelectorAll('[class*="bg-gradient"]')];
+    expect(gradients.map((el) => el.getAttribute('data-yt-mask'))).toEqual(['top', 'bottom']);
+    for (const el of gradients) expect(el.className).toContain('pointer-events-none');
     const h1 = screen.getByRole('heading', { level: 1 });
     expect(h1.className).toContain('[text-shadow:0_1px_2px_rgba(0,0,0,0.85)'); // titre compact : ombre dense
     const letra = screen.getByRole('button', { name: /ver a letra/i });
     expect(letra.querySelector('svg').getAttribute('class')).toContain('drop-shadow');
     expect(letra.querySelector('span[aria-hidden]:last-child').className).toContain('[text-shadow:');
+  });
+
+  it('hides the YouTube Shorts UI without zoom: glass rail + top/bottom masks, only over a video', () => {
+    const { container, unmount } = renderOverlay();
+    expect(container.querySelector('[data-rail]')).toHaveAttribute('data-rail-glass', 'true');
+    expect(container.querySelector('[data-rail]').className).toContain('backdrop-blur');
+    expect(container.querySelector('[data-yt-mask="top"]')).not.toBeNull();
+    expect(container.querySelector('[data-yt-mask="bottom"]')).not.toBeNull();
+    unmount();
+
+    // Pas de Short (scène de la Caipivara) : rien à masquer.
+    const { container: noVideo } = renderOverlay({ player: { ...idlePlayer, phase: 'none' } });
+    expect(noVideo.querySelector('[data-rail]')).not.toHaveAttribute('data-rail-glass');
+    expect(noVideo.querySelector('[data-yt-mask]')).toBeNull();
   });
 
   it('Som is a small speaker at the top right (not in the rail), only once the sound is on', () => {

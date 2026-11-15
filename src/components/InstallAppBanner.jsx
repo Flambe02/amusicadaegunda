@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Download, RefreshCcw, Share2, X } from 'lucide-react';
 import usePWAInstall from '@/hooks/usePWAInstall';
+import { installInviteAllowed, snoozeInstallInvite } from '@/lib/installInvite';
 
 export default function InstallAppBanner() {
   const {
@@ -12,13 +13,17 @@ export default function InstallAppBanner() {
     applyUpdate,
   } = usePWAInstall();
   const [dismissed, setDismissed] = useState(false);
+  // Invitation à installer : pas à la première visite, et 30 jours de silence après
+  // « Fechar » (src/lib/installInvite.js). La mise à jour, elle, s'affiche toujours.
+  const [inviteAllowed] = useState(installInviteAllowed);
 
-  const shouldRender = canInstall || showIOSHint || updateAvailable;
+  const shouldRender = updateAvailable || (inviteAllowed && (canInstall || showIOSHint));
 
   const handleDismiss = () => {
     if (showIOSHint) {
       dismissIOSHint();
     }
+    if (!updateAvailable) snoozeInstallInvite();
     setDismissed(true);
   };
 
@@ -46,9 +51,9 @@ export default function InstallAppBanner() {
           <div className="min-w-0 flex-1">
             {updateAvailable ? (
               <>
-                <p className="text-sm font-semibold">Nova versao pronta</p>
+                <p className="text-sm font-semibold">Nova versão pronta</p>
                 <p className="mt-1 text-sm leading-6 text-white/70">
-                  Atualize a PWA para receber o shell mobile e o cache offline mais recentes.
+                  Atualize para ter as últimas novidades do site.
                 </p>
               </>
             ) : canInstall ? (

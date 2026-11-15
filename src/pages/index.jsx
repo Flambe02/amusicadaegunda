@@ -40,6 +40,9 @@ function DeepLinkHandler() {
     return null;
 }
 
+// Adresse inconnue : page « não encontrada » (avant : écran noir).
+const NotFound = lazy(() => import('./NotFound'));
+
 // Interface grand écran (TV + ordinateur) : la même app que sur la box, chargée à part.
 const BigScreenApp = lazy(() => import('@/tv/TvApp'));
 // Les routes qu'elle sert sur ordinateur. Toutes les autres (dont /apprendre) gardent
@@ -144,6 +147,9 @@ function PagesContent() {
                             element={<route.component />}
                         />
                     ))}
+
+                    {/* Toute autre adresse (doit rester la dernière) */}
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </Suspense>
         </Layout>

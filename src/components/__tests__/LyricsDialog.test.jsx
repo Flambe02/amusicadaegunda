@@ -59,3 +59,14 @@ describe('LyricsDialog — chanson sans fiche', () => {
     expect(screen.queryByRole('button', { name: 'Ficha' })).not.toBeInTheDocument();
   });
 });
+
+describe('LyricsDialog — panneau du bas (feed et Catálogo mobiles)', () => {
+  it('shows the lyrics in a bottom sheet like « História », with a close button', () => {
+    render(<LyricsDialog open onOpenChange={() => {}} song={NON_PILOT_SONG} asSheet />);
+    expect(screen.getByText(/era pra ser um conto de fadas/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument();
+    const panel = document.querySelector('[data-vaul-drawer]');
+    expect(panel).not.toBeNull();
+    expect(panel.className).toContain('bottom-0');
+  });
+});

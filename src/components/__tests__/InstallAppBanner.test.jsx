@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import indexCss from '../../index.css?raw';
 
@@ -12,6 +12,18 @@ vi.mock('@/hooks/usePWAInstall', () => ({
 import InstallAppBanner from '../InstallAppBanner';
 
 describe('InstallAppBanner — jamais par-dessus des contrôles sur mobile', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    window.localStorage.setItem('amds-visits', '1'); // ce rendu = deuxième visite
+    window.localStorage.removeItem('amds-install-dismissed-at');
+  });
+
+  it('does not invite on the very first visit', () => {
+    window.localStorage.clear();
+    const { container } = render(<InstallAppBanner />);
+    expect(container.querySelector('[data-install-banner]')).toBeNull();
+  });
+
   it('sits just above the bottom nav on mobile; tablet and desktop positions unchanged', () => {
     const { container } = render(<InstallAppBanner />);
     const banner = container.querySelector('[data-install-banner]');

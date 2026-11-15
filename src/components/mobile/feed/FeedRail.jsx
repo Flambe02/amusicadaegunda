@@ -14,10 +14,15 @@ const railClass =
 const railIconClass = `h-8 w-8 ${ICON_SHADOW}`;
 const railLabelClass = `whitespace-nowrap text-xs font-semibold leading-none ${TEXT_SHADOW}`;
 
+// Fond « verre dépoli » (feed vidéo) : YouTube superpose parfois ses propres boutons
+// Shorts (j'aime, partager) exactement sous la colonne ; flous et assombris, ils
+// disparaissent et seuls nos boutons restent lisibles. Sans zoom de la vidéo.
+const GLASS_CLASS = 'rounded-[22px] bg-black/35 px-1 py-2.5 backdrop-blur-md';
+
 /** Conteneur de la colonne ; la position est donnée par l'appelant. */
-export function Rail({ className = '', children }) {
+export function Rail({ className = '', glass = false, children }) {
   return (
-    <div data-rail className={`z-30 flex flex-col items-stretch gap-3 ${className}`}>
+    <div data-rail data-rail-glass={glass ? 'true' : undefined} className={`z-30 flex flex-col items-stretch gap-3 ${glass ? GLASS_CLASS : ''} ${className}`}>
       {children}
     </div>
   );
