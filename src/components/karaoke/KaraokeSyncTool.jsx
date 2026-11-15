@@ -50,6 +50,7 @@ import {
 import { roleLabel } from '@/lib/workshopUi';
 import QuickSyncView from '@/components/karaoke/quick/QuickSyncView';
 import TimingImportDialog from '@/components/karaoke/TimingImportDialog';
+import { buildImportPlan } from '@/lib/timingImport';
 import { useLocalTransport } from '@/hooks/useLocalTransport';
 import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
 import LocalTracksPanel from '@/components/karaoke/workshop/LocalTracksPanel';
@@ -782,21 +783,21 @@ export default function KaraokeSyncTool({
     }
   }, [preAligning, localAudio, analyzePitch, lines, commitLines, toast]);
 
-  // ── Importação manual de um JSON de timing (ferramenta avançada de recuperação) ──
+  // ── Importação manual (atalho sem pré-visualização) ──
+  // MESMO leitor que o botão « Importar » (buildImportPlan): LRC, timing_data E lista de
+  // palavras de alinhador. Antes só aceitava timing_data → um JSON de palavras que
+  // « Importar » aceitava dava aqui « JSON inválido » (2026-11-15).
   const presyncInputRef = useRef(null);
   const onImportManualTiming = useCallback((e) => {
     const f = e.target.files?.[0];
     e.target.value = '';
     if (!f) return;
     f.text().then((txt) => {
-      const model = parseTimingModel(txt);
-      if (!model) { toast({ title: 'JSON inválido', description: 'Não é um timing_data reconhecível.', variant: 'destructive' }); return; }
-      const editorLines = timingModelToEditorLines(model);
-      if (editorLines.length === 0) { toast({ title: 'Sem linhas no ficheiro', variant: 'destructive' }); return; }
-      commitLines(() => editorLines);
-      toast({ title: '✔ Sincronização importada', description: `${editorLines.length} linhas. Revê e Guarda.` });
+      const plan = buildImportPlan({ fileName: f.name, text: txt, currentLines: lines });
+      if (!plan.ok) { toast({ title: 'Ficheiro não reconhecido', description: plan.error, variant: 'destructive' }); return; }
+      handleImportApply(plan.lines, plan);
     }).catch(() => toast({ title: 'Erro ao ler o ficheiro', variant: 'destructive' }));
-  }, [commitLines, toast]);
+  }, [lines, handleImportApply, toast]);
 
   // ── Player (monté seulement une fois l'étape « Sincronizar » atteinte) ──
   useEffect(() => {
@@ -3648,7 +3649,7 @@ export default function KaraokeSyncTool({
                 {/* Ferramenta avançada de recuperação: importar um timing_data já pronto (ex.:
                     exportado doutra sessão). O caminho normal é o painel « Sincronização
                     automática » acima, que corre o alinhamento diretamente no navegador. */}
-                <input ref={presyncInputRef} type="file" accept="application/json,.json" className="hidden" onChange={onImportManualTiming} />
+                <input ref={presyncInputRef} type="file" accept="application/json,.json,.lrc" className="hidden" onChange={onImportManualTiming} />
                 <button
                   onClick={() => presyncInputRef.current?.click()}
                   title="Ferramenta avançada: importa um ficheiro timing_data já pronto. Para gerar um novo, usa « Sincronização automática » acima."

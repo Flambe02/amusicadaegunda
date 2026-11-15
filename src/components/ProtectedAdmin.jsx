@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
@@ -13,6 +13,7 @@ export default function ProtectedAdmin() {
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showUpdatePassword, setShowUpdatePassword] = useState(false);
+  const verifiedAdminIdRef = useRef(null);
 
    
   useEffect(() => {
@@ -54,13 +55,22 @@ export default function ProtectedAdmin() {
     }
     
     // Écouter les changements d'authentification (seulement pour les événements externes)
+    // ⚠️ Callback SYNCHRONE, aucun appel Supabase attendu ici (2026-11-15). supabase-js
+    // appelle ce callback EN TENANT son verrou d'auth, et ré-émet SIGNED_IN à chaque
+    // retour sur l'onglet. Un `await supabase.from(...)` ici attend ce même verrou →
+    // interblocage permanent : Guardar mouline (« Salvando… »), Sair ne fait rien, et
+    // comme le verrou (navigator.locks) est partagé entre onglets, les autres onglets
+    // du site tombent sur le catalogue statique périmé. Le travail est donc différé
+    // hors du verrou (setTimeout 0, recommandation officielle Supabase).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        // Ne pas réagir aux événements initiaux pour éviter les boucles
+      (event, session) => {
         if (event === 'SIGNED_IN' && session && isMounted) {
           setIsAuthenticated(true);
-          await checkAdminStatus(session.user.id);
+          // Même utilisateur déjà reconnu admin : rien à revérifier à chaque retour d'onglet.
+          if (verifiedAdminIdRef.current === session.user.id) return;
+          setTimeout(() => { if (isMounted) checkAdminStatus(session.user.id); }, 0);
         } else if (event === 'SIGNED_OUT' && isMounted) {
+          verifiedAdminIdRef.current = null;
           setIsAuthenticated(false);
           setIsAdmin(false);
           setIsLoading(false);
@@ -109,23 +119,7 @@ export default function ProtectedAdmin() {
     
     try {
       isDev && console.warn('🔍 Checking admin status for user:', userId);
-      
-      // Essayer d'abord une requête simple pour vérifier la connexion
-      try {
-        const { data: testData, error: testError } = await supabase
-          .from('admins')
-          .select('user_id')
-          .limit(1);
-        
-        if (testError && testError.code !== 'PGRST116') {
-          isDev && console.warn('⚠️ Test de connexion à la table admins:', testError.message);
-        } else {
-          isDev && console.warn('✅ Connexion à la table admins OK');
-        }
-      } catch (testErr) {
-        isDev && console.warn('⚠️ Erreur test connexion:', testErr.message);
-      }
-      
+
       // Utiliser .maybeSingle() qui est plus robuste et ne lance pas d'erreur si aucune ligne n'est trouvée
       // Timeout augmenté à 10 secondes pour donner plus de temps
       const queryPromise = supabase
@@ -183,6 +177,7 @@ export default function ProtectedAdmin() {
         
         // Si pas d'erreur et data existe, l'utilisateur est admin
         const isAdminUser = !!data;
+        verifiedAdminIdRef.current = isAdminUser ? userId : null;
         isDev && console.warn(isAdminUser ? '✅ User IS admin' : '⚠️ User is NOT admin');
         setIsAdmin(isAdminUser);
       } catch (raceError) {

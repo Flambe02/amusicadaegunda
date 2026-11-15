@@ -25,7 +25,20 @@ export default function AdminLayout() {
     pitchMapSong, openPitchMap, closePitchMap,
   } = useAdminData();
 
-  const handleLogout = async () => { await supabase.auth.signOut(); window.location.href = '/login'; };
+  // Sair ne doit JAMAIS rester sans effet : si signOut() ne répond pas en 4 s (réseau,
+  // verrou d'auth occupé), on efface quand même la session locale et on redirige.
+  const handleLogout = async () => {
+    try {
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('signOut timeout')), 4000)),
+      ]);
+    } catch (error) {
+      console.error('Sair: signOut sem resposta, sessão local apagada mesmo assim.', error);
+      try { window.localStorage.removeItem('supabase.auth.token'); } catch { /* ignore */ }
+    }
+    window.location.href = '/login';
+  };
   const manageLinks = (view) => navigate(`/admin/links?song=${view.id}`);
 
   // Sessão de áudio local PARTILHADA entre « Sincronizar karaokê » e « Guia de tom »
