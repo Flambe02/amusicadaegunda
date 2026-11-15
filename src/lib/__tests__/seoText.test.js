@@ -123,8 +123,18 @@ describe('pages fixes — une seule source (scripts/seo.pages.json)', () => {
   });
 
   it('pageSeo hands the exact title to useSEO', () => {
-    expect(pageSeo('/sobre')).toEqual({ ...pages['/sobre'], exactTitle: true });
+    expect(pageSeo('/sobre')).toEqual({
+      ...pages['/sobre'], exactTitle: true, url: '/sobre/', robots: 'index, follow, max-video-preview:0',
+    });
     expect(() => pageSeo('/nada')).toThrow();
+  });
+
+  // Régression 2026-11-15 : sans `url`, useSEO mettait l'accueil en canonical de /roda/,
+  // et son robots par défaut écrasait le max-video-preview:0 du HTML statique.
+  it('pageSeo gives the same canonical (trailing slash) and robots as the static page', () => {
+    expect(pageSeo('/roda')).toMatchObject({ url: '/roda/', robots: 'index, follow, max-video-preview:0' });
+    expect(pageSeo('/')).toMatchObject({ url: '/' });
+    expect(pageSeo('/blog').robots).toBe('noindex, follow');
   });
 
   it('index.html carries the home title and description in title, og: and twitter:', () => {

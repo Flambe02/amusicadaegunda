@@ -190,7 +190,6 @@ export default function Blog() {
   useSEO({
     ...pageSeo('/blog'),
     keywords: 'blog musical, histórias de músicas, música da segunda, paródias musicais, descrições de canções',
-    url: '/blog',
     type: 'website',
     // ✅ SEO: contenu dupliqué de /musica/[slug] (mêmes descriptions) → noindex pour
     // éviter la cannibalisation. La page reste navigable et les liens suivis (follow).

@@ -41,7 +41,9 @@ jobs:
         run: npm run test:coverage
       
   e2e-tests:
-    runs-on: ubuntu-latest
+    # Épinglé : depuis la bascule d'ubuntu-latest vers Ubuntu 26 (oct. 2026),
+    # `playwright install chromium --with-deps` échoue (dernier run vert : 10/10/2026).
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       CI: true

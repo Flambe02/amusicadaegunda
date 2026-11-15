@@ -503,7 +503,6 @@ export default function Sobre() {
   useSEO({
     ...pageSeo('/sobre'),
     keywords: 'música da segunda, paródias musicais, música brasileira, humor musical, atualidades do Brasil, música semanal, sátira musical',
-    url: '/sobre',
     type: 'website'
   });
 

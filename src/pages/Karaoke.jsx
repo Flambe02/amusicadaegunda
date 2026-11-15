@@ -60,7 +60,6 @@ export default function KaraokePage() {
 
   useSEO({
     ...pageSeo('/karaoke'),
-    url: '/karaoke',
   });
 
   // Astuce première visite (une seule fois, persistée).

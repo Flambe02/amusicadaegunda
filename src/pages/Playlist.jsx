@@ -188,7 +188,7 @@ export default function Playlist() {
     ...(year
       ? { title: archiveSeoTitle(year), description: archiveSeoDescription(year, yearCount), exactTitle: true }
       : pageSeo('/musica')),
-    url: year ? `/arquivo/${year}/` : '/musica',
+    ...(year ? { url: `/arquivo/${year}/`, robots: 'index, follow, max-video-preview:0' } : {}),
     type: 'website',
     enabled: !year || yearCount > 0,
   });
@@ -198,7 +198,6 @@ export default function Playlist() {
     <>
       <Helmet>
         <html lang="pt-BR" />
-        <meta name="robots" content="index, follow, max-video-preview:0" />
       </Helmet>
 
       {/* Layout Desktop - Inchangé */}
