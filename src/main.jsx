@@ -13,6 +13,22 @@ const helmetContext = {}
 
 logBuildInfo()
 
+// ── Retour d'un 404 GitHub Pages — AVANT le routeur ──────────────────────────
+// public/404.html mémorise l'URL demandée (sessionStorage.redirect) puis renvoie
+// vers « / ». Personne ne la relisait : un lien vers une chanson sans page statique
+// (publiée après le dernier build) atterrissait sur l'accueil (2026-11-15).
+try {
+  const redirect = sessionStorage.redirect
+  delete sessionStorage.redirect
+  if (redirect) {
+    const target = new URL(redirect)
+    const path = target.pathname + target.search + target.hash
+    if (target.origin === window.location.origin && path !== '/') {
+      window.history.replaceState(null, '', path)
+    }
+  }
+} catch { /* jamais bloquant pour le boot */ }
+
 // ── Viewport TV — AVANT le montage de React (jamais après) ──────────────────
 // ⚠️ NE PAS forcer `width=1920` ici (ancien réglage retiré 2026-07-14) : sur la
 // vraie WebView Android TV (Samsung), `width=1920` crée un LAYOUT viewport de

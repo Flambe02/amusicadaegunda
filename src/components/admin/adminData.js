@@ -211,6 +211,24 @@ export async function ensureWritableSession() {
   return session;
 }
 
+// Colonnes que le formulaire « Editar música » a le droit d'écrire. Tout le reste
+// (lrc_content, timing_data, timing_mode, karaoke_*, lyrics_karaoke, pitch_map, id,
+// created_at…) appartient à d'autres outils et ne doit jamais repartir avec Salvar.
+export const SONG_FORM_FIELDS = [
+  'title', 'subtitle', 'artist', 'youtube_music_url', 'youtube_url', 'spotify_url',
+  'apple_music_url', 'cover_image', 'release_date', 'status', 'description',
+  'context_short', 'mascot_costume', 'lyrics', 'category', 'difficulty',
+  'difficulty_manual', 'hashtags', 'slug', 'publish_at',
+];
+
+export function pickSongFormFields(source) {
+  const out = {};
+  for (const key of SONG_FORM_FIELDS) {
+    if (source && Object.prototype.hasOwnProperty.call(source, key)) out[key] = source[key];
+  }
+  return out;
+}
+
 export function normalizeSongPayload(formData) {
   const payload = Object.fromEntries(
     Object.entries(formData).filter(([, value]) => value !== '' && !(Array.isArray(value) && value.length === 0))

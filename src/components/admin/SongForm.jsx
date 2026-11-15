@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { DEFAULT_CATEGORIES } from './adminData';
+import { DEFAULT_CATEGORIES, pickSongFormFields } from './adminData';
 
 const EMPTY_FORM = {
   title: '',
@@ -145,7 +145,11 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
     }
     const lyrics = sanitizeInput(form.lyrics);
     onSave({
-      ...form,
+      // Seulement les champs DU formulaire : `form` contient toute la ligne `songs`
+      // (chargée en select('*')). La renvoyer réécrivait lrc_content, timing_data,
+      // pitch_map, karaoke_published… avec leur valeur à l'ouverture du formulaire,
+      // et effaçait une sincronização ou un guia de tom faits entre-temps (2026-11-15).
+      ...pickSongFormFields(form),
       title: sanitizeInput(form.title),
       subtitle: sanitizeInput(form.subtitle),
       description: sanitizeInput(form.description),

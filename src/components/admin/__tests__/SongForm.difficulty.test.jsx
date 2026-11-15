@@ -100,3 +100,18 @@ describe('SongForm — categoria obrigatória numa música nova', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 });
+
+// Régression 2026-11-15 : Salvar renvoyait toute la ligne `songs` et réécrivait la
+// sincronização karaokê / le guia de tom avec leur valeur à l'ouverture du formulaire.
+describe('SongForm — Salvar não reescreve as colunas do karaokê', () => {
+  it('only form fields are sent, never lrc_content, timing_data, pitch_map…', () => {
+    const saved = save({
+      ...base, lyrics: 'letra', lrc_content: '[00:01.00]velho', timing_data: { lines: [] }, timing_mode: 'word',
+      karaoke_published: false, karaoke_synced_at: '2026-01-01', lyrics_karaoke: 'k', pitch_map: { v: 1 }, created_at: 'x',
+    });
+    for (const col of ['id', 'lrc_content', 'timing_data', 'timing_mode', 'karaoke_published', 'karaoke_synced_at', 'lyrics_karaoke', 'pitch_map', 'created_at']) {
+      expect(saved).not.toHaveProperty(col);
+    }
+    expect(saved).toMatchObject({ title: 'Teste', lyrics: 'letra', status: 'draft' });
+  });
+});

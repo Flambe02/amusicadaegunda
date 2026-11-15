@@ -145,3 +145,25 @@ export function applyWordEditorResult(line, result) {
   }
   return next;
 }
+
+/**
+ * Décale UNE ligne en bloc : début, fin et mots du même delta (borné à 0 pour le début ;
+ * la fin et les mots suivent le delta réellement appliqué, donc restent dans les bornes).
+ * @param {{time:number|null,endTime?:number|null,words?:Array}} line
+ * @param {number} delta secondes
+ */
+export function shiftLineBy(line, delta) {
+  if (!line || line.time == null || !Number.isFinite(delta)) return line;
+  const time = Math.max(0, line.time + delta);
+  const applied = time - line.time;
+  const next = { ...line, time };
+  if (Number.isFinite(line.endTime)) next.endTime = line.endTime + applied;
+  if (Array.isArray(line.words)) {
+    next.words = line.words.map((w) => ({
+      ...w,
+      ...(Number.isFinite(w.start) ? { start: w.start + applied } : {}),
+      ...(Number.isFinite(w.end) ? { end: w.end + applied } : {}),
+    }));
+  }
+  return next;
+}

@@ -186,7 +186,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(async () => {
           const cache = await caches.open(CACHE_NAME);
-          return cache.match(request) || new Response('', { status: 503 });
+          return (await cache.match(request)) || new Response('', { status: 503 });
         })
     );
     return;
@@ -246,7 +246,7 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(async () => {
         const cache = await caches.open(CACHE_NAME);
-        return cache.match(request) || new Response('', { status: 503 });
+        return (await cache.match(request)) || new Response('', { status: 503 });
       })
   );
 });

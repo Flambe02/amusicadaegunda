@@ -26,15 +26,18 @@ export default function AdminLayout() {
   } = useAdminData();
 
   // Sair ne doit JAMAIS rester sans effet : si signOut() ne répond pas en 4 s (réseau,
-  // verrou d'auth occupé), on efface quand même la session locale et on redirige.
+  // verrou d'auth occupé) OU renvoie { error } (hors ligne : supabase-js garde alors la
+  // session), on efface quand même la session locale et on redirige. scope 'local' :
+  // ne déconnecte que CET appareil (global coupait l'éditeur ouvert sur le téléphone).
   const handleLogout = async () => {
     try {
-      await Promise.race([
-        supabase.auth.signOut(),
+      const result = await Promise.race([
+        supabase.auth.signOut({ scope: 'local' }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('signOut timeout')), 4000)),
       ]);
+      if (result?.error) throw result.error;
     } catch (error) {
-      console.error('Sair: signOut sem resposta, sessão local apagada mesmo assim.', error);
+      console.error('Sair: signOut falhou, sessão local apagada mesmo assim.', error);
       try { window.localStorage.removeItem('supabase.auth.token'); } catch { /* ignore */ }
     }
     window.location.href = '/login';

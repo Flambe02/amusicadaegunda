@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId, getYouTubeThumbnailUrl } from '@/lib/utils';
+import { resolveSyncVideo } from '@/lib/syncVideoSource';
 import { hasDuetTags } from '@/lib/lrc';
 import { resolveSongTiming } from '@/lib/timingModel';
 import { distributeWords } from '@/lib/wordDistribution';
@@ -309,8 +310,12 @@ export default function KaraokePlayer({
     if ((phase !== 'live' || scoreResult) && pitch.active) pitchDeactivate();
   }, [phase, scoreResult, pitch.active, pitchDeactivate]);
 
+  // Horloge = la chanson COMPLÈTE (même règle que l'éditeur : resolveSyncVideo écarte le
+  // Short et lit les playlists YouTube Music). Le Short ne sert qu'en tout dernier
+  // recours : sinon un `youtube_url` en playlist faisait jouer le Short avec des
+  // timings calés sur la chanson complète (2026-11-15).
   const videoId = useMemo(
-    () => extractYouTubeId(song?.youtube_url) || extractYouTubeId(song?.youtube_music_url),
+    () => resolveSyncVideo(song).videoId || extractYouTubeId(song?.youtube_music_url),
     [song?.youtube_url, song?.youtube_music_url]
   );
   // Timing : préfère timing_data structuré (ligne+mot) quand valide, sinon lrc_content

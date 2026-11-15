@@ -20,6 +20,7 @@ import { listTimingVersions, getTimingVersion, createTimingVersion } from '@/lib
 import { parseTimingModel, timingModelToEditorLines } from '@/lib/timingModel';
 import {
   isParentKeyboardActive, buildTimingPayload, buildRestoreTimingPayload, applyWordEditorResult,
+  shiftLineBy,
 } from '@/lib/karaokeSyncContract';
 import {
   initialSelectedIndex, beginCapture, completeCapture, cancelCapture,
@@ -838,6 +839,9 @@ export default function KaraokeSyncTool({
       if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
       try { player.destroy(); } catch { /* ignore */ }
       playerRef.current = null;
+      // Sans ça, le poll du temps courant (deps [playerReady]) ne repartait jamais
+      // pour le nouveau lecteur : horloge figée après « Letra completa » → « Sincronizar ».
+      setPlayerReady(false);
     };
   }, [step, apiReady, YT, videoId]);
 
@@ -1083,7 +1087,9 @@ export default function KaraokeSyncTool({
   // légèrement en avance/retard) — évite de refaire chaque ligne une par une.
   const shiftAll = useCallback((deltaMs) => {
     const delta = deltaMs / 1000;
-    commitLines((prev) => prev.map((l) => (l.time != null ? { ...l, time: Math.max(0, l.time + delta) } : l)));
+    // Décalage EN BLOC : la fin et les mots suivent le début (avant, seul `time` bougeait
+    // → endTime < time et mots hors bornes, sauvés tels quels dans timing_data).
+    commitLines((prev) => prev.map((l) => (l.time != null ? shiftLineBy(l, delta) : l)));
   }, [commitLines]);
 
   // Décale seulement la ligne SÉLECTIONNÉE (quand « Shift All » est désactivé).

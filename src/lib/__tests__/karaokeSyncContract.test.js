@@ -17,6 +17,7 @@ import {
   buildTimingPayload,
   buildRestoreTimingPayload,
   applyWordEditorResult,
+  shiftLineBy,
 } from '@/lib/karaokeSyncContract';
 import { capInferredLastEnd, wordsAreValid } from '@/lib/ballMotion';
 import { resolveSongTiming } from '@/lib/timingModel';
@@ -343,5 +344,23 @@ describe('F. aller-retour frase → mots → save → reload', () => {
     expect(p2.timing_data).toEqual(p1.timing_data);
     expect(p2.lrc_content).toBe(p1.lrc_content);
     expect(p2.timing_mode).toBe(p1.timing_mode);
+  });
+});
+
+describe('shiftLineBy — décalage en bloc (2026-11-15)', () => {
+  it('moves start, end and words by the same delta', () => {
+    const out = shiftLineBy({ text: 'a b', time: 10, endTime: 12, words: [{ text: 'a', start: 10, end: 11 }, { text: 'b', start: 11, end: 12 }] }, 3);
+    expect(out).toMatchObject({ time: 13, endTime: 15 });
+    expect(out.words.map((w) => [w.start, w.end])).toEqual([[13, 14], [14, 15]]);
+  });
+  it('clamps at 0 and keeps end/words consistent with the delta actually applied', () => {
+    const out = shiftLineBy({ text: 'x', time: 1, endTime: 2, words: [{ text: 'x', start: 1, end: 2 }] }, -5);
+    expect(out).toMatchObject({ time: 0, endTime: 1 });
+    expect(out.words[0]).toMatchObject({ start: 0, end: 1 });
+  });
+  it('leaves unmarked lines and missing end untouched', () => {
+    const unmarked = { text: 'y', time: null };
+    expect(shiftLineBy(unmarked, 2)).toBe(unmarked);
+    expect(shiftLineBy({ text: 'z', time: 4, endTime: null }, 1)).toEqual({ text: 'z', time: 5, endTime: null });
   });
 });
