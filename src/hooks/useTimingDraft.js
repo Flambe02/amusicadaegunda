@@ -68,3 +68,25 @@ export function linesSignature(lines) {
     })
     .join('\n');
 }
+
+/**
+ * Que faire d'un brouillon local à l'ouverture de l'éditeur ?
+ * - 'none'     : pas de brouillon, ou identique à la version guardada ;
+ * - 'newer'    : brouillon fait à partir de la version guardada actuelle → récupérable ;
+ * - 'conflict' : la version guardada a changé APRÈS le brouillon (autre appareil, autre
+ *                onglet) → récupérer le brouillon écraserait ce travail plus récent.
+ * @param {{lines:Array, baseSignature?:string, savedAt?:string}|null} draft
+ * @param {Array} serverLines lignes de la version guardada (buildEditorLines)
+ * @param {string|null} [serverSyncedAt] songs.karaoke_synced_at
+ */
+export function draftStatus(draft, serverLines, serverSyncedAt) {
+  if (!draft || !Array.isArray(draft.lines)) return 'none';
+  const serverSig = linesSignature(serverLines);
+  const draftSig = linesSignature(draft.lines);
+  if (!draftSig || draftSig === serverSig) return 'none';
+  const baseChanged = typeof draft.baseSignature === 'string' && draft.baseSignature !== serverSig;
+  const savedAt = Date.parse(draft.savedAt);
+  const syncedAt = Date.parse(serverSyncedAt);
+  const savedAfter = Number.isFinite(savedAt) && Number.isFinite(syncedAt) && syncedAt > savedAt;
+  return baseChanged || savedAfter ? 'conflict' : 'newer';
+}

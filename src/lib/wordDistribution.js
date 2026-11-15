@@ -16,6 +16,8 @@
  * chevauchent jamais et restent dans l'ordre du texte.
  */
 
+import { splitSingerTag } from '@/lib/lrc';
+
 const DEFAULT_MIN_WORD_DURATION = 0.12; // secondes
 const DEFAULT_LAST_WORD_BOOST = 1.15;   // le dernier mot reçoit ~15% de poids en plus
 const PAUSE_PUNCTUATION_RE = /[.,!?;:…]+$/;
@@ -29,7 +31,25 @@ const LETTERS_RE = /[\p{L}\p{N}]/gu;
  */
 export function tokenizeWords(text) {
   if (!text || typeof text !== 'string') return [];
-  return text.trim().split(/\s+/).filter(Boolean);
+  // Le tag de chanteur (`{A}`) n'est pas un mot chanté.
+  return splitSingerTag(text).text.split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Met les mots d'une ligne à jour après correction de son texte.
+ * - même nombre de mots (faute corrigée) → chaque mot garde ses temps, prend le nouveau texte ;
+ * - nombre différent → nouvelle distribution sur la même plage (début du 1er mot → fin du dernier) ;
+ * - plus aucun mot → undefined (la ligne repasse en timing de frase).
+ * @param {{ id?:string, text:string, start:number, end:number }[]} words
+ * @param {string} text
+ * @returns {Array|undefined}
+ */
+export function retextWords(words, text) {
+  if (!Array.isArray(words) || words.length === 0) return undefined;
+  const tokens = tokenizeWords(text);
+  if (tokens.length === 0) return undefined;
+  if (tokens.length === words.length) return words.map((w, i) => ({ ...w, text: tokens[i] }));
+  return distributeWords(text, words[0].start, words[words.length - 1].end);
 }
 
 function wordWeight(token, isLast, lastWordBoost) {

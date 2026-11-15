@@ -26,7 +26,7 @@
  * Contrat de timing inchangé : secondes, temps absolus (ligne ET mot), `timing_data`
  * prioritaire sur `lrc_content` quand il existe, `endTime` peut rester null.
  */
-import { buildLrc, parseLrc } from '@/lib/lrc';
+import { buildLrc, parseLrc, resolveLyricsText, splitLyricsLines, splitSingerTag, withSingerTag } from '@/lib/lrc';
 import { buildTimingModel, parseTimingModel, timingModelToEditorLines } from '@/lib/timingModel';
 import { wordsAreValid } from '@/lib/ballMotion';
 
@@ -166,4 +166,57 @@ export function shiftLineBy(line, delta) {
     }));
   }
   return next;
+}
+
+/**
+ * Lignes de travail de l'éditeur pour une chanson (ce que l'on voit à l'ouverture).
+ *
+ * Priorité : timing_data structuré > lrc_content > letra brute non synchronisée.
+ * - Le tag de chanteur (`{A}`/`{B}`/`{AB}`) est remis DANS le texte : sinon il était
+ *   perdu au premier Guardar (bug 2026-11-15).
+ * - Les lignes de la letra qui n'ont pas encore de temps sont réinsérées à leur place :
+ *   Guardar n'écrit que les lignes marquées, donc après une sauvegarde partielle la fin
+ *   des paroles disparaissait à la réouverture. On ne le fait que si TOUTES les lignes
+ *   synchronisées se retrouvent, dans l'ordre, dans la letra — sinon (letra différente)
+ *   on garde les lignes synchronisées telles quelles plutôt que de mélanger deux textes.
+ * @param {object} song
+ * @returns {Array<{text:string,time:number|null,endTime:number|null,words?:Array}>}
+ */
+export function buildEditorLines(song) {
+  const model = parseTimingModel(song?.timing_data);
+  const timed = model
+    ? timingModelToEditorLines(model)
+    : parseLrc(song?.lrc_content).map((l) => ({ text: l.text, time: l.time, endTime: l.endTime ?? null, singer: l.singer }));
+  const lyrics = splitLyricsLines(resolveLyricsText(song));
+  if (timed.length === 0) return lyrics.map((text) => ({ text, time: null, endTime: null }));
+
+  const withTags = timed.map(({ singer, ...l }) => ({ ...l, text: withSingerTag(l.text, singer) }));
+  return restoreUntimedLines(withTags, lyrics);
+}
+
+/**
+ * Réinsère, à leur place, les lignes de `lyrics` absentes de `timedLines`.
+ * Comparaison sur le texte sans tag de chanteur ni espaces superflus.
+ * Renvoie `timedLines` inchangé si une ligne synchronisée ne se retrouve pas dans la letra.
+ * @param {Array<{text:string}>} timedLines
+ * @param {string[]} lyrics
+ */
+export function restoreUntimedLines(timedLines, lyrics) {
+  if (!Array.isArray(lyrics) || lyrics.length <= timedLines.length) return timedLines;
+  const key = (t) => splitSingerTag(t).text.replace(/\s+/g, ' ').toLowerCase();
+  const out = [];
+  let j = 0;
+  for (const line of timedLines) {
+    const k = key(line.text);
+    let found = -1;
+    for (let p = j; p < lyrics.length; p += 1) {
+      if (key(lyrics[p]) === k) { found = p; break; }
+    }
+    if (found === -1) return timedLines;
+    for (; j < found; j += 1) out.push({ text: lyrics[j], time: null, endTime: null });
+    out.push(line);
+    j = found + 1;
+  }
+  for (; j < lyrics.length; j += 1) out.push({ text: lyrics[j], time: null, endTime: null });
+  return out;
 }

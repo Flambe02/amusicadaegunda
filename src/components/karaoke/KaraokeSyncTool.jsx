@@ -12,15 +12,14 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/components/ui/use-toast';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { resolveSyncVideo, syncVideoProblem } from '@/lib/syncVideoSource';
-import { splitLyricsLines, parseLrc, formatTimestamp, activeLineIndex, resolveLyricsText, isSongPublished } from '@/lib/lrc';
+import { splitLyricsLines, formatTimestamp, activeLineIndex, isSongPublished, withSingerTag } from '@/lib/lrc';
 import { validateTiming } from '@/lib/timingValidation';
 import { useUnsavedGuard } from '@/hooks/useUnsavedGuard';
-import { useTimingDraft, linesSignature } from '@/hooks/useTimingDraft';
+import { useTimingDraft, linesSignature, draftStatus } from '@/hooks/useTimingDraft';
 import { listTimingVersions, getTimingVersion, createTimingVersion } from '@/lib/timingVersions';
-import { parseTimingModel, timingModelToEditorLines } from '@/lib/timingModel';
 import {
   isParentKeyboardActive, buildTimingPayload, buildRestoreTimingPayload, applyWordEditorResult,
-  shiftLineBy,
+  shiftLineBy, buildEditorLines,
 } from '@/lib/karaokeSyncContract';
 import {
   initialSelectedIndex, beginCapture, completeCapture, cancelCapture,
@@ -55,7 +54,7 @@ import { buildImportPlan } from '@/lib/timingImport';
 import { useLocalTransport } from '@/hooks/useLocalTransport';
 import KaraokeWorkshopBar from '@/components/karaoke/workshop/KaraokeWorkshopBar';
 import LocalTracksPanel from '@/components/karaoke/workshop/LocalTracksPanel';
-import { distributeWords } from '@/lib/wordDistribution';
+import { distributeWords, retextWords } from '@/lib/wordDistribution';
 import KaraokeWipeLine from '@/components/karaoke/KaraokeWipeLine';
 import KaraokeWordLine from '@/components/karaoke/KaraokeWordLine';
 import KaraokeBallSyncStudio from '@/components/karaoke/ball-sync/KaraokeBallSyncStudio';
@@ -517,7 +516,9 @@ export default function KaraokeSyncTool({
     (async () => {
       const { data, error } = await supabase
         .from('songs')
-        .select('id, title, status, lyrics, lyrics_karaoke, lrc_content, youtube_url, youtube_music_url, karaoke_published')
+        // timing_data + karaoke_synced_at : sans eux, la version guardada d'une chanson
+        // synchronisée par mot était relue sans ses mots (faux « rascunho mais recente »).
+        .select('id, title, status, lyrics, lyrics_karaoke, lrc_content, timing_data, karaoke_synced_at, youtube_url, youtube_music_url, karaoke_published')
         .eq('id', song.id)
         .maybeSingle();
       if (cancelled) return;
@@ -574,22 +575,25 @@ export default function KaraokeSyncTool({
   const quickActive = presentation === 'quick' && step === 'sync';
   const [lyricsDraft, setLyricsDraft] = useState(() => lines.map((l) => l.text).join('\n'));
 
-  // Dès que la donnée FRAÎCHE de Supabase arrive, si l'utilisateur n'a encore rien
-  // corrigé manuellement et qu'on est toujours à l'étape « Letra », on aligne le
-  // brouillon dessus (sécurité : le prop `song` initial pourrait être obsolète).
+  // Dès que la donnée FRAÎCHE de Supabase arrive (une seule fois), si l'utilisateur n'a
+  // encore rien modifié, on aligne l'éditeur dessus : le prop `song` peut être une copie
+  // obsolète (liste admin chargée avant un Guardar fait ailleurs). Avant, ce n'était fait
+  // qu'à l'étape « Letra » : une chanson déjà synchronisée s'ouvrait sur l'ancienne
+  // version, et un Guardar écrasait alors le travail plus récent.
+  const freshAppliedRef = useRef(false);
   useEffect(() => {
-    if (!freshSong || step !== 'lyrics' || userEditedLyricsRef.current) return;
+    if (!freshSong || freshAppliedRef.current) return;
+    freshAppliedRef.current = true;
+    if (userEditedLyricsRef.current || isDirtyRef.current) return;
     const fresh = buildInitialLines(freshSong);
-    const currentTexts = lines.map((l) => l.text).join('\n');
-    const freshTexts = fresh.map((l) => l.text).join('\n');
-    if (freshTexts && freshTexts !== currentTexts) {
-      setLines(fresh);
-      setLyricsDraft(freshTexts);
-      setCursor(0);
-      savedSignatureRef.current = linesSignature(fresh); // nouvel état serveur de référence
-    }
+    if (fresh.length === 0 || linesSignature(fresh) === linesSignature(lines)) return;
+    setLines(fresh);
+    setLyricsDraft(fresh.map((l) => l.text).join('\n'));
+    setCursor(step === 'sync' ? initialSelectedIndex(fresh) : 0);
+    savedSignatureRef.current = linesSignature(fresh); // nouvel état serveur de référence
+    if (initialSyncLinesRef.current) initialSyncLinesRef.current = fresh.map((l) => ({ ...l }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [freshSong, step]);
+  }, [freshSong]);
 
   // Instantané des lignes au moment d'entrer en sync — sert de filet de sécurité
   // (« Restaurar versão inicial ») pour annuler TOUTE la session de sync en une fois.
@@ -716,8 +720,10 @@ export default function KaraokeSyncTool({
   // O plano vem já calculado e pré-visualizado por TimingImportDialog. Aqui só se
   // aplica: via commitLines() (anulável com Ctrl+Z) e SEM guardar nada no Supabase —
   // o « Guardar » habitual é que persiste, como em qualquer outra edição.
-  const handleImportApply = useCallback((importedLines, plan) => {
-    if (!Array.isArray(importedLines) || importedLines.length === 0) return;
+  const handleImportApply = useCallback((rawImportedLines, plan) => {
+    if (!Array.isArray(rawImportedLines) || rawImportedLines.length === 0) return;
+    // Tag de chanteur remis dans le texte, comme partout dans l'éditeur (cf. buildEditorLines).
+    const importedLines = rawImportedLines.map(({ singer, ...l }) => ({ ...l, text: withSingerTag(l.text, singer) }));
     commitLines(() => importedLines);
     setLyricsDraft(importedLines.map((l) => l.text).join('\n'));
     userEditedLyricsRef.current = true; // o texto importado não deve ser reescrito pelo fetch «fresh»
@@ -1013,8 +1019,22 @@ export default function KaraokeSyncTool({
     try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
   }, [cursor, lines, seekTo]);
 
+  // Corriger le texte d'une ligne synchronisée par mot met aussi ses mots à jour : le
+  // lecteur affiche les mots, pas le texte de la ligne (sinon la faute restait visible).
+  // Les mots de départ sont mémorisés pendant la frappe : un nombre de mots qui change
+  // un instant (espace tapé puis effacé) ne fait pas perdre les temps réglés à la main.
+  const wordsBeforeEditRef = useRef(new Map());
+  useEffect(() => { wordsBeforeEditRef.current.clear(); }, [cursor, lines.length]);
   const setLineText = useCallback((index, text) => {
-    setLines((prev) => prev.map((l, i) => (i === index ? { ...l, text } : l)));
+    setLines((prev) => prev.map((l, i) => {
+      if (i !== index) return l;
+      const base = wordsBeforeEditRef.current.get(index) ?? l.words;
+      if (!(Array.isArray(base) && base.length > 0)) return { ...l, text };
+      wordsBeforeEditRef.current.set(index, base);
+      const { words: _old, ...rest } = l;
+      const words = retextWords(base, text);
+      return words ? { ...rest, text, words } : { ...rest, text };
+    }));
   }, []);
 
   const addLineAfter = useCallback((index) => {
@@ -1413,12 +1433,16 @@ export default function KaraokeSyncTool({
 
   // ── Récupération de brouillon : propose UNE fois si un brouillon local plus récent
   // que la version serveur existe pour cette chanson (refresh/fermeture accidentelle).
+  // 'conflict' = la version guardada a changé après le brouillon (autre appareil) : le
+  // bandeau le dit et met « Usar versão salva » en avant, au lieu de « mais recente ».
+  const [draftConflict, setDraftConflict] = useState(false);
   useEffect(() => {
     if (draftDecidedRef.current || !initialDraft) return;
-    const serverSig = linesSignature(buildInitialLines(freshSong || song));
-    const draftSig = linesSignature(initialDraft.lines);
-    if (draftSig && draftSig !== serverSig) setDraftPrompt(true);
-    else draftDecidedRef.current = true; // brouillon identique au serveur → rien à proposer
+    const server = freshSong || song;
+    const status = draftStatus(initialDraft, buildInitialLines(server), server?.karaoke_synced_at);
+    setDraftConflict(status === 'conflict');
+    setDraftPrompt(status !== 'none');
+    if (status === 'none') draftDecidedRef.current = true; // brouillon identique au serveur → rien à proposer
   }, [initialDraft, freshSong, song]);
 
   const recoverDraft = useCallback(() => {
@@ -2825,14 +2849,26 @@ export default function KaraokeSyncTool({
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm">
           <span className="flex items-center gap-2 text-amber-200">
             <RotateCcw size={15} />
-            Há um rascunho local mais recente desta música
+            {draftConflict
+              ? 'Há um rascunho local, mas a versão guardada foi alterada depois dele (noutro aparelho ou separador). Recuperar o rascunho apaga essas alterações.'
+              : 'Há um rascunho local mais recente desta música'}
             {initialDraft?.savedAt && <span className="text-amber-200/60">({formatClock(new Date(initialDraft.savedAt))})</span>}
           </span>
           <span className="flex items-center gap-2">
-            <button onClick={recoverDraft} className="karaoke-focusable rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400">
+            <button
+              onClick={recoverDraft}
+              className={draftConflict
+                ? 'karaoke-focusable rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-gray-200 hover:bg-white/10'
+                : 'karaoke-focusable rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400'}
+            >
               Recuperar rascunho
             </button>
-            <button onClick={discardDraft} className="karaoke-focusable rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-gray-200 hover:bg-white/10">
+            <button
+              onClick={discardDraft}
+              className={draftConflict
+                ? 'karaoke-focusable rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-400'
+                : 'karaoke-focusable rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-gray-200 hover:bg-white/10'}
+            >
               Usar versão salva
             </button>
           </span>
@@ -4432,16 +4468,10 @@ function describeSaveError(error) {
   return msg || 'Erro ao guardar.';
 }
 
-// Construit les lignes initiales : privilégie le LRC existant, sinon les paroles brutes.
+// Construit les lignes initiales (timing_data > LRC > letra brute) — voir buildEditorLines
+// dans @/lib/karaokeSyncContract (tags de duo et lignes non synchronisées conservés).
 function buildInitialLines(song) {
-  // Priorité au timing structuré (Stage 2 — ligne+mot) quand présent et valide,
-  // pour charger les blocs de mots existants dans l'éditeur. Sinon comportement
-  // historique : LRC, puis paroles brutes non synchronisées.
-  const model = parseTimingModel(song?.timing_data);
-  if (model) return timingModelToEditorLines(model);
-  const parsed = parseLrc(song?.lrc_content);
-  if (parsed.length > 0) return parsed.map((l) => ({ text: l.text, time: l.time, endTime: l.endTime ?? null }));
-  return splitLyricsLines(resolveLyricsText(song)).map((text) => ({ text, time: null, endTime: null }));
+  return buildEditorLines(song);
 }
 
 // Fusionne un nouveau texte (liste de lignes) avec les lignes déjà synchronisées en

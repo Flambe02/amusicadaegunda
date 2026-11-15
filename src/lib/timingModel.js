@@ -14,13 +14,13 @@
  *     schemaVersion: 1,
  *     timingMode: 'line' | 'word' | 'hybrid',
  *     lines: [{
- *       id, text, start, end, singer: 'A'|'B'|null,
+ *       id, text, start, end, singer: 'A'|'B'|'AB'|null,
  *       timingMode: 'line'|'word',
  *       words?: [{ id, text, start, end }]
  *     }]
  *   }
  */
-import { parseLrc } from '@/lib/lrc';
+import { normalizeSinger, parseLrc, splitSingerTag } from '@/lib/lrc';
 
 const SCHEMA_VERSION = 1;
 
@@ -47,12 +47,13 @@ export function parseTimingModel(raw) {
     const words = Array.isArray(l.words)
       ? l.words.filter((w) => w && typeof w.text === 'string' && Number.isFinite(w.start) && Number.isFinite(w.end))
       : undefined;
+    const parts = splitSingerTag(l.text);
     lines.push({
       id: l.id || null,
-      text: l.text,
+      text: parts.text,
       start: l.start,
       end,
-      singer: l.singer === 'A' || l.singer === 'B' ? l.singer : null,
+      singer: normalizeSinger(l.singer) || parts.singer,
       timingMode: words && words.length > 0 ? 'word' : 'line',
       words: words && words.length > 0 ? words : undefined,
     });
@@ -86,12 +87,14 @@ export function buildTimingModel(editorLines) {
   const lines = sorted.map((l, i) => {
     const hasWords = Array.isArray(l.words) && l.words.length > 0;
     if (hasWords) anyWord = true; else allWord = false;
+    // L'éditeur garde le tag `{A}` dans le texte : on le range dans `singer`.
+    const parts = splitSingerTag(l.text ?? '');
     return {
       id: l.id || `l${i + 1}`,
-      text: l.text ?? '',
+      text: parts.text,
       start: l.time,
       end: Number.isFinite(l.endTime) ? l.endTime : null,
-      singer: l.singer === 'A' || l.singer === 'B' ? l.singer : null,
+      singer: normalizeSinger(l.singer) || parts.singer,
       timingMode: hasWords ? 'word' : 'line',
       ...(hasWords ? { words: l.words.map((w, wi) => ({ id: w.id || `w${wi + 1}`, text: w.text, start: w.start, end: w.end })) } : {}),
     };

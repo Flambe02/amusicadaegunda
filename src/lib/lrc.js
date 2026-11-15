@@ -21,6 +21,36 @@ const LRC_SINGLE_TAG_RE = /\[(\d{1,2}):(\d{1,2})(?:[.:](\d{1,3}))?\]/;
 // `{A}`, `{B}` ou `{AB}` en tout début de texte, ex. `[00:12.50]{A}Eu sou Ronaldo`.
 // Une ligne sans ce tag garde `singer: null` (comportement historique inchangé).
 const SINGER_TAG_RE = /^\{(A|B|AB)\}\s*/i;
+const SINGERS = new Set(['A', 'B', 'AB']);
+
+/**
+ * Sépare le tag de chanteur (`{A}`, `{B}`, `{AB}`) du texte d'une ligne.
+ * @param {string} text
+ * @returns {{ singer: 'A'|'B'|'AB'|null, text: string }}
+ */
+export function splitSingerTag(text) {
+  const raw = typeof text === 'string' ? text.trim() : '';
+  const match = raw.match(SINGER_TAG_RE);
+  if (!match) return { singer: null, text: raw };
+  return { singer: match[1].toUpperCase(), text: raw.slice(match[0].length).trim() };
+}
+
+/** Chanteur valide ('A' | 'B' | 'AB') ou null. */
+export function normalizeSinger(singer) {
+  const s = typeof singer === 'string' ? singer.toUpperCase() : null;
+  return SINGERS.has(s) ? s : null;
+}
+
+/**
+ * Texte d'une ligne de l'éditeur avec son tag de chanteur en tête (`{A}Eu sou…`).
+ * L'éditeur garde le tag DANS le texte : il survit ainsi à l'édition de la letra,
+ * à la fusion des lignes et à l'import, sans champ caché à recopier partout.
+ */
+export function withSingerTag(text, singer) {
+  const parts = splitSingerTag(text);
+  const tag = normalizeSinger(singer) || parts.singer;
+  return tag ? `{${tag}}${parts.text}` : parts.text;
+}
 
 /**
  * Découpe des paroles brutes en lignes exploitables.
@@ -82,7 +112,8 @@ export function buildLrc(lines) {
     .map((l) => {
       const hasEnd = Number.isFinite(l.endTime) && l.endTime > l.time;
       const endPart = hasEnd ? `[${formatTimestamp(l.endTime)}]` : '';
-      return `[${formatTimestamp(l.time)}]${(l.text ?? '').trim()}${endPart}`;
+      // Le tag de chanteur vient du champ `singer` ou du texte lui-même, jamais en double.
+      return `[${formatTimestamp(l.time)}]${withSingerTag(l.text ?? '', l.singer)}${endPart}`;
     })
     .join('\n');
 }
@@ -104,15 +135,8 @@ export function parseLrc(lrc) {
     const match = rawLine.match(LRC_LINE_RE);
     if (!match) continue;
     const tags = match[1];
-    let text = (match[2] || '').trim();
     const endTime = match[3] ? parseTagSeconds(match[3]) : null;
-
-    let singer = null;
-    const singerMatch = text.match(SINGER_TAG_RE);
-    if (singerMatch) {
-      singer = singerMatch[1].toUpperCase();
-      text = text.slice(singerMatch[0].length).trim();
-    }
+    const { singer, text } = splitSingerTag(match[2] || '');
 
     LRC_TAG_RE.lastIndex = 0;
     let tagMatch;
