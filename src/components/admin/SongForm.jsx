@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { DEFAULT_CATEGORIES, pickSongFormFields } from './adminData';
+import ReleaseLinksFinder from './ReleaseLinksFinder';
 
 const EMPTY_FORM = {
   title: '',
@@ -200,6 +201,9 @@ export default function SongForm({ initial, onSave, onCancel, isSaving, categori
           {form.subtitle.length}/{SUBTITLE_MAX_LEN}
         </p>
       </div>
+
+      {/* Buscar links (Short, YouTube Music, Spotify, Apple Music) */}
+      <ReleaseLinksFinder title={form.title} releaseDate={form.release_date} values={form} onApply={set} />
 
       {/* YouTube URLs */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
