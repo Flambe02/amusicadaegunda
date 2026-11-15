@@ -8,6 +8,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+  # Reconstruction quotidienne (demandée par l'utilisateur le 2026-11-15) : le build lit
+  # Supabase (catalogue de secours content/songs.json, pages statiques /musica/<slug>/,
+  # sitemaps, llms.txt). Sans push de code, une chanson ajoutée dans l'admin n'y
+  # apparaissait jamais (site figé du 10/10 au 15/11/2026). 09:00 UTC = 06:00 São Paulo.
+  schedule:
+    - cron: '0 9 * * *'
 
 permissions:
   contents: read

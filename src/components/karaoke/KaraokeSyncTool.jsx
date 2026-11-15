@@ -629,12 +629,12 @@ export default function KaraokeSyncTool({
     setStep('lyrics');
   }, [lines]);
 
-  // Sauvegarde SEULE a letra — em DUAS colunas possíveis (o utilizador escolhe):
-  //   'lyrics'         → campo original, visível na leitura pública do site (DEFAULT).
-  //   'lyrics_karaoke' → cópia de trabalho, só para a sincronização karaokê (não
-  //                      altera o texto oficial do site) — ver resolveLyricsText() em @/lib/lrc.
+  // Sauvegarde SEULE a letra, na cópia de trabalho do karaokê (`lyrics_karaoke`, ver
+  // resolveLyricsText() em @/lib/lrc). A letra pública (`lyrics`) nunca é escrita aqui
+  // (decisão do utilizador 2026-11-15) : o antigo botão « Guardar letra » foi retirado.
   const [isSavingLyrics, setIsSavingLyrics] = useState(false);
-  const handleSaveLyricsOnly = useCallback(async (column = 'lyrics') => {
+  const handleSaveLyricsOnly = useCallback(async () => {
+    const column = 'lyrics_karaoke';
     const joined = splitLyricsLines(lyricsDraft).join('\n');
     if (!joined) return;
     setIsSavingLyrics(true);
@@ -643,18 +643,14 @@ export default function KaraokeSyncTool({
       const { data, error } = await supabase.from('songs').update({ [column]: joined }).eq('id', song.id).select();
       if (error) throw new Error(describeSaveError(error));
       if (!data || data.length === 0) throw new Error(await diagnoseZeroRows());
-      toast({
-        title: '✅ Letra guardada',
-        description: column === 'lyrics_karaoke'
-          ? 'Cópia de trabalho para o karaokê atualizada (não altera a letra pública do site).'
-          : 'A letra pública do site foi atualizada no Supabase.',
-      });
+      onSaved?.(data[0]); // a lista do admin vê o novo texto (senão « Editar música » reenviaria o antigo)
+      toast({ title: '✅ Letra guardada', description: 'Cópia de trabalho para o karaokê atualizada (não altera a letra pública do site).' });
     } catch (err) {
       toast({ title: 'Erro ao guardar letra', description: err.message, variant: 'destructive' });
     } finally {
       setIsSavingLyrics(false);
     }
-  }, [lyricsDraft, song.id, toast]);
+  }, [lyricsDraft, song.id, onSaved, toast]);
 
   // Colle le contenu du presse-papiers directement dans le textarea des paroles.
   const handlePasteLyrics = useCallback(async () => {
@@ -2461,7 +2457,9 @@ export default function KaraokeSyncTool({
       };
       if (syncLyricsToo) {
         const joined = lines.map((l) => l.text.trim()).filter(Boolean).join('\n');
-        if (joined) payload.lyrics = joined; // letra pública do site (opção padrão — ver « Guardar p/ karaokê » na etapa Letra completa para a cópia de trabalho)
+        // Cópia de trabalho do karaokê SÓ. A letra pública (`lyrics`) nunca é escrita
+        // pelo editor karaokê (decisão do utilizador 2026-11-15) : só « Editar música ».
+        if (joined) payload.lyrics_karaoke = joined;
       }
 
       const { data, error } = await supabase
@@ -2976,15 +2974,7 @@ export default function KaraokeSyncTool({
                 })()}
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleSaveLyricsOnly('lyrics')}
-                    disabled={isSavingLyrics || splitLyricsLines(lyricsDraft).length === 0}
-                    title="Guardar como letra pública do site (coluna lyrics) — opção padrão, sem tocar na sincronização"
-                    className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-gray-300 hover:bg-white/10 disabled:opacity-40"
-                  >
-                    {isSavingLyrics ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar letra
-                  </button>
-                  <button
-                    onClick={() => handleSaveLyricsOnly('lyrics_karaoke')}
+                    onClick={() => handleSaveLyricsOnly()}
                     disabled={isSavingLyrics || splitLyricsLines(lyricsDraft).length === 0}
                     title="Guardar só como cópia de trabalho para o karaokê (coluna lyrics_karaoke) — não altera a letra pública do site"
                     className="karaoke-focusable inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-200 hover:bg-sky-500/20 disabled:opacity-40"
@@ -3674,7 +3664,7 @@ export default function KaraokeSyncTool({
                 {karaokePublished ? <Eye size={13} /> : <EyeOff size={13} />} Publicar karaokê
               </label>
               <label className="flex cursor-pointer items-center gap-1.5">
-                <input type="checkbox" checked={syncLyricsToo} onChange={(e) => setSyncLyricsToo(e.target.checked)} className="accent-purple-600" /> Atualizar letra também
+                <input type="checkbox" checked={syncLyricsToo} onChange={(e) => setSyncLyricsToo(e.target.checked)} className="accent-purple-600" /> Atualizar letra karaokê também
               </label>
             </div>
 
