@@ -4,7 +4,8 @@
  * Guardado no aparelho (localStorage), nunca enviado. Três estados :
  *   - null                         → ainda não configurado ;
  *   - { source: 'none' }           → sem microfone (só a letra) ;
- *   - { source: 'device', deviceId, label, testedAt } → um microfone testado.
+ *   - { source: 'device', deviceId, label, testedAt } → um microfone testado ;
+ *   - { source: 'phone', code }    → um celular como microfone (K3, src/lib/phoneMic.js).
  * O `deviceId` do navegador pode mudar (outro navegador, permissões limpas) : se o
  * aparelho sumir, `audioConstraints` volta ao microfone padrão em vez de falhar.
  */
@@ -17,6 +18,7 @@ export function loadMicPrefs(storage = globalThis.localStorage) {
     if (!raw) return null;
     const value = JSON.parse(raw);
     if (value?.source === 'none') return { source: 'none' };
+    if (value?.source === 'phone' && typeof value.code === 'string' && value.code) return { source: 'phone', code: value.code };
     if (value?.source === 'device' && typeof value.deviceId === 'string') {
       return { source: 'device', deviceId: value.deviceId, label: String(value.label || ''), testedAt: value.testedAt || null };
     }
@@ -59,7 +61,13 @@ export function micDisplayName(label) {
 export function micStatus(prefs) {
   if (!prefs) return { kind: 'unset', text: 'Microfone ainda não configurado' };
   if (prefs.source === 'none') return { kind: 'none', text: 'Sem microfone · só a letra' };
+  if (prefs.source === 'phone') return { kind: 'phone', text: 'Celular como microfone' };
   return { kind: 'device', text: micDisplayName(prefs.label) };
+}
+
+/** Un micro qui donne une nota : celui de l'appareil ou un celular. */
+export function hasScoringMic(prefs) {
+  return prefs?.source === 'device' || prefs?.source === 'phone';
 }
 
 /** RMS d'un buffer d'octets (getByteTimeDomainData) → 0..1. */

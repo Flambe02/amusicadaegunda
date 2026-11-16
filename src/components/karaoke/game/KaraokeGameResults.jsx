@@ -50,12 +50,17 @@ export default function KaraokeGameResults({ mode, rows, top = [], onReplay, onC
               <span className="kg-results-name">{r.id === TEAM ? 'Equipe' : r.name}</span>
               <Stars n={r.stars} />
               <span className="kg-results-score">{r.score.toLocaleString('pt-BR')}</span>
+              {r.pitch != null && <span className="kg-results-pitch" title="Notas cantadas no tom">Afinação {r.pitch}%</span>}
               {r.rank === 1 && <span className="kg-badge is-gold">Novo recorde!</span>}
               {r.rank !== 1 && r.personalBest && <span className="kg-badge">Melhor nota de {r.name}</span>}
             </li>
           ))}
         </ol>
-        <p className="kg-results-note">A nota mede se você canta no tempo de cada palavra (não a afinação).</p>
+        <p className="kg-results-note">
+          {sorted.some((r) => r.pitch != null)
+            ? 'A nota mede se você canta no tempo de cada palavra e no tom da melodia (na sua oitava).'
+            : 'A nota mede se você canta no tempo de cada palavra (não a afinação).'}
+        </p>
 
         {top.length > 0 && (
           <div className="kg-top">

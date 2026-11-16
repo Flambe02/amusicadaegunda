@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { Check, Mic, MicOff, RotateCcw } from 'lucide-react';
+import QRCode from 'react-qr-code';
+import { Check, Mic, MicOff, RotateCcw, Smartphone } from 'lucide-react';
 import FocusableButton from './components/FocusableButton';
 import FocusRow from './components/FocusRow';
 import { audioConstraints, loadMicPrefs, micDisplayName, rmsOfBytes, saveMicPrefs } from '@/lib/micPrefs';
 import { createVoiceDetector } from '@/lib/karaokeGame';
+import { generateMicCode, listenPhoneMic, phoneMicUrl } from '@/lib/phoneMic';
 import '@/styles/bs-lobby.css';
 
 // Durée cumulée de voix pour valider le test (même détecteur que le score).
@@ -38,10 +40,18 @@ export default function TvMicSetup({ onDone, onBack, backInterceptorRef, tv = fa
   const [chosen, setChosen] = useState(null); // { deviceId, label }
   const [heard, setHeard] = useState(false);
   const barRef = useRef(null);
+  // Celular como microfone (K3) : le même code d'une fois sur l'autre (le téléphone
+  // resté ouvert sur la page se reconnecte tout seul).
+  const [phoneCode] = useState(() => {
+    const saved = loadMicPrefs();
+    return saved?.source === 'phone' ? saved.code : generateMicCode();
+  });
+  const [phoneOn, setPhoneOn] = useState(false);
 
   useEffect(() => {
     if (!backInterceptorRef) return undefined;
     backInterceptorRef.current = () => {
+      if (step === 'phone') { setStep('intro'); return true; }
       if (step === 'test' || step === 'error') { setStep(devices.length ? 'choose' : 'intro'); return true; }
       onBack?.();
       return true;
@@ -51,10 +61,13 @@ export default function TvMicSetup({ onDone, onBack, backInterceptorRef, tv = fa
 
   // Focus de départ de chaque étape.
   useEffect(() => {
-    const key = { intro: 'MIC_ALLOW', choose: 'MIC_DEVICE_0', test: heard ? 'MIC_USE' : 'MIC_OTHER', error: 'MIC_RETRY' }[step];
+    const key = {
+      intro: tv ? 'MIC_PHONE' : 'MIC_ALLOW', choose: 'MIC_DEVICE_0', test: heard ? 'MIC_USE' : 'MIC_OTHER', error: 'MIC_RETRY',
+      phone: heard ? 'MIC_PHONE_USE' : 'MIC_PHONE_BACK',
+    }[step];
     const id = setTimeout(() => { try { SpatialNavigation.setFocus(key); } catch { /* ignore */ } }, 60);
     return () => clearTimeout(id);
-  }, [step, heard]);
+  }, [step, heard, tv]);
 
   const finish = useCallback((prefs) => { saveMicPrefs(prefs); onDone?.(prefs); }, [onDone]);
 
@@ -131,7 +144,29 @@ export default function TvMicSetup({ onDone, onBack, backInterceptorRef, tv = fa
     };
   }, [step, chosen]);
 
+  // Celular : on écoute le canal `mic:CODE` ; jauge et « ouvimos você » avec le même
+  // détecteur que le score, nourri par les niveaux envoyés par le téléphone.
+  useEffect(() => {
+    if (step !== 'phone') return undefined;
+    const rmsRef = { current: 0 };
+    const stopListening = listenPhoneMic(phoneCode, rmsRef, { onConnectedChange: setPhoneOn });
+    const detector = createVoiceDetector();
+    let raf; let last = performance.now(); let voicedMs = 0;
+    setHeard(false);
+    const loop = (now) => {
+      const rms = rmsRef.current;
+      if (barRef.current) barRef.current.style.transform = `scaleX(${Math.min(1, Math.sqrt(rms) * 2.4)})`;
+      if (detector.update(rms, now - last)) voicedMs += now - last;
+      last = now;
+      if (voicedMs >= VOICE_MS_OK) setHeard(true);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => { cancelAnimationFrame(raf); stopListening(); setPhoneOn(false); };
+  }, [step, phoneCode]);
+
   const none = () => finish({ source: 'none' });
+  const phoneUrl = phoneMicUrl(phoneCode);
 
   return (
     <div className="bs-screen bs-mic">
@@ -145,11 +180,23 @@ export default function TvMicSetup({ onDone, onBack, backInterceptorRef, tv = fa
               Com um microfone, o karaokê ouve a sua voz e dá uma nota no final da música.
               O som fica neste aparelho: nada é gravado nem enviado.
             </p>
-            {tv && <p className="bs-mic-hint">A maioria das TVs não tem microfone. Se a sua tiver (ou um microfone USB), ele aparece no próximo passo.</p>}
+            {tv
+              ? <p className="bs-mic-hint">A maioria das TVs não tem microfone: use o seu celular. Se a TV tiver um (ou um microfone USB), escolha « Microfone da TV ».</p>
+              : <p className="bs-mic-hint">Sem microfone no computador? Use o seu celular: ele ouve a voz e manda só o volume, nunca o som.</p>}
             <FocusRow className="bs-mic-actions" focusKey="MIC_INTRO_ROW">
-              <FocusableButton focusKey="MIC_ALLOW" className="bs-btn bs-btn-primary bs-focus" onPress={allow}>
-                <Mic size={28} aria-hidden="true" /> Permitir o microfone
+              {tv && (
+                <FocusableButton focusKey="MIC_PHONE" className="bs-btn bs-btn-primary bs-focus" onPress={() => setStep('phone')}>
+                  <Smartphone size={28} aria-hidden="true" /> Usar o celular
+                </FocusableButton>
+              )}
+              <FocusableButton focusKey="MIC_ALLOW" className={`bs-btn bs-focus ${tv ? '' : 'bs-btn-primary'}`} onPress={allow}>
+                <Mic size={28} aria-hidden="true" /> {tv ? 'Microfone da TV' : 'Permitir o microfone'}
               </FocusableButton>
+              {!tv && (
+                <FocusableButton focusKey="MIC_PHONE" className="bs-btn bs-focus" onPress={() => setStep('phone')}>
+                  <Smartphone size={24} aria-hidden="true" /> Usar o celular
+                </FocusableButton>
+              )}
               <FocusableButton focusKey="MIC_NONE" className="bs-btn bs-focus" onPress={none}>
                 <MicOff size={24} aria-hidden="true" /> Cantar sem microfone
               </FocusableButton>
@@ -205,6 +252,42 @@ export default function TvMicSetup({ onDone, onBack, backInterceptorRef, tv = fa
               </FocusableButton>
             </FocusRow>
           </>
+        )}
+
+        {step === 'phone' && (
+          <div className="bs-mic-phone">
+            <div className="bs-mic-qr" aria-hidden="true">
+              <QRCode value={phoneUrl} size={280} bgColor="#FFF7F0" fgColor="#1A0710" />
+            </div>
+            <div className="bs-mic-phone-body">
+              <h1 className="bs-mic-title">{heard ? 'Celular OK!' : phoneOn ? 'Agora cante ou fale' : 'Aponte a câmera do celular'}</h1>
+              <p className="bs-mic-text">
+                {phoneOn
+                  ? <>Celular conectado. {heard ? 'Ouvimos você.' : 'Fale perto do celular: a barra deve subir.'}</>
+                  : <>Abra o QR code e toque em <strong>« Ligar o microfone »</strong>. Ou digite <strong>{phoneUrl.replace(/^https?:\/\//, '')}</strong></>}
+              </p>
+              <p className={`bs-mic-phone-state ${phoneOn ? 'is-on' : ''}`}>
+                <Smartphone size={22} aria-hidden="true" /> {phoneOn ? 'Conectado' : 'Aguardando o celular…'} · código <strong>{phoneCode}</strong>
+              </p>
+              <div className={`bs-mic-meter ${heard ? 'is-ok' : ''}`} aria-hidden="true">
+                <span ref={barRef} className="bs-mic-meter-bar" />
+                {heard && <Check className="bs-mic-meter-ok" size={34} />}
+              </div>
+              <p className="bs-mic-hint">O celular manda só o volume da voz, nunca o som. Segure-o perto da boca, como um microfone.</p>
+              <FocusRow className="bs-mic-actions" focusKey="MIC_PHONE_ROW">
+                <FocusableButton
+                  focusKey="MIC_PHONE_USE"
+                  className={`bs-btn bs-focus ${heard ? 'bs-btn-primary' : ''}`}
+                  onPress={() => finish({ source: 'phone', code: phoneCode })}
+                >
+                  <Check size={26} aria-hidden="true" /> {heard ? 'Usar o celular' : 'Usar mesmo assim'}
+                </FocusableButton>
+                <FocusableButton focusKey="MIC_PHONE_BACK" className="bs-btn bs-focus" onPress={() => setStep('intro')}>
+                  Voltar
+                </FocusableButton>
+              </FocusRow>
+            </div>
+          </div>
         )}
 
         {step === 'error' && (

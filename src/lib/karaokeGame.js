@@ -14,6 +14,7 @@
  */
 import { splitSingerTag } from './lrc';
 import { distributeWords } from './wordDistribution';
+import { expectedNoteAt, gameNotes, onPitch } from './karaokePitch';
 
 export const GAME_MODES = {
   solo: { label: 'Solo', min: 1, max: 1, needsMic: false, desc: 'Uma pessoa canta tudo.' },
@@ -36,9 +37,15 @@ export const PASS_EVERY = 4;
 export function createVoiceDetector({ floor = 0.003, minThreshold = 0.007, ratio = 2.2, maxNoise = 0.03 } = {}) {
   let noise = floor;
   return {
-    update(rms, dtMs = 16) {
+    /**
+     * `expectingVoice: false` (intro, pause entre deux versos) : personne n'est censé
+     * chanter, ce qu'on entend est la musique des enceintes → le plancher monte vite
+     * (~1,5 s) au lieu de ~20 s. Sinon la musique comptait comme une voix au début.
+     */
+    update(rms, dtMs = 16, { expectingVoice = true } = {}) {
       const level = Number.isFinite(rms) ? rms : 0;
-      const k = level < noise ? Math.min(1, dtMs / 250) : Math.min(1, dtMs / 20000);
+      const up = expectingVoice ? 20000 : 1500;
+      const k = level < noise ? Math.min(1, dtMs / 250) : Math.min(1, dtMs / up);
       noise = Math.min(maxNoise, Math.max(floor, noise + (level - noise) * k));
       return level > Math.max(minThreshold, noise * ratio);
     },
@@ -120,18 +127,28 @@ export function starsFor(avgRatio) {
   return Math.max(1, Math.min(5, Math.ceil(avgRatio * 5 - 0.25)));
 }
 
+// Avec une melodia : la moitié des points pour chanter au bon moment, l'autre pour la note.
+const PITCH_WEIGHT = 0.5;
+// Moins de ça de notes attendues dans une ligne : la justesse n'y compte pas.
+const MIN_PITCH_MS = 250;
+
 /**
- * Compteur de score. `update({ t, rms, dtMs })` à chaque image ; renvoie l'événement de
- * la ligne qui vient de se terminer (pour les « Perfeito! »), sinon null.
+ * Compteur de score. `update({ t, rms, midi, dtMs })` à chaque image (`midi` = hauteur
+ * de la voix, ou null) ; renvoie l'événement de la ligne qui vient de se terminer (pour
+ * les « Perfeito! »), sinon null. `pitchNotes` (carte brute en ms, optionnelle) active la
+ * justesse (K5).
  */
-export function createScorer({ lines, mode, playerCount = 1, passEvery = PASS_EVERY }) {
+export function createScorer({ lines, mode, playerCount = 1, passEvery = PASS_EVERY, pitchNotes = null }) {
   const owners = lineOwners(lines, mode, playerCount, { passEvery });
   const windows = (lines || []).map((line, i) => wordWindows(line, lines[i + 1]?.time));
+  const notes = gameNotes(pitchNotes, windows, owners);
   const ids = mode === 'coop' ? [TEAM] : Array.from({ length: playerCount }, (_, i) => i);
-  const players = Object.fromEntries(ids.map((id) => [id, { score: 0, combo: 0, bestCombo: 0, lines: 0, ratioSum: 0 }]));
-  const perLine = windows.map(() => ({ needMs: 0, voicedMs: 0, done: false }));
+  const players = Object.fromEntries(ids.map((id) => [id, { score: 0, combo: 0, bestCombo: 0, lines: 0, ratioSum: 0, pitchNeedMs: 0, pitchOkMs: 0 }]));
+  const perLine = windows.map(() => ({ needMs: 0, voicedMs: 0, pitchNeedMs: 0, pitchOkMs: 0, done: false }));
   // Segments chantés (pour colorer la piste) : [{ line, start, end }]
   const hits = [];
+  // Segments chantés JUSTES (piste des notes) : [{ line, start, end }]
+  const pitchHits = [];
   const detector = createVoiceDetector();
   let current = -1;
 
@@ -153,30 +170,37 @@ export function createScorer({ lines, mode, playerCount = 1, passEvery = PASS_EV
     if (!rec || rec.done || owners[idx] == null) return null;
     rec.done = true;
     if (rec.needMs <= 0) return null;
-    const ratio = Math.min(1, rec.voicedMs / rec.needMs);
+    const timing = Math.min(1, rec.voicedMs / rec.needMs);
+    const tuned = notes.length && rec.pitchNeedMs >= MIN_PITCH_MS ? Math.min(1, rec.pitchOkMs / rec.pitchNeedMs) : null;
+    const ratio = tuned == null ? timing : timing * (1 - PITCH_WEIGHT + PITCH_WEIGHT * tuned);
     let gained = 0;
     credit(owners[idx], (p) => {
       p.lines += 1; p.ratioSum += ratio;
+      if (tuned != null) { p.pitchNeedMs += rec.pitchNeedMs; p.pitchOkMs += rec.pitchOkMs; }
       p.combo = ratio >= 0.6 ? p.combo + 1 : 0;
       p.bestCombo = Math.max(p.bestCombo, p.combo);
       const mult = 1 + Math.min(4, Math.max(0, p.combo - 1)) * 0.1;
       gained = Math.round(ratio * LINE_POINTS * mult);
       p.score += gained;
     });
-    return { line: idx, owner: owners[idx], ratio, points: gained, label: lineLabel(ratio) };
+    return { line: idx, owner: owners[idx], ratio, tuned, points: gained, label: lineLabel(ratio) };
   };
 
   return {
     owners,
     windows,
     hits,
+    pitchHits,
+    notes,
     players,
     ownerAt: (t) => { const i = lineAt(t); return i >= 0 ? owners[i] : null; },
     lineAt,
-    update({ t, rms, dtMs }) {
-      // Le détecteur écoute à chaque image (silences compris) pour suivre le bruit.
-      const voiced = detector.update(rms, dtMs);
+    update({ t, rms, midi = null, dtMs }) {
+      // Le détecteur écoute à chaque image (silences compris) pour suivre le bruit ;
+      // hors des mots, il apprend vite la musique qui revient dans le micro.
       const idx = lineAt(t);
+      const expecting = idx >= 0 && owners[idx] != null && windows[idx].some((w) => t >= w.start - 0.3 && t <= w.end + 0.3);
+      const voiced = detector.update(rms, dtMs, { expectingVoice: expecting });
       let event = null;
       if (idx !== current) {
         if (current >= 0) event = close(current);
@@ -195,6 +219,18 @@ export function createScorer({ lines, mode, playerCount = 1, passEvery = PASS_EV
         if (last && last.line === idx && from - last.end < 0.12) last.end = t;
         else hits.push({ line: idx, start: from, end: t });
       }
+      // Justesse : seulement quand une note est attendue (et à l'octave près).
+      const note = notes.length ? expectedNoteAt(notes, t) : null;
+      if (note && note.line === idx) {
+        rec.pitchNeedMs += dt;
+        if (voiced && onPitch(midi, note.midi)) {
+          rec.pitchOkMs += dt;
+          const lastP = pitchHits[pitchHits.length - 1];
+          const from = t - dt / 1000;
+          if (lastP && lastP.line === idx && from - lastP.end < 0.12) lastP.end = t;
+          else pitchHits.push({ line: idx, start: from, end: t });
+        }
+      }
       return event;
     },
     /** Termine la chanson : clôt la ligne en cours, renvoie le classement. */
@@ -203,7 +239,8 @@ export function createScorer({ lines, mode, playerCount = 1, passEvery = PASS_EV
       return ids.map((id) => {
         const p = players[id];
         const avg = p.lines ? p.ratioSum / p.lines : 0;
-        return { id, score: p.score, stars: starsFor(avg), bestCombo: p.bestCombo, lines: p.lines, avg };
+        const pitch = p.pitchNeedMs >= MIN_PITCH_MS ? Math.round((p.pitchOkMs / p.pitchNeedMs) * 100) : null;
+        return { id, score: p.score, stars: starsFor(avg), bestCombo: p.bestCombo, lines: p.lines, avg, pitch };
       });
     },
   };

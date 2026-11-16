@@ -58,7 +58,7 @@
 }
 
 .bs-lobby-mic-status { display: inline-flex; align-items: center; gap: 12px; font-size: 23px; font-weight: 600; }
-.bs-lobby-mic-status.is-device svg { color: #4ADE80; }
+.bs-lobby-mic-status.is-device svg, .bs-lobby-mic-status.is-phone svg { color: #4ADE80; }
 .bs-lobby-mic-status.is-unset, .bs-lobby-mic-status.is-none { color: var(--bs-text-2); }
 .bs-lobby-mic-note { color: var(--bs-gold); font-size: 19px; }
 
@@ -95,6 +95,17 @@
 .bs-mic-meter.is-ok { border-color: #4ADE80; }
 .bs-mic-meter-ok { position: absolute; right: 12px; top: -1px; color: #fff; }
 .bs-mic-device:hover, .bs-lobby-mode:hover, .bs-lobby-player:hover { border-color: #fff; }
+/* Celular como microfone (K3) : QR à gauche, état + jauge à droite. */
+.bs-mic-phone { display: flex; align-items: flex-start; gap: 48px; }
+.bs-mic-qr { flex: 0 0 auto; padding: 18px; border-radius: 24px; background: #FFF7F0; line-height: 0; }
+.bs-mic-phone-body { flex: 1 1 auto; min-width: 0; }
+.bs-mic-phone .bs-mic-title { font-size: 52px; }
+.bs-mic-phone-state {
+  display: inline-flex; align-items: center; gap: 10px; margin: 0 0 6px; padding: 8px 18px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06); color: var(--bs-text-2); font-size: 20px; font-weight: 600;
+}
+.bs-mic-phone-state strong { color: #fff; letter-spacing: 0.12em; }
+.bs-mic-phone-state.is-on { color: #4ADE80; background: rgba(74, 222, 128, 0.12); }
 
 /* ── Recordes (toutes músicas, cet appareil) ─────────────────────────────── */
 .bs-records-body { flex: 1 1 auto; min-height: 0; padding: 8px var(--bs-pad-x) 40px; display: flex; flex-direction: column; }

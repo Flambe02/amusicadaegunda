@@ -7,8 +7,8 @@ import { DEFAULT_RECOMMENDED_TITLE, DEFAULT_RECOMMENDED_MESSAGE, STORE_OPEN_ERRO
 import '@/styles/tv-update.css';
 
 /**
- * Overlay compact au-dessus de TvApp (même pattern que TvModeSelectionOverlay :
- * FocusContext dédié + SpatialNavigation.setFocus au montage). Le Retour
+ * Overlay compact au-dessus de TvApp (FocusContext dédié + SpatialNavigation.setFocus
+ * au montage). Le Retour
  * matériel est géré par TvApp lui-même (priorité la plus haute dans son
  * onBackPress, cf. TvApp.jsx) — jamais de second abonnement ici pour éviter un
  * double déclenchement (backButton peut avoir plusieurs listeners actifs).

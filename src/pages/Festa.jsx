@@ -11,6 +11,8 @@ import FestaJoinForm from '@/components/festa/FestaJoinForm';
 import FestaLivePanel from '@/components/festa/FestaLivePanel';
 import FestaCatalogTab from '@/components/festa/FestaCatalogTab';
 import FestaQueueTab from '@/components/festa/FestaQueueTab';
+import PhoneMic from '@/components/festa/PhoneMic';
+import { normalizeMicCode } from '@/lib/phoneMic';
 import '@/styles/festa.css';
 
 const GUEST_NAME_KEY = 'festa_guest_name';
@@ -42,8 +44,17 @@ function rememberMyEntry(sessionId, entryId) {
 /**
  * /festa — télécommande téléphone du Modo Festa. Publique, sans compte,
  * accessible seulement via un code/QR partagé en direct par la TV (noindex).
+ * `?mic=CODE` : le celular comme microfone du karaokê grand écran (K3) — pas de
+ * nouvelle route (ni stub, ni sitemap) : la même page, un autre écran.
  */
 export default function Festa() {
+  const [searchParams] = useSearchParams();
+  const micCode = normalizeMicCode(searchParams.get('mic'));
+  if (micCode) return <PhoneMic code={micCode} />;
+  return <FestaRoom />;
+}
+
+function FestaRoom() {
   useSEO({
     title: 'Festa — A Música da Segunda',
     description: 'Entre na festa, escolha músicas para a fila do karaokê e aplauda ao vivo.',

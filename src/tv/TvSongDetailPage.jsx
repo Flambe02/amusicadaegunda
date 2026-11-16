@@ -6,7 +6,6 @@ import { extractYouTubeId } from '@/lib/utils';
 import { resolveLyricsText } from '@/lib/lrc';
 import { toTvSong } from './lib/tvSongRepository';
 import { trackTv } from './lib/tvAnalytics';
-import { queueToastMessage } from './lib/tvQueue';
 import { fitTitle, formatLongDate, formatShortDate, getBackdropUrl, getRefrain, getShortContext } from './lib/bsSong';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import TvSongVisualPanel from './components/TvSongVisualPanel';
@@ -15,7 +14,6 @@ import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
 import { Song } from '@/api/entities';
 import { useFullSong } from '@/hooks/useFullSong';
-import TvModeSelectionOverlay from './components/TvModeSelectionOverlay';
 import TvFullLyricsOverlay from './components/TvFullLyricsOverlay';
 import TvContextOverlay from './components/TvContextOverlay';
 import TvToast from './components/TvToast';
@@ -97,8 +95,7 @@ function RelatedSong({ song, index, web, onOpen, upFocusKey }) {
 export default function TvSongDetailPage({
   song: listedSong, source = 'catalog', getThumb,
   songs = [], web = false, onOpenRelated, playClip = false,
-  festaPeople = null,
-  onStartKaraoke, onOpenLobby, onAddToQueue,
+  onStartKaraoke, onOpenLobby,
   onGoHome, onOpenCatalog, onOpenFesta, onOpenSettings,
   backInterceptorRef,
 }) {
@@ -118,7 +115,6 @@ export default function TvSongDetailPage({
     [songs, song, onOpenRelated]
   );
   const categoryLabel = song?.category ? SONG_CATEGORY_LABELS[song.category] || null : null;
-  const festaActive = typeof festaPeople === 'number';
 
   // Ouverture de la fiche = moment où la chanson complète (LRC, timing par mot) devient
   // utile : demandée d'avance pour que « Cantar agora » démarre sans attente. En cas
@@ -139,46 +135,17 @@ export default function TvSongDetailPage({
   const durationLabel = formatDuration(vm.videoTeaserDuration);
 
   // ── Overlays + toast + lecture teaser ──────────────────────────────────────
-  const [overlay, setOverlay] = useState(null); // 'mode' | 'lyrics' | 'context' | 'queue'
+  const [overlay, setOverlay] = useState(null); // 'lyrics' | 'context' | 'qr'
   const [playing, setPlaying] = useState(false);
   const [toast, setToast] = useState({ message: '', nonce: 0 });
   const restoreFocusRef = useRef('DETAIL_CANTAR');
 
-  // Modes pertinents : Solo toujours ; Dueto si compatible ; Festa si session active.
-  const relevantModes = useMemo(() => {
-    const m = ['solo'];
-    if (vm.recommendedModes.includes('duet')) m.push('duet');
-    if (festaActive) m.push('festa');
-    return m;
-  }, [vm.recommendedModes, festaActive]);
-
-  const addToQueue = useCallback(() => {
-    // En Festa, TvApp écrit dans la fila Festa (Supabase), celle que la Festa joue —
-    // avant, la música partait dans une fila locale jamais jouée (audit B4).
-    const res = onAddToQueue?.(vm) || { added: false, position: 0 };
-    trackTv(res.added ? 'tv_song_added_to_queue' : 'tv_song_queue_already_contains', { song_id: vm.id, source, festa: Boolean(res.festa) });
-    setToast({ message: queueToastMessage(res, res.festa), nonce: Date.now() });
-    res.pending?.catch(() => {
-      setToast({ message: 'Não foi possível adicionar à fila da Festa. Tente de novo.', nonce: Date.now() });
-    });
-  }, [onAddToQueue, vm, source]);
-
-  const startMode = useCallback((mode) => {
-    trackTv('tv_song_mode_selected', { mode, song_id: vm.id, source });
-    setOverlay(null);
-    if (mode === 'solo') onStartKaraoke(song, null);
-    else if (mode === 'duet') onStartKaraoke(song, { dueto: true });
-    else addToQueue(); // festa → adiciona à sessão
-  }, [vm.id, source, onStartKaraoke, song, addToQueue]);
-
   const onCantar = useCallback(() => {
     trackTv('tv_song_started', { song_id: vm.id, source });
-    // Karaokê K1 : l'écran « Antes de cantar » remplace la fenêtre de choix du mode.
+    // Karaokê K1 : l'écran « Antes de cantar » a remplacé la fenêtre de choix du mode.
     if (onOpenLobby) { onOpenLobby(song); return; }
-    if (relevantModes.length === 1) { onStartKaraoke(song, null); return; }
-    restoreFocusRef.current = 'DETAIL_CANTAR';
-    setOverlay('mode');
-  }, [vm.id, source, relevantModes, onStartKaraoke, onOpenLobby, song]);
+    onStartKaraoke?.(song, null);
+  }, [vm.id, source, onStartKaraoke, onOpenLobby, song]);
 
   const openContext = useCallback(() => {
     trackTv('tv_song_context_opened', { song_id: vm.id });
@@ -508,9 +475,6 @@ export default function TvSongDetailPage({
 
       <TvToast message={toast.message} nonce={toast.nonce} onDone={() => setToast({ message: '', nonce: 0 })} />
 
-      {overlay === 'mode' && (
-        <TvModeSelectionOverlay modes={relevantModes} onSelect={startMode} onClose={closeOverlay} />
-      )}
       {overlay === 'context' && (
         <TvContextOverlay title={vm.title} text={fullContext} onClose={closeOverlay} />
       )}

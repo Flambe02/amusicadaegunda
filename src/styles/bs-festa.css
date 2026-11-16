@@ -74,3 +74,11 @@
 .bs-festa-queue-singer { flex: none; color: var(--bs-pink-text); font-size: 19px; }
 .bs-festa-queue-more { margin: 6px 0 0; color: var(--bs-text-2); font-size: 18px; }
 .bs-festa-start-label { max-width: 560px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Festa : choisir la primeira música (audit B5, 2026-11-16) ─────────────── */
+.bs-festa-pick-head { display: flex; align-items: flex-end; gap: 40px; margin: 8px 0 36px; }
+.bs-festa-pick-head > div { flex: 1 1 auto; min-width: 0; }
+.bs-festa-pick-title { margin: 0 0 14px; font-family: var(--bs-font-title); font-weight: 400; font-size: 64px; line-height: 1.05; color: #fff; }
+.bs-festa-pick-text { margin: 0; max-width: 980px; font-size: 24px; line-height: 1.4; color: var(--bs-text-2); }
+.bs-festa-pick-actions { flex: 0 0 auto; display: flex; }
+.bs-festa-pick-grid { display: flex; flex-wrap: wrap; gap: 36px 24px; }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { ArrowRightLeft, Check, Handshake, ListPlus, Mic, MicOff, Minus, Pencil, Plus, Settings2, Swords, Trophy, User, Users } from 'lucide-react';
+import { ArrowRightLeft, Check, Handshake, ListPlus, Mic, MicOff, Minus, Pencil, Plus, Settings2, Swords, Trophy, User, Users, Smartphone } from 'lucide-react';
 import FocusableButton from './components/FocusableButton';
 import FocusRow from './components/FocusRow';
 import BsPoster from './components/BsPoster';
@@ -9,7 +9,7 @@ import { queueToastMessage } from './lib/tvQueue';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import { fitTitle } from './lib/bsSong';
 import { toTvSong } from './lib/tvSongRepository';
-import { micStatus } from '@/lib/micPrefs';
+import { hasScoringMic, micStatus } from '@/lib/micPrefs';
 import { loadLobbyChoice, loadPlayerNames, MAX_NAME, playersFor, saveLobbyChoice, savePlayerNames } from '@/lib/karaokePlayers';
 import { GAME_MODES } from '@/lib/karaokeGame';
 import { topForSong } from '@/lib/karaokeRecords';
@@ -90,7 +90,7 @@ export default function TvSingLobby({
   const players = playersFor(mode, names, count);
   const flexible = mode === 'coop' || mode === 'pass';
   const mic = micStatus(micPrefs);
-  const withMic = micPrefs?.source === 'device';
+  const withMic = hasScoringMic(micPrefs);
   const needsMic = Boolean(GAME_MODES[mode]?.needsMic) && !withMic;
 
   useEffect(() => {
@@ -209,7 +209,9 @@ export default function TvSingLobby({
             <h2 className="bs-lobby-h">Microfone</h2>
             <FocusRow className="bs-lobby-row bs-lobby-mic" focusKey="LOBBY_MIC">
               <span className={`bs-lobby-mic-status is-${mic.kind}`}>
-                {mic.kind === 'device' ? <Mic size={24} aria-hidden="true" /> : <MicOff size={24} aria-hidden="true" />}
+                {mic.kind === 'device' && <Mic size={24} aria-hidden="true" />}
+                {mic.kind === 'phone' && <Smartphone size={24} aria-hidden="true" />}
+                {mic.kind !== 'device' && mic.kind !== 'phone' && <MicOff size={24} aria-hidden="true" />}
                 {mic.text}
                 {withMic && <span className="bs-lobby-mic-note">· pontuação ligada</span>}
               </span>

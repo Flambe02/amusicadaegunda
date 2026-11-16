@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { festaPlaying, festaRows, festaWaiting, planFestaAdd, queueToastMessage } from '../tvQueue';
+import { festaPlaying, festaQueueLabel, festaRows, festaWaiting, planFestaAdd, queueToastMessage } from '../tvQueue';
 
 const q = (id, songId, status, addedAt, singer = 'Ana') => ({
   id, song_id: songId, status, added_at: addedAt, singer_name: singer,
@@ -37,5 +37,13 @@ describe('Fila do grand écran — règles', () => {
   it('says which queue the song went to', () => {
     expect(queueToastMessage({ added: true, position: 3 }, true)).toBe('Adicionada à fila da Festa · posição 3');
     expect(queueToastMessage({ added: false, position: 1 })).toBe('Já está na fila · posição 1');
+  });
+});
+
+describe('Festa — o que o karaokê mostra no lugar de « Fila 1/35 »', () => {
+  it('shows the real phone queue, never the catalogue fallback', () => {
+    const rows = festaRows(festaWaiting(FESTA), [{ id: 20, title: 'Urna' }, { id: 30, title: 'Pix' }]);
+    expect(festaQueueLabel(rows)).toBe('Festa · 2 na fila · próxima: Urna (Ana)');
+    expect(festaQueueLabel([])).toBe('Festa · fila vazia');
   });
 });

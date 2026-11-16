@@ -3,7 +3,7 @@
    / identité+métadonnées+conceito+contexto+prévia da letra / « Por que cantar? »)
    + rangée d'actions pleine largeur + barre d'interaction. Calqué sur l'image de
    référence (icônes, typographie, couleurs). Namespace tvd- (distinct de tvh-/tvc-).
-   Réutilise les variables de couleur de tv-home-v3.css (--tvh-yellow, etc.).
+   Réutilise les variables de couleur --tvh-* (définies dans bs-base.css).
    ========================================================================== */
 
 .tvd-page {

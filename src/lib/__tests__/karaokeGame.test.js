@@ -104,6 +104,13 @@ describe('Karaokê — ouvir a voz', () => {
     expect(voiced).toBeGreaterThan(250);
   });
 
+  it('music heard before the first verse is learned in ~2 s (it does not light the track)', () => {
+    const d = createVoiceDetector();
+    for (let i = 0; i < 125; i += 1) d.update(0.02, 16, { expectingVoice: false }); // 2 s d'intro
+    expect(d.update(0.02, 16)).toBe(false);
+    expect(d.update(0.09, 16)).toBe(true);
+  });
+
   it('steady background music does not count as singing, a voice on top does', () => {
     const d = createVoiceDetector();
     for (let i = 0; i < 2000; i += 1) d.update(0.02, 16); // musique qui revient dans le micro

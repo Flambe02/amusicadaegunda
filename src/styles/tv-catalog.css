@@ -2,7 +2,7 @@
    Catálogo TV « song-first » — split grille (~70%) + panneau contextuel (~30%).
    Chargé UNIQUEMENT par le bundle TV. Namespace tvc- (distinct des namespaces tvh-
    et tv2- des autres écrans).
-   Réutilise la nav .tvh-nav (importée avec tv-home-v3.css). Palette : navy/quasi-
+   Variables --tvh-* : définies dans bs-base.css. Palette : navy/quasi-
    noir, JAUNE = focus + action, violet/rose = accents secondaires, difficulté =
    vert/jaune/rouge (avec barres, jamais la couleur seule).
    ========================================================================== */

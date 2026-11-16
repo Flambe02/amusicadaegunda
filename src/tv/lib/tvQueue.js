@@ -47,6 +47,18 @@ export function festaRows(entries, songs) {
   });
 }
 
+/**
+ * Ce qu'affiche le karaokê pendant une Festa à la place de « Fila 1/35 » : la vraie fila
+ * dos celulares (`rows` = festaRows des entrées en attente).
+ */
+export function festaQueueLabel(rows) {
+  const n = (rows || []).length;
+  if (!n) return 'Festa · fila vazia';
+  const next = rows[0];
+  const who = next.singer ? ` (${next.singer})` : '';
+  return `Festa · ${n} na fila · próxima: ${next.title}${who}`;
+}
+
 /** Message du toast après un ajout. */
 export function queueToastMessage({ added, position }, festa = false) {
   const where = festa ? 'fila da Festa' : 'fila';

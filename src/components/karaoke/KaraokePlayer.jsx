@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense, Frag
 import { isPointerMode } from '@/tv/lib/pointerModeState';
 import { createPortal } from 'react-dom';
 import { audioConstraints, loadMicPrefs } from '@/lib/micPrefs';
+import { listenPhoneMic, PHONE_LATENCY_SEC } from '@/lib/phoneMic';
+import { voiceMidi } from '@/lib/karaokePitch';
 import KaraokeGameHud from './game/KaraokeGameHud';
 import KaraokeGameResults from './game/KaraokeGameResults';
 import { lineOwners, TEAM } from '@/lib/karaokeGame';
@@ -106,7 +108,8 @@ async function translateText(text, target) {
  * Props :
  *  - song      : { title, artist, youtube_url, youtube_music_url, lrc_content, cover_image }
  *  - onClose   : () => void
- *  - queueInfo     : { index, total, nextTitle } | null   (modo festa)
+ *  - queueInfo     : { index, total, nextTitle, label? } | null   (modo festa ; `label`
+ *                    remplace « Fila i/total » quand la fila interne n'est pas la vraie)
  *  - onNext        : () => void   (passer à la chanson suivante de la fila)
  *  - onEnded       : () => void   (la chanson s'est terminée naturellement)
  *  - handoff       : bool         (afficher « passa o micro » sur l'intro, pour un relais de fila)
@@ -567,6 +570,12 @@ export default function KaraokePlayer({
   const energyBarRef = useRef(null);
   // ── Jeu grand écran : niveau du micro partagé avec la piste (KaraokeGameHud). ──
   const voiceRmsRef = useRef(0);
+  // Hauteur de la voix (MIDI ou null) pour la piste des notes (K5) — mesurée seulement
+  // quand la chanson a une melodia (YIN coûte cher sur une TV).
+  const voicePitchRef = useRef(null);
+  const gamePitchNotes = tvMode && game && pitchRef.available ? pitchRef.notes : null;
+  const wantPitchRef = useRef(false);
+  wantPitchRef.current = Boolean(gamePitchNotes);
   const gameScorerRef = useRef(null);
   const [gameRound, setGameRound] = useState(0);
   const [gameResults, setGameResults] = useState(null);
@@ -577,8 +586,22 @@ export default function KaraokePlayer({
     const s = syncRef.current;
     return s.playing ? s.t + ((performance.now() - s.wall) / 1000) * s.rate : s.t;
   }, []);
+  // Celular como microfone (K3) : les niveaux arrivent par le réseau, avec un retard
+  // compensé dans le score.
+  const phoneMicCode = tvMode && opts.energy ? (loadMicPrefs()?.source === 'phone' ? loadMicPrefs().code : null) : null;
   useEffect(() => {
     if (!opts.energy || phase !== 'live') return undefined;
+    if (phoneMicCode) {
+      setEnergyMicUnavailable(false);
+      const stopListening = listenPhoneMic(phoneMicCode, voiceRmsRef, { pitchRef: voicePitchRef });
+      let barRaf;
+      const bar = () => {
+        if (energyBarRef.current) energyBarRef.current.style.height = `${Math.min(100, voiceRmsRef.current * 260)}%`;
+        barRaf = requestAnimationFrame(bar);
+      };
+      barRaf = requestAnimationFrame(bar);
+      return () => { cancelAnimationFrame(barRaf); stopListening(); voiceRmsRef.current = 0; };
+    }
     let raf; let ctx; let stream; let stopped = false;
     (async () => {
       try {
@@ -592,8 +615,10 @@ export default function KaraokePlayer({
         if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
         const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
-        analyser.fftSize = 512;
+        // Grand écran : fenêtre assez longue pour la hauteur des voix graves (K5).
+        analyser.fftSize = tvMode ? 2048 : 512;
         src.connect(analyser);
+        let lastPitchAt = 0;
         const buf = new Uint8Array(analyser.fftSize);
         // Mesure fine en flottant quand elle existe : en 8 bits, une voix posée sur un
         // micro sans gain automatique tombe dans l'arrondi.
@@ -611,6 +636,10 @@ export default function KaraokePlayer({
           const rms = Math.sqrt(sum / buf.length); // 0..~1
           const pct = Math.min(100, rms * 260);
           voiceRmsRef.current = rms;
+          if (fbuf && wantPitchRef.current) {
+            const now = performance.now();
+            if (now - lastPitchAt >= 45) { lastPitchAt = now; voicePitchRef.current = voiceMidi(fbuf, ctx.sampleRate); }
+          }
           if (energyBarRef.current) energyBarRef.current.style.height = `${pct}%`;
           // Stats pour la note finale : seulement en lecture. « active » = une ligne est
           // en cours (on est censé chanter) ; « sung » = le micro dépasse le seuil.
@@ -635,11 +664,12 @@ export default function KaraokePlayer({
     return () => {
       stopped = true;
       voiceRmsRef.current = 0;
+      voicePitchRef.current = null;
       if (raf) cancelAnimationFrame(raf);
       try { stream?.getTracks().forEach((tr) => tr.stop()); } catch { /* ignore */ }
       try { ctx?.close(); } catch { /* ignore */ }
     };
-  }, [opts.energy, phase, tvMode]);
+  }, [opts.energy, phase, tvMode, phoneMicCode]);
 
   // ── Barre de progression + temps (mise à jour légère, mutation directe, sans re-render) ──
   // Mêmes refs pour TV et mobile : une seule des deux séries de nœuds est montée à la
@@ -1167,7 +1197,7 @@ export default function KaraokePlayer({
           <p className="truncate text-sm font-bold text-white md:text-base">{song?.title}</p>
           <p className="truncate text-xs text-white/50">
             {song?.artist || 'A Música da Segunda'}
-            {queueInfo && <span className="ml-2 text-app-yellow/70">· Fila {queueInfo.index + 1}/{queueInfo.total}</span>}
+            {queueInfo && <span className="ml-2 text-app-yellow/70">· {queueInfo.label || `Fila ${queueInfo.index + 1}/${queueInfo.total}`}</span>}
           </p>
         </div>
         {/* Modo Aprender simplifié : niveau visible discrètement pendant le chant (§17
@@ -1382,6 +1412,9 @@ export default function KaraokePlayer({
               getTime={getLyricsTime}
               isPlaying={isPlaying}
               voiceRmsRef={voiceRmsRef}
+              voicePitchRef={voicePitchRef}
+              pitchNotes={gamePitchNotes}
+              voiceLatencySec={phoneMicCode ? PHONE_LATENCY_SEC : 0}
               scorerRef={gameScorerRef}
             />
           )}

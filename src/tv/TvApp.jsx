@@ -13,13 +13,12 @@ import {
   createFestaSession, endFestaSession, updateFestaSessionCurrentSong,
   markFestaQueueStatus, buildFestaJoinUrl, addToFestaQueue, skipFestaQueueEntry,
 } from '@/lib/festa';
-import { festaPlaying, festaRows, festaWaiting, planFestaAdd, TV_SINGER } from './lib/tvQueue';
+import { festaPlaying, festaQueueLabel, festaRows, festaWaiting, planFestaAdd, TV_SINGER } from './lib/tvQueue';
 import { useFestaSession } from '@/hooks/useFestaSession';
 import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import BsHomePage from './BsHomePage';
 import { TvChromeProvider } from './lib/chromeContext';
 import TvCatalogPage from './TvCatalogPage';
-import TvGrid from './TvGrid';
 import TvSongDetailPage from './TvSongDetailPage';
 import TvReactionBurst from './components/TvReactionBurst';
 import TvSingLobby from './TvSingLobby';
@@ -28,8 +27,7 @@ import TvRecordsPage from './TvRecordsPage';
 import { loadMicPrefs } from '@/lib/micPrefs';
 import TvKaraokeScreen, { preloadKaraokePlayer } from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
-import TvClipsLanding from './TvClipsLanding';
-import TvKaraokeModeLanding from './TvKaraokeModeLanding';
+import TvFestaPickPage from './TvFestaPickPage';
 import TvSettingsPanel from './components/TvSettingsPanel';
 import TvStage from './components/TvStage';
 import { BRAND_SQUARE_LARGE } from '@/lib/imageAssets';
@@ -40,11 +38,8 @@ import { HOME_SEO, HOME_SEO_IMAGE } from '@/config/homeSeo';
 import { titleToSlug } from '@/lib/utils';
 import '@/styles/tv.css';
 import '@/styles/tv-home-v2.css';
-import '@/styles/tv-home-v3.css';
 import '@/styles/tv-catalog.css';
 import '@/styles/tv-karaoke-landing.css';
-import '@/styles/tv-clips-landing.css';
-import '@/styles/tv-karaoke-mode-landing.css';
 // Après les autres : la refonte 2026-10 redéfinit leurs couleurs et la police.
 import '@/styles/bs-base.css';
 
@@ -80,20 +75,13 @@ if (typeof document !== 'undefined' && !document.querySelector('link[rel="precon
 }
 
 // Écrans qui portent la barre du haut (le bouton « Voltar » de l'ordinateur s'y range dessous).
-const NAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing', 'records']);
+const NAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'records', 'festa-pick']);
 // Écrans dont la barre du haut (TvTopNavigation) porte elle-même « Voltar » sur ordinateur :
 // la pilule flottante chevauchait le logo et le titre (audit 2026-11-16, B8).
-const TOPNAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'records']);
+const TOPNAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'records', 'festa-pick']);
 
 // Initialise la navigation spatiale une seule fois (au chargement du bundle TV).
 init({ debug: false, visualDebug: false });
-
-const CATEGORY_LABELS = {
-  internacional: 'Internacional', midia: 'Mídia', energia: 'Energia', cidades: 'Cidades', esporte: 'Esporte',
-  cultura: 'Cultura', outros: 'Outros', saude: 'Saúde', policia: 'Polícia',
-  politica: 'Política', seguranca: 'Segurança', tecnologia: 'Tecnologia',
-  gastronomia: 'Gastronomia', economia: 'Economia',
-};
 
 /** Slug public d'une chanson : la colonne `slug`, sinon dérivé du titre (comme Song.jsx). */
 const songSlug = (song) => (song?.slug || titleToSlug(song?.title) || '');
@@ -464,22 +452,15 @@ export default function TvApp({ web = null }) {
       || '',
     [],
   );
-  const getCat = useCallback((s) => (s.category ? (CATEGORY_LABELS[s.category] || s.category) : ''), []);
   const getHasKaraoke = useCallback(
     (s) => isKaraokePublished(s) && Boolean(s.youtube_url || s.youtube_music_url),
     [],
   );
 
-  // Navigation centralisée pour la barre TvHomeNavigation quand elle est montée depuis
-  // un écran autre que l'accueil (TvSongDetail) — TvHome calcule ces mêmes listes en
-  // interne pour SES propres boutons ; on duplique ici pour ne jamais avoir à modifier
-  // TvHome.jsx (fichier verrouillé pour sa mise en page — seule sa nav est étendue).
+  // Destinations de la barre du haut (TvTopNavigation), partagées par tous les écrans.
   const goHome = useCallback(() => setStack([{ name: 'home' }]), []);
   const songsRef = useRef(songs);
   songsRef.current = songs;
-  // Destination « Clipes » de la nav partagée — page dédiée (rangées mês/ano/
-  // tema), plus la grille générique (cf. TvClipsLanding.jsx).
-  const openClipsLanding = useCallback(() => setStack((s) => [...s, { name: 'clips-landing' }]), []);
   // Destination « Catálogo » de la nav = page dédiée song-first (recherche, filtres,
   // grille + panneau contextuel, fila). Remplace l'ancienne grille générique.
   const openCatalog = useCallback(() => setStack((s) => [...s, { name: 'catalog' }]), []);
@@ -499,25 +480,6 @@ export default function TvApp({ web = null }) {
   // ── Landing Karaokê (page dédiée) : 4 modes + rangée « Para cantar agora » ──
   const openKaraokeLanding = useCallback(() => setStack((s) => [...s, { name: 'karaoke-landing' }]), []);
 
-  // Grilles de sélection avec CONTEXTE DE MODE explicite — `mode` détermine ce que
-  // fait `onSelect` (cf. branche 'grid' plus bas) : jamais de comportement implicite
-  // selon l'écran appelant.
-  const openModeGrid = useCallback((mode, title) => setStack((s) => [
-    ...s, { name: 'grid', title, songs: songsRef.current.filter(getHasKaraoke), mode },
-  ]), [getHasKaraoke]);
-  // Grilles complètes « Ver todos os karaokês » ATTEINTES DEPUIS une page de mode
-  // (mode-landing) — même contexte de mode que la page d'origine (jamais le
-  // sélecteur générique 'karaoke-any', qui rouvrirait le choix Karaokê/Festa).
-  const openSoloGrid = useCallback(() => openModeGrid('solo', 'Karaokê — Solo'), [openModeGrid]);
-  const openDuetGrid = useCallback(() => openModeGrid('duet', 'Karaokê — Dueto'), [openModeGrid]);
-  const openFestaGrid = useCallback(() => openModeGrid('festa', 'Escolha a primeira música'), [openModeGrid]);
-
-  // Pages dédiées Solo/Dueto/Festa (TvKaraokeModeLanding) — remplacent l'ancien
-  // raccourci direct vers la grille : chaque mode a maintenant son écran
-  // explicatif (hero + rangée de chansons) avant la sélection.
-  const openModeLanding = useCallback((mode) => setStack((s) => [...s, { name: 'mode-landing', mode }]), []);
-  const onChooseSolo = useCallback(() => openModeLanding('solo'), [openModeLanding]);
-  const onChooseDuet = useCallback(() => openModeLanding('duet'), [openModeLanding]);
   // Festa passe désormais TOUJOURS par l'écran d'invitation (QR + code) avant
   // le choix de la première chanson. « Continuar sem fila » : si des invités ont
   // déjà mis des chansons en fila PENDANT que l'invitation était affichée, on
@@ -538,14 +500,6 @@ export default function TvApp({ web = null }) {
     else if (entry === 'festa') onChooseFesta();
     else if (entry === 'ajustes') openTvSettings();
   }, [isWeb, loading, openCatalog, openSearch, onChooseFesta, openTvSettings]);
-  // Dispatcher unique pour la section « Como você quer cantar? » de l'accueil v3 :
-  // chaque mode mène à SON parcours (jamais la même page), cf. onChoose* ci-dessus.
-  const onChooseMode = useCallback((mode) => {
-    if (mode === 'solo') return onChooseSolo();
-    if (mode === 'duet') return onChooseDuet();
-    return onChooseFesta(); // festa
-  }, [onChooseSolo, onChooseDuet, onChooseFesta]);
-
   // Restauration du focus au retour d'une fiche → l'accueil v3 mémorise la clé de la
   // dernière carte focalisée (ref, pas de state : jamais de re-render pendant que
   // l'accueil est monté). Persistée sur TvApp (qui reste monté) → survit au
@@ -621,13 +575,14 @@ export default function TvApp({ web = null }) {
         const rest = pool.filter((sg) => sg.id !== song.id);
         return [...s, {
           name: 'karaoke', queue: [song, ...rest], index: 0, handoff: false, sessionOptions: null,
-          festaQueueId: firstEntry.id, prevApplause: null, prevTomato: null,
+          festa: true, festaQueueId: firstEntry.id, prevApplause: null, prevTomato: null,
         }];
       });
       return;
     }
-    openModeLanding('festa');
-  }, [openModeLanding, getHasKaraoke]);
+    // Personne n'a encore rien pedido : on choisit la primeira música (audit B5).
+    setStack((s) => [...s, { name: 'festa-pick' }]);
+  }, [getHasKaraoke]);
 
   // Lance le karaoké normal (solo ou dueto — `sessionOptions` porte le dueto en
   // session uniquement, cf. KaraokePlayer `initialSessionOptions`). Représenté comme
@@ -635,12 +590,6 @@ export default function TvApp({ web = null }) {
   const startKaraoke = useCallback((song, sessionOptions, extra = null) => setStack((s) => [
     ...s, { name: 'karaoke', queue: [song], index: 0, handoff: false, sessionOptions: sessionOptions || null, ...(extra || {}) },
   ]), []);
-
-  // Chanson choisie SANS contexte de mode (rangée « Para cantar agora », grille
-  // complète) → lance directement le karaoké en solo par défaut, SANS écran
-  // intermédiaire de question (le Modo Festa reste un choix fait depuis son point
-  // d'entrée dédié de l'accueil, jamais reposé au niveau d'une chanson individuelle).
-  const onRequestKaraoke = useCallback((song) => startKaraoke(song, null), [startKaraoke]);
 
   // « Começar a cantar » depuis l'overlay de fila du catálogo — lance le karaokê
   // avec la fila LOCALE comme playlist (titres chantables d'abord). `advanceFesta`
@@ -676,7 +625,7 @@ export default function TvApp({ web = null }) {
       const rest = pool.filter((song) => song.id !== firstSong.id);
       return [...s, {
         name: 'karaoke', queue: [firstSong, ...rest], index: 0, handoff: false, sessionOptions: null,
-        festaQueueId: null, prevApplause: null, prevTomato: null,
+        festa: true, festaQueueId: null, prevApplause: null, prevTomato: null,
       }];
     });
   }, [getHasKaraoke]);
@@ -713,6 +662,7 @@ export default function TvApp({ web = null }) {
           index: t.index + 1,
           handoff: true,
           sessionOptions: null,
+          festa: Boolean(t.festa),
           festaQueueId: nextEntry.id,
           prevApplause: finishedEntry?.applause_score ?? null,
           prevTomato: finishedEntry?.tomato_score ?? null,
@@ -733,27 +683,6 @@ export default function TvApp({ web = null }) {
   }), [getEnergyGrade]);
 
   const content = useMemo(() => {
-    if (top.name === 'grid') {
-      // Le contexte de mode (posé par openModeGrid) détermine ce que fait la
-      // sélection d'une chanson — jamais implicite selon l'écran d'origine.
-      const handleSelect = (s) => {
-        if (top.mode === 'solo') return startKaraoke(s, null);
-        if (top.mode === 'duet') return startKaraoke(s, { dueto: true });
-        if (top.mode === 'festa') return startFesta(s);
-        if (top.mode === 'karaoke-any') return onRequestKaraoke(s);
-        return push({ name: 'detail', song: s }); // Todos/Clipes/Catálogo : comportement historique inchangé
-      };
-      return (
-        <TvGrid
-          title={top.title}
-          songs={top.songs}
-          getThumb={getThumb}
-          getCat={getCat}
-          getHasKaraoke={getHasKaraoke}
-          onSelect={handleSelect}
-        />
-      );
-    }
     if (top.name === 'catalog') {
       return (
         <TvCatalogPage
@@ -801,10 +730,8 @@ export default function TvApp({ web = null }) {
           onOpenSettings={openTvSettings}
           onOpenRelated={(related) => push({ name: 'detail', song: related, source: top.source || 'catalog' })}
           getThumb={getThumb}
-          festaPeople={festaSession ? festaPeopleNames.length : null}
           onStartKaraoke={startKaraoke}
           onOpenLobby={openLobby}
-          onAddToQueue={addToQueue}
           backInterceptorRef={backInterceptorRef}
         />
       );
@@ -828,42 +755,17 @@ export default function TvApp({ web = null }) {
         />
       );
     }
-    if (top.name === 'clips-landing') {
+    if (top.name === 'festa-pick') {
       return (
-        <TvClipsLanding
+        <TvFestaPickPage
           songs={songs}
-          getThumb={getThumb}
-          onSelectSong={(s) => push({ name: 'detail', song: s })}
-          onNavigateHome={goHome}
-          onNavigateKaraoke={openKaraokeLanding}
-          onNavigateFesta={onChooseFesta}
-          onNavigateAll={openCatalog}
-          onExitApp={exitApp}
-          backInterceptorRef={backInterceptorRef}
-        />
-      );
-    }
-    if (top.name === 'mode-landing') {
-      const fullGridOpeners = { solo: openSoloGrid, duet: openDuetGrid, festa: openFestaGrid };
-      const handleSelect = (s) => {
-        if (top.mode === 'solo') return startKaraoke(s, null);
-        if (top.mode === 'duet') return startKaraoke(s, { dueto: true });
-        return startFesta(s); // festa
-      };
-      return (
-        <TvKaraokeModeLanding
-          mode={top.mode}
-          songs={songs}
-          getThumb={getThumb}
           getHasKaraoke={getHasKaraoke}
-          onSelectSong={handleSelect}
-          onOpenFullGrid={fullGridOpeners[top.mode]}
-          onNavigateHome={goHome}
-          onNavigateKaraoke={openKaraokeLanding}
-          onNavigateFesta={onChooseFesta}
-          onNavigateClips={openClipsLanding}
-          onNavigateAll={openCatalog}
-          onExitApp={exitApp}
+          festaQueueCount={festaSession ? festaWaitingCount : null}
+          onPick={(song) => { markFamiliar(song); startFesta(song); }}
+          onGoHome={goHome}
+          onOpenCatalog={openCatalog}
+          onOpenFesta={onChooseFesta}
+          onOpenSettings={openTvSettings}
           backInterceptorRef={backInterceptorRef}
         />
       );
@@ -935,8 +837,17 @@ export default function TvApp({ web = null }) {
     }
     if (top.name === 'karaoke') {
       const currentSong = top.queue[top.index];
+      // En Festa, la « fila » interne contient tout le catálogo karaokê (filet de sécurité
+      // quand les celulares n'ont rien pedido) : « Fila 1/35 » laissait croire à 35 músicas
+      // pedidas (audit 2026-11-16). On affiche la vraie fila da Festa à la place.
+      const festaNext = top.festa && festaSession ? festaRows(festaWaiting(festaQueue), songs) : null;
       const qInfo = top.queue.length > 1
-        ? { index: top.index, total: top.queue.length, nextTitle: top.queue[top.index + 1]?.title }
+        ? {
+          index: top.index,
+          total: top.queue.length,
+          nextTitle: festaNext ? (festaNext[0]?.title ?? null) : top.queue[top.index + 1]?.title,
+          label: festaNext ? festaQueueLabel(festaNext) : null,
+        }
         : null;
       // Entrée de la fila Festa qui passe : ses 👏/🍅 arrivent en direct (Realtime).
       const liveEntry = top.festaQueueId ? festaQueue.find((q) => q.id === top.festaQueueId) : null;
@@ -987,10 +898,9 @@ export default function TvApp({ web = null }) {
     );
   }, [
     top, songs, getThumb, getHasKaraoke, push, openCatalog, isWeb,
-    onChooseMode, startKaraoke, advanceFesta, startFesta,
-    onChooseFesta, openKaraokeLanding, openClipsLanding,
-    onRequestKaraoke, openSoloGrid, openDuetGrid, openFestaGrid,
-    goHome, pop, getCat, setHomeFocusKey, setKaraokeFocusKey, openTvSettings,
+    startKaraoke, advanceFesta, startFesta,
+    onChooseFesta, openKaraokeLanding,
+    goHome, pop, setHomeFocusKey, setKaraokeFocusKey, openTvSettings,
     festaSession, festaPeopleNames, festaLoading, festaOffline, proceedToFestaPicker, exitFestaInvite,
     liveEnergyByEntry, festaQueue, festaWaitingCount, endFestaNow,
     // Catálogo

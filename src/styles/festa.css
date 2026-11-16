@@ -244,3 +244,33 @@
 }
 .festa-vote-applause { background: rgba(253, 224, 71, 0.15); color: #FDE047; border: 1px solid rgba(253, 224, 71, 0.4); }
 .festa-vote-tomato { background: rgba(248, 113, 113, 0.12); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.35); }
+
+/* ── Celular como microfone (/festa?mic=CODE, karaokê K3) ─────────────────── */
+.phone-mic { align-items: center; justify-content: center; gap: 1rem; padding: 2rem 1.5rem; text-align: center; }
+.phone-mic-eyebrow { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255, 255, 255, 0.5); }
+.phone-mic-title { margin: 0; font-size: 1.75rem; font-weight: 800; line-height: 1.15; }
+.phone-mic-tv {
+  display: inline-flex; align-items: center; gap: 0.45rem; margin: 0; padding: 0.4rem 0.9rem; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.65); font-size: 0.85rem; font-weight: 600;
+}
+.phone-mic-tv.is-on { color: #4ADE80; background: rgba(74, 222, 128, 0.12); }
+.phone-mic-button {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.9rem;
+  width: min(72vw, 280px); aspect-ratio: 1; margin: 1rem 0; border-radius: 50%; cursor: pointer;
+  border: 3px solid rgba(253, 224, 71, 0.5); background: #1a1505; color: #FDE047;
+  font: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+.phone-mic-button.is-on { border-color: #4ADE80; color: #fff; background: #0d1f14; }
+.phone-mic-button-text { position: relative; font-size: 1.05rem; font-weight: 800; }
+.phone-mic-button svg { position: relative; }
+.phone-mic-level {
+  position: absolute; inset: 0; transform-origin: center bottom; transform: scaleY(0);
+  background: linear-gradient(0deg, rgba(74, 222, 128, 0.55), rgba(253, 224, 71, 0.35));
+  transition: transform 60ms linear;
+}
+.phone-mic-hint { margin: 0; max-width: 22rem; font-size: 0.9rem; line-height: 1.45; color: rgba(255, 255, 255, 0.65); }
+.phone-mic-stop {
+  margin-top: 0.5rem; padding: 0.7rem 1.4rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent; color: #fff; font: inherit; font-weight: 700; cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) { .phone-mic-level { transition: none; } }

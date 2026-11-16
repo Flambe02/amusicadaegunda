@@ -53,6 +53,12 @@
   --tvh-panel: var(--bs-surface);
   --tvh-border: var(--bs-surface-2);
   --tvh-pink: var(--bs-pink);
+  /* Reprises de l'ancienne tv-home-v3.css (retirée en 2026-11) : encore lues par
+     tv.css, tv-catalog.css et tv-song-detail.css. */
+  --tvh-purple: #a855f7;
+  --tvh-orange: #f59e0b;
+  --tvh-green: #4ade80;
+  --tvh-red: #f87171;
 }
 
 .tv-root {
@@ -94,7 +100,7 @@
    les autres (catálogo, karaokê), elle suit les marges de l'écran qui la contient. */
 .bs-screen > .bs-nav { height: 148px; padding: 12px var(--bs-pad-x) 0; }
 .tvc-header-more { margin-left: auto; align-self: flex-end; margin-bottom: 6px; }
-.bs-nav-brand { display: flex; align-items: center; gap: 18px; margin-right: auto; }
+.bs-nav-brand { flex: 0 0 auto; display: flex; align-items: center; gap: 18px; margin-right: auto; }
 .bs-nav-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; display: block; }
 .bs-nav-name { font-family: var(--bs-font-title); font-size: 26px; line-height: 1; color: var(--bs-text); white-space: nowrap; }
 .bs-nav-back {
@@ -103,11 +109,19 @@
   color: var(--bs-text); font-family: var(--bs-font); font-size: 22px; font-weight: 700; line-height: 1; white-space: nowrap;
 }
 .bs-nav-back:hover, .bs-nav-back:focus-visible { background: #fff; color: #111; outline: none; }
-.bs-nav-menu { display: flex; align-items: center; gap: 12px; }
+.bs-nav-menu { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; }
+/* Ordinateur, hors accueil : « Voltar », « Recordes » et « Modo TV » s'ajoutent à la barre.
+   Sur une scène étroite (≤ 1728 de large), tout ne tenait plus — le nom passait sous
+   « Início » et « Modo TV » se cassait en deux (2026-11-16). Le nom passe sur deux lignes,
+   les entrées se resserrent ; rien ne se chevauche ni ne se coupe. */
+.bs-nav:has(.bs-nav-back) .bs-nav-brand { gap: 14px; }
+.bs-nav:has(.bs-nav-back) .bs-nav-name { white-space: normal; width: 7.4em; font-size: 22px; line-height: 1.05; }
+.bs-nav:has(.bs-nav-back) .bs-nav-menu { gap: 4px; }
+.bs-nav:has(.bs-nav-back) .bs-nav-item { padding: 0 20px; }
 .bs-nav-item {
   display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 26px;
   border: 0; border-radius: 999px; background: transparent; cursor: pointer;
-  color: var(--bs-text); font-family: var(--bs-font); font-size: 22px; font-weight: 600;
+  color: var(--bs-text); font-family: var(--bs-font); font-size: 22px; font-weight: 600; white-space: nowrap;
 }
 .bs-nav-item.is-active { background: var(--bs-surface-2); color: var(--bs-gold); font-weight: 700; }
 .bs-nav-item.is-festa { color: var(--bs-pink-text); font-weight: 700; }
