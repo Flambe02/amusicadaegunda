@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ICON_SHADOW, TEXT_SHADOW } from './feedStyles';
+import { favoriteKey } from '@/hooks/useFavorites';
+import { HeartFilled } from '@/components/mobile/icons/FilledIcons';
 
 /**
  * Colonne d'icônes façon TikTok (addendum H.5.1), partagée par le feed de l'Início et
@@ -14,26 +16,51 @@ const railClass =
 const railIconClass = `h-8 w-8 ${ICON_SHADOW}`;
 const railLabelClass = `whitespace-nowrap text-xs font-semibold leading-none ${TEXT_SHADOW}`;
 
-// Fond « verre dépoli » (feed vidéo) : YouTube superpose parfois ses propres boutons
-// Shorts (j'aime, partager) exactement sous la colonne ; flous et assombris, ils
-// disparaissent et seuls nos boutons restent lisibles. Sans zoom de la vidéo.
-const GLASS_CLASS = 'rounded-[22px] bg-black/35 px-1 py-2.5 backdrop-blur-md';
-
-/** Conteneur de la colonne ; la position est donnée par l'appelant. */
-export function Rail({ className = '', glass = false, children }) {
+/**
+ * Conteneur de la colonne ; la position est donnée par l'appelant. Fond toujours
+ * transparent : le verre dépoli essayé le 2026-11-15 a été retiré à la demande.
+ */
+export function Rail({ className = '', children }) {
   return (
-    <div data-rail data-rail-glass={glass ? 'true' : undefined} className={`z-30 flex flex-col items-stretch gap-3 ${glass ? GLASS_CLASS : ''} ${className}`}>
+    <div data-rail className={`z-30 flex flex-col items-stretch gap-3 ${className}`}>
       {children}
     </div>
   );
 }
 
-export function RailButton({ label, icon: Icon, onClick, ariaLabel, buttonRef }) {
+/**
+ * `pressed` (facultatif) : bouton bascule (Favoritar) → `aria-pressed`. `iconClassName`
+ * colore l'icône (cœur rouge une fois favorite).
+ */
+export function RailButton({ label, icon: Icon, onClick, ariaLabel, buttonRef, pressed, iconClassName = '' }) {
   return (
-    <button ref={buttonRef} type="button" onClick={onClick} aria-label={ariaLabel} className={railClass}>
-      <Icon className={railIconClass} />
+    <button
+      ref={buttonRef}
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      aria-pressed={typeof pressed === 'boolean' ? pressed : undefined}
+      className={railClass}
+    >
+      <Icon className={iconClassName ? `${railIconClass} ${iconClassName}` : railIconClass} />
       <span aria-hidden="true" className={railLabelClass}>{label}</span>
     </button>
+  );
+}
+
+/** Favoritar / Favorita : premier élément de la colonne (feed et Catálogo), façon TikTok. */
+export function RailFavoriteButton({ song, isFavorite, onToggle }) {
+  if (!favoriteKey(song)) return null;
+  const title = song?.title || 'esta música';
+  return (
+    <RailButton
+      label={isFavorite ? 'Favorita' : 'Favoritar'}
+      icon={HeartFilled}
+      pressed={isFavorite}
+      iconClassName={isFavorite ? 'text-red-500' : 'text-white'}
+      onClick={() => onToggle?.(song)}
+      ariaLabel={isFavorite ? `Remover ${title} das favoritas` : `Adicionar ${title} às favoritas`}
+    />
   );
 }
 

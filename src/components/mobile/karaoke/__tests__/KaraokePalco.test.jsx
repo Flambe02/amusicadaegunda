@@ -18,6 +18,7 @@ const SONGS = [
 
 let reduceMotion = false;
 beforeEach(() => {
+  localStorage.clear();
   reduceMotion = false;
   window.matchMedia = vi.fn().mockImplementation((query) => ({
     matches: query.includes('reduce') ? reduceMotion : false, media: query,
@@ -173,5 +174,47 @@ describe('KaraokePalco', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Chanson da Semana' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Ver o clipe de Chanson da Semana' }));
     expect(lastPath).toBe('/?musica=semana');
+  });
+});
+
+describe('KaraokePalco — « Todas / ♥ Favoritas »', () => {
+  const filterGroup = () => document.querySelector('[data-palco-filter]');
+
+  it('no toggle without a favourite among the karaoke songs', () => {
+    localStorage.setItem('amds-favorites-v1', JSON.stringify(['999']));
+    renderPalco();
+    expect(filterGroup()).toBeNull();
+  });
+
+  it('filters the carousel to favourites, newest first, and back to all', () => {
+    localStorage.setItem('amds-favorites-v1', JSON.stringify(['4', '3']));
+    renderPalco();
+    expect(screen.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Favoritas' }));
+    expect(screen.getByRole('button', { name: 'Favoritas' })).toHaveAttribute('aria-pressed', 'true');
+    expect(cards()).toHaveLength(2);
+    expect(centerLabel()).toBe('Cantar Combo Master');
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima música' }));
+    expect(centerLabel()).toBe('Cantar Pix do Pão');
+    fireEvent.click(screen.getByRole('button', { name: 'Todas' }));
+    expect(cards()).toHaveLength(4);
+    expect(centerLabel()).toBe('Cantar Tá Chovendo de Novo');
+    // Toujours un seul jaune plein à l'écran : le micro.
+    expect(document.querySelectorAll('[data-palco] .bg-app-yellow')).toHaveLength(1);
+  });
+
+  it('no favourite left while filtering: a friendly message and a way back to « Todas »', async () => {
+    const { toggleFavorite } = await import('@/lib/favorites');
+    localStorage.setItem('amds-favorites-v1', JSON.stringify(['3']));
+    renderPalco();
+    fireEvent.click(screen.getByRole('button', { name: 'Favoritas' }));
+    expect(cards()).toHaveLength(1);
+    act(() => { toggleFavorite('3'); }); // retirée depuis un autre écran
+    expect(screen.getByText('Nenhuma favorita por aqui')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cantar' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Ver todas' }));
+    expect(screen.queryByText('Nenhuma favorita por aqui')).toBeNull();
+    expect(cards()).toHaveLength(4);
+    expect(filterGroup()).toBeNull(); // plus aucune favorite : plus de bascule
   });
 });

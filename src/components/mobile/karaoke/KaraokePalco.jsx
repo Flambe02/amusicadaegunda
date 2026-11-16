@@ -6,7 +6,8 @@ import TileImage from '@/components/mobile/search/TileImage';
 import { publishedNewestFirst } from '@/components/mobile/search/searchCatalog';
 import { getPublicSlug, monthYearLabel } from '@/components/mobile/feed/feedMedia';
 import { TEXT_SHADOW } from '@/components/mobile/feed/feedStyles';
-import { MicFilled } from '@/components/mobile/icons/FilledIcons';
+import { HeartFilled, MicFilled } from '@/components/mobile/icons/FilledIcons';
+import { useFavorites } from '@/hooks/useFavorites';
 import {
   CARD_MAX_H,
   CARD_MIN_H,
@@ -40,6 +41,9 @@ const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
  * karaokê indisponibles (panne, repli songs.json sans LRC) → état dégradé : la chanson
  * de la semaine seule au centre, « O karaokê volta já » à la place du micro. Jamais
  * d'écran vide.
+ *
+ * « Todas / ♥ Favoritas » : seulement si une chanson du karaokê est favorite sur
+ * l'appareil ; filtre le carrousel. Plus aucune favorite : message et retour à « Todas ».
  */
 export default function KaraokePalco({ songs = [], isLoading = false, unavailable = false, onSing }) {
   const reduceMotion = prefersReducedMotion();
@@ -58,11 +62,22 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
     return () => { alive = false; };
   }, [degraded, weekSong]);
 
-  const items = degraded ? (weekSong ? [weekSong] : []) : ordered;
+  const { isFavorite } = useFavorites();
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const favoriteItems = useMemo(() => ordered.filter((song) => isFavorite(song)), [ordered, isFavorite]);
+  const showFavoritesToggle = !degraded && (favoriteItems.length > 0 || onlyFavorites);
+  const favoritesEmpty = !degraded && onlyFavorites && favoriteItems.length === 0;
+  const items = degraded ? (weekSong ? [weekSong] : []) : onlyFavorites ? favoriteItems : ordered;
   const [index, setIndex] = useState(0);
   const safeIndex = Math.min(index, Math.max(items.length - 1, 0));
   const current = items[safeIndex] || null;
   const [announce, setAnnounce] = useState('');
+  const chooseFilter = (favoritesOnly) => {
+    if (favoritesOnly === onlyFavorites) return;
+    setOnlyFavorites(favoritesOnly);
+    setIndex(0); // le carrousel repart de la plus récente de la liste choisie
+    setAnnounce(favoritesOnly ? 'Mostrando só as favoritas' : 'Mostrando todas as músicas');
+  };
 
   const go = (target) => {
     if (target < 0 || target >= items.length || target === safeIndex) return;
@@ -188,6 +203,38 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
         </Link>
       </header>
 
+      {/* Filtre « Todas / ♥ Favoritas » (seulement avec au moins une favorite). */}
+      {showFavoritesToggle ? (
+        <div
+          role="group"
+          aria-label="Filtrar músicas"
+          data-palco-filter={onlyFavorites ? 'favoritas' : 'todas'}
+          className="mt-2 flex flex-shrink-0 gap-2 px-4"
+        >
+          <button
+            type="button"
+            onClick={() => chooseFilter(false)}
+            aria-pressed={!onlyFavorites}
+            className={`inline-flex h-8 touch-manipulation items-center rounded-full border px-3 text-xs font-bold active:opacity-70 ${
+              onlyFavorites ? 'border-white/25 text-white' : 'border-white bg-white text-black'
+            }`}
+          >
+            Todas
+          </button>
+          <button
+            type="button"
+            onClick={() => chooseFilter(true)}
+            aria-pressed={onlyFavorites}
+            className={`inline-flex h-8 touch-manipulation items-center gap-1.5 rounded-full border px-3 text-xs font-bold active:opacity-70 ${
+              onlyFavorites ? 'border-white bg-white text-black' : 'border-white/25 text-white'
+            }`}
+          >
+            <HeartFilled className="h-3.5 w-3.5 text-red-500" />
+            Favoritas
+          </button>
+        </div>
+      ) : null}
+
       {/* Carrousel 3D. */}
       <div
         ref={areaRef}
@@ -195,6 +242,20 @@ export default function KaraokePalco({ songs = [], isLoading = false, unavailabl
         data-layout={layoutMode}
         className={`relative flex min-h-0 flex-1 items-center justify-center ${compact ? 'mt-1' : 'mt-2'}`}
       >
+        {favoritesEmpty ? (
+          <div data-palco-empty className="absolute inset-0 z-20 flex flex-col items-center justify-center px-8 text-center">
+            <p className="text-lg font-extrabold">Nenhuma favorita por aqui</p>
+            <p className="mt-1 text-sm text-white/70">Toque no coração de uma música para guardá-la.</p>
+            <button
+              type="button"
+              onClick={() => chooseFilter(false)}
+              className="mt-4 inline-flex h-11 touch-manipulation items-center rounded-full border border-white/30 px-5 text-sm font-bold text-white active:bg-white/10"
+            >
+              Ver todas
+            </button>
+          </div>
+        ) : null}
+
         {/* Projecteur : cône jaune sur la carte centrale. */}
         {current ? (
           // Centré par ses bords, pas par une translation : l'animation d'oscillation

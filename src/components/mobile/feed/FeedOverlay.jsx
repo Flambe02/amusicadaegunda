@@ -6,8 +6,10 @@ import FeedStorySheet from './FeedStorySheet';
 import Scrubber from './Scrubber';
 import { FeedWaitEqualizer, FeedWaitLine } from './FeedWaitCue';
 import FeedKaraokeLine from './FeedKaraokeLine';
-import { Rail, RailButton, RailLink } from './FeedRail';
+import { Rail, RailButton, RailFavoriteButton, RailLink } from './FeedRail';
 import { useShareSong } from './useShareSong';
+import { useFavorites } from '@/hooks/useFavorites';
+import NotaDaSemana from '@/components/reactions/NotaDaSemana';
 import {
   HeadphonesFilled,
   LyricsSheetFilled,
@@ -35,8 +37,11 @@ const EASE_OUT = 'ease-[cubic-bezier(0.23,1,0.32,1)]';
  *
  * Aucun second mouvement ne concurrence la vidéo : pas d'avatar animé ni de bulle
  * (retirés après test sur iPhone, 2026-09-25).
+ *
+ * `weekSong` : cette diapositive est la chanson de la semaine (la première du feed,
+ * `Song.getCurrentLite()`) → pastilles « Nota da semana » au-dessus du titre.
  */
-export default function FeedOverlay({ song, player, karaokeMode = 'video', isFirst = true, onShowLyrics, onOuvir, onRequestSound }) {
+export default function FeedOverlay({ song, player, karaokeMode = 'video', isFirst = true, weekSong = false, onShowLyrics, onOuvir, onRequestSound }) {
   const slug = getPublicSlug(song);
   const canSing = isKaraokePublished(song) && Boolean(slug);
   const TitleTag = isFirst ? 'h1' : 'h2';
@@ -57,6 +62,7 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
   useEffect(() => { setStoryOpen(false); }, [song?.id, song?.title]);
 
   const { share, linkSheet } = useShareSong(song);
+  const favorites = useFavorites();
   // Une vidéo YouTube est (ou sera) affichée : ses calques d'interface sont à masquer.
   const hasVideo = player.phase !== 'none' && karaokeMode === 'video';
 
@@ -66,7 +72,7 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
           muet et « ⋮ » en haut, nom de la chaîne en bas, ~85 px des bords). La vidéo est
           une iframe fermée : on ne peut pas la retirer, seulement la recouvrir. Deux
           bandes floues et assombries, fondues dans l'image, sans zoom (décision du
-          2026-11-15). Les boutons de droite ont leur propre fond (Rail glass). */}
+          2026-11-15). La colonne de droite reste sans fond (choix de l'utilisateur). */}
       {hasVideo ? (
         <>
           <div
@@ -93,6 +99,9 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
         }`}
       >
         <FeedWaitEqualizer active={waiting} />
+        {/* Nota da semana : masquée (sans être démontée) quand le titre est compact — la
+            ligne de karaokê occupe alors cette place. Seuls ses boutons captent les taps. */}
+        {weekSong ? <NotaDaSemana song={song} variant="feed" className={compact ? 'hidden' : ''} /> : null}
         <TitleTag
           data-compact={compact ? 'true' : 'false'}
           className={`font-black tracking-tight text-white transition-[font-size,line-height] duration-300 ${EASE_OUT} motion-reduce:transition-none ${
@@ -130,9 +139,10 @@ export default function FeedOverlay({ song, player, karaokeMode = 'video', isFir
         </button>
       ) : null}
 
-      {/* Colonne droite, de haut en bas : Ouvir, Letra, História, Cantar, Compartilhar.
-          Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
-      <Rail glass={hasVideo} className="absolute bottom-6 right-1.5">
+      {/* Colonne droite, de haut en bas : Favoritar, Ouvir, Letra, História, Cantar,
+          Compartilhar. Façon TikTok : icônes pleines posées sur la vidéo, sans rond. */}
+      <Rail className="absolute bottom-6 right-1.5">
+        <RailFavoriteButton song={song} isFavorite={favorites.isFavorite(song)} onToggle={favorites.toggle} />
         {/* Ouvir : la chanson complète dans le Catálogo (calque), son lancé dans ce geste.
             Seulement si la chanson a un lien youtube_url lisible (onOuvir fourni). */}
         {onOuvir ? (

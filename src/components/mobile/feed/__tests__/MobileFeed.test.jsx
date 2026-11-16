@@ -758,7 +758,7 @@ describe('MobileFeed — navigation entre les semaines (étape 4b)', () => {
     it('rail starts with Ouvir only when the song has a youtube_url, and never shows Clipe', async () => {
       const { rerender } = await loadedWith({ onOpenOuvir: vi.fn() });
       const rail = document.querySelector('section[data-feed-index] [data-rail]');
-      expect([...rail.children].map((el) => el.textContent)).toEqual(['Ouvir', 'Letra', 'Compartilhar']);
+      expect([...rail.children].map((el) => el.textContent)).toEqual(['Favoritar', 'Ouvir', 'Letra', 'Compartilhar']);
       rerender(renderWith({ songs: [{ ...WEEK, youtube_url: '' }], onOpenOuvir: vi.fn() }));
       expect(screen.queryByRole('button', { name: /ouvir a música completa/i })).toBeNull();
     });

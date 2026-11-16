@@ -1,3 +1,4 @@
+import { installInviteAllowed } from '@/lib/installInvite';
 // Utilitaires pour la détection PWA et iOS
 export const detectIOS = () => {
   const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -23,12 +24,19 @@ export const detectMobile = () => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
+// Même règle que la bannière « Instalar o app » (src/lib/installInvite.js) : jamais à
+// la première visite, silence de 30 jours après « Fechar » (audit UX du 2026-11-15).
 export const shouldShowTutorial = () => {
   const ios = detectIOS();
   const standalone = detectStandalone();
-  const tutorialSeen = localStorage.getItem('ios-tutorial-seen');
-  
-  return ios && !standalone && !tutorialSeen;
+  let tutorialSeen = null;
+  try {
+    tutorialSeen = localStorage.getItem('ios-tutorial-seen');
+  } catch {
+    /* stockage indisponible */
+  }
+
+  return ios && !standalone && !tutorialSeen && installInviteAllowed();
 };
 
 export const getInstallPrompt = () => {

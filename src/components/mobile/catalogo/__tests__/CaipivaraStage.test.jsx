@@ -312,13 +312,13 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(external.unmute).toHaveBeenCalled();
   });
 
-  it('right rail like the feed: Letra, História, Cantar (if published), Compartilhar, Clipe → feed', () => {
+  it('right rail like the feed: Favoritar, Letra, História, Cantar (if published), Compartilhar, Clipe → feed', () => {
     const karaoke = { ...SONGS[0], lrc_content: '[00:01.00]Chove', karaoke_published: true };
     renderStage([karaoke]);
     expect(document.querySelector('[data-rail]')).toBeNull(); // rien avant le premier tap
     fireEvent.click(caipivara());
     const rail = document.querySelector('[data-rail]');
-    expect([...rail.children].map((el) => el.textContent)).toEqual(['Letra', 'História', 'Cantar', 'Compartilhar', 'Clipe']);
+    expect([...rail.children].map((el) => el.textContent)).toEqual(['Favoritar', 'Letra', 'História', 'Cantar', 'Compartilhar', 'Clipe']);
     expect(screen.getByRole('link', { name: /ver o clipe/i })).toHaveAttribute('href', '/?musica=ta-chovendo-de-novo');
     expect(screen.getByRole('link', { name: /cantar/i })).toHaveAttribute('href', '/karaoke?musica=ta-chovendo-de-novo');
     // Plus de liens « História » / « Ver o clipe » en bas de l'écran.
@@ -394,5 +394,47 @@ describe('CaipivaraStage — la musique se lance au tap', () => {
     expect(vignette.style.backgroundImage).toMatch(/radial-gradient/);
     expect(container.innerHTML).not.toMatch(/mask-image/i);
     expect(container.textContent).not.toMatch(/\d+\s*(músicas|paródias|canções)/i);
+  });
+});
+
+describe('CaipivaraStage — Favoritar et « ♥ Só favoritas »', () => {
+  it('the rail starts with the heart for the song playing; it saves the song on the device', () => {
+    renderStage([SONGS[0]]);
+    fireEvent.click(caipivara());
+    const heart = document.querySelector('[data-rail]').children[0];
+    expect(heart).toHaveAttribute('aria-label', 'Adicionar Tá Chovendo de Novo às favoritas');
+    expect(heart).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(heart);
+    expect(document.querySelector('[data-rail]').children[0]).toHaveAttribute('aria-pressed', 'true');
+    expect(document.querySelector('[data-rail]').children[0].textContent).toBe('Favorita');
+    expect(JSON.parse(localStorage.getItem('amds-favorites-v1'))).toEqual(['1']);
+  });
+
+  it('no « Só favoritas » without a playable favourite in the catalogue', () => {
+    localStorage.setItem('amds-favorites-v1', JSON.stringify(['4', '5'])); // brouillon, sans lien
+    renderStage();
+    expect(screen.queryByRole('button', { name: /só favoritas/i })).toBeNull();
+  });
+
+  it('with the filter on, taps draw only among favourites — the first tap still just resumes the muted pre-drawn song (iOS)', () => {
+    localStorage.setItem('amds-favorites-v1', JSON.stringify(['3']));
+    renderStage();
+    const toggle = screen.getByRole('button', { name: /só favoritas/i });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    // La chanson d'avance est retirée parmi les favorites, hors du geste.
+    expect(songOfVideo(lastVideoId()).id).toBe(3);
+
+    fireEvent.click(caipivara());
+    expect(player.loadNow).not.toHaveBeenCalled(); // reprise + son, dans le geste
+    expect(player.play).toHaveBeenCalled();
+    expect(player.unmute).toHaveBeenCalled();
+    expect(screen.getByText('Combo Master')).toBeInTheDocument();
+
+    // « Outra » : toujours parmi les favorites (une seule ici).
+    act(() => { vi.advanceTimersByTime(8000); });
+    fireEvent.click(screen.getByRole('button', { name: 'Outra música' }));
+    expect(player.loadNow).toHaveBeenLastCalledWith(getSongAudioId(SONGS[2]));
   });
 });

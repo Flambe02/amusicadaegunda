@@ -49,6 +49,8 @@ export default function KaraokePage() {
     setTheme,
     setDifficulty,
     setSort,
+    setFavoritesOnly,
+    favoriteCount,
     clearFilters,
     pickSurprise,
   } = useKaraokeCatalog();
@@ -105,6 +107,11 @@ export default function KaraokePage() {
     setDifficulty(value);
     trackEvent('karaoke_difficulty_filter_selected', { difficulty: value || 'todas' });
   }, [setDifficulty]);
+
+  const handleFavoritesChange = useCallback((value) => {
+    setFavoritesOnly(value);
+    trackEvent('karaoke_favorites_filter_selected', { enabled: Boolean(value) });
+  }, [setFavoritesOnly]);
 
   const handleSortChange = useCallback((value) => {
     setSort(value);
@@ -224,6 +231,8 @@ export default function KaraokePage() {
                 filters={filters}
                 hasActiveFilters={hasActiveFilters}
                 onDifficultyChange={handleDifficultyChange}
+                showFavorites={favoriteCount > 0}
+                onFavoritesChange={handleFavoritesChange}
                 onThemeChange={handleThemeChange}
                 onSortChange={handleSortChange}
                 onClear={clearFilters}

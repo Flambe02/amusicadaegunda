@@ -2,6 +2,7 @@ import { Mic } from 'lucide-react';
 import { themeLabel, getSongCover } from '@/lib/karaokeCatalog';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 import KaraokeDifficultyBadge from './KaraokeDifficultyBadge';
+import FavoriteHeartButton from '@/components/favorites/FavoriteHeartButton';
 
 /**
  * Carta vertical do redesign 2026-07-30 : capa grande, tema + duração (se existir)
@@ -10,6 +11,8 @@ import KaraokeDifficultyBadge from './KaraokeDifficultyBadge';
  * Sem descrição, sem data de lançamento, sem múltiplos botões — só o essencial para
  * decidir e cantar. A carta INTEIRA é um único <button> (não um botão aninhado
  * noutro botão) : « Cantar » é um <span> visual, não um elemento interativo próprio.
+ * O coração (favorita) é um botão IRMÃO, posicionado por cima da capa — nunca dentro
+ * do botão da carta.
  */
 export default function KaraokeSongCard({ song, onSelect }) {
   const theme = themeLabel(song.category);
@@ -21,46 +24,49 @@ export default function KaraokeSongCard({ song, onSelect }) {
     : null;
 
   return (
-    <button
-      type="button"
-      className="karaoke-song-card karaoke-card"
-      onClick={() => onSelect(song)}
-      aria-label={`Cantar ${song.title}`}
-    >
-      <span className="karaoke-song-cover">
-        <img
-          src={cover}
-          alt={`Capa de ${song.title}`}
-          loading="lazy"
-          decoding="async"
-          width="200"
-          height="200"
-          onError={(e) => {
-            if (e.currentTarget.src !== window.location.origin + BRAND_SQUARE_MEDIUM) {
-              e.currentTarget.src = BRAND_SQUARE_MEDIUM;
-            }
-          }}
-        />
-      </span>
+    <div className="karaoke-song-card-wrap">
+      <button
+        type="button"
+        className="karaoke-song-card karaoke-card"
+        onClick={() => onSelect(song)}
+        aria-label={`Cantar ${song.title}`}
+      >
+        <span className="karaoke-song-cover">
+          <img
+            src={cover}
+            alt={`Capa de ${song.title}`}
+            loading="lazy"
+            decoding="async"
+            width="200"
+            height="200"
+            onError={(e) => {
+              if (e.currentTarget.src !== window.location.origin + BRAND_SQUARE_MEDIUM) {
+                e.currentTarget.src = BRAND_SQUARE_MEDIUM;
+              }
+            }}
+          />
+        </span>
 
-      <span className="karaoke-song-body">
-        {(theme || durationLabel) && (
-          <span className="karaoke-song-meta">
-            {theme && <span className="karaoke-song-theme">{theme}</span>}
-            {durationLabel && <span className="karaoke-song-duration">{durationLabel}</span>}
-          </span>
-        )}
+        <span className="karaoke-song-body">
+          {(theme || durationLabel) && (
+            <span className="karaoke-song-meta">
+              {theme && <span className="karaoke-song-theme">{theme}</span>}
+              {durationLabel && <span className="karaoke-song-duration">{durationLabel}</span>}
+            </span>
+          )}
 
-        <span className="karaoke-song-title">{song.title}</span>
-        {song.artist && <span className="karaoke-song-artist">{song.artist}</span>}
+          <span className="karaoke-song-title">{song.title}</span>
+          {song.artist && <span className="karaoke-song-artist">{song.artist}</span>}
 
-        <span className="karaoke-song-footer">
-          <KaraokeDifficultyBadge song={song} />
-          <span className="karaoke-song-cta" aria-hidden="true">
-            <Mic className="h-3.5 w-3.5" /> Cantar
+          <span className="karaoke-song-footer">
+            <KaraokeDifficultyBadge song={song} />
+            <span className="karaoke-song-cta" aria-hidden="true">
+              <Mic className="h-3.5 w-3.5" /> Cantar
+            </span>
           </span>
         </span>
-      </span>
-    </button>
+      </button>
+      <FavoriteHeartButton song={song} className="karaoke-song-fav absolute right-[1.1rem] top-[1.1rem] z-10" />
+    </div>
   );
 }

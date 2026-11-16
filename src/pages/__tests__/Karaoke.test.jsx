@@ -253,3 +253,48 @@ describe('KaraokePage — le point de rupture 768 px est suivi en direct', () =>
     }
   });
 });
+
+describe('KaraokePage — « ♥ Minhas favoritas » (desktop)', () => {
+  it('no favourites chip until a karaoke song is a favourite on this device', async () => {
+    renderPage();
+    await screen.findByText('Camarada Quer CPF');
+    expect(screen.queryByRole('button', { name: /minhas favoritas/i })).toBeNull();
+  });
+
+  it('a heart on each card (its own button, not inside the card) adds the song; the chip then filters to favourites', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('Camarada Quer CPF');
+    const heart = screen.getByRole('button', { name: 'Adicionar Independência ou Gol às favoritas' });
+    expect(heart.closest('.karaoke-song-card')).toBeNull(); // jamais un bouton dans le bouton
+    expect(heart).toHaveAttribute('aria-pressed', 'false');
+    await user.click(heart);
+    expect(screen.queryByTestId('karaoke-player')).toBeNull(); // le cœur n'ouvre pas le lecteur
+    expect(screen.getByRole('button', { name: 'Remover Independência ou Gol das favoritas' })).toHaveAttribute('aria-pressed', 'true');
+
+    const chip = screen.getByRole('button', { name: /minhas favoritas/i });
+    expect(chip.className).toContain('karaoke-chip');
+    expect(chip).toHaveAttribute('aria-pressed', 'false');
+    await user.click(chip);
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('Independência ou Gol')).toBeInTheDocument();
+    expect(screen.queryByText('Camarada Quer CPF')).not.toBeInTheDocument();
+    expect(screen.getByText(/1 música pronta para cantar/i)).toBeInTheDocument();
+
+    // « Limpar filtros » retire aussi le filtre des favorites.
+    await user.click(screen.getByRole('button', { name: /limpar filtros/i }));
+    expect(screen.getByText('Camarada Quer CPF')).toBeInTheDocument();
+  });
+
+  it('favourites saved earlier show the chip directly; combined with the difficulty filter', async () => {
+    localStorage.setItem('amds-favorites-v1', JSON.stringify(['1', '3']));
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('Camarada Quer CPF');
+    await user.click(screen.getByRole('button', { name: /minhas favoritas/i }));
+    expect(screen.getByText(/2 músicas prontas para cantar/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Difícil' }));
+    expect(screen.getByText('Messi é o Melhor')).toBeInTheDocument();
+    expect(screen.queryByText('Camarada Quer CPF')).not.toBeInTheDocument();
+  });
+});

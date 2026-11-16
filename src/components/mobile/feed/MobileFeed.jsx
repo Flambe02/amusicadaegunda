@@ -547,6 +547,8 @@ export default function MobileFeed({
             player={player}
             karaokeMode={ouvirOpen ? 'none' : slideMode}
             isFirst={safeIndex === 0}
+            // La première diapositive est la chanson de la semaine (Home la place en tête).
+            weekSong={safeIndex === 0}
             onShowLyrics={() => onShowLyrics?.(current)}
             onRequestSound={requestSound}
             onOuvir={canOuvir ? openOuvir : undefined}
@@ -617,10 +619,14 @@ function NeighbourSlide({ song, buildArtwork, position }) {
   );
 }
 
-/** Indice discret, affiché tant que l'utilisateur n'a jamais changé de semaine. */
+/**
+ * Indice discret, affiché tant que l'utilisateur n'a jamais changé de semaine.
+ * En haut, sous le ruban de la semaine : le bas de la première diapositive porte déjà
+ * la « Nota da semana » et le titre (chevauchement constaté le 2026-11-15).
+ */
 function SwipeHint() {
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-28 z-20 flex justify-center">
+    <div className="pointer-events-none absolute inset-x-0 top-[calc(max(env(safe-area-inset-top),0.35rem)+6.5rem)] z-20 flex justify-center">
       <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-semibold text-white/90 backdrop-blur-md">
         <ChevronUp className="h-4 w-4" aria-hidden="true" />
         Deslize para a semana anterior

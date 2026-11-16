@@ -1,4 +1,4 @@
-import { Tag, Clock } from 'lucide-react';
+import { Tag, Clock, Heart } from 'lucide-react';
 import KaraokeSelect from './KaraokeSelect';
 import { SORT_OPTIONS } from '@/lib/karaokeCatalog';
 import { DIFFICULTY_FILTER_OPTIONS } from '@/lib/karaokeDifficulty';
@@ -13,12 +13,16 @@ import { DIFFICULTY_FILTER_OPTIONS } from '@/lib/karaokeDifficulty';
  *     plana) — ver `karaokeCatalog.js`.
  *   - o contador de resultados vive agora numa única linha acima da grade
  *     (`Karaoke.jsx`), não aqui, para não duplicar a contagem.
+ *   - « ♥ Minhas favoritas » : mesma puce, à part, dès qu'une chanson est favorite sur
+ *     l'appareil (`showFavorites`) — ou tant que le filtre reste actif.
  */
 export default function KaraokeFilters({
   themes,
   filters,
   hasActiveFilters,
   onDifficultyChange,
+  showFavorites = false,
+  onFavoritesChange,
   onThemeChange,
   onSortChange,
   onClear,
@@ -40,6 +44,16 @@ export default function KaraokeFilters({
             </button>
           );
         })}
+        {showFavorites || filters.favoritesOnly ? (
+          <button
+            type="button"
+            className={`karaoke-chip karaoke-chip-favorites${filters.favoritesOnly ? ' is-active' : ''}`}
+            aria-pressed={Boolean(filters.favoritesOnly)}
+            onClick={() => onFavoritesChange?.(!filters.favoritesOnly)}
+          >
+            <Heart className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true" /> Minhas favoritas
+          </button>
+        ) : null}
       </div>
 
       <div className="karaoke-filters-row">

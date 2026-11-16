@@ -189,6 +189,8 @@
 }
 .karaoke-chip:hover { color: var(--karaoke-text-primary); border-color: rgba(255, 255, 255, 0.2); }
 .karaoke-chip:focus-visible { outline: 3px solid var(--karaoke-yellow); outline-offset: 2px; }
+.karaoke-chip-favorites { display: inline-flex; align-items: center; gap: 0.4rem; }
+.karaoke-chip-favorites svg { color: #ef4444; }
 .karaoke-chip.is-active {
   background: var(--karaoke-yellow-soft); border-color: var(--karaoke-yellow-border);
   color: var(--karaoke-yellow);
@@ -270,6 +272,9 @@
   transition: border-color 0.18s, transform 0.15s;
 }
 .karaoke-song-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+/* Carta + coração (favorita) : o coração é um botão irmão, por cima da capa. */
+.karaoke-song-card-wrap { position: relative; display: flex; }
+.karaoke-song-card-wrap > .karaoke-song-card { flex: 1; }
 .karaoke-song-card:focus-visible { outline: 3px solid var(--karaoke-yellow); outline-offset: 2px; }
 .karaoke-song-cover {
   display: block; width: 100%; aspect-ratio: 1 / 1; margin-bottom: 0.65rem;

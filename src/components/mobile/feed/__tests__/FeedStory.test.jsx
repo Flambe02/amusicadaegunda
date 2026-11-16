@@ -29,6 +29,7 @@ function renderOverlay(props = {}) {
 }
 
 beforeEach(() => {
+  localStorage.clear();
   window.matchMedia = vi.fn().mockImplementation((query) => ({
     matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn(),
     addListener: vi.fn(), removeListener: vi.fn(),
@@ -39,10 +40,11 @@ const railLabels = (container) =>
   [...container.querySelectorAll('[data-rail] > a, [data-rail] > button')].map((el) => el.getAttribute('aria-label'));
 
 describe('Colonne droite — Som et História', () => {
-  it('orders the rail: Letra, História, Cantar, Compartilhar — Som is no longer in it (top right)', () => {
+  it('orders the rail: Favoritar, Letra, História, Cantar, Compartilhar — Som is no longer in it (top right)', () => {
     const { container } = renderOverlay();
     expect(screen.getByRole('button', { name: 'Silenciar' }).closest('[data-rail]')).toBeNull();
     expect(railLabels(container)).toEqual([
+      'Adicionar Tá Chovendo de Novo às favoritas',
       'Ver a letra de Tá Chovendo de Novo',
       'Ler a história de Tá Chovendo de Novo',
       'Cantar Tá Chovendo de Novo no karaokê',
@@ -53,7 +55,7 @@ describe('Colonne droite — Som et História', () => {
   it('TikTok style: filled 32 px icons straight on the video (no dark disc), 12 px semibold labels, ≥ 44 px targets', () => {
     const { container } = renderOverlay();
     const items = container.querySelectorAll('[data-rail] > a, [data-rail] > button');
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(5);
     for (const item of items) {
       expect(item.className).toMatch(/min-h-\[44px\]/);
       expect(item.className).toMatch(/min-w-\[56px\]/);
@@ -70,7 +72,8 @@ describe('Colonne droite — Som et História', () => {
 
   it('sound off: no « Silenciar »; the crossed-out speaker (Ativar o som) sits top right, outside the rail', () => {
     const { container } = renderOverlay({ player: muted });
-    expect(railLabels(container)[0]).toBe('Ver a letra de Tá Chovendo de Novo');
+    expect(railLabels(container)[0]).toBe('Adicionar Tá Chovendo de Novo às favoritas');
+    expect(railLabels(container)[1]).toBe('Ver a letra de Tá Chovendo de Novo');
     expect(screen.queryByRole('button', { name: 'Silenciar' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Ativar o som' }).closest('[data-rail]')).toBeNull();
   });

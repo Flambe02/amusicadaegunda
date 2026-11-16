@@ -77,6 +77,30 @@ export function ShareArrowFilled(props) {
   );
 }
 
+/** Favoritar : cœur plein (blanc par défaut, rouge une fois favorite — couleur via la classe). */
+export function HeartFilled(props) {
+  return (
+    <FilledIcon {...props}>
+      <path d="M12 20.6c-.3 0-.6-.1-.8-.3C5.6 15.6 2.5 12.7 2.5 8.9 2.5 6 4.7 3.8 7.5 3.8c1.8 0 3.4.9 4.5 2.3 1.1-1.4 2.7-2.3 4.5-2.3 2.8 0 5 2.2 5 5.1 0 3.8-3.1 6.7-8.7 11.4-.2.2-.5.3-.8.3Z" />
+    </FilledIcon>
+  );
+}
+
+/** Favoritar (contour) : le même cœur au trait, pour les fonds clairs ou les listes. */
+export function HeartOutline(props) {
+  return (
+    <FilledIcon {...props}>
+      <path
+        d="M12 19.4C6.6 14.9 3.7 12.3 3.7 8.9c0-2.2 1.7-3.9 3.8-3.9 1.5 0 2.9.9 3.6 2.2l.9 1.6.9-1.6c.7-1.3 2.1-2.2 3.6-2.2 2.1 0 3.8 1.7 3.8 3.9 0 3.4-2.9 6-8.3 10.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </FilledIcon>
+  );
+}
+
 /** Karaokê / Cantar : micro plein (capsule, pied et socle). */
 export function MicFilled(props) {
   return (

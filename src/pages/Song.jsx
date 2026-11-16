@@ -29,6 +29,9 @@ import { extractYouTubeId, getYouTubeEmbedInfo, getYouTubeThumbnailUrl, titleToS
 import { saveLastSongSnapshot } from '@/lib/offlineSongStore';
 import { BRAND_SQUARE_MEDIUM } from '@/lib/imageAssets';
 import { isKaraokePublished, resolveLyricsText } from '@/lib/lrc';
+import { useIsWeekSong } from '@/hooks/useIsWeekSong';
+import FavoriteHeartButton from '@/components/favorites/FavoriteHeartButton';
+import NotaDaSemana from '@/components/reactions/NotaDaSemana';
 
 const CATEGORY_LABELS = SONG_CATEGORY_LABELS;
 
@@ -123,6 +126,8 @@ export default function SongPage() {
   const shouldNoindex = !isLoading && errorType === 'invalid_slug';
   // Balises et JSON-LD : même définition que la fiche de l'interface grand écran.
   const { normalizedUrl } = useSongSEO({ song, slug, noindex: shouldNoindex });
+  // « Nota da semana » : seulement sur la chanson de la semaine (Song.getCurrentLite).
+  const isWeekSong = useIsWeekSong(song);
 
   // Player controls:
   // - yellow button/audio uses youtube_url first (YouTube Music audio/playlist)
@@ -394,9 +399,12 @@ export default function SongPage() {
             <button type="button" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white/78" aria-label="Voltar">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white/78" aria-label="Compartilhar">
-              <Share2 className="h-5 w-5" />
-            </a>
+            <div className="flex items-center gap-2">
+              <FavoriteHeartButton song={song} variant="round" />
+              <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white/78" aria-label="Compartilhar">
+                <Share2 className="h-5 w-5" />
+              </a>
+            </div>
           </div>
 
           <div className="relative overflow-hidden rounded-[18px] border border-white/10 bg-black shadow-[0_22px_60px_rgba(0,0,0,0.48)]">
@@ -467,6 +475,8 @@ export default function SongPage() {
               </p>
             ) : null}
           </div>
+
+          {isWeekSong ? <NotaDaSemana song={song} className="mt-3" /> : null}
 
           <div className="mt-3">
             <p className="mb-2 text-xs font-semibold text-white/42">Ouvir em</p>
@@ -847,9 +857,9 @@ export default function SongPage() {
                 </div>
               )}
 
-              {/* Play + Karaoke buttons */}
-              {hasVideo && (
-                <div className="flex flex-wrap items-center gap-3 pt-1">
+              {/* Play + Karaoke + Favoritar buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                {hasVideo && (
                   <button
                     onClick={handlePlayerPlay}
                     className="inline-flex items-center gap-2.5 rounded-full bg-[#FDE047] px-6 py-3 text-sm font-bold text-black transition hover:bg-[#fde047]/90"
@@ -858,17 +868,20 @@ export default function SongPage() {
                     {playerBarPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current" />}
                     {playerBarPlaying ? 'Pausar' : 'Ouvir agora'}
                   </button>
-                  {hasKaraoke && (
-                    <button
-                      onClick={() => { stopPlayerBar(); setIsKaraokeOpen(true); }}
-                      className="inline-flex items-center gap-2.5 rounded-full border border-app-yellow/40 bg-app-yellow/10 px-6 py-3 text-sm font-bold text-app-yellow transition hover:bg-app-yellow/20"
-                      aria-label="Abrir karaokê"
-                    >
-                      <Mic className="h-4 w-4" /> Cantar (Karaokê)
-                    </button>
-                  )}
-                </div>
-              )}
+                )}
+                {hasVideo && hasKaraoke && (
+                  <button
+                    onClick={() => { stopPlayerBar(); setIsKaraokeOpen(true); }}
+                    className="inline-flex items-center gap-2.5 rounded-full border border-app-yellow/40 bg-app-yellow/10 px-6 py-3 text-sm font-bold text-app-yellow transition hover:bg-app-yellow/20"
+                    aria-label="Abrir karaokê"
+                  >
+                    <Mic className="h-4 w-4" /> Cantar (Karaokê)
+                  </button>
+                )}
+                <FavoriteHeartButton song={song} variant="pill" className="px-6 py-3" />
+              </div>
+
+              {isWeekSong ? <NotaDaSemana song={song} className="max-w-xl" /> : null}
             </div>
 
             {/* ── Right column: Video ── */}

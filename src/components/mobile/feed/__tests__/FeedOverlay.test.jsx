@@ -13,6 +13,7 @@ const LRC = '[00:01.00]Olá\n[00:03.00]Mundo';
 // Lundi 21/09/2026 ; « maintenant » = jeudi 24/09/2026 midi, heure de São Paulo.
 const NOW = new Date('2026-09-24T15:00:00Z');
 const SONG = {
+  id: 7,
   title: 'Tá Chovendo de Novo',
   slug: 'ta-chovendo-de-novo',
   release_date: '2026-09-21',
@@ -35,6 +36,7 @@ function renderOverlay(props = {}) {
 }
 
 beforeEach(() => {
+  localStorage.clear();
   vi.useFakeTimers({ shouldAdvanceTime: true, now: NOW });
   toast.mockClear();
   window.matchMedia = vi.fn().mockImplementation((query) => ({
@@ -189,17 +191,15 @@ describe('FeedOverlay (étape 4)', () => {
     expect(letra.querySelector('span[aria-hidden]:last-child').className).toContain('[text-shadow:');
   });
 
-  it('hides the YouTube Shorts UI without zoom: glass rail + top/bottom masks, only over a video', () => {
+  it('hides the YouTube Shorts UI without zoom: top/bottom masks only over a video, rail with no background', () => {
     const { container, unmount } = renderOverlay();
-    expect(container.querySelector('[data-rail]')).toHaveAttribute('data-rail-glass', 'true');
-    expect(container.querySelector('[data-rail]').className).toContain('backdrop-blur');
+    expect(container.querySelector('[data-rail]').className).not.toMatch(/backdrop-blur|bg-black/);
     expect(container.querySelector('[data-yt-mask="top"]')).not.toBeNull();
     expect(container.querySelector('[data-yt-mask="bottom"]')).not.toBeNull();
     unmount();
 
     // Pas de Short (scène de la Caipivara) : rien à masquer.
     const { container: noVideo } = renderOverlay({ player: { ...idlePlayer, phase: 'none' } });
-    expect(noVideo.querySelector('[data-rail]')).not.toHaveAttribute('data-rail-glass');
     expect(noVideo.querySelector('[data-yt-mask]')).toBeNull();
   });
 
@@ -213,7 +213,7 @@ describe('FeedOverlay (étape 4)', () => {
     expect(som.className).toMatch(/top-\[calc\(max\(env\(safe-area-inset-top\)/);
     fireEvent.click(som);
     expect(mute).toHaveBeenCalledTimes(1);
-    expect([...document.querySelector('[data-rail]').children].map((el) => el.textContent)).toEqual(['Letra', 'Cantar', 'Compartilhar']);
+    expect([...document.querySelector('[data-rail]').children].map((el) => el.textContent)).toEqual(['Favoritar', 'Letra', 'Cantar', 'Compartilhar']);
     unmount();
     renderOverlay(); // son coupé : haut-parleur barré à la même place
     expect(screen.queryByRole('button', { name: 'Silenciar' })).toBeNull();
@@ -223,6 +223,48 @@ describe('FeedOverlay (étape 4)', () => {
   it('never writes a news headline line (no manchete source yet)', () => {
     renderOverlay({ song: { ...SONG, subtitle: 'O mês já virou o setembro mais chuvoso' } });
     expect(screen.queryByText(/setembro mais chuvoso/)).toBeNull();
+  });
+});
+
+describe('FeedOverlay — Favoritar (premier élément de la colonne)', () => {
+  const FAV_SONG = { ...SONG, id: 42 };
+
+  it('the heart is the first rail item: white « Favoritar », then red « Favorita » (aria-pressed), saved on the device', () => {
+    const gtag = vi.fn();
+    window.gtag = gtag;
+    renderOverlay({ song: FAV_SONG });
+    const rail = document.querySelector('[data-rail]');
+    const heart = rail.children[0];
+    expect(heart).toBe(screen.getByRole('button', { name: 'Adicionar Tá Chovendo de Novo às favoritas' }));
+    expect(heart).toHaveAttribute('aria-pressed', 'false');
+    expect(heart.textContent).toBe('Favoritar');
+    expect(heart.querySelector('svg').getAttribute('class')).toContain('text-white');
+
+    fireEvent.click(heart);
+    const on = screen.getByRole('button', { name: 'Remover Tá Chovendo de Novo das favoritas' });
+    expect(on).toBe(rail.children[0]);
+    expect(on).toHaveAttribute('aria-pressed', 'true');
+    expect(on.textContent).toBe('Favorita');
+    expect(on.querySelector('svg').getAttribute('class')).toContain('text-red-500');
+    expect(JSON.parse(localStorage.getItem('amds-favorites-v1'))).toEqual(['42']);
+    expect(gtag).toHaveBeenCalledWith('event', 'favorite_add', { item_id: 'ta-chovendo-de-novo' });
+
+    fireEvent.click(on);
+    expect(rail.children[0]).toHaveAttribute('aria-pressed', 'false');
+    expect(gtag).toHaveBeenLastCalledWith('event', 'favorite_remove', { item_id: 'ta-chovendo-de-novo' });
+    delete window.gtag;
+  });
+
+  it('the rail keeps no background (no blur, no dark disc) with the heart', () => {
+    renderOverlay({ song: FAV_SONG });
+    const rail = document.querySelector('[data-rail]');
+    expect(rail.className).not.toMatch(/backdrop-blur|bg-black/);
+    expect(rail.querySelector('[class*="bg-black"], [class*="rounded-full"]')).toBeNull();
+  });
+
+  it('no « Nota da semana » on a slide that is not the song of the week', () => {
+    renderOverlay({ song: FAV_SONG });
+    expect(document.querySelector('[data-nota-semana]')).toBeNull();
   });
 });
 

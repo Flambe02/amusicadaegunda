@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Song } from '@/api/entities';
 import { isKaraokePublished } from '@/lib/lrc';
+import { useFavorites } from '@/hooks/useFavorites';
 import {
   buildSearchIndex,
   deriveThemes,
@@ -29,14 +30,16 @@ function writeRecent(ids) {
   }
 }
 
-const DEFAULT_FILTERS = { query: '', theme: null, difficulty: null, sort: 'newest' };
+const DEFAULT_FILTERS = { query: '', theme: null, difficulty: null, sort: 'newest', favoritesOnly: false };
 
 /**
  * Contrôleur d'état partagé du catalogue Karaokê (mobile + desktop).
  *
  * - charge les chansons éligibles (lrc_content), les indexe pour la recherche ;
  * - expose filtres (query/theme/difficulty/sort) + dérivés (thèmes, résultats) ;
- * - fournit un tirage aléatoire respectant les filtres actifs et l'anti-répétition.
+ * - fournit un tirage aléatoire respectant les filtres actifs et l'anti-répétition ;
+ * - « ♥ Minhas favoritas » (`favoritesOnly`) : seulement les favorites de l'appareil
+ *   (src/lib/favorites.js), combinable avec les autres filtres.
  *
  * Le regroupement/filtre par MOIS a été retiré avec le redesign (grille plate, plus
  * de sections mensuelles) — voir `karaokeCatalog.js`. La recherche reste capable de
@@ -51,6 +54,7 @@ export function useKaraokeCatalog() {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const recentRef = useRef(readRecent());
+  const { isFavorite } = useFavorites();
 
   const load = useCallback(async () => {
     setIsLoading(true);
@@ -94,19 +98,23 @@ export function useKaraokeCatalog() {
   const themes = useMemo(() => deriveThemes(songs), [songs]);
 
   // Résultats filtrés + triés (une seule passe mémoïsée).
-  const results = useMemo(
-    () => filterAndSortSongs(songs, filters),
-    [songs, filters],
-  );
+  const results = useMemo(() => {
+    const filtered = filterAndSortSongs(songs, filters);
+    return filters.favoritesOnly ? filtered.filter((song) => isFavorite(song)) : filtered;
+  }, [songs, filters, isFavorite]);
+
+  // Favorites présentes dans le catalogue karaokê (la puce n'apparaît qu'à partir d'une).
+  const favoriteCount = useMemo(() => songs.filter((song) => isFavorite(song)).length, [songs, isFavorite]);
 
   const hasActiveFilters =
-    !!filters.query.trim() || filters.theme !== null || filters.difficulty !== null;
+    !!filters.query.trim() || filters.theme !== null || filters.difficulty !== null || filters.favoritesOnly;
 
   // ── Mutateurs de filtres ──
   const setQuery = useCallback((query) => setFilters((f) => ({ ...f, query })), []);
   const setTheme = useCallback((theme) => setFilters((f) => ({ ...f, theme })), []);
   const setDifficulty = useCallback((difficulty) => setFilters((f) => ({ ...f, difficulty })), []);
   const setSort = useCallback((sort) => setFilters((f) => ({ ...f, sort })), []);
+  const setFavoritesOnly = useCallback((favoritesOnly) => setFilters((f) => ({ ...f, favoritesOnly: Boolean(favoritesOnly) })), []);
   const clearFilters = useCallback(
     () => setFilters((f) => ({ ...DEFAULT_FILTERS, sort: f.sort })),
     [],
@@ -132,6 +140,7 @@ export function useKaraokeCatalog() {
     songs,
     results,
     totalEligible: songs.length,
+    favoriteCount,
     isLoading,
     error,
     // dérivés pour l'UI
@@ -144,6 +153,7 @@ export function useKaraokeCatalog() {
     setTheme,
     setDifficulty,
     setSort,
+    setFavoritesOnly,
     clearFilters,
     pickSurprise,
     reload: load,

@@ -3,7 +3,7 @@ import { Pause, Play, SkipForward, VolumeX } from 'lucide-react';
 import { useShortPlayer } from '@/components/mobile/feed/useShortPlayer';
 import FeedStorySheet from '@/components/mobile/feed/FeedStorySheet';
 import WeekRibbon from '@/components/mobile/feed/WeekRibbon';
-import { Rail, RailButton, RailLink } from '@/components/mobile/feed/FeedRail';
+import { Rail, RailButton, RailFavoriteButton, RailLink } from '@/components/mobile/feed/FeedRail';
 import { useShareSong } from '@/components/mobile/feed/useShareSong';
 import { getPublicSlug } from '@/components/mobile/feed/feedMedia';
 import Scrubber from '@/components/mobile/feed/Scrubber';
@@ -16,6 +16,8 @@ import {
 } from '@/components/mobile/icons/FilledIcons';
 import LyricsDialog from '@/components/LyricsDialog';
 import { isKaraokePublished } from '@/lib/lrc';
+import { useFavorites } from '@/hooks/useFavorites';
+import { HeartFilled } from '@/components/mobile/icons/FilledIcons';
 import { ANIMATIONS, DANCE_CLIP, EDGE_VIGNETTE, IDLE_CLIP, getSongAudioId, pickAnimation, pickSong } from './stageDraw';
 import { findCostumeClip, getClipUrl, isDataSaver, loadMascotCatalog, remoteDances } from './mascotCatalog';
 
@@ -93,6 +95,11 @@ function ClipSources({ clip }) {
  * feed garde son `videoId` aligné (pas de rechargement). Si le son n'a pas pu partir
  * (lecteur pas prêt, ouverture directe de l'adresse), « Toque para ouvir » le relance.
  * `ribbonTop` : position du ruban (sous l'en-tête transparent de l'Início).
+ *
+ * « ♥ Só favoritas » (dès qu'une chanson du catalogue est favorite sur l'appareil) :
+ * les tirages — tap, « Outra », fin de chanson — ne portent plus que sur les favorites.
+ * La chanson tirée d'avance (muette dans le lecteur) est retirée parmi elles AVANT le
+ * tap, hors du geste : le premier tap reste un simple « reprendre + son » (iOS).
  */
 export default function CaipivaraStage({ songs = [], player: externalPlayer = null, initialSong = null, onSongChange, ribbonTop = 'top-3' }) {
   const reduceMotion = prefersReducedMotion();
@@ -104,6 +111,17 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
   const [storyOpen, setStoryOpen] = useState(false);
   const [lyricsOpen, setLyricsOpen] = useState(false);
   const [retapUsed, setRetapUsed] = useState(readRetapUsed);
+  const { isFavorite, toggle: toggleFavorite } = useFavorites();
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  // Chansons favorites du catalogue reçu (le tirage garde ses propres règles : publiée, jouable).
+  const favoriteSongs = useMemo(() => songs.filter((song) => isFavorite(song)), [songs, isFavorite]);
+  const hasFavoriteDraw = favoriteSongs.some((song) => pickSong([song], null));
+  // Liste des tirages : les favorites si le filtre est actif (et qu'il en reste une
+  // jouable), sinon tout le catalogue — jamais un tirage vide à cause du filtre.
+  const drawSongs = useMemo(
+    () => (onlyFavorites && hasFavoriteDraw ? favoriteSongs : songs),
+    [onlyFavorites, hasFavoriteDraw, favoriteSongs, songs]
+  );
 
   const mountRef = useRef(null);
   const storyButtonRef = useRef(null);
@@ -115,13 +133,16 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
   const danceRef = useRef(null);
   const timeoutRef = useRef(null);
 
-  // Première chanson tirée d'avance, dès que le catalogue est là.
+  // Première chanson tirée d'avance, dès que le catalogue est là. Filtre « Só
+  // favoritas » activé avant le premier tap : la chanson d'avance est retirée parmi les
+  // favorites (le lecteur la charge en muet, hors du geste, comme la première).
   useEffect(() => {
-    if (!queued && !current) {
-      const song = pickSong(songs, null);
-      if (song) setQueued(song);
+    if (current) return;
+    if (!queued || (onlyFavorites && hasFavoriteDraw && !isFavorite(queued))) {
+      const song = pickSong(drawSongs, null);
+      if (song && song !== queued) setQueued(song);
     }
-  }, [songs, queued, current]);
+  }, [drawSongs, queued, current, onlyFavorites, hasFavoriteDraw, isFavorite]);
 
   const playing = current || queued;
   // Toujours appelé (règle des hooks) ; inerte quand la scène emprunte le lecteur du feed.
@@ -238,7 +259,7 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
     if (busyRef.current) return; // tap pendant une animation : ignoré
     // La chanson est tirée AVANT l'animation : son costume éventuel décide de ce qu'on voit.
     const usesQueued = !currentRef.current && queued;
-    const nextSong = usesQueued ? queued : pickSong(songs, currentRef.current);
+    const nextSong = usesQueued ? queued : pickSong(drawSongs, currentRef.current);
     startAnimation(nextSong);
     if (currentRef.current && !retapUsed) {
       // Changement de chanson par la Caipivara : l'indice a servi.
@@ -252,15 +273,15 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
     const song = nextSong;
     if (song) startSong(song, false);
     else pendingStartRef.current = true; // catalogue pas encore là : dès qu'il arrive
-  }, [queued, songs, startAnimation, startSong, retapUsed]);
+  }, [queued, drawSongs, startAnimation, startSong, retapUsed]);
 
   /** « Outra » : même tirage que le tap sur la Caipivara (animation + chanson suivante). */
   const next = useCallback(() => {
     if (busyRef.current) return;
     startAnimation();
-    const song = pickSong(songs, currentRef.current);
+    const song = pickSong(drawSongs, currentRef.current);
     if (song) startSong(song, false);
-  }, [songs, startAnimation, startSong]);
+  }, [drawSongs, startAnimation, startSong]);
 
   // Fin de la chanson : la Caipivara en choisit une autre, comme « Outra » (même
   // lecteur, hors du geste — si le navigateur refuse le son, ▶ le relance). Une seule
@@ -276,19 +297,19 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
     if (!song || endedSongRef.current === song) return;
     endedSongRef.current = song;
     if (!busyRef.current) startAnimation();
-    const nextSong = pickSong(songs, song);
+    const nextSong = pickSong(drawSongs, song);
     if (nextSong) startSong(nextSong, false);
-  }, [ended, songs, startAnimation, startSong]);
+  }, [ended, drawSongs, startAnimation, startSong]);
 
   // Tap fait avant l'arrivée du catalogue : la musique part dès qu'il est là (hors du
   // geste — si le navigateur refuse le son, le bouton ▶ le relance).
   useEffect(() => {
     if (!pendingStartRef.current || currentRef.current) return;
-    const song = pickSong(songs, null);
+    const song = pickSong(drawSongs, null);
     if (!song) return;
     pendingStartRef.current = false;
     startSong(song, false);
-  }, [songs, startSong]);
+  }, [drawSongs, startSong]);
 
   const soundOn = player.isSoundOn;
   const dancing = !reduceMotion && !animation && soundOn;
@@ -334,6 +355,23 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
 
       {/* Ruban éphémère du feed, à chaque nouvelle chanson (rien avant le premier tap). */}
       <WeekRibbon song={current} phase={player.phase} topClass={ribbonTop} />
+
+      {/* « ♥ Só favoritas » : en haut à droite, en face du ruban ; seulement si au moins
+          une chanson du catalogue est favorite (ou si le filtre est encore actif). */}
+      {hasFavoriteDraw || onlyFavorites ? (
+        <button
+          type="button"
+          onClick={() => setOnlyFavorites((value) => !value)}
+          aria-pressed={onlyFavorites}
+          data-only-favorites={onlyFavorites ? 'true' : 'false'}
+          className={`absolute right-3 z-30 inline-flex h-9 touch-manipulation items-center gap-1.5 rounded-full border px-3 text-xs font-bold active:opacity-70 ${ribbonTop} ${
+            onlyFavorites ? 'border-white bg-white text-black' : 'border-white/25 text-white'
+          }`}
+        >
+          <HeartFilled className={`h-4 w-4 ${onlyFavorites ? 'text-red-500' : 'text-white'}`} />
+          Só favoritas
+        </button>
+      ) : null}
 
       <div className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center pt-4">
         <button
@@ -452,9 +490,10 @@ export default function CaipivaraStage({ songs = [], player: externalPlayer = nu
           <p className="mt-1 text-sm font-medium text-white/60">Ou toque em mim</p>
         ) : null}
 
-        {/* Colonne d'icônes, identique au feed : Letra, História, Cantar, Compartilhar, Clipe. */}
+        {/* Colonne d'icônes, identique au feed : Favoritar, Letra, História, Cantar, Compartilhar, Clipe. */}
         {current ? (
           <Rail className="absolute bottom-2 right-1.5">
+            <RailFavoriteButton song={current} isFavorite={isFavorite(current)} onToggle={toggleFavorite} />
             <RailButton
               label="Letra"
               onClick={() => setLyricsOpen(true)}
