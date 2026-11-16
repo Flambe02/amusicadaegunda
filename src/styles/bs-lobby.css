@@ -1,0 +1,122 @@
+/* « Antes de cantar » + « Configurar microfone » (karaokê K1). Scène 1920×1080. */
+
+/* ── Antes de cantar ─────────────────────────────────────────────────────── */
+.bs-screen.bs-lobby { padding: 132px var(--bs-pad-x) 48px; }
+.bs-lobby-body { flex: 1 1 auto; min-height: 0; display: flex; gap: 64px; }
+.bs-lobby-side { flex: 0 0 300px; display: flex; flex-direction: column; gap: 22px; min-height: 0; }
+.bs-lobby-poster { flex: none; width: 300px; height: 534px; border-radius: 26px; overflow: hidden; background: var(--bs-surface); }
+.bs-lobby-records-h { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; color: var(--bs-gold); font-size: 17px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.bs-lobby-records ol { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.bs-lobby-records li { display: flex; align-items: center; gap: 10px; font-size: 19px; }
+.bs-lobby-records li span { width: 20px; color: var(--bs-text-2); font-weight: 800; }
+.bs-lobby-records li strong { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-lobby-records li b { font-variant-numeric: tabular-nums; }
+.bs-lobby-records-empty { margin: 0; color: var(--bs-text-2); font-size: 18px; line-height: 26px; }
+.bs-lobby-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bs-lobby-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+
+.bs-lobby-kicker {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 14px;
+  color: var(--bs-gold); font-size: 20px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.bs-lobby-title {
+  margin: 0 0 18px; height: 96px; font-family: var(--bs-font-title); font-weight: 400; color: #fff;
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden;
+}
+.bs-lobby-tags { margin-bottom: 34px; }
+
+.bs-lobby-section { margin: 0 0 26px; }
+.bs-lobby-h { margin: 0 0 14px; font-family: var(--bs-font-title); font-weight: 400; font-size: 26px; color: #fff; }
+.bs-lobby-row { display: flex; align-items: center; flex-wrap: wrap; gap: 18px; }
+.bs-lobby-hint { margin: 12px 0 0; color: var(--bs-text-2); font-size: 19px; }
+
+.bs-lobby-mode {
+  display: inline-flex; align-items: center; gap: 12px; height: 70px; padding: 0 24px; font-size: 23px;
+  border-radius: 22px; border: 1.5px solid var(--bs-tag-border); background: var(--bs-surface);
+  color: var(--bs-text); font-family: var(--bs-font); text-align: left; cursor: pointer;
+}
+.bs-lobby-mode.is-on { border-color: var(--bs-gold); background: rgba(245, 197, 66, 0.12); }
+.bs-lobby-mode-text { display: flex; flex-direction: column; gap: 4px; }
+.bs-lobby-mode-text strong { font-size: 25px; }
+.bs-lobby-mode-text span { font-size: 17px; color: var(--bs-text-2); }
+.bs-lobby-mode-check { color: var(--bs-gold); }
+.bs-lobby-mode-desc { margin: 14px 0 0; color: var(--bs-text); font-size: 21px; }
+.bs-lobby-hint.is-warn { color: var(--bs-gold); }
+
+.bs-lobby-player {
+  display: inline-flex; align-items: center; gap: 12px; height: 62px; padding: 0 24px;
+  border-radius: 999px; border: 2px solid var(--player); background: var(--bs-surface);
+  color: var(--bs-text); font-family: var(--bs-font); font-size: 23px; font-weight: 700; cursor: pointer;
+}
+.bs-lobby-player-dot { width: 18px; height: 18px; border-radius: 999px; background: var(--player); flex: none; }
+.bs-lobby-player-pen { opacity: 0.6; }
+.bs-lobby-player.is-editing { padding-right: 12px; }
+.bs-lobby-player-input {
+  width: 260px; height: 44px; border: 0; border-radius: 12px; padding: 0 12px;
+  background: rgba(255, 255, 255, 0.1); color: #fff; font-family: var(--bs-font); font-size: 23px; font-weight: 700;
+  outline: 2px solid var(--player);
+}
+
+.bs-lobby-mic-status { display: inline-flex; align-items: center; gap: 12px; font-size: 23px; font-weight: 600; }
+.bs-lobby-mic-status.is-device svg { color: #4ADE80; }
+.bs-lobby-mic-status.is-unset, .bs-lobby-mic-status.is-none { color: var(--bs-text-2); }
+.bs-lobby-mic-note { color: var(--bs-gold); font-size: 19px; }
+
+.bs-lobby-actions { display: flex; align-items: center; gap: 22px; margin-top: auto; padding: 0 0 8px 6px; }
+.bs-lobby-sing { min-width: 300px; }
+
+/* ── Configurar microfone ────────────────────────────────────────────────── */
+.bs-screen.bs-mic { align-items: center; justify-content: center; padding: 120px var(--bs-pad-x) 60px; }
+.bs-mic-card {
+  width: 1100px; max-width: 100%; padding: 56px 64px; border-radius: 32px;
+  background: var(--bs-surface); border: 1.5px solid var(--bs-tag-border);
+}
+.bs-mic-title { margin: 0 0 18px; font-family: var(--bs-font-title); font-weight: 400; font-size: 64px; line-height: 1.1; color: #fff; }
+.bs-mic-text { margin: 0 0 18px; max-width: 900px; font-size: 26px; line-height: 38px; color: var(--bs-text); }
+.bs-mic-hint { margin: 0 0 30px; max-width: 900px; font-size: 20px; line-height: 30px; color: var(--bs-text-2); }
+.bs-mic-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin-top: 20px; }
+.bs-mic-list { display: flex; flex-direction: column; align-items: stretch; gap: 14px; margin-top: 10px; }
+.bs-mic-device {
+  display: flex; align-items: center; gap: 16px; height: 72px; padding: 0 28px; border-radius: 20px;
+  border: 1.5px solid var(--bs-tag-border); background: rgba(15, 13, 9, 0.6); color: var(--bs-text);
+  font-family: var(--bs-font); font-size: 24px; font-weight: 700; text-align: left; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bs-mic-device.is-none { color: var(--bs-text-2); }
+.bs-mic-meter {
+  position: relative; height: 34px; margin: 10px 0 24px; border-radius: 999px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.08); border: 1.5px solid var(--bs-tag-border);
+}
+.bs-mic-meter-bar {
+  position: absolute; inset: 0; transform-origin: left center; transform: scaleX(0);
+  background: linear-gradient(90deg, #4ADE80, var(--bs-gold) 70%, #FB7185);
+  transition: transform 60ms linear;
+}
+.bs-mic-meter.is-ok { border-color: #4ADE80; }
+.bs-mic-meter-ok { position: absolute; right: 12px; top: -1px; color: #fff; }
+.bs-mic-device:hover, .bs-lobby-mode:hover, .bs-lobby-player:hover { border-color: #fff; }
+
+/* ── Recordes (toutes músicas, cet appareil) ─────────────────────────────── */
+.bs-records-body { flex: 1 1 auto; min-height: 0; padding: 8px var(--bs-pad-x) 40px; display: flex; flex-direction: column; }
+.bs-records-title { margin: 0 0 24px; font-family: var(--bs-font-title); font-weight: 400; font-size: 64px; line-height: 1.05; color: #fff; }
+.bs-records-filters { margin-bottom: 26px; }
+.bs-records-filters .bs-lobby-mode { height: 56px; padding: 0 22px; font-size: 20px; }
+.bs-records-empty { margin: 30px 0 0; max-width: 1000px; color: var(--bs-text-2); font-size: 26px; line-height: 38px; }
+.bs-records-list { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 6px; margin: -6px; }
+.bs-records-row {
+  display: grid; grid-template-columns: 56px minmax(0, 1.1fr) minmax(0, 1.6fr) 200px 130px 150px 90px 28px; align-items: center; gap: 18px;
+  height: 52px; padding: 0 24px; border-radius: 16px; border: 1.5px solid transparent;
+  background: var(--bs-surface); color: var(--bs-text); font-family: var(--bs-font); font-size: 21px; text-align: left; cursor: pointer;
+}
+.bs-records-row.is-first { border-color: var(--bs-gold); background: rgba(245, 197, 66, 0.1); }
+.bs-records-row:hover { border-color: #fff; }
+/* Lignes pleine largeur : contour au focus, sans agrandissement (il débordait). */
+.bs-records-row.bs-focus.is-focused { transform: none; box-shadow: 0 0 0 3px rgba(245, 197, 66, 0.45); outline-offset: 3px; }
+.bs-records-rank { font-family: var(--bs-font-title); color: var(--bs-gold); font-size: 22px; }
+.bs-records-name { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-records-song, .bs-records-mode, .bs-records-date { color: var(--bs-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bs-records-mode, .bs-records-date { font-size: 18px; }
+.bs-records-stars { color: var(--bs-gold); letter-spacing: 2px; font-size: 18px; }
+.bs-records-stars span { color: rgba(255, 255, 255, 0.18); }
+.bs-records-score { font-family: var(--bs-font-title); font-size: 24px; text-align: right; font-variant-numeric: tabular-nums; }
+.bs-records-go { color: var(--bs-text-2); }

@@ -1,4 +1,4 @@
-import { ArrowLeft, ListMusic, Maximize, Minimize, Search, Settings } from 'lucide-react';
+import { ArrowLeft, ListMusic, Maximize, Trophy, Minimize, Search, Settings } from 'lucide-react';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import FocusRow from './FocusRow';
 import FocusableButton from './FocusableButton';
@@ -28,15 +28,16 @@ export default function TvTopNavigation({
   return (
     <header className="bs-nav">
       <div className="bs-nav-brand">
-        <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="bs-nav-logo" />
-        <span className="bs-nav-name">A Música da Segunda</span>
         {/* Ordinateur seulement (chrome.onBack est null sur TV et sur l'accueil) : retour à
-            la souris, dans la barre — jamais en surimpression du logo ou du titre. */}
+            la souris, TOUT À GAUCHE de la barre (là où on le cherche, 2026-11-16) — jamais
+            en surimpression du logo ou du titre. */}
         {chrome.onBack && (
           <button type="button" className="bs-nav-back" onClick={chrome.onBack} aria-label="Voltar">
-            <ArrowLeft size={20} aria-hidden="true" /> Voltar
+            <ArrowLeft size={22} aria-hidden="true" /> Voltar
           </button>
         )}
+        <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="bs-nav-logo" />
+        <span className="bs-nav-name">A Música da Segunda</span>
       </div>
 
       {hasFesta && (
@@ -56,6 +57,11 @@ export default function TvTopNavigation({
         {buscar && (
           <FocusableButton focusKey="HOME_NAV_BUSCAR" className={cls('buscar')} ariaLabel="Buscar uma música" onPress={buscar}>
             <Search size={22} aria-hidden="true" /> Buscar
+          </FocusableButton>
+        )}
+        {chrome.onRecordes && (
+          <FocusableButton focusKey="HOME_NAV_RECORDES" className={cls('recordes')} ariaLabel="Recordes deste aparelho" onPress={chrome.onRecordes}>
+            <Trophy size={22} aria-hidden="true" /> Recordes
           </FocusableButton>
         )}
         <FocusableButton focusKey="HOME_NAV_FESTA" className={cls('festa', 'is-festa')} ariaLabel="Abrir o Modo Festa" onPress={onFesta}>

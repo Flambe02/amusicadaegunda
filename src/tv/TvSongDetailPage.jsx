@@ -98,7 +98,7 @@ export default function TvSongDetailPage({
   song: listedSong, source = 'catalog', getThumb,
   songs = [], web = false, onOpenRelated, playClip = false,
   festaPeople = null,
-  onStartKaraoke, onAddToQueue,
+  onStartKaraoke, onOpenLobby, onAddToQueue,
   onGoHome, onOpenCatalog, onOpenFesta, onOpenSettings,
   backInterceptorRef,
 }) {
@@ -173,10 +173,12 @@ export default function TvSongDetailPage({
 
   const onCantar = useCallback(() => {
     trackTv('tv_song_started', { song_id: vm.id, source });
+    // Karaokê K1 : l'écran « Antes de cantar » remplace la fenêtre de choix du mode.
+    if (onOpenLobby) { onOpenLobby(song); return; }
     if (relevantModes.length === 1) { onStartKaraoke(song, null); return; }
     restoreFocusRef.current = 'DETAIL_CANTAR';
     setOverlay('mode');
-  }, [vm.id, source, relevantModes, onStartKaraoke, song]);
+  }, [vm.id, source, relevantModes, onStartKaraoke, onOpenLobby, song]);
 
   const openContext = useCallback(() => {
     trackTv('tv_song_context_opened', { song_id: vm.id });

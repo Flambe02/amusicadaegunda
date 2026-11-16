@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, lazy, Suspense, Fragment } from 'react';
 import { isPointerMode } from '@/tv/lib/pointerModeState';
 import { createPortal } from 'react-dom';
+import { audioConstraints, loadMicPrefs } from '@/lib/micPrefs';
+import KaraokeGameHud from './game/KaraokeGameHud';
+import KaraokeGameResults from './game/KaraokeGameResults';
+import { lineOwners, TEAM } from '@/lib/karaokeGame';
+import { addRecords, topForSong } from '@/lib/karaokeRecords';
 import { Link } from 'react-router-dom';
 import {
   ArrowLeft, Play, Pause, Music, Loader2, Settings2, Mic,
@@ -105,6 +110,10 @@ async function translateText(text, target) {
  *  - onNext        : () => void   (passer à la chanson suivante de la fila)
  *  - onEnded       : () => void   (la chanson s'est terminée naturellement)
  *  - handoff       : bool         (afficher « passa o micro » sur l'intro, pour un relais de fila)
+ *  - game          : { mode, players:[{name,color}] } | null (grand écran : jeu « cantar no
+ *                                  tempo » — piste, scores, résultats ; exige le micro)
+ *  - autoStart     : bool         (grand écran, après « Antes de cantar » : démarre dès que le
+ *                                  lecteur est prêt, sans l'écran « Começar » — 2026-11-16)
  *  - applauseScore : number|null  (fila por telefone : aplausos reçus pour la chanson QUI VIENT
  *                                  DE FINIR — snapshot pris au moment du relais, affiché sur l'intro)
  *  - tomatoScore   : number|null  (idem, "tomates" — réaction négative/moquerie)
@@ -149,7 +158,7 @@ async function translateText(text, target) {
  * reste visible jusqu'à la suivante.
  */
 export default function KaraokePlayer({
-  song, onClose, queueInfo = null, onNext, onEnded, handoff = false, tvMode = false, backInterceptorRef = null,
+  song, onClose, queueInfo = null, onNext, onEnded, handoff = false, autoStart = false, game = null, tvMode = false, backInterceptorRef = null,
   applauseScore = null, tomatoScore = null, remoteEnergyLevel = null, remoteEnergyGrade = null,
   initialSessionOptions = null, learningMode = false, translationLanguage = null,
   learningLevel = 'beginner', onLearningLevelChange = null, mobileShell = false,
@@ -387,7 +396,19 @@ export default function KaraokePlayer({
   );
 
   // Couleur d'une ligne selon le mode (dueto → part color, sinon jaune).
-  const lineColor = useCallback((i) => (opts.dueto ? DUET_COLORS[i % 2] : YELLOW), [opts.dueto]);
+  // Jeu grand écran : chaque ligne prend la couleur de la personne qui doit la chanter
+  // (plus de bandeau « Agora: … », demande du 2026-11-16).
+  const gameLineOwners = useMemo(
+    () => (tvMode && game?.players?.length && opts.energy ? lineOwners(lines, game.mode, game.players.length) : null),
+    [tvMode, game, opts.energy, lines],
+  );
+  const lineColor = useCallback((i) => {
+    if (gameLineOwners) {
+      const owner = gameLineOwners[i];
+      return owner == null || owner === TEAM ? YELLOW : (game.players[owner]?.color || YELLOW);
+    }
+    return opts.dueto ? DUET_COLORS[i % 2] : YELLOW;
+  }, [opts.dueto, gameLineOwners, game]);
 
   // Duet View (LOT B) : disponible seulement si la chanson a des tags {A}/{B} réels
   // — que ce soit via le LRC historique ou via `singer` dans le timing structuré.
@@ -444,7 +465,8 @@ export default function KaraokePlayer({
             if (learningModeRef.current) {
               setShowLearningEnd(true);
               trackEvent('learning_song_completed', { song_slug: learnSlugRef.current, level: learningLevelRef.current });
-            } else if (optsRef.current.energy && !queueInfoRef.current && !tvMode) finishAndScoreRef.current?.();
+            } else if (gameOnRef.current && gameScorerRef.current) finishGameRef.current?.();
+            else if (optsRef.current.energy && !queueInfoRef.current && !tvMode) finishAndScoreRef.current?.();
             else onEndedRef.current?.();
           }
         },
@@ -543,27 +565,52 @@ export default function KaraokePlayer({
 
   // ── Energy meter (micro) ──
   const energyBarRef = useRef(null);
+  // ── Jeu grand écran : niveau du micro partagé avec la piste (KaraokeGameHud). ──
+  const voiceRmsRef = useRef(0);
+  const gameScorerRef = useRef(null);
+  const [gameRound, setGameRound] = useState(0);
+  const [gameResults, setGameResults] = useState(null);
+  const gameOn = Boolean(tvMode && game && game.players?.length && opts.energy);
+  const gameOnRef = useRef(gameOn);
+  gameOnRef.current = gameOn;
+  const getLyricsTime = useCallback(() => {
+    const s = syncRef.current;
+    return s.playing ? s.t + ((performance.now() - s.wall) / 1000) * s.rate : s.t;
+  }, []);
   useEffect(() => {
     if (!opts.energy || phase !== 'live') return undefined;
     let raf; let ctx; let stream; let stopped = false;
     (async () => {
       try {
         if (!navigator.mediaDevices?.getUserMedia) throw new Error('getUserMedia indisponível');
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Grand écran : le micro choisi dans « Configurar microfone » (K1) ; sinon, comme avant.
+        const micPrefs = loadMicPrefs();
+        stream = await navigator.mediaDevices.getUserMedia({ audio: micPrefs?.source === 'device' ? audioConstraints(micPrefs) : true });
         setEnergyMicUnavailable(false); // sonde réussie (micro TV présent)
         ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Créé après un `await` : Chrome peut le laisser suspendu → jauge et note figées.
+        if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
         const src = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 512;
         src.connect(analyser);
         const buf = new Uint8Array(analyser.fftSize);
+        // Mesure fine en flottant quand elle existe : en 8 bits, une voix posée sur un
+        // micro sans gain automatique tombe dans l'arrondi.
+        const fbuf = typeof analyser.getFloatTimeDomainData === 'function' ? new Float32Array(analyser.fftSize) : null;
         const loop = () => {
           if (stopped) return;
-          analyser.getByteTimeDomainData(buf);
           let sum = 0;
-          for (let i = 0; i < buf.length; i += 1) { const v = (buf[i] - 128) / 128; sum += v * v; }
+          if (fbuf) {
+            analyser.getFloatTimeDomainData(fbuf);
+            for (let i = 0; i < fbuf.length; i += 1) sum += fbuf[i] * fbuf[i];
+          } else {
+            analyser.getByteTimeDomainData(buf);
+            for (let i = 0; i < buf.length; i += 1) { const v = (buf[i] - 128) / 128; sum += v * v; }
+          }
           const rms = Math.sqrt(sum / buf.length); // 0..~1
           const pct = Math.min(100, rms * 260);
+          voiceRmsRef.current = rms;
           if (energyBarRef.current) energyBarRef.current.style.height = `${pct}%`;
           // Stats pour la note finale : seulement en lecture. « active » = une ligne est
           // en cours (on est censé chanter) ; « sung » = le micro dépasse le seuil.
@@ -587,6 +634,7 @@ export default function KaraokePlayer({
     })();
     return () => {
       stopped = true;
+      voiceRmsRef.current = 0;
       if (raf) cancelAnimationFrame(raf);
       try { stream?.getTracks().forEach((tr) => tr.stop()); } catch { /* ignore */ }
       try { ctx?.close(); } catch { /* ignore */ }
@@ -677,6 +725,23 @@ export default function KaraokePlayer({
     setCountdown(3);
   }, [duetTaggedAvailable, duetToggleOn, learningMode, learnSlug, learningLevel]);
 
+  // « Cantar » de l'écran « Antes de cantar » vaut le geste de lancement : on démarre
+  // dès que le lecteur est prêt. Si le navigateur refuse la lecture automatique avec le
+  // son (la vidéo ne part pas), on revient à l'écran « Começar » au lieu d'un écran figé.
+  const autoStartedRef = useRef(false);
+  const handleStartRef = useRef(handleStart);
+  handleStartRef.current = handleStart;
+  useEffect(() => {
+    if (!autoStart || !playerReady || autoStartedRef.current) return undefined;
+    autoStartedRef.current = true;
+    handleStartRef.current();
+    const check = setTimeout(() => {
+      const state = playerRef.current?.getPlayerState?.();
+      if (state !== 1 && state !== 3) { setCountdown(null); setPhase('intro'); }
+    }, 3500);
+    return () => clearTimeout(check);
+  }, [autoStart, playerReady]);
+
   // Calcule et affiche la note d'énergie. coverage = part du temps « à chanter » où le
   // micro a capté du son ; loudness = volume moyen normalisé. Pondération 70/30.
   const finishAndScore = useCallback(() => {
@@ -688,6 +753,39 @@ export default function KaraokePlayer({
     setScoreResult({ score, ...gradeFor(score) });
   }, []);
   finishAndScoreRef.current = finishAndScore;
+
+  // Fin d'une partie (grand écran) : classement, recordes de l'appareil, écran de résultats.
+  const finishGame = useCallback(() => {
+    const scorer = gameScorerRef.current;
+    if (!scorer || !game) return;
+    const results = scorer.finish();
+    const rows = results.map((r) => {
+      const team = r.id === TEAM;
+      const player = team ? null : game.players[r.id];
+      return {
+        ...r,
+        name: team ? game.players.map((p) => p.name).join(' · ') : (player?.name || 'Cantor'),
+        color: team ? '#F5C542' : (player?.color || '#F5C542'),
+      };
+    });
+    const saved = addRecords(song?.id, song?.title, rows.map((r) => ({ name: r.name, score: r.score, stars: r.stars, mode: game.mode })));
+    const withRank = rows.map((r) => {
+      const rec = saved.find((s) => s.name === r.name && s.score === r.score);
+      return { ...r, rank: rec?.rank ?? null, personalBest: Boolean(rec?.personalBest) };
+    });
+    setGameResults({ rows: withRank, top: topForSong(song?.id, 5) });
+  }, [game, song?.id, song?.title]);
+  const finishGameRef = useRef(finishGame);
+  finishGameRef.current = finishGame;
+
+  const restartGame = useCallback(() => {
+    setGameResults(null);
+    setGameRound((n) => n + 1);
+    try { playerRef.current?.seekTo?.(0, true); } catch { /* ignore */ }
+    try { playerRef.current?.playVideo?.(); } catch { /* ignore */ }
+    setPhase('live');
+    setCountdown(3);
+  }, []);
 
   // Rejouer depuis la note (recommence proprement au début).
   const restartFromScore = useCallback(() => {
@@ -1275,8 +1373,21 @@ export default function KaraokePlayer({
             </div>
           )}
 
+          {/* Jeu grand écran : piste rythmique + scores (remplace la petite jauge). */}
+          {gameOn && phase === 'live' && (
+            <KaraokeGameHud
+              key={gameRound}
+              lines={lines}
+              game={game}
+              getTime={getLyricsTime}
+              isPlaying={isPlaying}
+              voiceRmsRef={voiceRmsRef}
+              scorerRef={gameScorerRef}
+            />
+          )}
+
           {/* Energy meter */}
-          {opts.energy && (
+          {opts.energy && !gameOn && (
             <div className="pointer-events-none absolute right-4 top-1/2 z-20 flex h-40 w-3 -translate-y-1/2 items-end overflow-hidden rounded-full border border-white/10 bg-white/5 md:right-8 md:h-56">
               <div ref={energyBarRef} className="w-full rounded-full bg-gradient-to-t from-orange-500 via-app-yellow to-red-400 transition-[height] duration-75" style={{ height: '0%' }} />
             </div>
@@ -1320,7 +1431,7 @@ export default function KaraokePlayer({
                   wordApiRef={wordApiRef}
                   fontScale={scale}
                   showBall={opts.showBall}
-                  dueto={opts.dueto}
+                  dueto={opts.dueto || Boolean(gameLineOwners)}
                   lineColor={lineColor}
                   translating={opts.translate !== 'off'}
                 />
@@ -1626,6 +1737,16 @@ export default function KaraokePlayer({
       )}
 
       {/* Nota final do medidor de energia */}
+      {gameResults && (
+        <KaraokeGameResults
+          mode={game?.mode}
+          rows={gameResults.rows}
+          top={gameResults.top}
+          onReplay={restartGame}
+          onClose={handleClose}
+        />
+      )}
+
       {scoreResult && (
         <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-5 bg-black/88 px-6 text-center backdrop-blur-md">
           <button type="button" onClick={handleClose} aria-label="Sair"

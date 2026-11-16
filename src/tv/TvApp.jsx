@@ -22,6 +22,10 @@ import TvCatalogPage from './TvCatalogPage';
 import TvGrid from './TvGrid';
 import TvSongDetailPage from './TvSongDetailPage';
 import TvReactionBurst from './components/TvReactionBurst';
+import TvSingLobby from './TvSingLobby';
+import TvMicSetup from './TvMicSetup';
+import TvRecordsPage from './TvRecordsPage';
+import { loadMicPrefs } from '@/lib/micPrefs';
 import TvKaraokeScreen, { preloadKaraokePlayer } from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
 import TvClipsLanding from './TvClipsLanding';
@@ -76,10 +80,10 @@ if (typeof document !== 'undefined' && !document.querySelector('link[rel="precon
 }
 
 // Écrans qui portent la barre du haut (le bouton « Voltar » de l'ordinateur s'y range dessous).
-const NAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing']);
+const NAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing', 'records']);
 // Écrans dont la barre du haut (TvTopNavigation) porte elle-même « Voltar » sur ordinateur :
 // la pilule flottante chevauchait le logo et le titre (audit 2026-11-16, B8).
-const TOPNAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing']);
+const TOPNAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'records']);
 
 // Initialise la navigation spatiale une seule fois (au chargement du bundle TV).
 init({ debug: false, visualDebug: false });
@@ -318,6 +322,13 @@ export default function TvApp({ web = null }) {
 
   const push = useCallback((screen) => setStack((s) => [...s, screen]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
+  // ── Karaokê K1 : « Antes de cantar » entre chaque « Cantar agora » et le lecteur,
+  // et le micro choisi une fois pour toutes (src/lib/micPrefs.js). ──
+  const [micPrefs, setMicPrefs] = useState(loadMicPrefs);
+  const openLobby = useCallback((song) => setStack((s) => [...s, { name: 'lobby', song }]), []);
+  const openMicSetup = useCallback(() => setStack((s) => [...s, { name: 'mic-setup' }]), []);
+  // « Recordes » : une seule fois dans la pile (depuis la barre du haut, on y revient).
+  const openRecords = useCallback(() => setStack((s) => (s[s.length - 1]?.name === 'records' ? s : [...s, { name: 'records' }])), []);
 
   // ── Panneau de réglages global (avatar de TvTopNavigation) ─────────────────
   // Un SEUL état ici (au lieu d'un état local par écran) : l'avatar ouvre le même
@@ -479,10 +490,10 @@ export default function TvApp({ web = null }) {
   }, []);
   const chrome = useMemo(
     () => ({
-      web: isWeb, onBuscar: openSearch, canFullscreen, fullscreen, toggleFullscreen,
+      web: isWeb, onBuscar: openSearch, onRecordes: openRecords, canFullscreen, fullscreen, toggleFullscreen,
       onBack: isWeb && stack.length > 1 ? handleBack : null,
     }),
-    [isWeb, openSearch, canFullscreen, fullscreen, toggleFullscreen, stack.length, handleBack]
+    [isWeb, openSearch, openRecords, canFullscreen, fullscreen, toggleFullscreen, stack.length, handleBack]
   );
 
   // ── Landing Karaokê (page dédiée) : 4 modes + rangée « Para cantar agora » ──
@@ -621,8 +632,8 @@ export default function TvApp({ web = null }) {
   // Lance le karaoké normal (solo ou dueto — `sessionOptions` porte le dueto en
   // session uniquement, cf. KaraokePlayer `initialSessionOptions`). Représenté comme
   // une fila d'UNE chanson : la même forme de pile sert le solo/dueto ET la festa.
-  const startKaraoke = useCallback((song, sessionOptions) => setStack((s) => [
-    ...s, { name: 'karaoke', queue: [song], index: 0, handoff: false, sessionOptions: sessionOptions || null },
+  const startKaraoke = useCallback((song, sessionOptions, extra = null) => setStack((s) => [
+    ...s, { name: 'karaoke', queue: [song], index: 0, handoff: false, sessionOptions: sessionOptions || null, ...(extra || {}) },
   ]), []);
 
   // Chanson choisie SANS contexte de mode (rangée « Para cantar agora », grille
@@ -759,7 +770,7 @@ export default function TvApp({ web = null }) {
           initialState={catalogStateRef.current}
           onStateChange={setCatalogState}
           onOpenDetail={(song) => { markFamiliar(song); push({ name: 'detail', song, source: 'catalog' }); }}
-          onCantar={(song) => { markFamiliar(song); startKaraoke(song, null); }}
+          onCantar={(song) => { markFamiliar(song); openLobby(song); }}
           onAddToQueue={addToQueue}
           onRemoveFromQueue={removeFromQueue}
           onClearQueue={clearQueue}
@@ -792,6 +803,7 @@ export default function TvApp({ web = null }) {
           getThumb={getThumb}
           festaPeople={festaSession ? festaPeopleNames.length : null}
           onStartKaraoke={startKaraoke}
+          onOpenLobby={openLobby}
           onAddToQueue={addToQueue}
           backInterceptorRef={backInterceptorRef}
         />
@@ -807,7 +819,7 @@ export default function TvApp({ web = null }) {
           initialFocusKey={karaokeFocusKeyRef.current}
           onCardFocusKey={setKaraokeFocusKey}
           onOpenDetail={(song) => { markFamiliar(song); push({ name: 'detail', song, source: 'karaoke' }); }}
-          onCantar={(song) => { markFamiliar(song); startKaraoke(song, null); }}
+          onCantar={(song) => { markFamiliar(song); openLobby(song); }}
           onNavigateHome={goHome}
           onNavigateFesta={onChooseFesta}
           onNavigateAll={openCatalog}
@@ -873,6 +885,54 @@ export default function TvApp({ web = null }) {
         />
       );
     }
+    if (top.name === 'lobby') {
+      return (
+        <TvSingLobby
+          key={top.song.id}
+          song={songs.find((item) => item.id === top.song.id) || top.song}
+          micPrefs={micPrefs}
+          festaActive={Boolean(festaSession)}
+          tv={!isWeb}
+          onSing={({ mode, players, withMic }) => {
+            markFamiliar(top.song);
+            // Pas d'écran « Começar » : « Cantar » ici lance la chanson. Avec un micro, la
+            // partie est notée (piste, scores, résultats, recordes).
+            startKaraoke(
+              top.song,
+              { dueto: mode === 'duet', ...(withMic ? { energy: true } : {}) },
+              { autoStart: true, game: withMic ? { mode, players } : null },
+            );
+          }}
+          onAddToFesta={addToQueue}
+          onOpenMicSetup={openMicSetup}
+          onBack={pop}
+          backInterceptorRef={backInterceptorRef}
+        />
+      );
+    }
+    if (top.name === 'records') {
+      return (
+        <TvRecordsPage
+          songs={songs}
+          onOpenLobby={openLobby}
+          onGoHome={goHome}
+          onOpenCatalog={openCatalog}
+          onOpenFesta={onChooseFesta}
+          onOpenSettings={openTvSettings}
+          backInterceptorRef={backInterceptorRef}
+        />
+      );
+    }
+    if (top.name === 'mic-setup') {
+      return (
+        <TvMicSetup
+          tv={!isWeb}
+          onDone={(prefs) => { setMicPrefs(prefs); pop(); }}
+          onBack={pop}
+          backInterceptorRef={backInterceptorRef}
+        />
+      );
+    }
     if (top.name === 'karaoke') {
       const currentSong = top.queue[top.index];
       const qInfo = top.queue.length > 1
@@ -892,6 +952,8 @@ export default function TvApp({ web = null }) {
           onNext={qInfo ? advanceFesta : undefined}
           onEnded={qInfo ? advanceFesta : undefined}
           handoff={top.handoff}
+          autoStart={Boolean(top.autoStart)}
+          game={top.game || null}
           applauseScore={top.prevApplause ?? null}
           tomatoScore={top.prevTomato ?? null}
           remoteEnergyLevel={top.festaQueueId ? (liveEnergyByEntry[top.festaQueueId] ?? null) : null}
@@ -916,7 +978,7 @@ export default function TvApp({ web = null }) {
         initialFocusKey={homeFocusKeyRef.current}
         onOpenDetail={(s) => { markFamiliar(s); push({ name: 'detail', song: s, source: 'home' }); }}
         onOpenClip={(s) => { markFamiliar(s); push({ name: 'detail', song: s, source: 'home', playClip: true }); }}
-        onCantar={(s) => startKaraoke(s, null)}
+        onCantar={(s) => openLobby(s)}
         onOpenFesta={onChooseFesta}
         onOpenCatalog={openCatalog}
         onOpenSettings={openTvSettings}
@@ -934,6 +996,7 @@ export default function TvApp({ web = null }) {
     // Catálogo
     loading, loadError, localQueue, setCatalogState, markFamiliar,
     addToQueue, removeFromQueue, clearQueue, startQueue, removeFestaEntry, loadSongs,
+    micPrefs, openLobby, openMicSetup,
   ]);
 
   if (loading) {

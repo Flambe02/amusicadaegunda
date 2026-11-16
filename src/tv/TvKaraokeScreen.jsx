@@ -25,7 +25,7 @@ export const preloadKaraokePlayer = loadKaraokePlayer;
  * complète ; un échec le dit et propose de réessayer (Voltar = Retour de TvApp).
  */
 export default function TvKaraokeScreen({
-  song, nextSong = null, onClose, backInterceptorRef, queueInfo, onNext, onEnded, handoff,
+  song, nextSong = null, onClose, backInterceptorRef, queueInfo, onNext, onEnded, handoff, autoStart = false, game = null,
   applauseScore, tomatoScore, remoteEnergyLevel, remoteEnergyGrade, initialSessionOptions,
 }) {
   const { song: fullSong, isLoading, error, retry } = useFullSong(song);
@@ -68,6 +68,8 @@ export default function TvKaraokeScreen({
       onNext={onNext}
       onEnded={onEnded}
       handoff={handoff}
+      autoStart={autoStart}
+      game={game}
       applauseScore={applauseScore}
       tomatoScore={tomatoScore}
       remoteEnergyLevel={remoteEnergyLevel}
