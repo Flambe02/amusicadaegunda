@@ -97,6 +97,12 @@
 .bs-nav-brand { display: flex; align-items: center; gap: 18px; margin-right: auto; }
 .bs-nav-logo { width: 56px; height: 56px; border-radius: 14px; object-fit: cover; display: block; }
 .bs-nav-name { font-family: var(--bs-font-title); font-size: 26px; line-height: 1; color: var(--bs-text); white-space: nowrap; }
+.bs-nav-back {
+  display: inline-flex; align-items: center; gap: 8px; height: 44px; margin-left: 14px; padding: 0 18px;
+  border-radius: 999px; border: 1.5px solid var(--bs-tag-border); background: transparent; cursor: pointer;
+  color: var(--bs-text); font-family: var(--bs-font); font-size: 18px; font-weight: 600; white-space: nowrap;
+}
+.bs-nav-back:hover, .bs-nav-back:focus-visible { border-color: #fff; outline: none; }
 .bs-nav-menu { display: flex; align-items: center; gap: 12px; }
 .bs-nav-item {
   display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 26px;

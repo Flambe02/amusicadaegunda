@@ -1250,7 +1250,7 @@ export default function KaraokePlayer({
 
               <button type="button" onClick={handleStart} disabled={!playerReady}
                 className="karaoke-focusable karaoke-start-btn relative mt-2 inline-flex items-center gap-3 rounded-full bg-app-yellow px-9 py-4 text-lg font-black text-black disabled:opacity-50 md:px-12 md:py-5 md:text-xl">
-                {playerReady ? (<><Play className="h-6 w-6 fill-current" /> {learningMode ? 'Escutar & aprender' : 'Começar'}</>) : (<><Loader2 className="h-6 w-6 animate-spin" /> A preparar…</>)}
+                {playerReady ? (<><Play className="h-6 w-6 fill-current" /> {learningMode ? 'Escutar & aprender' : 'Começar'}</>) : (<><Loader2 className="h-6 w-6 animate-spin" /> Preparando…</>)}
               </button>
               {duetTaggedAvailable && (
                 <button type="button"

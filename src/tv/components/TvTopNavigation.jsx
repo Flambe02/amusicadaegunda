@@ -1,4 +1,4 @@
-import { ListMusic, Maximize, Minimize, Search, Settings } from 'lucide-react';
+import { ArrowLeft, ListMusic, Maximize, Minimize, Search, Settings } from 'lucide-react';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import FocusRow from './FocusRow';
 import FocusableButton from './FocusableButton';
@@ -30,6 +30,13 @@ export default function TvTopNavigation({
       <div className="bs-nav-brand">
         <img src={BRAND_SQUARE_SMALL} alt="" aria-hidden="true" className="bs-nav-logo" />
         <span className="bs-nav-name">A Música da Segunda</span>
+        {/* Ordinateur seulement (chrome.onBack est null sur TV et sur l'accueil) : retour à
+            la souris, dans la barre — jamais en surimpression du logo ou du titre. */}
+        {chrome.onBack && (
+          <button type="button" className="bs-nav-back" onClick={chrome.onBack} aria-label="Voltar">
+            <ArrowLeft size={20} aria-hidden="true" /> Voltar
+          </button>
+        )}
       </div>
 
       {hasFesta && (

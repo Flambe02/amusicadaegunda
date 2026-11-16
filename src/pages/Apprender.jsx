@@ -70,7 +70,7 @@ export default function Apprender() {
 
       {lessons.length === 0 ? (
         <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-center text-sm text-white/50">
-          A carregar as músicas…
+          Carregando as músicas…
         </div>
       ) : (
         <>

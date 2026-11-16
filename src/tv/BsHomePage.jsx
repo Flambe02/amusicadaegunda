@@ -10,7 +10,7 @@ import TvHomeRemoteHint from './components/TvHomeRemoteHint';
 import { getInterface } from '@/lib/interface';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import { getDifficultyMeta, getMode } from './lib/songMeta';
-import { fitTitle, formatShortDate, formatWeekdayDate, getBackdropUrl, getShortContext } from './lib/bsSong';
+import { fitTitle, formatShortDate, getBackdropUrl, getShortContext, weekDateLabel } from './lib/bsSong';
 import '@/styles/bs-home.css';
 
 /**
@@ -153,7 +153,7 @@ export default function BsHomePage({
             <div className="bs-hero-body">
               <p className="bs-hero-kicker">
                 <span className="bs-badge">Música da semana</span>
-                {week.releaseDate && <span className="bs-hero-date">Nova desde {formatWeekdayDate(week.releaseDate)}</span>}
+                {week.releaseDate && <span className="bs-hero-date">{weekDateLabel(week.releaseDate)}</span>}
               </p>
               <h1 className="bs-hero-title" style={{ fontSize: title.fontSize, lineHeight: `${title.lineHeight}px`, WebkitLineClamp: title.lines }}>{week.title}</h1>
               <p className="bs-hero-context">{getShortContext(week.raw)}</p>

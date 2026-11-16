@@ -75,6 +75,9 @@ if (typeof document !== 'undefined' && !document.querySelector('link[rel="precon
 
 // Écrans qui portent la barre du haut (le bouton « Voltar » de l'ordinateur s'y range dessous).
 const NAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing', 'mode-landing', 'clips-landing']);
+// Écrans dont la barre du haut (TvTopNavigation) porte elle-même « Voltar » sur ordinateur :
+// la pilule flottante chevauchait le logo et le titre (audit 2026-11-16, B8).
+const TOPNAV_SCREENS = new Set(['home', 'detail', 'catalog', 'karaoke-landing']);
 
 // Initialise la navigation spatiale une seule fois (au chargement du bundle TV).
 init({ debug: false, visualDebug: false });
@@ -472,8 +475,11 @@ export default function TvApp({ web = null }) {
     setStack((s) => [...s, { name: 'catalog' }]);
   }, []);
   const chrome = useMemo(
-    () => ({ web: isWeb, onBuscar: openSearch, canFullscreen, fullscreen, toggleFullscreen }),
-    [isWeb, openSearch, canFullscreen, fullscreen, toggleFullscreen]
+    () => ({
+      web: isWeb, onBuscar: openSearch, canFullscreen, fullscreen, toggleFullscreen,
+      onBack: isWeb && stack.length > 1 ? handleBack : null,
+    }),
+    [isWeb, openSearch, canFullscreen, fullscreen, toggleFullscreen, stack.length, handleBack]
   );
 
   // ── Landing Karaokê (page dédiée) : 4 modes + rangée « Para cantar agora » ──
@@ -893,7 +899,7 @@ export default function TvApp({ web = null }) {
         <div className="tv-root tv-boot tv-wait">
           <img src={BRAND_SQUARE_LARGE} alt="" className="tv-boot-mascot" />
           <span><Loader2 className="tv-spin" size={44} /></span>
-          <p>A preparar o palco…</p>
+          <p>Preparando o palco…</p>
         </div>
       </TvStage>
     );
@@ -911,9 +917,9 @@ export default function TvApp({ web = null }) {
         {/* Écran chargé à la demande pas encore arrivé : rien pendant 400 ms (tv-wait). */}
         <Suspense
           fallback={(
-            <div className="tv-karaoke-wait tv-wait" role="status" aria-label="A preparar o palco…">
+            <div className="tv-karaoke-wait tv-wait" role="status" aria-label="Preparando o palco…">
               <span><Loader2 className="tv-spin" size={44} /></span>
-              <p>A preparar o palco…</p>
+              <p>Preparando o palco…</p>
             </div>
           )}
         >
@@ -921,7 +927,7 @@ export default function TvApp({ web = null }) {
         </Suspense>
         </TvChromeProvider>
         {/* Web : retour à la souris (Échap et le bouton Retour du navigateur font pareil). */}
-        {isWeb && stack.length > 1 && (
+        {isWeb && stack.length > 1 && !TOPNAV_SCREENS.has(top.name) && (
           <button type="button" className="tv-web-back" onClick={handleBack} aria-label="Voltar">
             <ArrowLeft size={22} aria-hidden="true" /> Voltar
           </button>

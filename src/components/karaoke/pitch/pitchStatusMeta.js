@@ -11,7 +11,7 @@ import { AudioLines, ArrowUp, ArrowDown, Mic, MicOff, Loader2, Ear } from 'lucid
  */
 export const PITCH_STATUS_META = {
   disabled:     { label: 'Microfone desligado', Icon: MicOff,    tone: 'off' },
-  initializing: { label: 'A preparar…',         Icon: Loader2,   tone: 'neutral', spin: true },
+  initializing: { label: 'Preparando…',         Icon: Loader2,   tone: 'neutral', spin: true },
   listening:    { label: 'Ouvindo',             Icon: Ear,       tone: 'neutral' },
   inTune:       { label: 'Afinado',             Icon: AudioLines, tone: 'good' },
   tooLow:       { label: 'Mais alto',           Icon: ArrowUp,   tone: 'neutral' },

@@ -34,6 +34,20 @@ export function formatWeekdayDate(value) {
   return d ? `${WEEKDAYS[d.weekday]}, ${d.day} de ${MONTHS[d.month - 1]}` : '';
 }
 
+/**
+ * Libellé de date du bloc « Música da semana » : « Nova desde segunda, 16 de novembro »,
+ * ou « Estreia segunda, 16 de novembro » tant que la date (publiée d'avance) n'est pas
+ * encore arrivée — jour local de l'appareil.
+ */
+export function weekDateLabel(value, now = new Date()) {
+  const d = parseDay(value);
+  if (!d) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const release = `${d.year}-${pad(d.month)}-${pad(d.day)}`;
+  const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `${release > today ? 'Estreia' : 'Nova desde'} ${formatWeekdayDate(value)}`;
+}
+
 const plain = (text) => String(text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 /**
@@ -129,20 +143,58 @@ export function getBackdropUrl(song) {
 }
 
 // Largeur moyenne d'un caractère d'Archivo Black, en fraction du corps (mesurée sur les
-// titres du catalogue : « Bets Bets Bets » fait 820 px à 104 px).
+// titres du catalogue : « Bets Bets Bets » fait 820 px à 104 px). Ne sert que si la
+// mesure réelle est impossible (police pas encore chargée, environnement de test).
 const TITLE_CHAR_EM = 0.6;
+const TITLE_FONT = "400 100px 'Archivo Black', 'Archivo', 'Arial Black', sans-serif";
+// Marge de sécurité : arrondis du rendu, crénage, ombre.
+const TITLE_SAFETY = 0.96;
+
+let titleCanvasContext = null;
+/**
+ * Largeur réelle de `text` en Archivo Black, pour un corps de 1 px — via canvas, une
+ * fois la police chargée. `null` si la mesure n'est pas fiable : l'appelant estime.
+ * (2026-11-16 : l'estimation à 0,6 em coupait « 15 de Novembro » en « 15 de… ».)
+ */
+export function measureTitleEm(text) {
+  if (typeof document === 'undefined' || !document.fonts?.check) return null;
+  try {
+    if (!document.fonts.check("400 1em 'Archivo Black'")) return null;
+    titleCanvasContext ||= document.createElement('canvas').getContext('2d');
+    if (!titleCanvasContext) return null;
+    titleCanvasContext.font = TITLE_FONT;
+    return titleCanvasContext.measureText(text).width / 100;
+  } catch {
+    return null;
+  }
+}
+
+const estimateEm = (text) => Math.max(1, text.length) * TITLE_CHAR_EM;
 
 /**
  * Corps du grand titre pour qu'il tienne dans `width` pixels : une ligne tant que le
- * corps reste lisible, sinon deux lignes. La hauteur du bloc titre ne change jamais
- * (`boxHeight`), donc rien ne bouge autour.
+ * corps reste lisible, sinon deux lignes (coupées à l'espace qui équilibre le mieux).
+ * La hauteur du bloc titre ne change jamais (`boxHeight`), donc rien ne bouge autour.
+ * `measure(text)` → largeur en em (défaut : mesure réelle, sinon estimation).
  * @returns {{ fontSize: number, lines: 1|2, lineHeight: number }}
  */
-export function fitTitle(title, width, { max = 104, boxHeight = 104, minOneLine = 54 } = {}) {
-  const length = Math.max(1, String(title || '').trim().length);
-  const oneLine = Math.floor(width / (length * TITLE_CHAR_EM));
-  if (oneLine >= minOneLine) return { fontSize: Math.min(max, oneLine), lines: 1, lineHeight: boxHeight };
-  const twoLines = Math.floor(width / (Math.ceil(length / 2 + 2) * TITLE_CHAR_EM));
+export function fitTitle(title, width, { max = 104, boxHeight = 104, minOneLine = 54, measure = measureTitleEm } = {}) {
+  const text = String(title || '').trim() || ' ';
+  const em = (t) => {
+    const measured = measure(t);
+    return measured > 0 ? measured / TITLE_SAFETY : estimateEm(t);
+  };
+  const oneLine = Math.floor(width / em(text));
+  const words = text.split(/\s+/);
+  if (oneLine >= minOneLine || words.length < 2) {
+    return { fontSize: Math.max(28, Math.min(max, oneLine)), lines: 1, lineHeight: boxHeight };
+  }
+  // Coupure qui rend la plus longue des deux lignes la plus courte possible.
+  let widest = Infinity;
+  for (let i = 1; i < words.length; i += 1) {
+    widest = Math.min(widest, Math.max(em(words.slice(0, i).join(' ')), em(words.slice(i).join(' '))));
+  }
+  const twoLines = Math.floor(width / widest);
   const fontSize = Math.max(28, Math.min(Math.floor(boxHeight / 2) - 4, twoLines));
   return { fontSize, lines: 2, lineHeight: Math.floor(boxHeight / 2) };
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatLongDate, formatShortDate, formatWeekdayDate, getBackdropUrl, getPosterCandidates,
-  fitTitle, getRefrain, getShortContext,
+  fitTitle, getRefrain, getShortContext, weekDateLabel,
 } from '../bsSong';
 
 describe('bsSong — dates en portugais', () => {
@@ -9,6 +9,15 @@ describe('bsSong — dates en portugais', () => {
     expect(formatShortDate('2026-09-28')).toBe('28 set');
     expect(formatLongDate('2026-09-21')).toBe('21 de setembro de 2026');
     expect(formatWeekdayDate('2026-10-05')).toBe('segunda, 5 de outubro');
+  });
+
+  it('a song published ahead of its Monday says « Estreia », then « Nova desde »', () => {
+    const sunday = new Date(2026, 10, 15, 22, 0);
+    const monday = new Date(2026, 10, 16, 0, 5);
+    expect(weekDateLabel('2026-11-16', sunday)).toBe('Estreia segunda, 16 de novembro');
+    expect(weekDateLabel('2026-11-16', monday)).toBe('Nova desde segunda, 16 de novembro');
+    expect(weekDateLabel('2026-11-09', monday)).toBe('Nova desde segunda, 9 de novembro');
+    expect(weekDateLabel(null, monday)).toBe('');
   });
 
   it('a date with a time stays the same civil day; an invalid one gives nothing', () => {
@@ -86,5 +95,23 @@ describe('bsSong — affiches et fond', () => {
     expect(long.lines).toBe(2);
     expect(long.fontSize * 2).toBeLessThanOrEqual(104);
     expect(fitTitle('Itau', 867).fontSize).toBe(104);
+  });
+
+  it('measures the real width: a short but wide title (« 15 de Novembro ») is never cut', () => {
+    // Archivo Black réel : chiffres et capitales bien plus larges que 0,6 em.
+    const wide = (text) => text.length * 0.78;
+    const fit = fitTitle('15 de Novembro', 867, { measure: wide });
+    // Ce que l'estimation aurait choisi (103 px) déborde : 14 × 0,78 × 103 ≈ 1125 px.
+    expect(fit.fontSize * wide('15 de Novembro')).toBeLessThanOrEqual(867);
+    expect(fit.lines).toBe(1);
+    const narrow = fitTitle('15 de Novembro', 500, { measure: wide });
+    expect(narrow.lines).toBe(2);
+    expect(narrow.fontSize * wide('de Novembro')).toBeLessThanOrEqual(500);
+  });
+
+  it('a single long word never goes to two lines: it shrinks on one', () => {
+    const fit = fitTitle('Supercalifragilistico', 400, { measure: (t) => t.length * 0.7 });
+    expect(fit.lines).toBe(1);
+    expect(fit.fontSize).toBeGreaterThanOrEqual(28);
   });
 });

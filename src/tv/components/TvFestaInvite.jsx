@@ -118,7 +118,7 @@ export default function TvFestaInvite({
             <QRCode value={joinUrl} size={388} bgColor="#FFF7F0" fgColor="#1A0710" />
           ) : (
             <p className="bs-festa-qr-empty">
-              {loading ? 'A preparar…' : <>Não foi possível criar a sessão agora.<br />Pode começar sem fila.</>}
+              {loading ? 'Preparando…' : <>Não foi possível criar a sessão agora.<br />Pode começar sem fila.</>}
             </p>
           )}
         </div>

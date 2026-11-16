@@ -51,9 +51,9 @@ export default function TvKaraokeScreen({
   if (isLoading) {
     // Rien pendant 400 ms (tv-wait) : la chanson complète arrive le plus souvent avant.
     return (
-      <div className="tv-karaoke-wait tv-wait" role="status" aria-label="A preparar o palco…">
+      <div className="tv-karaoke-wait tv-wait" role="status" aria-label="Preparando o palco…">
         <span><Loader2 className="tv-spin" size={44} /></span>
-        <p>A preparar o palco…</p>
+        <p>Preparando o palco…</p>
       </div>
     );
   }
