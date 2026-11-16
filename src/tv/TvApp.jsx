@@ -21,6 +21,7 @@ import { TvChromeProvider } from './lib/chromeContext';
 import TvCatalogPage from './TvCatalogPage';
 import TvGrid from './TvGrid';
 import TvSongDetailPage from './TvSongDetailPage';
+import TvReactionBurst from './components/TvReactionBurst';
 import TvKaraokeScreen, { preloadKaraokePlayer } from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
 import TvClipsLanding from './TvClipsLanding';
@@ -153,7 +154,8 @@ export default function TvApp({ web = null }) {
     const names = [...festaPresentNames];
     const seen = new Set(names);
     festaQueue.forEach((q) => {
-      if ((q.status === 'waiting' || q.status === 'playing') && q.singer_name && !seen.has(q.singer_name)) {
+      // « TV » (ajouts faits sur la TV) n'est pas une personne de la festa.
+      if ((q.status === 'waiting' || q.status === 'playing') && q.singer_name && q.singer_name !== TV_SINGER && !seen.has(q.singer_name)) {
         seen.add(q.singer_name);
         names.push(q.singer_name);
       }
@@ -863,6 +865,7 @@ export default function TvApp({ web = null }) {
           loading={festaLoading}
           offline={festaOffline}
           queuedCount={festaQueue.filter((q) => q.status === 'waiting').length}
+          queue={festaRows(festaWaiting(festaQueue), songs)}
           onContinue={proceedToFestaPicker}
           onBack={exitFestaInvite}
           onEnd={endFestaNow}
@@ -875,7 +878,10 @@ export default function TvApp({ web = null }) {
       const qInfo = top.queue.length > 1
         ? { index: top.index, total: top.queue.length, nextTitle: top.queue[top.index + 1]?.title }
         : null;
+      // Entrée de la fila Festa qui passe : ses 👏/🍅 arrivent en direct (Realtime).
+      const liveEntry = top.festaQueueId ? festaQueue.find((q) => q.id === top.festaQueueId) : null;
       return (
+        <>
         <TvKaraokeScreen
           key={`${currentSong.id}-${top.index}`}
           song={currentSong}
@@ -892,6 +898,14 @@ export default function TvApp({ web = null }) {
           remoteEnergyGrade={top.prevEnergyGrade ?? null}
           initialSessionOptions={top.sessionOptions}
         />
+        {liveEntry && (
+          <TvReactionBurst
+            key={liveEntry.id}
+            applause={liveEntry.applause_score || 0}
+            tomato={liveEntry.tomato_score || 0}
+          />
+        )}
+        </>
       );
     }
     return (

@@ -58,3 +58,19 @@
 .bs-festa-code-label { margin: 30px 0 6px; font-size: 20px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #5C1E3A; }
 .bs-festa-code { margin: 0 0 30px; font-family: var(--bs-font-title); font-size: 92px; line-height: 96px; letter-spacing: 0.08em; }
 .bs-festa-nocam { margin: 0; max-width: 470px; text-align: center; font-size: 21px; line-height: 31px; }
+
+/* Fila (remplace les trois étapes dès qu'une música y est ; même hauteur : 192 + 54). */
+.bs-festa-queue { height: 192px; margin: 0 0 54px; display: flex; flex-direction: column; }
+.bs-festa-queue-head { margin: 0 0 12px; font-family: var(--bs-font-title); font-size: 28px; color: #fff; }
+.bs-festa-queue-head span { margin-left: 14px; font-family: var(--bs-font); font-size: 20px; color: var(--bs-pink-text); opacity: 0.85; }
+.bs-festa-queue-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.bs-festa-queue-list li {
+  display: flex; align-items: center; gap: 16px; height: 40px; padding: 0 18px; border-radius: 14px;
+  background: var(--bs-plum); border: 1.5px solid var(--bs-plum-border); color: var(--bs-text); font-size: 22px; font-weight: 600;
+}
+.bs-festa-queue-list li.is-first { border-color: var(--bs-pink); }
+.bs-festa-queue-n { flex: none; width: 28px; color: var(--bs-pink-text); font-family: var(--bs-font-title); font-size: 20px; }
+.bs-festa-queue-title { min-width: 0; flex: 1 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+.bs-festa-queue-singer { flex: none; color: var(--bs-pink-text); font-size: 19px; }
+.bs-festa-queue-more { margin: 6px 0 0; color: var(--bs-text-2); font-size: 18px; }
+.bs-festa-start-label { max-width: 560px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

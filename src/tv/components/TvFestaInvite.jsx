@@ -4,6 +4,8 @@ import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { Mic } from 'lucide-react';
 import FocusableButton from './FocusableButton';
 import FocusRow from './FocusRow';
+import { TV_STAGE_WIDTH, useTvStageWidth } from './TvStage';
+import { fitTitle } from '../lib/bsSong';
 import '@/styles/bs-festa.css';
 
 // Places de la rangée « Quem já entrou » : vides (pointillés) tant que personne n'est là.
@@ -19,11 +21,15 @@ const initialOf = (name) => (String(name || '').trim().charAt(0) || '?').toUpper
  * Les invités n'ont pas d'avatar, seulement un prénom : un rond avec l'initiale.
  * Sans session (hors ligne), la fête peut commencer sans fila, comme avant.
  *
+ * Dès qu'une música est na fila, les trois étapes cèdent la place à la fila elle-même
+ * (même hauteur) : on voit ce qui va passer et pour qui, et « Começar » nomme la
+ * première música (retour utilisateur du 2026-11-16 : « pas très clair »).
+ *
  * Retour : `onBack` (TvApp garde la session ouverte si quelqu'un a rejoint). « Encerrar
  * Festa » demande une confirmation, puis `onEnd` ferme la session.
  */
 export default function TvFestaInvite({
-  code, joinUrl, presentNames = [], loading = false, offline = false, queuedCount = 0,
+  code, joinUrl, presentNames = [], loading = false, offline = false, queuedCount = 0, queue = [],
   onContinue, onBack, onEnd, backInterceptorRef,
 }) {
   const [confirming, setConfirming] = useState(false);
@@ -49,6 +55,11 @@ export default function TvFestaInvite({
     return () => clearTimeout(id);
   }, [confirming]);
 
+  // Titre toujours sur une ligne : sur un écran moins large que 16:9 (ordinateur 4:3,
+  // 16:10), « Chama a galera » passait à deux lignes et poussait les prénoms sous les
+  // boutons. Largeur = scène − marges (96 × 2) − carte QR (560) − écart (72).
+  const stageWidth = useTvStageWidth() || TV_STAGE_WIDTH;
+  const title = fitTitle('Chama a galera', stageWidth - 96 * 2 - 560 - 72, { max: 104, minOneLine: 40 });
   const seats = Array.from({ length: Math.max(SEATS, presentNames.length) }, (_, index) => presentNames[index] || null);
   const hasSession = Boolean(code) && !offline && !loading;
 
@@ -57,21 +68,39 @@ export default function TvFestaInvite({
       <span className="bs-festa-badge">Modo Festa</span>
 
       <div className="bs-festa-main">
-        <h1 className="bs-festa-title">Chama a galera</h1>
+        <h1 className="bs-festa-title" style={{ fontSize: title.fontSize }}>Chama a galera</h1>
         <p className="bs-festa-lead">Cada um entra pelo celular, escolhe a música e entra na fila. A TV cuida do resto.</p>
 
-        <ol className="bs-festa-steps">
-          <li><span className="bs-festa-step-n">1</span>Aponte a câmera para o código</li>
-          <li><span className="bs-festa-step-n">2</span>Escreva seu nome</li>
-          <li><span className="bs-festa-step-n">3</span>Escolha a música e entre na fila</li>
-        </ol>
+        {queue.length > 0 ? (
+          <div className="bs-festa-queue" aria-live="polite">
+            <p className="bs-festa-queue-head">
+              Na fila <span>{queue.length} {queue.length === 1 ? 'música' : 'músicas'}</span>
+            </p>
+            <ol className="bs-festa-queue-list">
+              {queue.slice(0, 3).map((item, index) => (
+                <li key={item.qid} className={index === 0 ? 'is-first' : ''}>
+                  <span className="bs-festa-queue-n">{index + 1}</span>
+                  <span className="bs-festa-queue-title">{item.title}</span>
+                  {item.singer && <span className="bs-festa-queue-singer">{item.singer}</span>}
+                </li>
+              ))}
+            </ol>
+            {queue.length > 3 && <p className="bs-festa-queue-more">e mais {queue.length - 3}</p>}
+          </div>
+        ) : (
+          <ol className="bs-festa-steps">
+            <li><span className="bs-festa-step-n">1</span>Aponte a câmera para o código</li>
+            <li><span className="bs-festa-step-n">2</span>Escreva seu nome</li>
+            <li><span className="bs-festa-step-n">3</span>Escolha a música e entre na fila</li>
+          </ol>
+        )}
 
         <p className="bs-festa-guests-head">
           <span className="bs-festa-guests-title">Quem já entrou</span>
           <span className="bs-festa-guests-hint" aria-live="polite">
             {presentNames.length === 0
               ? 'Esperando a galera chegar'
-              : `${presentNames.length} ${presentNames.length === 1 ? 'pessoa' : 'pessoas'}${queuedCount > 0 ? ` · ${queuedCount} ${queuedCount === 1 ? 'música' : 'músicas'} na fila` : ''}`}
+              : `${presentNames.length} ${presentNames.length === 1 ? 'pessoa' : 'pessoas'}${queuedCount > 0 && !queue.length ? ` · ${queuedCount} ${queuedCount === 1 ? 'música' : 'músicas'} na fila` : ''}`}
           </span>
         </p>
         <ul className="bs-festa-seats">
@@ -100,10 +129,11 @@ export default function TvFestaInvite({
             <FocusableButton
               focusKey="FESTA_INVITE_CONTINUE"
               className="bs-btn bs-btn-primary bs-btn-pink bs-festa-start bs-focus"
-              ariaLabel="Começar a cantar"
+              ariaLabel={queue.length ? `Começar a cantar: ${queue[0].title}` : 'Escolher a primeira música'}
               onPress={onContinue}
             >
-              <Mic size={28} aria-hidden="true" /> Começar a cantar
+              <Mic size={28} aria-hidden="true" />
+              {queue.length ? <span className="bs-festa-start-label">Começar: {queue[0].title}</span> : 'Escolher a primeira música'}
             </FocusableButton>
             <FocusableButton focusKey="FESTA_INVITE_BACK" className="bs-btn bs-focus" ariaLabel="Encerrar Festa" onPress={() => (onEnd ? setConfirming(true) : onBack?.())}>
               Encerrar Festa
