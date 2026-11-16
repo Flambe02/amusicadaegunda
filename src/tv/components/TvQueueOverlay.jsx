@@ -23,24 +23,44 @@ function QueueRow({ item, index, onRemove }) {
   );
 }
 
+function QueueSection({ title, items, onRemove }) {
+  return (
+    <div className="tvc-queue-next">
+      <span className="tvc-queue-section-h">{title}</span>
+      <ul className="tvc-queue-ul">
+        {items.map((item, i) => (
+          <QueueRow key={item.qid} item={item} index={i + 1} onRemove={onRemove} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 /**
- * Overlay de fila : TOCANDO AGORA (1ère entrée) + PRÓXIMAS, retrait par entrée,
- * « Limpar fila » (confirmation en 2 temps), « Começar a cantar ». En session Festa,
- * la fila reflète les ajouts des téléphones via Supabase Realtime (géré en amont
- * par TvApp) et affiche le prénom du chanteur.
+ * Overlay de fila — liste EXACTEMENT ce que compte « Fila · N » (audit 2026-11-16, B3) :
+ *   - hors Festa : la fila de la TV, numérotée à partir de 1 ;
+ *   - en Festa : « Cantando agora » (si une música passe), puis « Próximas na Festa »
+ *     (téléphones + ajouts faits sur la TV, avec le prénom), puis, s'il en reste, la
+ *     fila locale d'avant la Festa.
+ * « Começar a cantar » n'apparaît que s'il y a quelque chose à chanter ; « Limpar »
+ * ne vide que la fila de la TV, jamais les choix des convidados.
  */
-export default function TvQueueOverlay({ queue, festaActive = false, onRemove, onClear, onStart, onClose, backInterceptorRef }) {
+export default function TvQueueOverlay({
+  queue, festaActive = false, festaQueue = [], festaNow = null,
+  onRemove, onRemoveFesta, onClear, onStart, onClose, backInterceptorRef,
+}) {
   const [confirmClear, setConfirmClear] = useState(false);
   const { ref, focusKey } = useFocusable({
     focusKey: 'CAT_QUEUE', trackChildren: true, saveLastFocusedChild: true,
   });
+  const canStart = queue.length > 0 || festaQueue.length > 0;
 
   useEffect(() => {
     const t = setTimeout(() => {
-      try { SpatialNavigation.setFocus(queue.length ? 'CAT_QUEUE_START' : 'CAT_QUEUE_CLOSE'); } catch { /* ignore */ }
+      try { SpatialNavigation.setFocus(canStart ? 'CAT_QUEUE_START' : 'CAT_QUEUE_CLOSE'); } catch { /* ignore */ }
     }, 0);
     return () => clearTimeout(t);
-  }, [queue.length]);
+  }, [canStart]);
 
   useEffect(() => {
     if (!backInterceptorRef) return undefined;
@@ -48,8 +68,7 @@ export default function TvQueueOverlay({ queue, festaActive = false, onRemove, o
     return () => { if (backInterceptorRef) backInterceptorRef.current = null; };
   }, [backInterceptorRef, onClose]);
 
-  const current = queue[0];
-  const upcoming = queue.slice(1);
+  const nothing = !festaNow && !canStart;
 
   return (
     <div className="tvc-overlay tvc-queue-overlay">
@@ -60,42 +79,46 @@ export default function TvQueueOverlay({ queue, festaActive = false, onRemove, o
             {festaActive && <span className="tvc-queue-festa-badge">Festa ativa</span>}
           </div>
 
-          {queue.length === 0 ? (
-            <p className="tvc-queue-empty">A fila está vazia. Adicione músicas pelo catálogo.</p>
+          {nothing ? (
+            <p className="tvc-queue-empty">
+              {festaActive
+                ? 'A fila está vazia. Os convidados escolhem pelo celular; aqui, use « Adicionar à fila » no painel do catálogo.'
+                : 'A fila está vazia. No catálogo, escolha uma música e use « Adicionar à fila » no painel.'}
+            </p>
           ) : (
             <div className="tvc-queue-lists">
-              <div className="tvc-queue-now">
-                <span className="tvc-queue-section-h">Tocando agora</span>
-                <div className="tvc-qrow tvc-qrow-now">
-                  <Play size={18} className="tvc-qrow-nowicon" />
-                  <span className="tvc-qrow-info">
-                    <span className="tvc-qrow-title">{current.title}</span>
-                    {current.singer && <span className="tvc-qrow-singer">{current.singer}</span>}
-                  </span>
+              {festaNow && (
+                <div className="tvc-queue-now">
+                  <span className="tvc-queue-section-h">Cantando agora</span>
+                  <div className="tvc-qrow tvc-qrow-now">
+                    <Play size={18} className="tvc-qrow-nowicon" />
+                    <span className="tvc-qrow-info">
+                      <span className="tvc-qrow-title">{festaNow.title}</span>
+                      {festaNow.singer && <span className="tvc-qrow-singer">{festaNow.singer}</span>}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              {upcoming.length > 0 && (
-                <div className="tvc-queue-next">
-                  <span className="tvc-queue-section-h">Próximas</span>
-                  <ul className="tvc-queue-ul">
-                    {upcoming.map((item, i) => (
-                      <QueueRow key={item.qid} item={item} index={i + 2} onRemove={onRemove} />
-                    ))}
-                  </ul>
-                </div>
+              )}
+              {festaQueue.length > 0 && (
+                <QueueSection title="Próximas na Festa" items={festaQueue} onRemove={onRemoveFesta} />
+              )}
+              {queue.length > 0 && (
+                <QueueSection title={festaActive ? 'Fila desta TV (antes da Festa)' : 'Na fila'} items={queue} onRemove={onRemove} />
               )}
             </div>
           )}
 
           <div className="tvc-queue-actions">
-            <FocusableButton
-              focusKey="CAT_QUEUE_START"
-              className="tvc-queue-btn is-primary"
-              ariaLabel="Começar a cantar a fila"
-              onPress={onStart}
-            >
-              <Mic size={19} /> Começar a cantar
-            </FocusableButton>
+            {canStart && (
+              <FocusableButton
+                focusKey="CAT_QUEUE_START"
+                className="tvc-queue-btn is-primary"
+                ariaLabel="Começar a cantar a fila"
+                onPress={onStart}
+              >
+                <Mic size={19} /> Começar a cantar
+              </FocusableButton>
+            )}
             {queue.length > 0 && (
               <FocusableButton
                 focusKey="CAT_QUEUE_CLEAR"
@@ -103,7 +126,7 @@ export default function TvQueueOverlay({ queue, festaActive = false, onRemove, o
                 ariaLabel={confirmClear ? 'Confirmar limpar fila' : 'Limpar fila'}
                 onPress={() => { if (confirmClear) { onClear(); setConfirmClear(false); } else setConfirmClear(true); }}
               >
-                {confirmClear ? 'Confirmar?' : 'Limpar fila'}
+                {confirmClear ? 'Confirmar?' : festaActive ? 'Limpar fila da TV' : 'Limpar fila'}
               </FocusableButton>
             )}
             <FocusableButton

@@ -6,6 +6,7 @@ import { extractYouTubeId } from '@/lib/utils';
 import { resolveLyricsText } from '@/lib/lrc';
 import { toTvSong } from './lib/tvSongRepository';
 import { trackTv } from './lib/tvAnalytics';
+import { queueToastMessage } from './lib/tvQueue';
 import { fitTitle, formatLongDate, formatShortDate, getBackdropUrl, getRefrain, getShortContext } from './lib/bsSong';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import TvSongVisualPanel from './components/TvSongVisualPanel';
@@ -152,11 +153,13 @@ export default function TvSongDetailPage({
   }, [vm.recommendedModes, festaActive]);
 
   const addToQueue = useCallback(() => {
+    // En Festa, TvApp écrit dans la fila Festa (Supabase), celle que la Festa joue —
+    // avant, la música partait dans une fila locale jamais jouée (audit B4).
     const res = onAddToQueue?.(vm) || { added: false, position: 0 };
-    trackTv(res.added ? 'tv_song_added_to_queue' : 'tv_song_queue_already_contains', { song_id: vm.id, source });
-    setToast({
-      message: res.added ? `Adicionada à fila · posição ${res.position}` : `Já está na fila · posição ${res.position}`,
-      nonce: Date.now(),
+    trackTv(res.added ? 'tv_song_added_to_queue' : 'tv_song_queue_already_contains', { song_id: vm.id, source, festa: Boolean(res.festa) });
+    setToast({ message: queueToastMessage(res, res.festa), nonce: Date.now() });
+    res.pending?.catch(() => {
+      setToast({ message: 'Não foi possível adicionar à fila da Festa. Tente de novo.', nonce: Date.now() });
     });
   }, [onAddToQueue, vm, source]);
 

@@ -180,6 +180,9 @@
 .tvc-panel-cta.is-primary.is-focused { box-shadow: 0 0 0 4px rgba(253, 224, 71, 0.35), 0 0 30px rgba(253, 224, 71, 0.5); transform: scale(1.03); }
 .tvc-panel-cta.is-secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1.5px solid rgba(255, 255, 255, 0.2); }
 .tvc-panel-cta.is-secondary.is-focused { background: rgba(255, 255, 255, 0.2); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28); transform: scale(1.03); }
+/* Cantar agora + Adicionar à fila côte à côte : trois boutons empilés écrasaient le texte du panneau. */
+.tvc-panel-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.tvc-panel-actions-row .tvc-panel-cta { padding: 0 0.6rem; font-size: clamp(0.9rem, 19px, 1.1rem); white-space: nowrap; }
 .tvc-panel-cta.is-tertiary { background: transparent; color: rgba(255, 255, 255, 0.7); border: 1.5px dashed rgba(255, 255, 255, 0.2); height: clamp(42px, 43.2px, 52px); font-size: clamp(0.9rem, 20.2px, 1.1rem); }
 .tvc-panel-cta.is-tertiary.is-focused { color: #fff; border-style: solid; border-color: var(--tvh-yellow); box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.3); transform: scale(1.03); }
 

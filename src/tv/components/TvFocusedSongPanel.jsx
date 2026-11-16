@@ -1,5 +1,5 @@
 import { FocusContext, useFocusable } from '@noriginmedia/norigin-spatial-navigation';
-import { Play, Mic } from 'lucide-react';
+import { ListPlus, Play, Mic } from 'lucide-react';
 import FocusableButton from './FocusableButton';
 
 const MODE_LABELS = { solo: 'Solo', duet: 'Dueto', family: 'Família', festa: 'Festa' };
@@ -26,7 +26,7 @@ function MetaRow({ label, value }) {
  * en session Festa.
  */
 export default function TvFocusedSongPanel({
-  vm, artSrc, familiar = false, festaChosenBy = null, onConhecer, onCantar,
+  vm, artSrc, festaChosenBy = null, onConhecer, onCantar, onAddToQueue,
 }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'CAT_PANEL', trackChildren: true, saveLastFocusedChild: true,
@@ -77,17 +77,30 @@ export default function TvFocusedSongPanel({
           >
             <Play size={19} className="tvc-cta-icon-fill" /> Abrir ficha
           </FocusableButton>
-          {/* « Cantar agora » : raccourci direct visible seulement si le titre est déjà
-              familier (récemment ouvert/chanté) — ne concurrence jamais « Abrir ficha ». */}
-          {familiar && vm.isSingable && (
-            <FocusableButton
-              focusKey="CAT_PANEL_CANTAR"
-              className="tvc-panel-cta is-secondary"
-              ariaLabel={`Cantar ${vm.title} agora`}
-              onPress={() => onCantar(vm)}
-            >
-              <Mic size={17} /> Cantar agora
-            </FocusableButton>
+          {/* Toujours là pour une música chantable (avant : seulement après une première
+              ouverture, le bouton semblait apparaître au hasard — audit B12). Côte à côte :
+              empilés, trois boutons écrasaient le texte du panneau. */}
+          {vm.isSingable && (
+            <div className="tvc-panel-actions-row">
+              <FocusableButton
+                focusKey="CAT_PANEL_CANTAR"
+                className="tvc-panel-cta is-secondary"
+                ariaLabel={`Cantar ${vm.title} agora`}
+                onPress={() => onCantar(vm)}
+              >
+                <Mic size={17} /> Cantar agora
+              </FocusableButton>
+              {onAddToQueue && (
+                <FocusableButton
+                  focusKey="CAT_PANEL_FILA"
+                  className="tvc-panel-cta is-secondary"
+                  ariaLabel={`Adicionar ${vm.title} à fila`}
+                  onPress={() => onAddToQueue(vm)}
+                >
+                  <ListPlus size={17} /> Adicionar à fila
+                </FocusableButton>
+              )}
+            </div>
           )}
         </div>
       </aside>

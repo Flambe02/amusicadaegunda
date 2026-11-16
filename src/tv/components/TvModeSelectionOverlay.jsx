@@ -5,7 +5,7 @@ import { Mic, Mic2, PartyPopper } from 'lucide-react';
 const MODE_DEFS = {
   solo: { icon: Mic, title: 'Solo', desc: 'Cante sozinho' },
   duet: { icon: Mic2, title: 'Dueto', desc: 'Cante com alguém' },
-  festa: { icon: PartyPopper, title: 'Festa', desc: 'Adicione à sessão' },
+  festa: { icon: PartyPopper, title: 'Festa', desc: 'Entra na fila da Festa' },
 };
 
 function ModeOption({ mode, onSelect }) {

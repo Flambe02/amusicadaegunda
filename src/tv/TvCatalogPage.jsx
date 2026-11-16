@@ -19,6 +19,7 @@ import TvCatalogSkeleton from './components/TvCatalogSkeleton';
 import TvEmptyCatalogState from './components/TvEmptyCatalogState';
 import TvCatalogRemoteHint from './components/TvCatalogRemoteHint';
 import { bumpCatalogOpenCount } from './lib/catalogHintPref';
+import { queueToastMessage } from './lib/tvQueue';
 
 const FOCUS_DWELL_MS = 600;
 const cardFocusKey = (vm) => `CAT_CARD_${vm.id}`;
@@ -37,9 +38,9 @@ const cardFocusKey = (vm) => `CAT_CARD_${vm.id}`;
  */
 export default function TvCatalogPage({
   songs, getThumb, loading = false, loadError = false,
-  queue = [], festaPeople = null, festaQueueCount = 0, familiarIds = null,
+  queue = [], festaPeople = null, festaQueueCount = 0, festaQueue = [], festaNow = null,
   initialState, onStateChange,
-  onOpenDetail, onCantar, onAddToQueue, onRemoveFromQueue, onClearQueue, onStartQueue,
+  onOpenDetail, onCantar, onAddToQueue, onRemoveFromQueue, onClearQueue, onStartQueue, onRemoveFestaEntry,
   onGoHome, onOpenKaraoke, onOpenFesta, onOpenSettings, onRetryLoad,
   backInterceptorRef,
 }) {
@@ -117,12 +118,10 @@ export default function TvCatalogPage({
   const [toast, setToast] = useState({ message: '', nonce: 0 });
   const addToQueue = useCallback((vm) => {
     const res = onAddToQueue?.(vm) || { added: false, position: 0 };
-    trackTv('tv_song_added_to_queue', { song_id: vm.id, added: res.added });
-    setToast({
-      message: res.added
-        ? `Adicionada à fila · posição ${res.position}`
-        : `Já está na fila · posição ${res.position}`,
-      nonce: Date.now(),
+    trackTv('tv_song_added_to_queue', { song_id: vm.id, added: res.added, festa: Boolean(res.festa) });
+    setToast({ message: queueToastMessage(res, res.festa), nonce: Date.now() });
+    res.pending?.catch(() => {
+      setToast({ message: 'Não foi possível adicionar à fila da Festa. Tente de novo.', nonce: Date.now() });
     });
   }, [onAddToQueue]);
 
@@ -162,9 +161,9 @@ export default function TvCatalogPage({
     else if (action === 'retry' || action === 'offline') onRetryLoad?.();
   }, [resetAll, onRetryLoad]);
 
-  // Raccourci « ajout rapide à la fila » (touche + / touche verte) quand une carte
-  // est focalisée et qu'aucun overlay n'est ouvert — l'action principale reste OK
-  // (ouvrir la fiche) + le CTA « Adicionar à fila » du panneau (Droite).
+  // Raccourci « ajout rapide à la fila » (touche + du clavier) quand une carte est
+  // focalisée et qu'aucun overlay n'est ouvert. Sur télécommande, le chemin est le
+  // bouton « Adicionar à fila » du panneau (▶ depuis la dernière colonne).
   useEffect(() => {
     if (overlay) return undefined;
     const onKey = (e) => {
@@ -172,7 +171,7 @@ export default function TvCatalogPage({
       const el = document.querySelector('.tvc-card.is-focused');
       const id = el?.getAttribute('data-song-id');
       const vm = id && filtered.find((v) => String(v.id) === id);
-      if (vm) addToQueue(vm);
+      if (vm?.isSingable) addToQueue(vm);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -188,7 +187,6 @@ export default function TvCatalogPage({
   }, [backInterceptorRef, overlay]);
 
   const advancedActive = !advancedIsEmpty(advanced);
-  const familiar = focusedVm && familiarIds ? familiarIds.has(focusedVm.id) : false;
   const showEmpty = !loading && !loadError && filtered.length === 0;
   const queueVms = queue; // {qid, id, title, singer?}
 
@@ -242,9 +240,9 @@ export default function TvCatalogPage({
         <TvFocusedSongPanel
           vm={focusedVm}
           artSrc={focusedVm ? getArtwork(focusedVm) : null}
-          familiar={familiar}
           onConhecer={openDetail}
           onCantar={(vm) => onCantar(vm.raw)}
+          onAddToQueue={addToQueue}
         />
       </div>
 
@@ -274,7 +272,10 @@ export default function TvCatalogPage({
         <TvQueueOverlay
           queue={queueVms}
           festaActive={typeof festaPeople === 'number'}
+          festaQueue={festaQueue}
+          festaNow={festaNow}
           onRemove={onRemoveFromQueue}
+          onRemoveFesta={onRemoveFestaEntry}
           onClear={onClearQueue}
           onStart={() => { onStartQueue?.(); setOverlay(null); }}
           onClose={closeOverlay}

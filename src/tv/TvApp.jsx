@@ -11,8 +11,9 @@ import { useAppUpdate } from '@/hooks/useAppUpdate';
 import TvRecommendedUpdateDialog from './components/TvRecommendedUpdateDialog';
 import {
   createFestaSession, endFestaSession, updateFestaSessionCurrentSong,
-  markFestaQueueStatus, buildFestaJoinUrl,
+  markFestaQueueStatus, buildFestaJoinUrl, addToFestaQueue, skipFestaQueueEntry,
 } from '@/lib/festa';
+import { festaPlaying, festaRows, festaWaiting, planFestaAdd, TV_SINGER } from './lib/tvQueue';
 import { useFestaSession } from '@/hooks/useFestaSession';
 import { loadKaraokeOptions, saveKaraokeOptions } from '@/lib/karaokeOptions';
 import BsHomePage from './BsHomePage';
@@ -551,13 +552,30 @@ export default function TvApp({ web = null }) {
     catalogStateRef.current = { ...catalogStateRef.current, ...partial };
   }, []);
 
-  // ── Fila LOCALE du catálogo (en mémoire) — indépendante de la fila Festa
-  // Supabase. Chaque entrée : { qid, id, title, singer? }. Sert au bouton
-  // « Adicionar à fila » + à l'overlay de fila + « Começar a cantar ». ──
+  // ── Fila LOCALE du catálogo (en mémoire), hors Festa. Chaque entrée :
+  // { qid, id, title, singer? }. Pendant une Festa, « Adicionar à fila » écrit dans la
+  // fila Festa (Supabase), la seule que la Festa joue (audit 2026-11-16, B4). ──
   const [localQueue, setLocalQueue] = useState([]);
   const localQueueRef = useRef(localQueue);
   localQueueRef.current = localQueue;
+  // Ajouts Festa envoyés mais pas encore revenus par Realtime : évite un doublon si
+  // l'on appuie deux fois de suite.
+  const pendingFestaAddsRef = useRef(new Set());
+  useEffect(() => {
+    festaQueue.forEach((q) => pendingFestaAddsRef.current.delete(q.song_id));
+  }, [festaQueue]);
   const addToQueue = useCallback((vm) => {
+    const session = festaSessionRef.current;
+    if (session) {
+      const plan = planFestaAdd(festaQueueRef.current, pendingFestaAddsRef.current, vm.id);
+      if (!plan.added) return { ...plan, festa: true };
+      pendingFestaAddsRef.current.add(vm.id);
+      const pending = addToFestaQueue(session.id, vm.id, TV_SINGER).catch((error) => {
+        pendingFestaAddsRef.current.delete(vm.id);
+        throw error;
+      });
+      return { ...plan, festa: true, pending };
+    }
     const existingIndex = localQueueRef.current.findIndex((q) => q.id === vm.id);
     if (existingIndex >= 0) return { added: false, position: existingIndex + 1 };
     const entry = { qid: `${vm.id}-${Date.now()}`, id: vm.id, title: vm.title, raw: vm.raw };
@@ -566,6 +584,9 @@ export default function TvApp({ web = null }) {
   }, []);
   const removeFromQueue = useCallback((qid) => setLocalQueue((q) => q.filter((e) => e.qid !== qid)), []);
   const clearQueue = useCallback(() => setLocalQueue([]), []);
+  // Retrait d'une música de la fila Festa depuis la TV : statut « skipped », comme
+  // le retrait fait par un invité (jamais de suppression).
+  const removeFestaEntry = useCallback((qid) => { skipFestaQueueEntry(qid).catch(() => {}); }, []);
 
   // Titres « familiers » (récemment ouverts en fiche ou chantés) → débloque le CTA
   // tertiaire discret « Cantar agora » dans le panneau du catálogo.
@@ -622,6 +643,13 @@ export default function TvApp({ web = null }) {
       festaQueueId: null, prevApplause: null, prevTomato: null,
     }]);
   }, [getHasKaraoke]);
+
+  // « Começar a cantar » de l'overlay : en Festa, la fila des téléphones passe d'abord
+  // (même chemin que la salle d'attente) ; sinon, la fila locale.
+  const startQueue = useCallback(() => {
+    if (festaSessionRef.current && festaWaiting(festaQueueRef.current).length > 0) proceedToFestaPicker();
+    else startLocalQueue();
+  }, [proceedToFestaPicker, startLocalQueue]);
 
   // Fila festa : la chanson choisie en premier, puis le reste du catalogue karaokê
   // (filet de sécurité si la fila Supabase des téléphones reste vide, cf. advanceFesta).
@@ -723,7 +751,9 @@ export default function TvApp({ web = null }) {
           queue={localQueue}
           festaPeople={festaSession ? festaPeopleNames.length : null}
           festaQueueCount={festaWaitingCount}
-          familiarIds={familiarIdsRef.current}
+          festaQueue={festaSession ? festaRows(festaWaiting(festaQueue), songs) : []}
+          festaNow={festaSession ? festaRows([festaPlaying(festaQueue)].filter(Boolean), songs)[0] || null : null}
+          onRemoveFestaEntry={removeFestaEntry}
           initialState={catalogStateRef.current}
           onStateChange={setCatalogState}
           onOpenDetail={(song) => { markFamiliar(song); push({ name: 'detail', song, source: 'catalog' }); }}
@@ -731,7 +761,7 @@ export default function TvApp({ web = null }) {
           onAddToQueue={addToQueue}
           onRemoveFromQueue={removeFromQueue}
           onClearQueue={clearQueue}
-          onStartQueue={startLocalQueue}
+          onStartQueue={startQueue}
           onGoHome={goHome}
           onOpenKaraoke={openKaraokeLanding}
           onOpenFesta={onChooseFesta}
@@ -889,7 +919,7 @@ export default function TvApp({ web = null }) {
     liveEnergyByEntry, festaQueue, festaWaitingCount, endFestaNow,
     // Catálogo
     loading, loadError, localQueue, setCatalogState, markFamiliar,
-    addToQueue, removeFromQueue, clearQueue, startLocalQueue, loadSongs,
+    addToQueue, removeFromQueue, clearQueue, startQueue, removeFestaEntry, loadSongs,
   ]);
 
   if (loading) {
