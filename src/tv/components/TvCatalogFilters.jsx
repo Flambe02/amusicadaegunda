@@ -34,7 +34,7 @@ function FilterChip({ id, label, active, focusKey, onPress, variant = 'quick' })
  * actif (pastille) pour signaler qu'un filtrage supplémentaire est en cours.
  */
 export default function TvCatalogFilters({
-  activeQuickId, advancedActive, onSelectQuick, onOpenSearch, onOpenAdvanced,
+  activeQuickId, advancedActive, onSelectQuick, onOpenSearch, onOpenAdvanced, hasFavorites = false,
 }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'CAT_FILTERS', trackChildren: true, saveLastFocusedChild: true,
@@ -50,7 +50,7 @@ export default function TvCatalogFilters({
           variant="search"
           onPress={onOpenSearch}
         />
-        {QUICK_FILTERS.map((f) => (
+        {QUICK_FILTERS.filter((f) => hasFavorites || !f.needsFavorites).map((f) => (
           <FilterChip
             key={f.id}
             id={f.id}

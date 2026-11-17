@@ -91,3 +91,15 @@
 .bs-qr-title { margin: 0; font-family: var(--bs-font-title); font-weight: 400; font-size: 38px; color: #fff; }
 .bs-qr-code { padding: 22px; border-radius: 24px; background: var(--bs-qr-card); line-height: 0; }
 .bs-qr-hint { margin: 0; color: var(--bs-text-2); font-size: 24px; }
+
+/* ── Favoritar + Nota da semana (audit grand écran, étape 6) ─────────────────── */
+.bs-fav-btn.is-on { color: var(--bs-pink-text, #f472b6); border-color: currentColor; }
+.bs-nota { margin-top: 30px; display: flex; align-items: center; gap: 30px; flex-wrap: wrap; }
+.bs-nota-head { display: flex; flex-direction: column; gap: 6px; min-width: 220px; }
+.bs-nota-kicker { color: var(--bs-gold); font-size: 17px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.bs-nota-sub { color: var(--bs-text-2); font-size: 19px; }
+.bs-nota-buttons { display: flex; gap: 14px; }
+.bs-nota-btn { height: 64px; padding: 0 24px; font-size: 21px; gap: 10px; }
+.bs-nota-btn.is-chosen { border-color: var(--bs-gold); color: var(--bs-gold); background: rgba(245, 197, 66, 0.12); }
+.bs-nota-emoji { font-size: 28px; line-height: 1; }
+.bs-nota-pct { font-weight: 800; opacity: 0.9; }

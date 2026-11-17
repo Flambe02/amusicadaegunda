@@ -8,6 +8,7 @@ import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
 import TvHomeRemoteHint from './components/TvHomeRemoteHint';
 import { getInterface } from '@/lib/interface';
+import { useFavorites } from '@/hooks/useFavorites';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import { getDifficultyMeta, getMode } from './lib/songMeta';
 import { fitTitle, formatShortDate, getBackdropUrl, getShortContext, nextReleaseLabel, weekDateLabel } from './lib/bsSong';
@@ -116,11 +117,17 @@ export default function BsHomePage({
 
   const vms = useMemo(() => songs.map(toHomeSong), [songs]);
   const week = vms[0] || null;
+  // « Minhas favoritas » (même liste que le mobile) : la plus récemment ajoutée d'abord.
+  const { ids: favoriteIds } = useFavorites();
   const rows = useMemo(() => ({
+    favoritas: [...favoriteIds]
+      .map((id) => vms.find((vm) => String(vm.id) === id))
+      .filter(Boolean)
+      .slice(0, perRow),
     novas: vms.slice(1, perRow + 1),
     faceis: vms.filter((vm) => vm.difficulty === 'easy').slice(0, perRow),
     karaoke: vms.filter((vm) => getHasKaraoke(vm.raw)).slice(0, perRow),
-  }), [vms, perRow, getHasKaraoke]);
+  }), [vms, perRow, getHasKaraoke, favoriteIds]);
 
   const weekSingable = Boolean(week && getHasKaraoke(week.raw));
   const tv = getInterface().tv;
@@ -238,6 +245,8 @@ export default function BsHomePage({
             </>
           )}
         />
+        {/* Seulement si l'appareil a au moins une favorita (Rail ne rend rien sinon). */}
+        <Rail id="FAVORITAS" title="Minhas favoritas" hint="Só neste aparelho" vms={rows.favoritas} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} isSingable={isSingable} onHelp={cardFocusHelp} />
         <Rail id="FACEIS" title="Fáceis para começar" vms={rows.faceis} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} isSingable={isSingable} onHelp={cardFocusHelp} />
         <Rail id="KARAOKE" title="Com karaokê" vms={rows.karaoke} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} isSingable={isSingable} onHelp={cardFocusHelp} />
       </div>

@@ -19,6 +19,8 @@ function isRecent(vm, days = 120) {
 // ── Filtres rapides de la barre (max 6 + TODAS + Mais filtros + Buscar) ──────
 export const QUICK_FILTERS = [
   { id: 'todas', label: 'Todas', predicate: () => true },
+  // Seulement quand l'appareil a des favoritas (TvCatalogFilters la masque sinon).
+  { id: 'favoritas', label: 'Favoritas', needsFavorites: true, predicate: (vm, ctx) => Boolean(ctx?.favorites?.has(String(vm.id))) },
   { id: 'facil', label: 'Fácil', predicate: (vm) => vm.difficulty === 'easy' },
   { id: 'familia', label: 'Família', predicate: (vm) => vm.recommendedModes.includes('family') },
   { id: 'dueto', label: 'Dueto', predicate: (vm) => vm.recommendedModes.includes('duet') },
@@ -150,8 +152,9 @@ export function matchesSearch(vm, query) {
 }
 
 // ── Application combinée ─────────────────────────────────────────────────────
-export function filterCatalog(vms, { quickId = 'todas', advanced, themeDimension, query = '' } = {}) {
+export function filterCatalog(vms, { quickId = 'todas', advanced, themeDimension, query = '', favorites = null } = {}) {
   const qp = quickPredicate(quickId);
+  const ctx = { favorites };
   const ap = advanced && !advancedIsEmpty(advanced) ? advancedPredicate(advanced, themeDimension) : () => true;
-  return vms.filter((vm) => qp(vm) && ap(vm) && matchesSearch(vm, query));
+  return vms.filter((vm) => qp(vm, ctx) && ap(vm) && matchesSearch(vm, query));
 }

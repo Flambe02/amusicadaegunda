@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { AlignLeft, Mic, Play, Share2 } from 'lucide-react';
+import { AlignLeft, Heart, Mic, Play, Share2 } from 'lucide-react';
 import { useYouTubeIframeApi } from '@/hooks/useYouTubeIframeApi';
 import { extractYouTubeId } from '@/lib/utils';
 import { resolveLyricsText } from '@/lib/lrc';
@@ -17,6 +17,8 @@ import { useFullSong } from '@/hooks/useFullSong';
 import TvFullLyricsOverlay from './components/TvFullLyricsOverlay';
 import TvContextOverlay from './components/TvContextOverlay';
 import TvToast from './components/TvToast';
+import BsNotaDaSemana from './components/BsNotaDaSemana';
+import { favoriteKey, useFavorites } from '@/hooks/useFavorites';
 import FocusableButton from './components/FocusableButton';
 import FocusRow from './components/FocusRow';
 import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
@@ -138,6 +140,16 @@ export default function TvSongDetailPage({
   const [overlay, setOverlay] = useState(null); // 'lyrics' | 'context' | 'qr'
   const [playing, setPlaying] = useState(false);
   const [toast, setToast] = useState({ message: '', nonce: 0 });
+  // Favoris de l'appareil (même liste que le mobile et /karaoke, audit étape 6).
+  const { isFavorite, toggle: toggleFavorite } = useFavorites();
+  const canFavorite = Boolean(favoriteKey(song));
+  const favorite = canFavorite && isFavorite(song);
+  const onFavorite = () => {
+    const on = toggleFavorite(song);
+    setToast({ message: on ? 'Salva nas suas favoritas (neste aparelho)' : 'Removida das favoritas', nonce: Date.now() });
+  };
+  // « Nota da semana » : seulement sur la chanson de la semaine (la plus récente).
+  const isWeekSong = Boolean(song?.id != null && songs?.[0]?.id === song.id);
   const restoreFocusRef = useRef('DETAIL_CANTAR');
 
   const onCantar = useCallback(() => {
@@ -403,6 +415,17 @@ export default function TvSongDetailPage({
                   <AlignLeft size={22} aria-hidden="true" /> Letra completa
                 </FocusableButton>
               )}
+              {canFavorite && (
+                <FocusableButton
+                  focusKey="DETAIL_FAVORITE"
+                  className={`bs-btn bs-focus bs-fav-btn ${favorite ? 'is-on' : ''}`}
+                  ariaLabel={favorite ? 'Favorita: tirar das favoritas' : 'Favoritar esta música'}
+                  ariaPressed={favorite}
+                  onPress={onFavorite}
+                >
+                  <Heart size={22} aria-hidden="true" className={favorite ? 'bs-icon-fill' : ''} /> {favorite ? 'Favorita' : 'Favoritar'}
+                </FocusableButton>
+              )}
             </FocusRow>
 
             {/* Hauteur fixe : la letra arrive après le résumé, rien ne bouge quand elle arrive. */}
@@ -414,6 +437,7 @@ export default function TvSongDetailPage({
                 </>
               )}
             </div>
+            {isWeekSong && <BsNotaDaSemana song={song} focusKey="DETAIL_NOTA" className="bs-song-nota" />}
           </div>
 
           <div className="bs-song-side">

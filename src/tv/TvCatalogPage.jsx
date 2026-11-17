@@ -8,6 +8,7 @@ import {
 import { trackTv } from './lib/tvAnalytics';
 import TvTopNavigation from './components/TvTopNavigation';
 import TvCatalogHeader from './components/TvCatalogHeader';
+import { useFavorites } from '@/hooks/useFavorites';
 import TvCatalogFilters from './components/TvCatalogFilters';
 import TvSongGrid from './components/TvSongGrid';
 import TvFocusedSongPanel from './components/TvFocusedSongPanel';
@@ -58,17 +59,21 @@ export default function TvCatalogPage({
   useEffect(() => { if (init.openSearch) onStateChange?.({ openSearch: false }); }, [init.openSearch, onStateChange]);
 
   const vms = useMemo(() => toTvSongs(songs), [songs]);
+  // Favoris de l'appareil : la puce « Favoritas » n'existe que s'il y en a (audit étape 6).
+  const { ids: favorites } = useFavorites();
+  const hasFavorites = favorites.size > 0;
+  useEffect(() => { if (quickId === 'favoritas' && !hasFavorites) setQuickId('todas'); }, [quickId, hasFavorites]);
   const themeDimension = useMemo(() => buildThemeDimension(vms), [vms]);
   const dimensions = useMemo(() => [...ADVANCED_DIMENSIONS, themeDimension], [themeDimension]);
 
   const filtered = useMemo(
-    () => filterCatalog(vms, { quickId, advanced, themeDimension, query: searchQuery }),
-    [vms, quickId, advanced, themeDimension, searchQuery],
+    () => filterCatalog(vms, { quickId, advanced, themeDimension, query: searchQuery, favorites }),
+    [vms, quickId, advanced, themeDimension, searchQuery, favorites],
   );
   const searchCount = filtered.length; // live count affiché dans l'overlay de recherche
   const countForAdvanced = useCallback(
-    (draft) => filterCatalog(vms, { quickId, advanced: draft, themeDimension, query: searchQuery }).length,
-    [vms, quickId, themeDimension, searchQuery],
+    (draft) => filterCatalog(vms, { quickId, advanced: draft, themeDimension, query: searchQuery, favorites }).length,
+    [vms, quickId, themeDimension, searchQuery, favorites],
   );
 
   // ── Chanson focalisée (pilote le panneau contextuel) ───────────────────────
@@ -216,6 +221,7 @@ export default function TvCatalogPage({
         onSelectQuick={selectQuick}
         onOpenSearch={openSearch}
         onOpenAdvanced={openAdvanced}
+        hasFavorites={hasFavorites}
       />
 
       <div className="tvc-body">

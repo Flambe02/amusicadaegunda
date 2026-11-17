@@ -1,20 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { fetchReactionCounts, voteReaction } from '@/api/reactions';
-import { NOTA_OPTIONS, getDeviceId, percentages, readOwnReaction, saveOwnReaction } from '@/lib/reactionDevice';
-import { getPublicSlug } from '@/components/mobile/feed/feedMedia';
+import { NOTA_OPTIONS } from '@/lib/reactionDevice';
+import { useNotaDaSemana, votesLabel } from '@/hooks/useNotaDaSemana';
 import { TEXT_SHADOW } from '@/components/mobile/feed/feedStyles';
-import { logger } from '@/lib/logger';
-
-const EMPTY_COUNTS = { fogo: 0, risada: 0, meh: 0 };
-
-// Seules les chansons de la base ont un identifiant numérique (le repli statique
-// `content/songs.json` donne « static-1 »…) : sans lui, pas de vote possible.
-function voteId(song) {
-  const id = song?.id;
-  return id != null && /^\d+$/.test(String(id)) ? String(id) : null;
-}
-
-const votesLabel = (total) => `${total} ${total === 1 ? 'voto' : 'votos'}`;
 
 /**
  * « Nota da semana » : 🔥 / 😂 / 😐 sur la chanson de la semaine (à l'appelant de ne
@@ -22,71 +8,14 @@ const votesLabel = (total) => `${total} ${total === 1 ? 'voto' : 'votos'}`;
  * s'affichent qu'après avoir voté (directement si l'appareil a déjà voté).
  *
  * Panne (fonction SQL absente, réseau) : le widget disparaît, sans message d'erreur.
+ * Logique partagée avec le grand écran : src/hooks/useNotaDaSemana.js.
  *
  * `variant` : `page` (fiche de la chanson) ou `feed` (pastilles posées sur la vidéo
  * du feed : seuls les boutons captent les taps, aucun jaune sur la vidéo).
  */
 export default function NotaDaSemana({ song, variant = 'page', className = '' }) {
-  const songId = voteId(song);
-  const slug = song ? getPublicSlug(song) : null;
-  const [status, setStatus] = useState('prompt'); // prompt | loading | results | hidden
-  const [own, setOwn] = useState(null);
-  const [counts, setCounts] = useState(EMPTY_COUNTS);
-  const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    if (!songId) return undefined;
-    const previous = readOwnReaction(songId);
-    setOwn(previous);
-    setCounts(EMPTY_COUNTS);
-    setPending(false);
-    if (!previous) {
-      setStatus('prompt');
-      return undefined;
-    }
-    // Déjà voté sur cet appareil : les résultats directement.
-    let alive = true;
-    setStatus('loading');
-    fetchReactionCounts(songId)
-      .then((next) => {
-        if (!alive) return;
-        setCounts(next);
-        setStatus('results');
-      })
-      .catch((error) => {
-        if (!alive) return;
-        logger.warn('Nota da semana indisponível:', error);
-        setStatus('hidden');
-      });
-    return () => { alive = false; };
-  }, [songId]);
-
-  const vote = useCallback((reaction) => {
-    if (!songId || pending || reaction === own) return;
-    setPending(true);
-    voteReaction(songId, getDeviceId(), reaction)
-      .then((next) => {
-        saveOwnReaction(songId, reaction);
-        setOwn(reaction);
-        setCounts(next);
-        setStatus('results');
-        try {
-          window.gtag?.('event', 'vote', { method: 'nota_da_semana', reaction, item_id: slug });
-        } catch {
-          /* analytics indisponible : sans effet */
-        }
-      })
-      .catch((error) => {
-        logger.warn('Nota da semana: voto não registrado:', error);
-        setStatus('hidden');
-      })
-      .finally(() => setPending(false));
-  }, [songId, pending, own, slug]);
-
-  if (!songId || status === 'hidden' || status === 'loading') return null;
-
-  const showResults = status === 'results';
-  const { total, share } = percentages(counts);
+  const { status, own, pending, vote, total, share, visible, showResults } = useNotaDaSemana(song);
+  if (!visible) return null;
 
   if (variant === 'feed') {
     return (
