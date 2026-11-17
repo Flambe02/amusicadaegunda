@@ -4,6 +4,7 @@ import { Mic, Music, Sparkles, ChevronRight } from 'lucide-react';
 import { useTvArtworkManifest, getTvCardArtwork } from './tvArtwork';
 import { toTvSongs } from './lib/tvSongRepository';
 import { filterCatalog, QUICK_FILTERS } from './lib/tvCatalogFilters';
+import { useFavorites } from '@/hooks/useFavorites';
 import { trackTv } from './lib/tvAnalytics';
 import TvTopNavigation from './components/TvTopNavigation';
 import TvSongGrid from './components/TvSongGrid';
@@ -37,14 +38,14 @@ function FilterChip({ label, active, focusKey, onPress }) {
 }
 
 /** Rangée de chips de filtre rapide (groupe de focus propre). */
-function KaraokeFilters({ activeQuickId, onSelectQuick }) {
+function KaraokeFilters({ activeQuickId, onSelectQuick, hasFavorites = false }) {
   const { ref, focusKey } = useFocusable({
     focusKey: 'KARAOKE_FILTERS', trackChildren: true, saveLastFocusedChild: true,
   });
   return (
     <FocusContext.Provider value={focusKey}>
       <div ref={ref} className="tvc-filters tvk-filters" role="toolbar" aria-label="Filtrar karaokês">
-        {QUICK_FILTERS.map((f) => (
+        {QUICK_FILTERS.filter((f) => hasFavorites || !f.needsFavorites).map((f) => (
           <FilterChip
             key={f.id}
             label={f.label}
@@ -82,7 +83,11 @@ export default function TvKaraokeLanding({
 
   const [quickId, setQuickId] = useState('todas');
   const karaokeVms = useMemo(() => toTvSongs(songs.filter(getHasKaraoke)), [songs, getHasKaraoke]);
-  const filtered = useMemo(() => filterCatalog(karaokeVms, { quickId }), [karaokeVms, quickId]);
+  // « Favoritas » seulement si l'appareil en a (même règle que le catálogo).
+  const { ids: favorites } = useFavorites();
+  const hasFavorites = favorites.size > 0;
+  useEffect(() => { if (quickId === 'favoritas' && !hasFavorites) setQuickId('todas'); }, [quickId, hasFavorites]);
+  const filtered = useMemo(() => filterCatalog(karaokeVms, { quickId, favorites }), [karaokeVms, quickId, favorites]);
   const total = karaokeVms.length;
 
   // ── Chanson focalisée (pilote le panneau) — restaurée au retour d'une fiche ──
@@ -170,7 +175,7 @@ export default function TvKaraokeLanding({
       <section className="tvk-hero">
         <div className="tvk-hero-text">
           <p className="tvk-eyebrow"><Mic size={17} /> Palco da Segunda</p>
-          <h1 className="tvk-title">KARAOKÊ</h1>
+          <h1 className="tvk-title">Karaokê</h1>
           <p className="tvk-subtitle">Escolha uma música ou deixe a sorte decidir.</p>
         </div>
         {total > 0 && (
@@ -194,7 +199,7 @@ export default function TvKaraokeLanding({
           </span>
           <span className="tvk-surprise-chevron" aria-hidden="true"><ChevronRight size={22} /></span>
         </FocusableButton>
-        <KaraokeFilters activeQuickId={quickId} onSelectQuick={selectQuick} />
+        <KaraokeFilters activeQuickId={quickId} onSelectQuick={selectQuick} hasFavorites={hasFavorites} />
       </div>
 
       <div className="tvc-body">

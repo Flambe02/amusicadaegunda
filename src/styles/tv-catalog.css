@@ -313,3 +313,30 @@
 }
 .tvc-search-input::placeholder { color: rgba(255, 255, 255, 0.42); font-weight: 600; }
 .tvc-search-input::-webkit-search-cancel-button { display: none; }
+
+/* ==========================================================================
+   Harmonisation avec les écrans « bs » (audit grand écran, étape 8, I4/I5) :
+   même cadre (marges 96 px, barre du haut à la même place : elle ne « saute » plus
+   d'un écran à l'autre), titres dans la police des titres en casse normale,
+   métadonnées des cartes en casse normale comme sur l'accueil.
+   ========================================================================== */
+.tvc-page {
+  position: absolute; inset: 0; max-width: none; margin: 0;
+  padding: 0 var(--bs-pad-x) 28px; background: var(--bs-bg); color: var(--bs-text);
+}
+.tvc-page > .bs-nav { height: 148px; padding-top: 12px; margin-bottom: -12px; }
+.tvc-header-title, .tvc-page .tvk-title {
+  font-family: var(--bs-font-title); font-weight: 400; text-transform: none;
+  letter-spacing: -0.01em; font-size: 52px; line-height: 1.05; color: #fff; text-shadow: none;
+}
+.tvc-header-sub, .tvc-page .tvk-subtitle { color: var(--bs-text-2); font-weight: 400; font-size: 22px; }
+.tvc-page .tvk-eyebrow { color: var(--bs-gold); }
+/* Panneau latéral : titre comme une fiche (casse normale, police des titres). */
+.tvc-panel-title { font-family: var(--bs-font-title); font-weight: 400; text-transform: none; letter-spacing: -0.01em; }
+.tvc-panel-type { text-transform: none; letter-spacing: 0; color: var(--bs-gold); }
+.tvc-card-theme, .tvc-card-diff {
+  text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 600;
+}
+.tvc-card-theme { color: var(--bs-text-2); }
+.tvc-header-surprise { display: inline-flex; align-items: center; gap: 8px; }
+.tvc-header-surprise + .tvc-header-more { margin-left: 28px; }

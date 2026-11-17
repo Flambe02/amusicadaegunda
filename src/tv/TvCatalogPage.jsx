@@ -213,6 +213,7 @@ export default function TvCatalogPage({
         festaPeople={festaPeople}
         onOpenQueue={openQueue}
         onMoreModes={onOpenKaraoke}
+        onSurprise={filtered.length > 1 ? () => openDetail(filtered[Math.floor(Math.random() * filtered.length)]) : null}
       />
 
       <TvCatalogFilters
