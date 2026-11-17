@@ -48,6 +48,22 @@ export function weekDateLabel(value, now = new Date()) {
   return `${release > today ? 'Estreia' : 'Nova desde'} ${formatWeekdayDate(value)}`;
 }
 
+/**
+ * Rendez-vous suivant (audit grand écran D8) : « Próxima: segunda, 23 de novembro » =
+ * le premier lundi APRÈS aujourd'hui (jour local). Rien tant que la chanson de la
+ * semaine n'est pas encore sortie (« Estreia » dit déjà la date).
+ */
+export function nextReleaseLabel(weekValue, now = new Date()) {
+  const d = parseDay(weekValue);
+  if (!d) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (`${d.year}-${pad(d.month)}-${pad(d.day)}` > `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`) return '';
+  const ahead = ((1 - today.getDay() + 7) % 7) || 7; // lundi = 1 ; aujourd'hui lundi → +7
+  const next = new Date(today.getFullYear(), today.getMonth(), today.getDate() + ahead);
+  return `Próxima: ${formatWeekdayDate(`${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`)}`;
+}
+
 const plain = (text) => String(text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 
 /**

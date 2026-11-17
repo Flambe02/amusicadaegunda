@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { init, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 import { Song } from '@/api/entities';
 import { mergeSongDescriptions, mergeSongLyrics } from '@/api/songColumns';
 import { isKaraokePublished } from '@/lib/lrc';
@@ -29,6 +29,7 @@ import TvKaraokeScreen, { preloadKaraokePlayer } from './TvKaraokeScreen';
 import TvKaraokeLanding from './TvKaraokeLanding';
 import TvFestaPickPage from './TvFestaPickPage';
 import TvSettingsPanel from './components/TvSettingsPanel';
+import TvToast from './components/TvToast';
 import TvStage from './components/TvStage';
 import { BRAND_SQUARE_LARGE } from '@/lib/imageAssets';
 import { emptyAdvanced } from './lib/tvCatalogFilters';
@@ -296,6 +297,10 @@ export default function TvApp({ web = null }) {
     request?.catch?.(() => { /* refusé par le navigateur : on reste en fenêtre */ });
   }, []);
 
+  // Message bref de l'app (pas d'un écran) : « Voltar de novo para sair », música não encontrada.
+  const [appToast, setAppToast] = useState({ message: '', nonce: 0 });
+  const showAppToast = useCallback((message) => setAppToast((t) => ({ message, nonce: t.nonce + 1 })), []);
+
   // ── Web : ouverture directe sur /musica/<slug>/ → accueil puis fiche dans la pile.
   useEffect(() => {
     if (!isWeb || loading || !initialSlugRef.current) return;
@@ -306,7 +311,8 @@ export default function TvApp({ web = null }) {
     // sa propre adresse : « Retour » depuis la fiche mène à l'accueil.
     window.history.replaceState({ ...(window.history.state || {}), amdsTv: 1 }, '', '/');
     if (song) setStack([{ name: 'home' }, { name: 'detail', song, source: 'home' }]);
-  }, [isWeb, loading, songs]);
+    else showAppToast('Música não encontrada. Veja as outras no catálogo.'); // audit D12
+  }, [isWeb, loading, songs, showAppToast]);
 
   const push = useCallback((screen) => setStack((s) => [...s, screen]), []);
   const pop = useCallback(() => setStack((s) => (s.length > 1 ? s.slice(0, -1) : s)), []);
@@ -378,11 +384,18 @@ export default function TvApp({ web = null }) {
     if (tvSettingsOpenRef.current) { closeTvSettings(); return true; }
     return Boolean(backInterceptorRef.current?.()); // l'écran courant a géré le Back
   }, [closeTvSettings, dismissRecommendedUpdate]);
+  // TV : sur l'accueil, un seul appui de trop fermait l'app (audit B13/D13). Il faut
+  // maintenant un 2e appui dans les 2,5 s.
+  const exitArmedAtRef = useRef(0);
   const handleBack = useCallback(() => {
     if (consumeBack()) return;
-    if (stackRef.current.length > 1) pop();
-    else exitApp();
-  }, [consumeBack, pop]);
+    if (stackRef.current.length > 1) { pop(); return; }
+    if (isWeb) { exitApp(); return; }
+    const now = Date.now();
+    if (now - exitArmedAtRef.current < 2500) { exitApp(); return; }
+    exitArmedAtRef.current = now;
+    showAppToast('Pressione Voltar de novo para sair');
+  }, [consumeBack, pop, isWeb, showAppToast]);
   // Dans un navigateur, seul Échap revient en arrière (pas Backspace).
   useEffect(
     () => onBackPress(handleBack, { backspace: !isWeb, ignoreKey: isWeb ? isFullscreenEscape : null }),
@@ -958,6 +971,10 @@ export default function TvApp({ web = null }) {
           </Suspense>
         )}
         {updateDialogOpen && <TvRecommendedUpdateDialog />}
+        <TvToast
+          message={appToast.message} nonce={appToast.nonce} icon={Info}
+          onDone={() => setAppToast((t) => ({ message: '', nonce: t.nonce }))}
+        />
       </div>
     </TvStage>
   );

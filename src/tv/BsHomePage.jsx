@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
 import { AlignLeft, Mic, Play, QrCode, Smartphone } from 'lucide-react';
 import TvTopNavigation from './components/TvTopNavigation';
@@ -10,7 +10,7 @@ import TvHomeRemoteHint from './components/TvHomeRemoteHint';
 import { getInterface } from '@/lib/interface';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
 import { getDifficultyMeta, getMode } from './lib/songMeta';
-import { fitTitle, formatShortDate, getBackdropUrl, getShortContext, weekDateLabel } from './lib/bsSong';
+import { fitTitle, formatShortDate, getBackdropUrl, getShortContext, nextReleaseLabel, weekDateLabel } from './lib/bsSong';
 import '@/styles/bs-home.css';
 
 /**
@@ -31,40 +31,67 @@ function toHomeSong(song) {
   };
 }
 
+/**
+ * Aide liée au focus (audit grand écran D3) : une phrase qui dit ce que fait l'élément
+ * sélectionné — à la télécommande comme au survol de la souris. Rien n'est caché dans
+ * une infobulle.
+ */
+const HERO_HELP = {
+  BS_HERO_CANTAR: 'Cantar agora: karaokê com a letra na tela',
+  BS_HERO_CLIPE: 'Ver clipe: o vídeo da paródia',
+  BS_HERO_LETRA: 'Letra e contexto: a letra e a notícia',
+  BS_FESTA_START: 'Festa: cada convidado pede pelo celular',
+  BS_RAIL_CATALOGO: 'Catálogo: todas as músicas, com filtros',
+};
+// Court : la ligne partage la place avec le titre de la rangée (≈ 45 caractères à 1280).
+function cardHelp(vm, singable) {
+  return `${vm.title} · ${singable ? 'com karaokê' : 'só clipe'} · ${vm.difficultyLabel}`;
+}
+
 // Une carte de rangée : 195 px d'affiche + 24 px d'écart (maquette : 8 cartes en 1920).
 const CARD_SLOT = 219;
 const SIDE_PADDING = 96;
 
 /** Carte d'une rangée : affiche verticale, titre, « difficulté · date ». */
-function SongCard({ vm, focusKey, onPress, onFocused }) {
+function SongCard({ vm, singable, focusKey, onPress, onFocused }) {
   return (
     <FocusableButton
       focusKey={focusKey}
       className="bs-card bs-focus"
-      ariaLabel={`${vm.title}, ${vm.difficultyLabel}`}
+      ariaLabel={`${vm.title}, ${vm.difficultyLabel}${singable ? ', com karaokê' : ''}`}
       onPress={onPress}
       onFocused={onFocused}
     >
-      <BsPoster song={vm.raw} className="bs-card-poster" />
+      <span className="bs-card-art">
+        <BsPoster song={vm.raw} className="bs-card-poster" />
+        {/* Savoir avant d'ouvrir si on peut chanter (audit D7). */}
+        {singable && <span className="bs-card-karaoke" aria-hidden="true"><Mic size={16} /> Karaokê</span>}
+      </span>
       <span className="bs-card-title">{vm.title}</span>
       <span className="bs-card-meta">{vm.difficultyLabel} · {formatShortDate(vm.releaseDate)}</span>
     </FocusableButton>
   );
 }
 
-function Rail({ id, title, hint, vms, onOpen, onFocusKey, action }) {
+function Rail({ id, title, hint, extra = null, vms, onOpen, onFocusKey, action, isSingable, onHelp }) {
   if (vms.length === 0) return null;
   return (
     <section className="bs-rail" aria-label={title}>
       <header className="bs-rail-head">
         <h2 className="bs-rail-title">{title}</h2>
-        {hint && <span className="bs-rail-hint">{hint}</span>}
+        {hint && <span className="bs-rail-hint">{hint}{extra}</span>}
         {action}
       </header>
       <FocusRow className="bs-rail-cards" focusKey={`BS_RAIL_${id}`}>
         {vms.map((vm) => {
           const focusKey = `BS_CARD_${id}_${vm.id}`;
-          return <SongCard key={vm.id} vm={vm} focusKey={focusKey} onPress={() => onOpen(vm.raw)} onFocused={() => onFocusKey?.(focusKey)} />;
+          const singable = isSingable(vm);
+          return (
+            <SongCard
+              key={vm.id} vm={vm} singable={singable} focusKey={focusKey} onPress={() => onOpen(vm.raw)}
+              onFocused={() => { onFocusKey?.(focusKey); onHelp?.(vm, singable); }}
+            />
+          );
         })}
       </FocusRow>
     </section>
@@ -96,6 +123,10 @@ export default function BsHomePage({
   }), [vms, perRow, getHasKaraoke]);
 
   const weekSingable = Boolean(week && getHasKaraoke(week.raw));
+  const tv = getInterface().tv;
+  const [help, setHelp] = useState('');
+  const isSingable = (vm) => Boolean(getHasKaraoke(vm.raw));
+  const cardFocusHelp = (vm, singable) => setHelp(cardHelp(vm, singable));
   const hasClip = Boolean(week?.videoTeaserUrl);
   const defaultFocus = weekSingable ? 'BS_HERO_CANTAR' : hasClip ? 'BS_HERO_CLIPE' : 'BS_HERO_LETRA';
 
@@ -139,7 +170,9 @@ export default function BsHomePage({
   const compact = width < 1900;
   const showPoster = width >= 1700;
   const title = fitTitle(week.title, width - SIDE_PADDING * 2 - 448 - 40 - 64 - 56 - (showPoster ? 213 + 40 : 0));
-  const heroFocus = (key) => () => onCardFocusKey?.(key);
+  const heroFocus = (key) => () => { onCardFocusKey?.(key); setHelp(HERO_HELP[key] || ''); };
+  const next = nextReleaseLabel(week.releaseDate);
+  const helpLine = <p className="bs-home-help" aria-live="polite">{help}</p>;
 
   return (
     <div className="bs-screen bs-home">
@@ -190,21 +223,23 @@ export default function BsHomePage({
           </aside>
         </div>
 
+        {/* Le concept en une phrase (audit D1) et le prochain rendez-vous (D8) ; l'aide liée au focus occupe le vide de
+            cette ligne (sur TV, l'indice de la télécommande y passe d'abord). */}
         <Rail
-          id="NOVAS" title="Novas músicas" hint="Uma nova toda segunda" vms={rows.novas}
-          onOpen={onOpenDetail} onFocusKey={onCardFocusKey}
+          id="NOVAS" title="Novas músicas" hint="Toda segunda, uma notícia vira paródia" vms={rows.novas}
+          extra={next ? <span className="bs-rail-next"> · {next}</span> : null}
+          onOpen={onOpenDetail} onFocusKey={onCardFocusKey} isSingable={isSingable} onHelp={cardFocusHelp}
           action={(
             <>
-              {/* TV : aide de la télécommande dans le vide de cette ligne (elle ne couvre rien). */}
-              {getInterface().tv && <TvHomeRemoteHint />}
-              <FocusableButton focusKey="BS_RAIL_CATALOGO" className="bs-link bs-rail-action bs-focus" onPress={onOpenCatalog}>
+              {tv ? <TvHomeRemoteHint fallback={helpLine} /> : helpLine}
+              <FocusableButton focusKey="BS_RAIL_CATALOGO" className="bs-link bs-rail-action bs-focus" onPress={onOpenCatalog} onFocused={heroFocus('BS_RAIL_CATALOGO')}>
                 Ver catálogo completo
               </FocusableButton>
             </>
           )}
         />
-        <Rail id="FACEIS" title="Fáceis para começar" vms={rows.faceis} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} />
-        <Rail id="KARAOKE" title="Com karaokê" vms={rows.karaoke} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} />
+        <Rail id="FACEIS" title="Fáceis para começar" vms={rows.faceis} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} isSingable={isSingable} onHelp={cardFocusHelp} />
+        <Rail id="KARAOKE" title="Com karaokê" vms={rows.karaoke} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} isSingable={isSingable} onHelp={cardFocusHelp} />
       </div>
     </div>
   );

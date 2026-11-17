@@ -7,9 +7,10 @@ let decided = null; // une décision par lancement de l'app, pas par retour à l
 
 /**
  * Indice télécommande de l'accueil, sur la TV seulement et aux premiers lancements
- * (non focusable). Il s'efface dès que la télécommande a été utilisée.
+ * (non focusable). Il s'efface dès que la télécommande a été utilisée ; `fallback`
+ * (l'aide liée au focus) prend alors sa place.
  */
-export default function TvHomeRemoteHint() {
+export default function TvHomeRemoteHint({ fallback = null }) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function TvHomeRemoteHint() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  if (!visible) return null;
+  if (!visible) return fallback;
   return (
     <div className="bs-home-hint" aria-hidden="true">
       <span>Navegue com <span className="bs-home-hint-key">▲</span><span className="bs-home-hint-key">▼</span><span className="bs-home-hint-key">◀</span><span className="bs-home-hint-key">▶</span></span>

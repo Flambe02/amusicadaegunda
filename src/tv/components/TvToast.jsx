@@ -7,7 +7,7 @@ import { CheckCircle2 } from 'lucide-react';
  * focusable — n'interfère jamais avec le D-pad. `nonce` force le redémarrage du
  * minuteur même si le message est identique (2 ajouts de suite).
  */
-export default function TvToast({ message, nonce, onDone, duration = 2600 }) {
+export default function TvToast({ message, nonce, onDone, duration = 2600, icon: Icon = CheckCircle2 }) {
   useEffect(() => {
     if (!message) return undefined;
     const t = setTimeout(() => onDone?.(), duration);
@@ -17,7 +17,7 @@ export default function TvToast({ message, nonce, onDone, duration = 2600 }) {
   if (!message) return null;
   return (
     <div className="tvc-toast" role="status" aria-live="polite">
-      <CheckCircle2 size={20} /> {message}
+      {Icon && <Icon size={20} />} {message}
     </div>
   );
 }

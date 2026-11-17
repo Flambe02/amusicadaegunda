@@ -158,7 +158,7 @@ export default function TvKaraokeLanding({
   return (
     <div className="tvc-page tvk-page">
       <TvTopNavigation
-        active="karaoke"
+        active="catalogo" /* on y arrive par « Só karaokê » du catálogo (audit D15) */
         onInicio={onNavigateHome}
         onCatalogo={onNavigateAll}
         onKaraoke={focusFirstSong}

@@ -1,5 +1,5 @@
 import { useFocusable, SpatialNavigation } from '@noriginmedia/norigin-spatial-navigation';
-import { Mic2, Users } from 'lucide-react';
+import { Mic2 } from 'lucide-react';
 
 /** Icône « 3 barres » de difficulté (jamais la couleur seule qui porte l'info). */
 function DifficultyBars({ level }) {
@@ -12,12 +12,11 @@ function DifficultyBars({ level }) {
   );
 }
 
-// Une SEULE icône de compatibilité par carte, et seulement quand elle ajoute de
-// l'info : Dueto (2 voix) ou Família. Le Solo (défaut de tout titre) n'affiche rien
-// pour ne pas saturer la grille (cf. cahier des charges).
+// Une SEULE pastille de compatibilité par carte, et seulement quand elle distingue la
+// chanson : Dueto (2 voix), avec son nom en clair (audit D5). « Família » s'affichait
+// sur presque toutes les cartes sans rien expliquer : le filtre Família suffit.
 function compatIcon(vm) {
   if (vm.recommendedModes.includes('duet')) return { Icon: Mic2, label: 'Dueto' };
-  if (vm.recommendedModes.includes('family')) return { Icon: Users, label: 'Família' };
   return null;
 }
 
@@ -76,8 +75,9 @@ export default function TvSongGridCard({ vm, focusKey, artSrc, onSelect, onFocus
           ? <img src={artSrc} alt="" loading="lazy" decoding="async" className="tvc-card-img" />
           : <div className="tvc-card-img tvc-card-img-fallback" aria-hidden="true" />}
         {compat && (
+          // Libellé en clair à côté de l'icône (audit D5) : une icône seule ne s'explique pas.
           <span className="tvc-card-compat" title={compat.label}>
-            <compat.Icon size={15} />
+            <compat.Icon size={15} aria-hidden="true" /> {compat.label}
           </span>
         )}
       </div>

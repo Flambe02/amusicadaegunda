@@ -72,8 +72,16 @@
 .bs-rail { margin-top: 38px; }
 .bs-rail-head { display: flex; align-items: baseline; gap: 18px; margin: 0 0 20px; }
 .bs-rail-title { margin: 0; font-family: var(--bs-font-title); font-weight: 400; font-size: 32px; line-height: 1; color: #fff; }
-.bs-rail-hint { color: var(--bs-text-2); font-size: 20px; }
+.bs-rail-hint { color: var(--bs-text-2); font-size: 20px; white-space: nowrap; flex: 0 0 auto; }
+.bs-rail-next { color: var(--bs-text); font-weight: 600; }
 .bs-rail-action { margin-left: auto; }
+/* Aide liée au focus (audit D3), dans le vide de la ligne « Novas músicas ». */
+.bs-home-help {
+  flex: 1 1 0; min-width: 0; margin: 0; align-self: center; text-align: center;
+  color: var(--bs-text); font-size: 21px; font-weight: 600; opacity: 0.85;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bs-home-help + .bs-rail-action { margin-left: 0; }
 .bs-rail-cards { display: flex; gap: 24px; }
 .bs-card {
   flex: 0 0 195px; width: 195px; display: flex; flex-direction: column; align-items: stretch;
@@ -81,6 +89,13 @@
   border-radius: 18px; scroll-margin: 110px 0 96px;
 }
 .bs-card-poster { width: 195px; height: 262px; border-radius: 18px; }
+.bs-card-art { position: relative; display: block; }
+/* Pastille « Karaokê » sur l'affiche (audit D7) : on sait avant d'ouvrir si on peut chanter. */
+.bs-card-karaoke {
+  position: absolute; left: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px; border-radius: 999px; background: rgba(6, 7, 11, 0.86); color: var(--bs-gold);
+  font-size: 15px; font-weight: 800; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
 .bs-card-title {
   margin-top: 12px; font-size: 20px; font-weight: 700; line-height: 26px; color: var(--bs-text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

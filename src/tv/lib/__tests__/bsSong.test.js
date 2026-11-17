@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatLongDate, formatShortDate, formatWeekdayDate, getBackdropUrl, getPosterCandidates,
-  fitTitle, getRefrain, getShortContext, weekDateLabel,
+  fitTitle, getRefrain, getShortContext, nextReleaseLabel, weekDateLabel,
 } from '../bsSong';
 
 describe('bsSong — dates en portugais', () => {
@@ -18,6 +18,17 @@ describe('bsSong — dates en portugais', () => {
     expect(weekDateLabel('2026-11-16', monday)).toBe('Nova desde segunda, 16 de novembro');
     expect(weekDateLabel('2026-11-09', monday)).toBe('Nova desde segunda, 9 de novembro');
     expect(weekDateLabel(null, monday)).toBe('');
+  });
+
+  it('the next Monday is announced once the week song is out', () => {
+    const sunday = new Date(2026, 10, 15, 22, 0);
+    const monday = new Date(2026, 10, 16, 9, 0);
+    const thursday = new Date(2026, 10, 19, 9, 0);
+    expect(nextReleaseLabel('2026-11-16', sunday)).toBe(''); // pas encore sortie
+    expect(nextReleaseLabel('2026-11-16', monday)).toBe('Próxima: segunda, 23 de novembro');
+    expect(nextReleaseLabel('2026-11-16', thursday)).toBe('Próxima: segunda, 23 de novembro');
+    expect(nextReleaseLabel('2026-11-30', new Date(2026, 11, 3))).toBe('Próxima: segunda, 7 de dezembro');
+    expect(nextReleaseLabel(null, monday)).toBe('');
   });
 
   it('a date with a time stays the same civil day; an invalid one gives nothing', () => {
