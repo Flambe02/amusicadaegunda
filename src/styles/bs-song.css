@@ -17,7 +17,11 @@
 
 .bs-song-top { display: flex; align-items: flex-start; gap: 64px; }
 .bs-song-main { flex: 1 1 auto; min-width: 0; }
-.bs-song-side { flex: 0 0 380px; width: 380px; }
+.bs-song-side { flex: 0 0 380px; width: 380px; transition: flex-basis 220ms ease-out, width 220ms ease-out; }
+/* Prévia du clip en cours (audit D14) : le cadre passe en vrai 9:16, plus grand — la vidéo
+   (Short 9:16) le remplit exactement : ni bandes noires, ni recadrage, ni zoom. */
+.bs-song.is-clip-playing .bs-song-side { flex-basis: 420px; width: 420px; }
+.bs-song.is-clip-playing .bs-song-visual.tvd-visual { width: 420px; height: 746px; }
 
 .bs-song-date {
   margin: 0 0 12px; height: 24px; color: var(--bs-text-2);

@@ -7,6 +7,7 @@ import FocusRow from './components/FocusRow';
 import BsPoster from './components/BsPoster';
 import BsBackdrop from './components/BsBackdrop';
 import TvHomeRemoteHint from './components/TvHomeRemoteHint';
+import BsHowItWorks from './components/BsHowItWorks';
 import { getInterface } from '@/lib/interface';
 import { useFavorites } from '@/hooks/useFavorites';
 import { TV_STAGE_WIDTH, useTvStageWidth } from './components/TvStage';
@@ -230,6 +231,8 @@ export default function BsHomePage({
           </aside>
         </div>
 
+        {/* Première visite : « Como funciona » ; « Entendi » rend le focus au bloc de la semaine. */}
+        <BsHowItWorks onDone={() => { try { SpatialNavigation.setFocus(defaultFocus); } catch { /* ignore */ } }} />
         {/* Le concept en une phrase (audit D1) et le prochain rendez-vous (D8) ; l'aide liée au focus occupe le vide de
             cette ligne (sur TV, l'indice de la télécommande y passe d'abord). */}
         <Rail

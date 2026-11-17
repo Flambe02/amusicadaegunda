@@ -118,3 +118,18 @@
   color: var(--bs-text); font-size: 18px;
 }
 .bs-home-hint-sep { color: var(--bs-tag-border); }
+
+/* ── « Como funciona » (première visite, audit D2) ─────────────────────────── */
+.bs-howto {
+  margin-top: 38px; display: flex; align-items: center; gap: 40px; padding: 26px 40px;
+  border-radius: 28px; border: 1.5px solid var(--bs-surface-2); background: var(--bs-surface);
+}
+.bs-howto-kicker { margin: 0; flex: 0 0 auto; color: var(--bs-gold); font-size: 17px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.bs-howto-steps { flex: 1 1 auto; display: flex; gap: 36px; margin: 0; padding: 0; list-style: none; }
+.bs-howto-steps li { flex: 1 1 0; display: flex; align-items: center; gap: 16px; color: var(--bs-text); font-size: 20px; line-height: 27px; }
+.bs-howto-steps strong { display: block; color: #fff; font-size: 22px; }
+.bs-howto-icon {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  width: 54px; height: 54px; border-radius: 50%; background: var(--bs-surface-2); color: var(--bs-gold);
+}
+.bs-howto-actions { flex: 0 0 auto; display: flex; }

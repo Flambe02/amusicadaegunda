@@ -14,6 +14,7 @@ import { loadLobbyChoice, loadPlayerNames, MAX_NAME, playersFor, saveLobbyChoice
 import { GAME_MODES } from '@/lib/karaokeGame';
 import { topForSong } from '@/lib/karaokeRecords';
 import '@/styles/bs-lobby.css';
+import { getInterface } from '@/lib/interface';
 
 const MODE_ICONS = { solo: User, duet: Users, duel: Swords, coop: Handshake, pass: ArrowRightLeft };
 
@@ -151,6 +152,11 @@ export default function TvSingLobby({
         <div className="bs-lobby-main">
           <p className="bs-lobby-kicker"><Mic size={22} aria-hidden="true" /> Antes de cantar</p>
           <h1 className="bs-lobby-title" style={{ fontSize: title.fontSize, lineHeight: `${title.lineHeight}px`, WebkitLineClamp: title.lines }}>{vm.title}</h1>
+          {/* Ce qui va se passer, en une phrase (audit D9). */}
+          <p className="bs-lobby-how">
+            A letra aparece na tela e acende no ritmo da música: é só cantar junto.
+            {' '}{getInterface().tv ? 'Voltar' : 'Esc'} para parar.
+          </p>
           <div className="bs-tags bs-lobby-tags">
             <span className="bs-tag">{vm.difficultyLabel}</span>
             {hasDuet && <span className="bs-tag">Tem dueto</span>}

@@ -131,3 +131,6 @@
 .bs-records-stars span { color: rgba(255, 255, 255, 0.18); }
 .bs-records-score { font-family: var(--bs-font-title); font-size: 24px; text-align: right; font-variant-numeric: tabular-nums; }
 .bs-records-go { color: var(--bs-text-2); }
+
+/* Phrase d'explication sous le titre (audit D9). */
+.bs-lobby-how { margin: 0 0 18px; max-width: 900px; color: var(--bs-text); font-size: 22px; line-height: 31px; opacity: 0.9; }
