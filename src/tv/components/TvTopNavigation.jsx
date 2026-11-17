@@ -7,15 +7,15 @@ import { useTvChrome } from '../lib/chromeContext';
 /**
  * Barre du haut de l'interface grand écran (maquette design/bigscreen/01-inicio.png) :
  * logo + « A Música da Segunda » à gauche ; à droite Início, Catálogo, Buscar, Festa
- * (en rose) et Ajustes. Sur ordinateur seulement, « Modo TV » (plein écran) s'y ajoute.
+ * (en rose) et Ajustes. Sur ordinateur seulement, « Tela cheia » (plein écran) s'y ajoute.
  *
- * Partagée par l'accueil, le catálogo et les écrans karaokê. « Buscar » et « Modo TV »
+ * Partagée par l'accueil, le catálogo et les écrans karaokê. « Buscar » et « Tela cheia »
  * viennent de TvApp par contexte (useTvChrome) ; un écran peut fournir son propre
  * `onBuscar` (le catálogo ouvre sa recherche sur place).
  *
  * Les clés de focus HOME_NAV_* / TOPNAV_SETTINGS sont lues ailleurs (focus de secours,
  * retour du painel de ajustes) : ne pas les renommer. `onKaraoke` n'a plus de bouton —
- * les écrans karaokê restent atteignables depuis le catálogo (« Mais modos »).
+ * les écrans karaokê restent atteignables depuis le catálogo (« Só karaokê »).
  */
 export default function TvTopNavigation({
   active = 'inicio', onInicio, onCatalogo, onFesta, onOpenSettings, onBuscar, festaQueueCount = null,
@@ -71,11 +71,11 @@ export default function TvTopNavigation({
           <FocusableButton
             focusKey="HOME_NAV_MODOTV"
             className={cls('modotv')}
-            ariaLabel={chrome.fullscreen ? 'Sair da tela cheia' : 'Modo TV — tela cheia'}
+            ariaLabel={chrome.fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
             onPress={chrome.toggleFullscreen}
           >
             {chrome.fullscreen ? <Minimize size={20} aria-hidden="true" /> : <Maximize size={20} aria-hidden="true" />}
-            {chrome.fullscreen ? 'Sair da tela cheia' : 'Modo TV'}
+            {chrome.fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
           </FocusableButton>
         )}
         <FocusableButton focusKey="TOPNAV_SETTINGS" className="bs-nav-round bs-focus" ariaLabel="Ajustes" onPress={onOpenSettings}>

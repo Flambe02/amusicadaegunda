@@ -90,8 +90,10 @@
 
 /* ── Indice télécommande (TV, premiers lancements) ───────────────────────────── */
 .bs-home-hint {
-  /* Dans le vide de la barre du haut, entre le nom et le menu : il ne couvre rien. */
-  position: absolute; left: 560px; top: 80px; transform: translateY(-50%); z-index: 5;
+  /* Dans la ligne « Novas músicas », entre le titre et « Ver catálogo completo ». Avant :
+     dans le vide de la barre du haut, qui a disparu quand « Buscar » et « Recordes » y sont
+     arrivés (il chevauchait « Início »). */
+  margin-left: auto; align-self: center;
   display: flex; align-items: center; gap: 14px;
   color: var(--bs-text-2); font-size: 22px; font-weight: 600; white-space: nowrap; pointer-events: none;
 }

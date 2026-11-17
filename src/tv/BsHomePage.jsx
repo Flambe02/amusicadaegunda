@@ -194,15 +194,18 @@ export default function BsHomePage({
           id="NOVAS" title="Novas músicas" hint="Uma nova toda segunda" vms={rows.novas}
           onOpen={onOpenDetail} onFocusKey={onCardFocusKey}
           action={(
-            <FocusableButton focusKey="BS_RAIL_CATALOGO" className="bs-link bs-rail-action bs-focus" onPress={onOpenCatalog}>
-              Ver catálogo completo
-            </FocusableButton>
+            <>
+              {/* TV : aide de la télécommande dans le vide de cette ligne (elle ne couvre rien). */}
+              {getInterface().tv && <TvHomeRemoteHint />}
+              <FocusableButton focusKey="BS_RAIL_CATALOGO" className="bs-link bs-rail-action bs-focus" onPress={onOpenCatalog}>
+                Ver catálogo completo
+              </FocusableButton>
+            </>
           )}
         />
         <Rail id="FACEIS" title="Fáceis para começar" vms={rows.faceis} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} />
         <Rail id="KARAOKE" title="Com karaokê" vms={rows.karaoke} onOpen={onOpenDetail} onFocusKey={onCardFocusKey} />
       </div>
-      {getInterface().tv && <TvHomeRemoteHint />}
     </div>
   );
 }

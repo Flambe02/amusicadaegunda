@@ -79,6 +79,9 @@
   z-index: 2;
 }
 @media (prefers-reduced-motion: reduce) { .bs-focus { transition: none; } }
+/* Prévia du clip en cours : OK pilote la vidéo, plus le bouton qui garde le focus (audit
+   B10) — l'anneau ne doit pas laisser croire qu'OK va « Cantar agora ». */
+.bs-song.is-clip-playing .bs-focus.is-focused { transform: none; outline-color: transparent; box-shadow: none; }
 
 /* ── Écran : marges de la maquette, défilement vertical par rangée ───────────── */
 .bs-screen {
@@ -110,9 +113,9 @@
 }
 .bs-nav-back:hover, .bs-nav-back:focus-visible { background: #fff; color: #111; outline: none; }
 .bs-nav-menu { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; }
-/* Ordinateur, hors accueil : « Voltar », « Recordes » et « Modo TV » s'ajoutent à la barre.
+/* Ordinateur, hors accueil : « Voltar », « Recordes » et « Tela cheia » s'ajoutent à la barre.
    Sur une scène étroite (≤ 1728 de large), tout ne tenait plus — le nom passait sous
-   « Início » et « Modo TV » se cassait en deux (2026-11-16). Le nom passe sur deux lignes,
+   « Início » et « Modo TV » (devenu « Tela cheia ») se cassait en deux (2026-11-16). Le nom passe sur deux lignes,
    les entrées se resserrent ; rien ne se chevauche ni ne se coupe. */
 .bs-nav:has(.bs-nav-back) .bs-nav-brand { gap: 14px; }
 .bs-nav:has(.bs-nav-back) .bs-nav-name { white-space: normal; width: 7.4em; font-size: 22px; line-height: 1.05; }

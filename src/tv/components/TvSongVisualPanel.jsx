@@ -48,7 +48,7 @@ function TeaserStrip({ thumb, durationLabel, onPress }) {
  *    (la lecture via postMessage n'est PAS affectée par inert) ;
  *  - `focusHolderRef` = puits de focus (tabindex -1) que la page focalise pour que
  *    l'élément actif ne soit JAMAIS l'iframe ;
- *  - barre d'aide visible : rappelle OK = pausar, ◀▶ = avançar, Voltar = sair.
+ *  - barre d'aide visible : OK = pausar, ◀▶ = ±10 s, Voltar = sair (clavier sur ordinateur).
  *
  * Affiche d'abord (2026-10-07) : l'affiche reste EN PLACE sous le lecteur, qui est
  * caché par opacité + clip-path tant que la vidéo ne joue pas (`videoVisible`) — plus
@@ -62,7 +62,7 @@ export default function TvSongVisualPanel({
   artSrc, teaserThumb, durationLabel, hasTeaser,
   playing, videoVisible, error, hostRef, progressRef, onPlayTeaser,
   wrapRef, focusHolderRef, onStopTeaser,
-  poster = null, showTeaserStrip = true, className = '',
+  poster = null, showTeaserStrip = true, className = '', web = false,
 }) {
   const [imgFailed, setImgFailed] = useState(false);
   const showPlayer = playing && !error;
@@ -95,7 +95,15 @@ export default function TvSongVisualPanel({
             <button type="button" className="tvd-visual-close" onClick={onStopTeaser} aria-label="Fechar prévia">
               ✕ Fechar
             </button>
-            <span className="tvd-visual-hint">OK: pausar · ◀ ▶: avançar · Voltar: sair</span>
+            {/* Touches de l'appareil (audit B10) : télécommande sur TV, clavier sur ordinateur. */}
+            <span className="tvd-visual-hint">
+              {(web
+                ? [['Espaço', 'pausar'], ['← →', '10 s'], ['Esc', 'fechar']]
+                : [['OK', 'pausar'], ['◀ ▶', '10 s'], ['Voltar', 'sair']]
+              ).map(([key, action]) => (
+                <span key={key} className="tvd-visual-hint-item"><b>{key}</b> {action}</span>
+              ))}
+            </span>
           </div>
         </>
       ) : (

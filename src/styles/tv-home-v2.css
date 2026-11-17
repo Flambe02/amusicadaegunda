@@ -261,6 +261,15 @@
 .tv2-settings-footer { flex: 0 0 auto; display: flex; flex-direction: column; gap: 0.7rem; position: relative; z-index: 2; }
 .tv2-settings-h { font-size: 1.3rem; font-weight: 900; text-transform: uppercase; margin: 0 0 0.5rem; color: #fff; flex: 0 0 auto; }
 .tv2-settings-h-app { margin-top: 0.4rem; }
+.tv2-settings-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex: 0 0 auto; }
+.tv2-settings-top .tv2-settings-h { margin: 0; }
+.tv2-settings-sub { margin: -0.2rem 0 0.3rem; font-size: 1rem; color: rgba(255, 255, 255, 0.55); flex: 0 0 auto; }
+.tv2-settings-close {
+  display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer;
+  padding: 0.5rem 1rem; border-radius: 9999px; border: 2px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06); color: #fff; font-size: 1rem; font-weight: 800;
+}
+.tv2-settings-close:hover, .tv2-settings-close.is-focused { background: rgba(253, 224, 71, 0.14); box-shadow: 0 0 0 3px #FDE047; border-color: transparent; }
 .tv2-settings-exit {
   display: inline-flex; align-items: center; gap: 0.6rem;
   padding: 0.9rem 1rem; border-radius: 14px; border: 2px solid rgba(248, 113, 113, 0.35);

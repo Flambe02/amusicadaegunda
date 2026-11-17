@@ -5,7 +5,7 @@ import { useFocusable } from '@noriginmedia/norigin-spatial-navigation';
  * (panneau pendant la lecture) et TvSettingsPanel (accueil). Une ligne à choix
  * multiple = UN focusable ; ←/→ cycle la valeur, Haut/Bas change de ligne.
  */
-export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onChange, wrap }) {
+export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onChange, wrap, help = null }) {
   const idx = options.findIndex((o) => o.value === value);
   const { ref, focused } = useFocusable({
     focusKey,
@@ -26,7 +26,7 @@ export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onC
     },
   });
   return (
-    <div ref={ref} className={`tv-opt-line ${focused ? 'is-focused' : ''}`}>
+    <div ref={ref} role="group" aria-label={label} className={`tv-opt-line ${help ? 'has-help' : ''} ${focused ? 'is-focused' : ''}`}>
       <span className="tv-opt-label">{Icon && <Icon size={17} />}{label}</span>
       <span className="tv-opt-choices">
         {options.map((o) => (
@@ -37,6 +37,7 @@ export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onC
             key={o.label}
             role="button"
             tabIndex={-1}
+            aria-pressed={o.value === value}
             onClick={() => onChange(o.value)}
             className={`tv-opt-chip ${o.value === value ? 'is-sel' : ''}`}
           >
@@ -44,21 +45,31 @@ export function OptChoiceLine({ focusKey, label, icon: Icon, options, value, onC
           </span>
         ))}
       </span>
+      {help && <span className="tv-opt-help">{help}</span>}
     </div>
   );
 }
 
 /** Toggle = UN focusable. OK bascule on/off. */
-export function OptToggleLine({ focusKey, label, icon: Icon, on, onToggle }) {
+export function OptToggleLine({ focusKey, label, icon: Icon, on, onToggle, help = null }) {
   const { ref, focused } = useFocusable({
     focusKey,
     onEnterPress: onToggle,
     onFocus: () => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }),
   });
   return (
-    <div ref={ref} onClick={onToggle} className={`tv-opt-line ${focused ? 'is-focused' : ''}`}>
+    // role="switch" : lu « ligado / desligado » par les lecteurs d'écran (audit B7).
+    <div
+      ref={ref}
+      onClick={onToggle}
+      role="switch"
+      aria-checked={Boolean(on)}
+      aria-label={label}
+      className={`tv-opt-line ${help ? 'has-help' : ''} ${focused ? 'is-focused' : ''}`}
+    >
       <span className="tv-opt-label">{Icon && <Icon size={17} />}{label}</span>
       <span className={`tv-opt-switch ${on ? 'is-on' : ''}`}><span /></span>
+      {help && <span className="tv-opt-help">{help}</span>}
     </div>
   );
 }

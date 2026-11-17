@@ -357,7 +357,7 @@ export default function TvSongDetailPage({
   }, [web, openExternal, pageUrl, vm.title]);
 
   return (
-    <div className="bs-screen bs-song">
+    <div className={`bs-screen bs-song ${playing ? 'is-clip-playing' : ''}`}>
       {/* Fond : la miniature de l'affiche en 32×18, étirée (aucun filter: blur()). */}
       <BsBackdrop src={getBackdropUrl(song)} className="bs-song-backdrop" />
       <span className="bs-song-veil" aria-hidden="true" />
@@ -432,6 +432,7 @@ export default function TvSongDetailPage({
               wrapRef={wrapRef}
               focusHolderRef={focusHolderRef}
               onStopTeaser={stopTeaser}
+              web={web}
               onPlayTeaser={() => startTeaser('DETAIL_CLIPE')}
             />
             <FocusRow className="bs-song-links" focusKey="DETAIL_LINKS">

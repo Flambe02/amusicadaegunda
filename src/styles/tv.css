@@ -462,6 +462,11 @@ html.tv-mode, html.tv-mode body, html.tv-mode #root {
   box-shadow: 0 0 0 3px var(--tv-focus);
 }
 .tv-opt-label { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 1.15rem; font-weight: 800; }
+/* Phrase d'aide sous une option (panneau Ajustes, audit D11) : passe à la ligne. */
+.tv-opt-line.has-help { flex-wrap: wrap; row-gap: 0.35rem; }
+/* Un libellé long passe à la ligne SANS repousser l'interrupteur sous lui. */
+.tv-opt-line.has-help .tv-opt-label { flex: 1 1 0; min-width: 0; }
+.tv-opt-help { flex: 1 0 100%; font-size: 0.95rem; font-weight: 500; line-height: 1.35; color: rgba(255, 255, 255, 0.55); }
 
 .tv-opt-choices { display: inline-flex; gap: 0.4rem; }
 .tv-opt-chip {

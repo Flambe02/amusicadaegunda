@@ -16,8 +16,8 @@ export default function TvCatalogHeader({ queueCount, festaQueueCount = 0, festa
       {/* Les écrans karaokê (modes Solo / Dueto / Festa, clipes) n'ont plus d'entrée dans la
           barre du haut : ils restent atteignables d'ici. */}
       {onMoreModes && (
-        <FocusableButton focusKey="CATALOG_MORE_MODES" className="bs-link bs-focus tvc-header-more" ariaLabel="Mais modos de karaokê" onPress={onMoreModes}>
-          Mais modos
+        <FocusableButton focusKey="CATALOG_MORE_MODES" className="bs-link bs-focus tvc-header-more" ariaLabel="Só as músicas com karaokê" onPress={onMoreModes}>
+          Só karaokê
         </FocusableButton>
       )}
       <TvQueueIndicator queueCount={queueCount} festaQueueCount={festaQueueCount} festaPeople={festaPeople} onOpen={onOpenQueue} />

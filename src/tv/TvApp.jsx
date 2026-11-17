@@ -950,7 +950,7 @@ export default function TvApp({ web = null }) {
           </button>
         )}
         {tvSettingsOpen && (
-          <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} onOpenSitePage={openSitePage} web={isWeb} />
+          <TvSettingsPanel opts={karaokeOpts} setOpts={setKaraokeOpts} onExitApp={exitApp} onOpenSitePage={openSitePage} onClose={closeTvSettings} web={isWeb} />
         )}
         {sitePageQr && (
           <Suspense fallback={null}>
