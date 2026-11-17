@@ -76,7 +76,7 @@ export default function Layout({ children }) {
   // effets.) La règle est celle d'index.html (src/lib/interfaceRule.js).
   const isMobileInterface = useInterfaceKind() === 'mobile';
   // Ordinateur où le grand écran est l'interface par défaut : les autres pages portent
-  // sa barre du haut à la place du menu latéral. `?ui=legacy` garde l'ancien menu.
+  // sa barre du haut à la place du menu latéral (toujours : `?ui=legacy` est retiré).
   const [topBarShell] = useState(() => isBigScreenUiEnabled());
   const [deferredAuxUiReady, setDeferredAuxUiReady] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

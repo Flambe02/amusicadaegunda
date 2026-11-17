@@ -161,6 +161,12 @@ export default function TvCatalogPage({
     setTimeout(() => { try { SpatialNavigation.setFocus('CAT_FILTER_TODAS'); } catch { /* ignore */ } }, 0);
   }, []);
 
+  // « Favoritas » de la barre du haut, déjà sur le catálogo : le filtre sur place.
+  const showFavorites = useCallback(() => {
+    setQuickId('favoritas'); setAdvanced(emptyAdvanced()); setSearchQuery('');
+    setTimeout(() => { try { SpatialNavigation.setFocus('CAT_FILTER_FAVORITAS'); } catch { /* ignore */ } }, 0);
+  }, []);
+
   const emptyAction = useCallback((action) => {
     if (action === 'clear' || action === 'back') resetAll();
     else if (action === 'retry' || action === 'offline') onRetryLoad?.();
@@ -198,10 +204,11 @@ export default function TvCatalogPage({
   return (
     <div className="tvc-page">
       <TvTopNavigation
-        active="catalogo"
+        active={quickId === 'favoritas' ? 'favoritas' : 'catalogo'}
         onInicio={onGoHome}
         onCatalogo={resetAll}
         onBuscar={openSearch}
+        onFavoritas={showFavorites}
         onFesta={onOpenFesta}
         onOpenSettings={onOpenSettings}
         festaQueueCount={null}

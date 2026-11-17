@@ -48,7 +48,7 @@
               // ?ui=bigscreen — `webBigScreen`, la règle de l'app) : l'affiche verticale
               // de la música da semana est demandée dès maintenant, à l'adresse exacte
               // que l'accueil affichera (un seul téléchargement). Avec l'ancien desktop
-              // (?ui=legacy, tablette), elle ne sert pas : rien n'est préchargé.
+              // (tablette en portrait), elle ne sert pas : rien n'est préchargé.
               if (short && ui.webBigScreen) add('link', { rel: 'preload', as: 'image', href: 'https://i.ytimg.com/vi/' + short[1] + '/oar2.jpg' });
               return;
             }

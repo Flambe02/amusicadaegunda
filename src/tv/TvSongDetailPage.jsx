@@ -415,17 +415,6 @@ export default function TvSongDetailPage({
                   <AlignLeft size={22} aria-hidden="true" /> Letra completa
                 </FocusableButton>
               )}
-              {canFavorite && (
-                <FocusableButton
-                  focusKey="DETAIL_FAVORITE"
-                  className={`bs-btn bs-focus bs-fav-btn ${favorite ? 'is-on' : ''}`}
-                  ariaLabel={favorite ? 'Favorita: tirar das favoritas' : 'Favoritar esta música'}
-                  ariaPressed={favorite}
-                  onPress={onFavorite}
-                >
-                  <Heart size={22} aria-hidden="true" className={favorite ? 'bs-icon-fill' : ''} /> {favorite ? 'Favorita' : 'Favoritar'}
-                </FocusableButton>
-              )}
             </FocusRow>
 
             {/* Hauteur fixe : la letra arrive après le résumé, rien ne bouge quand elle arrive. */}
@@ -468,6 +457,18 @@ export default function TvSongDetailPage({
               {song?.youtube_url && (
                 <FocusableButton focusKey="DETAIL_YTMUSIC" className="bs-btn bs-btn-small bs-focus" ariaLabel="Ouvir no YouTube Music" onPress={() => openExternal('Ouvir no YouTube Music', song.youtube_url, 'DETAIL_YTMUSIC')}>
                   YT Music
+                </FocusableButton>
+              )}
+              {/* Favoritar : bouton rond sous l'affiche (la rangée d'actions n'a pas la place). */}
+              {canFavorite && (
+                <FocusableButton
+                  focusKey="DETAIL_FAVORITE"
+                  className={`bs-btn bs-btn-small bs-btn-round bs-focus bs-fav-btn ${favorite ? 'is-on' : ''}`}
+                  ariaLabel={favorite ? 'Favorita: tirar das favoritas' : 'Favoritar esta música'}
+                  ariaPressed={favorite}
+                  onPress={onFavorite}
+                >
+                  <Heart size={22} aria-hidden="true" className={favorite ? 'bs-icon-fill' : ''} />
                 </FocusableButton>
               )}
               <FocusableButton focusKey="DETAIL_SHARE" className="bs-btn bs-btn-small bs-btn-round bs-focus" ariaLabel="Compartilhar" onPress={share}>

@@ -482,12 +482,17 @@ export default function TvApp({ web = null }) {
     catalogStateRef.current = { ...catalogStateRef.current, openSearch: true };
     setStack((s) => [...s, { name: 'catalog' }]);
   }, []);
+  // « Favoritas » de la barre du haut : le catálogo filtré sur les favorites de l'appareil.
+  const openFavorites = useCallback(() => {
+    catalogStateRef.current = { ...catalogStateRef.current, quickId: 'favoritas', advanced: emptyAdvanced(), searchQuery: '', focusKey: null };
+    setStack((s) => [...s, { name: 'catalog' }]);
+  }, []);
   const chrome = useMemo(
     () => ({
-      web: isWeb, onBuscar: openSearch, onRecordes: openRecords, canFullscreen, fullscreen, toggleFullscreen,
+      web: isWeb, onBuscar: openSearch, onFavoritas: openFavorites, onRecordes: openRecords, canFullscreen, fullscreen, toggleFullscreen,
       onBack: isWeb && stack.length > 1 ? handleBack : null,
     }),
-    [isWeb, openSearch, openRecords, canFullscreen, fullscreen, toggleFullscreen, stack.length, handleBack]
+    [isWeb, openSearch, openFavorites, openRecords, canFullscreen, fullscreen, toggleFullscreen, stack.length, handleBack]
   );
 
   // ── Landing Karaokê (page dédiée) : 4 modes + rangée « Para cantar agora » ──

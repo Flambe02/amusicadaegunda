@@ -1,8 +1,9 @@
-import { ArrowLeft, ListMusic, Maximize, Trophy, Minimize, Search, Settings } from 'lucide-react';
+import { ArrowLeft, Heart, ListMusic, Maximize, Trophy, Minimize, Search, Settings } from 'lucide-react';
 import { BRAND_SQUARE_SMALL } from '@/lib/imageAssets';
 import FocusRow from './FocusRow';
 import FocusableButton from './FocusableButton';
 import { useTvChrome } from '../lib/chromeContext';
+import { useFavorites } from '@/hooks/useFavorites';
 
 /**
  * Barre du haut de l'interface grand écran (maquette design/bigscreen/01-inicio.png) :
@@ -16,12 +17,17 @@ import { useTvChrome } from '../lib/chromeContext';
  * Les clés de focus HOME_NAV_* / TOPNAV_SETTINGS sont lues ailleurs (focus de secours,
  * retour du painel de ajustes) : ne pas les renommer. `onKaraoke` n'a plus de bouton —
  * les écrans karaokê restent atteignables depuis le catálogo (« Só karaokê »).
+ *
+ * « Favoritas » (2026-11-17) : seulement si l'appareil a au moins une favorita ; ouvre le
+ * catálogo filtré (le rang « Minhas favoritas » de l'accueil est sous la ligne de flottaison).
  */
 export default function TvTopNavigation({
-  active = 'inicio', onInicio, onCatalogo, onFesta, onOpenSettings, onBuscar, festaQueueCount = null,
+  active = 'inicio', onInicio, onCatalogo, onFesta, onOpenSettings, onBuscar, onFavoritas, festaQueueCount = null,
 }) {
   const chrome = useTvChrome();
   const buscar = onBuscar || chrome.onBuscar;
+  const { ids: favoriteIds } = useFavorites();
+  const favoritas = favoriteIds.size > 0 ? (onFavoritas || chrome.onFavoritas) : null;
   const cls = (key, extra = '') => `bs-nav-item bs-focus ${active === key ? 'is-active' : ''} ${extra}`;
   const hasFesta = typeof festaQueueCount === 'number';
 
@@ -57,6 +63,11 @@ export default function TvTopNavigation({
         {buscar && (
           <FocusableButton focusKey="HOME_NAV_BUSCAR" className={cls('buscar')} ariaLabel="Buscar uma música" onPress={buscar}>
             <Search size={22} aria-hidden="true" /> Buscar
+          </FocusableButton>
+        )}
+        {favoritas && (
+          <FocusableButton focusKey="HOME_NAV_FAVORITAS" className={cls('favoritas')} ariaLabel="Minhas favoritas" onPress={favoritas}>
+            <Heart size={22} aria-hidden="true" /> Favoritas
           </FocusableButton>
         )}
         {chrome.onRecordes && (

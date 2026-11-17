@@ -21,7 +21,7 @@ export function getInterface() {
  * Sur le web, l'accueil et la fiche chanson montent-ils l'interface grand écran ?
  *
  * Oui par défaut sur un ordinateur (un pointeur fin disponible, fenêtre d'au moins 900 px).
- * `?ui=legacy` garde l'ancien desktop (mémorisé), `?ui=bigscreen` force le grand écran,
+ * `?ui=bigscreen` force le grand écran (mémorisé),
  * `?ui=auto` revient au défaut. La règle est dans `interfaceRule.js` (`webBigScreen`),
  * la même qu'index.html. Sans effet sur un téléphone ni sur la TV.
  */

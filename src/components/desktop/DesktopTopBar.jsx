@@ -12,7 +12,7 @@ const ITEM =
  *
  * Ce sont de simples liens : le grand écran est une autre app (chargée à part), on y
  * entre par une adresse (`/?abrir=…`, voir src/lib/bigScreenEntry.js). Remplace l'ancien
- * menu latéral ; `?ui=legacy` garde celui-ci.
+ * menu latéral sur ordinateur (`?ui=legacy` est retiré).
  */
 export default function DesktopTopBar() {
   return (

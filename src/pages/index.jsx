@@ -56,8 +56,8 @@ function PagesContent() {
     const gaTimer = useRef(null);
 
     // Ordinateur (un pointeur fin disponible, ≥ 900 px) : l'accueil et la fiche chanson passent par
-    // l'interface grand écran, par défaut. `?ui=legacy` (mémorisé) garde l'ancien desktop,
-    // `?ui=auto` revient au défaut. Jamais sur téléphone ; la box TV, elle, monte TvApp
+    // l'interface grand écran, toujours (`?ui=legacy` est retiré).
+    // `?ui=auto` oublie un `?ui=bigscreen` mémorisé. Jamais sur téléphone ; la box TV, elle, monte TvApp
     // directement (App.jsx).
     const interfaceKind = useInterfaceKind();
     const [bigScreenUi] = useState(() => isBigScreenUiEnabled() && !getInterface().tv);

@@ -212,16 +212,23 @@ describe('Grand écran sur le web — le défaut sur ordinateur', () => {
     expect(detectInterface(tablet())).toMatchObject({ kind: 'bigscreen', tv: false, desktop: false, webBigScreen: true });
     expect(detectInterface(tablet({ width: 1366, height: 1024 })).webBigScreen).toBe(true);
     expect(detectInterface(tablet({ width: 899, height: 600 })).webBigScreen).toBe(false);
-    expect(detectInterface(tablet({ ui: 'legacy' })).webBigScreen).toBe(false);
+    expect(detectInterface(tablet({ ui: 'legacy' })).webBigScreen).toBe(true);
   });
 
-  it('?ui=legacy keeps the old desktop and is remembered; ?ui=auto returns to the default', () => {
+  it('?ui=legacy is gone: ignored, and an old remembered « legacy » choice is erased', () => {
     const win = computer({ search: '?ui=legacy' });
-    expect(detectInterface(win).webBigScreen).toBe(false);
-    win.location.search = '';
-    expect(detectInterface(win).webBigScreen).toBe(false);
-    win.location.search = '?x=1&ui=auto';
     expect(detectInterface(win).webBigScreen).toBe(true);
+    expect(win.__store.has('force-ui')).toBe(false);
+    win.__store.set('force-ui', 'legacy');
+    win.location.search = '';
+    expect(detectInterface(win).webBigScreen).toBe(true);
+    expect(win.__store.has('force-ui')).toBe(false);
+  });
+
+  it('?ui=auto forgets a remembered ?ui=bigscreen', () => {
+    const win = fakeWindow({ ua: UA.ipad, width: 1024, height: 768, fine: false, anyFine: false, ui: 'bigscreen' });
+    win.location.search = '?x=1&ui=auto';
+    detectInterface(win);
     expect(win.__store.has('force-ui')).toBe(false);
   });
 
